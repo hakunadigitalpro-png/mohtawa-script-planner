@@ -20,9 +20,10 @@ export async function createBrand(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Non authentifié." };
 
+  // created_by est rempli par le trigger BEFORE INSERT (migration 0002).
   const { data, error } = await supabase
     .from("brands")
-    .insert({ name, created_by: user.id })
+    .insert({ name })
     .select("id")
     .single();
 

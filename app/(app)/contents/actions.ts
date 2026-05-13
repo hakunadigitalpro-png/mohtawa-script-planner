@@ -22,11 +22,11 @@ export async function createContent(input: CreateContentInput) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Non authentifié." };
 
+  // user_id est rempli par le trigger BEFORE INSERT (migration 0002).
   const { data, error } = await supabase
     .from("contents")
     .insert({
       brand_id: brandId,
-      user_id: user.id,
       type: input.type,
       title: input.title || null,
       date: input.date || null,
