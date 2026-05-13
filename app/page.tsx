@@ -1,8 +1,11 @@
-export default function Home() {
-  return (
-    <main style={{ padding: "40px", fontFamily: "Arial" }}>
-      <h1>Mohtawa Script Planner 🚀</h1>
-      <p>Application connectée à Supabase avec succès.</p>
-    </main>
-  );
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  redirect(user ? "/dashboard" : "/login");
 }
