@@ -20,16 +20,25 @@ export async function createBrand(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Non authentifié." };
 
-  // created_by est rempli par le trigger BEFORE INSERT (migration 0002).
-  const { data, error } = await supabase
-    .from("brands")
-    .insert({ name })
-    .select("id")
-    .single();
+  // RPC security definer (migration 0003) - contourne les soucis RLS.
+  const { data: brandId, error } = await supabase.rpc("create_brand", {
+    p_name: name,
+  });
 
-  if (error) return { error: error.message };
+  if (error) {
+    if (error.message.includes("not_authenticated")) {
+      return { error: "Session expirée. Reconnecte-toi." };
+    }
+    if (error.message.includes("name_required")) {
+      return { error: "Le nom est requis." };
+    }
+    if (error.message.includes("name_too_long")) {
+      return { error: "Nom trop long (80 caractères max)." };
+    }
+    return { error: error.message };
+  }
 
-  await setActiveBrandId(data.id);
+  await setActiveBrandId(brandId as string);
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }
