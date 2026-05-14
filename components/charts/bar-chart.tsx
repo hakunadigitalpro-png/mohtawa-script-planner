@@ -54,8 +54,8 @@ export function BarChart({
           className="flex shrink-0 flex-col-reverse justify-between pr-2 text-right text-[10px] text-muted"
           style={{ height }}
         >
-          {yTicks.map((t) => (
-            <span key={t}>{format(t, fmt)}</span>
+          {yTicks.map((t, i) => (
+            <span key={i}>{format(t, fmt)}</span>
           ))}
         </div>
 
@@ -64,9 +64,9 @@ export function BarChart({
           style={{ height }}
         >
           <div className="pointer-events-none absolute inset-0 ml-2 flex flex-col-reverse justify-between">
-            {yTicks.map((t) => (
+            {yTicks.map((_, i) => (
               <div
-                key={t}
+                key={i}
                 className="h-px w-full border-t border-dashed border-border/60"
               />
             ))}
