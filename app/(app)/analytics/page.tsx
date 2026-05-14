@@ -192,7 +192,7 @@ export default async function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
         <p className="text-sm text-muted">
           {active.name} · ce que tu mesures, tu peux l&apos;améliorer.
         </p>

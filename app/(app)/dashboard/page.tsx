@@ -81,7 +81,7 @@ export default async function DashboardPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tableau de bord</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
           <p className="text-sm text-muted">
             {active.name} · vue rapide de ton activité.
           </p>

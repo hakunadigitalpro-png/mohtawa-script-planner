@@ -99,10 +99,10 @@ export function CalendarMonth({
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
-        <div className="grid grid-cols-7 border-b border-border bg-secondary text-xs font-medium text-muted">
+      <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_2px_12px_-4px_rgba(26,15,37,0.06)]">
+        <div className="grid grid-cols-7 border-b border-border/60 bg-secondary/50 text-[11px] font-bold uppercase tracking-wider text-muted">
           {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => (
-            <div key={d} className="px-2 py-2 text-center">{d}</div>
+            <div key={d} className="px-2 py-2.5 text-center">{d}</div>
           ))}
         </div>
         <div className="grid grid-cols-7">
@@ -116,10 +116,10 @@ export function CalendarMonth({
               <div
                 key={i}
                 className={cn(
-                  "group relative min-h-28 border-b border-r border-border p-1.5 transition-colors",
-                  otherMonth && "bg-secondary/50",
+                  "group relative min-h-28 border-b border-r border-border/60 p-2 transition-all",
+                  otherMonth && "bg-secondary/30",
                   (i + 1) % 7 === 0 && "border-r-0",
-                  isDragOver && "bg-primary/5 ring-1 ring-primary/40 ring-inset",
+                  isDragOver && "bg-accent/10 ring-2 ring-accent ring-inset",
                 )}
                 onDragOver={(e) => {
                   if (e.dataTransfer.types.includes(DRAG_MIME)) {
@@ -136,8 +136,8 @@ export function CalendarMonth({
                 <div className="flex items-center justify-between">
                   <span
                     className={cn(
-                      "inline-flex size-6 items-center justify-center rounded-full text-xs",
-                      today && "bg-primary text-primary-foreground font-semibold",
+                      "inline-flex size-7 items-center justify-center rounded-full text-xs font-semibold",
+                      today && "bg-ink text-white",
                       !today && otherMonth && "text-muted",
                       !today && !otherMonth && "text-foreground",
                     )}
@@ -150,13 +150,13 @@ export function CalendarMonth({
                       setPickedDate(key);
                       setModalOpen(true);
                     }}
-                    className="opacity-0 transition-opacity group-hover:opacity-100"
+                    className="flex size-6 items-center justify-center rounded-full text-muted opacity-0 transition hover:bg-accent hover:text-accent-foreground group-hover:opacity-100"
                     aria-label="Ajouter une vidéo ce jour"
                   >
-                    <Plus className="size-4 text-muted hover:text-foreground" />
+                    <Plus className="size-3.5" />
                   </button>
                 </div>
-                <ul className="mt-1 space-y-1">
+                <ul className="mt-1.5 space-y-1">
                   {items.slice(0, 3).map((c) => (
                     <li key={c.id}>
                       <Link
@@ -167,7 +167,7 @@ export function CalendarMonth({
                           e.dataTransfer.setData(DRAG_MIME, c.id);
                           e.dataTransfer.setData("text/plain", c.title ?? "");
                         }}
-                        className="flex cursor-grab items-center gap-1 truncate rounded px-1 py-0.5 text-xs hover:bg-accent active:cursor-grabbing"
+                        className="flex cursor-grab items-center gap-1.5 truncate rounded-full bg-secondary/50 px-2 py-1 text-[11px] font-medium hover:bg-secondary active:cursor-grabbing"
                       >
                         <ColorDot color={typeColor(c.type)} />
                         <span className="truncate">{c.title || "Sans titre"}</span>
@@ -175,7 +175,9 @@ export function CalendarMonth({
                     </li>
                   ))}
                   {items.length > 3 && (
-                    <li className="px-1 text-xs text-muted">+{items.length - 3}</li>
+                    <li className="px-2 text-[11px] font-medium text-muted">
+                      +{items.length - 3} autres
+                    </li>
                   )}
                 </ul>
               </div>

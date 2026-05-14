@@ -14,7 +14,7 @@ export default async function ProfilePage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Mon profil</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Mon profil</h1>
         <p className="text-sm text-muted">
           Modifie ton nom et ta langue préférée.
         </p>

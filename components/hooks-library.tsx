@@ -133,10 +133,10 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+        "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all",
         active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-card text-muted-foreground hover:bg-accent",
+          ? "border-accent bg-accent text-accent-foreground shadow-sm"
+          : "border-border bg-card/70 text-muted-foreground hover:bg-card hover:text-foreground",
       )}
     >
       {children}
