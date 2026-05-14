@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { BarChart, type BarPoint } from "@/components/charts/bar-chart";
 import { platformLabel } from "@/lib/constants";
 
+type PerfRow = { views: number | null; likes: number | null } | null;
 type ContentWithPerf = {
   id: string;
   title: string | null;
@@ -13,8 +14,21 @@ type ContentWithPerf = {
   platform: string | null;
   pillar: string | null;
   status: string;
-  performances: { views: number | null; likes: number | null }[] | null;
+  // Supabase peut renvoyer la relation soit en array (1-N) soit en objet (1-1
+  // quand la FK est PK). On normalise dans getPerf().
+  performances: PerfRow | PerfRow[] | null;
 };
+
+function getPerf(c: ContentWithPerf): PerfRow {
+  const p = c.performances;
+  if (!p) return null;
+  if (Array.isArray(p)) return p[0] ?? null;
+  return p;
+}
+
+function getViews(c: ContentWithPerf): number {
+  return getPerf(c)?.views ?? 0;
+}
 
 function monthKey(dateStr: string) {
   return dateStr.slice(0, 7);
@@ -70,7 +84,7 @@ export default async function AnalyticsPage() {
     if (!c.date) continue;
     const key = monthKey(c.date);
     if (!(key in viewsByMonth)) continue;
-    const views = c.performances?.[0]?.views ?? 0;
+    const views = getViews(c);
     viewsByMonth[key] += views;
   }
   const viewsData: BarPoint[] = months.map((m) => ({
@@ -98,7 +112,7 @@ export default async function AnalyticsPage() {
     .map((c) => ({
       id: c.id,
       title: c.title,
-      views: c.performances?.[0]?.views ?? 0,
+      views: getViews(c),
     }))
     .filter((c) => c.views > 0)
     .sort((a, b) => b.views - a.views);
@@ -107,7 +121,7 @@ export default async function AnalyticsPage() {
   // Top plateforme ---------------------------------------------------
   const platformViews: Record<string, number> = {};
   for (const c of rows) {
-    const v = c.performances?.[0]?.views ?? 0;
+    const v = getViews(c);
     if (!c.platform) continue;
     platformViews[c.platform] = (platformViews[c.platform] ?? 0) + v;
   }
@@ -116,14 +130,14 @@ export default async function AnalyticsPage() {
   // Top pilier -------------------------------------------------------
   const pillarViews: Record<string, number> = {};
   for (const c of rows) {
-    const v = c.performances?.[0]?.views ?? 0;
+    const v = getViews(c);
     if (!c.pillar) continue;
     pillarViews[c.pillar] = (pillarViews[c.pillar] ?? 0) + v;
   }
   const topPillar = Object.entries(pillarViews).sort((a, b) => b[1] - a[1])[0];
 
   const totalViews = rows.reduce(
-    (sum, c) => sum + (c.performances?.[0]?.views ?? 0),
+    (sum, c) => sum + (getViews(c)),
     0,
   );
   const totalPublished = rows.filter((c) => c.status === "published").length;
