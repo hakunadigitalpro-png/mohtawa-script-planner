@@ -7,6 +7,10 @@
 -- =====================================================================
 
 -- 1) Restreindre les types à 'reel' / 'story' --------------------------
+-- Normaliser d'abord les anciennes données (carousel/thread/post...) en 'reel'
+-- pour que la nouvelle contrainte CHECK puisse être appliquée.
+update public.contents set type = 'reel' where type not in ('reel','story');
+
 alter table public.contents drop constraint if exists contents_type_check;
 alter table public.contents
   add constraint contents_type_check check (type in ('reel','story'));
