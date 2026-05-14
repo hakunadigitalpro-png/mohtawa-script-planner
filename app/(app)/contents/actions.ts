@@ -83,6 +83,117 @@ export async function deleteContent(id: string) {
   redirect("/dashboard");
 }
 
+export async function deleteContentInPlace(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("contents").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard");
+  revalidatePath("/calendar");
+  return { ok: true };
+}
+
+export async function quickChangeStatus(id: string, status: string) {
+  return updateContent(id, { status });
+}
+
+export async function duplicateContent(id: string) {
+  const supabase = await createClient();
+
+  const { data: src, error: e1 } = await supabase
+    .from("contents")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (e1 || !src) return { error: e1?.message ?? "Contenu introuvable." };
+
+  const { data: newRow, error: e2 } = await supabase
+    .from("contents")
+    .insert({
+      brand_id: src.brand_id,
+      type: src.type,
+      title: src.title ? `${src.title} (copie)` : "Copie sans titre",
+      date: null,
+      platform: src.platform,
+      status: "idea",
+      pillar: src.pillar,
+      objective: src.objective,
+      hook: src.hook,
+      cta: src.cta,
+      tags: src.tags,
+    })
+    .select("id")
+    .single();
+  if (e2 || !newRow) return { error: e2?.message ?? "Erreur de duplication." };
+  const newId = newRow.id as string;
+
+  // Duplicate reel_details
+  if (src.type === "reel") {
+    const { data: rd } = await supabase
+      .from("reel_details")
+      .select("*")
+      .eq("content_id", id)
+      .maybeSingle();
+    if (rd) {
+      await supabase.from("reel_details").insert({
+        content_id: newId,
+        message_key: rd.message_key,
+        intro: rd.intro,
+        point1: rd.point1,
+        point2: rd.point2,
+        point3: rd.point3,
+        transition: rd.transition,
+        recap: rd.recap,
+        outro: rd.outro,
+        script_full: rd.script_full,
+        checklist: {},
+      });
+    } else {
+      await supabase.from("reel_details").insert({ content_id: newId });
+    }
+
+    // Duplicate storyboard_scenes (without image_url to avoid orphan references)
+    const { data: scenes } = await supabase
+      .from("storyboard_scenes")
+      .select("scene_number, description, camera_angle, on_screen_text, tag")
+      .eq("content_id", id);
+    if (scenes && scenes.length) {
+      await supabase.from("storyboard_scenes").insert(
+        scenes.map((s) => ({ ...s, content_id: newId })),
+      );
+    }
+  }
+
+  // Duplicate story_details + story_slides
+  if (src.type === "story") {
+    const { data: sd } = await supabase
+      .from("story_details")
+      .select("*")
+      .eq("content_id", id)
+      .maybeSingle();
+    if (sd) {
+      await supabase.from("story_details").insert({
+        content_id: newId,
+        objective: sd.objective,
+        cta_soft: sd.cta_soft,
+        format: sd.format,
+      });
+    }
+    const { data: slides } = await supabase
+      .from("story_slides")
+      .select("slot_number, body")
+      .eq("content_id", id);
+    if (slides && slides.length) {
+      await supabase.from("story_slides").insert(
+        slides.map((s) => ({ ...s, content_id: newId })),
+      );
+    }
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/calendar");
+  return { ok: true, id: newId };
+}
+
 export async function upsertReelDetails(
   contentId: string,
   patch: Partial<{

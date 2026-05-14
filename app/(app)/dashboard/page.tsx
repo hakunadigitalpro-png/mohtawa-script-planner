@@ -3,33 +3,79 @@ import { resolveActiveBrand } from "@/lib/brand";
 import { Card } from "@/components/ui/card";
 import { ContentCard } from "@/components/content-card";
 import { NewContentButton } from "@/components/new-content-modal";
+import { DashboardFilters } from "@/components/dashboard-filters";
 import type { Content } from "@/lib/types";
 
-export default async function DashboardPage() {
+type SearchParams = {
+  q?: string;
+  status?: string;
+  type?: string;
+  platform?: string;
+  month?: string;
+};
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const { active } = await resolveActiveBrand();
   if (!active) return null;
 
+  const params = await searchParams;
+
   const supabase = await createClient();
-  const { data } = await supabase
+
+  // KPIs : on calcule sur la totalité de la marque (pas filtré)
+  const { data: allRows } = await supabase
     .from("contents")
-    .select("*")
-    .eq("brand_id", active.id)
-    .order("date", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false });
+    .select("status, date")
+    .eq("brand_id", active.id);
 
-  const contents = (data ?? []) as Content[];
-  const total = contents.length;
-  const drafts = contents.filter((c) => c.status !== "published").length;
-  const published = contents.filter((c) => c.status === "published").length;
-
+  const allContents = allRows ?? [];
+  const total = allContents.length;
+  const drafts = allContents.filter((c) => c.status !== "published").length;
+  const published = allContents.filter((c) => c.status === "published").length;
   const now = new Date();
   const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const thisMonth = contents.filter((c) => {
+  const thisMonth = allContents.filter((c) => {
     if (!c.date) return false;
     const d = new Date(c.date);
     return d >= startMonth && d < endMonth;
   }).length;
+
+  // Liste filtrée
+  let query = supabase
+    .from("contents")
+    .select("*")
+    .eq("brand_id", active.id);
+
+  if (params.q) query = query.ilike("title", `%${params.q}%`);
+  if (params.status) query = query.eq("status", params.status);
+  if (params.type) query = query.eq("type", params.type);
+  if (params.platform) query = query.eq("platform", params.platform);
+  if (params.month && /^\d{4}-\d{2}$/.test(params.month)) {
+    const [y, m] = params.month.split("-").map(Number);
+    const next = new Date(y, m, 1);
+    const monthStart = `${params.month}-01`;
+    const monthEnd = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-01`;
+    query = query.gte("date", monthStart).lt("date", monthEnd);
+  }
+
+  const { data: filtered } = await query
+    .order("date", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false });
+
+  const contents = (filtered ?? []) as Content[];
+
+  const hasFilters = !!(
+    params.q ||
+    params.status ||
+    params.type ||
+    params.platform ||
+    params.month
+  );
 
   return (
     <div className="space-y-6">
@@ -50,15 +96,34 @@ export default async function DashboardPage() {
         <Kpi label="Ce mois-ci" value={thisMonth} />
       </div>
 
+      <DashboardFilters />
+
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-muted">Vidéos récentes</h2>
+        <h2 className="mb-3 text-sm font-semibold text-muted">
+          {hasFilters
+            ? `${contents.length} résultat${contents.length !== 1 ? "s" : ""}`
+            : "Vidéos récentes"}
+        </h2>
         {contents.length === 0 ? (
           <Card className="flex flex-col items-center justify-center gap-2 p-10 text-center">
-            <p className="text-base font-medium">Aucune vidéo pour le moment.</p>
-            <p className="text-sm text-muted">Commence par créer ta première vidéo.</p>
-            <div className="mt-2">
-              <NewContentButton />
-            </div>
+            {hasFilters ? (
+              <>
+                <p className="text-base font-medium">Aucun résultat.</p>
+                <p className="text-sm text-muted">
+                  Essaie de modifier ou d&apos;effacer les filtres.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-base font-medium">Aucune vidéo pour le moment.</p>
+                <p className="text-sm text-muted">
+                  Commence par créer ta première vidéo.
+                </p>
+                <div className="mt-2">
+                  <NewContentButton />
+                </div>
+              </>
+            )}
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
