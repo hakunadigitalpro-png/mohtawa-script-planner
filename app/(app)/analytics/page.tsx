@@ -189,7 +189,7 @@ export default async function AnalyticsPage() {
             <BarChart
               data={viewsData}
               color="var(--color-reel)"
-              formatValue={fmtNum}
+              format="compact"
             />
           </CardContent>
         </Card>
