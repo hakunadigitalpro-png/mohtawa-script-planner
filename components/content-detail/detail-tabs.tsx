@@ -10,6 +10,7 @@ import type {
   Content,
   ReelDetails,
   StoryDetails,
+  StorySlide,
   StoryboardScene,
   Performance,
 } from "@/lib/types";
@@ -18,12 +19,14 @@ export function DetailTabs({
   content,
   reel,
   story,
+  slides,
   scenes,
   perf,
 }: {
   content: Content;
   reel: ReelDetails | null;
   story: StoryDetails | null;
+  slides: StorySlide[];
   scenes: StoryboardScene[];
   perf: Performance | null;
 }) {
@@ -42,7 +45,7 @@ export function DetailTabs({
         <PlanTab content={content} />
       </TabsContent>
       <TabsContent value="script">
-        <ScriptTab content={content} reel={reel} story={story} />
+        <ScriptTab content={content} reel={reel} story={story} slides={slides} />
       </TabsContent>
       {!isStory && (
         <TabsContent value="storyboard">

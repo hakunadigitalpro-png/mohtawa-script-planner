@@ -1,27 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { upsertReelDetails, upsertStoryDetails } from "@/app/(app)/contents/actions";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { STORY_SLOT_LABELS } from "@/lib/constants";
+import {
+  upsertReelDetails,
+  upsertStoryDetails,
+  upsertStorySlide,
+} from "@/app/(app)/contents/actions";
 import { useAutosave, AutosaveIndicator } from "./autosave-field";
-import type { Content, ReelDetails, StoryDetails } from "@/lib/types";
+import type { Content, ReelDetails, StoryDetails, StorySlide } from "@/lib/types";
 
 export function ScriptTab({
   content,
   reel,
   story,
+  slides,
 }: {
   content: Content;
   reel: ReelDetails | null;
   story: StoryDetails | null;
+  slides: StorySlide[];
 }) {
   if (content.type === "story") {
-    return <StoryScript contentId={content.id} story={story} />;
+    return <StoryScript contentId={content.id} story={story} slides={slides} />;
   }
   return <ReelScript contentId={content.id} reel={reel} />;
 }
+
+/* ============================== REEL ============================== */
 
 function ReelScript({
   contentId,
@@ -41,16 +51,16 @@ function ReelScript({
     script_full: reel?.script_full ?? "",
   });
 
-  const status = useAutosave(state, async (v) =>
-    upsertReelDetails(contentId, v),
-  );
+  const status = useAutosave(state, async (v) => upsertReelDetails(contentId, v));
 
   return (
     <Card className="space-y-5 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold">Structure du script</h2>
-          <p className="text-xs text-muted">Une idée = un point. Structure d&apos;abord, tournage ensuite.</p>
+          <p className="text-xs text-muted">
+            Une idée = un point. Structure d&apos;abord, tournage ensuite.
+          </p>
         </div>
         <AutosaveIndicator status={status} />
       </div>
@@ -92,59 +102,159 @@ function ReelScript({
   );
 }
 
+/* ============================== STORY ============================== */
+
 function StoryScript({
   contentId,
   story,
+  slides: initialSlides,
 }: {
   contentId: string;
   story: StoryDetails | null;
+  slides: StorySlide[];
 }) {
-  const [state, setState] = useState({
+  // Header autosave
+  const [header, setHeader] = useState({
     objective: story?.objective ?? "",
     cta_soft: story?.cta_soft ?? "",
-    format: story?.format ?? "",
-    story1: story?.story1 ?? "",
-    story2: story?.story2 ?? "",
-    story3: story?.story3 ?? "",
-    story4: story?.story4 ?? "",
-    story5: story?.story5 ?? "",
   });
-
-  const status = useAutosave(state, async (v) =>
+  const headerStatus = useAutosave(header, async (v) =>
     upsertStoryDetails(contentId, v),
   );
 
   return (
-    <Card className="space-y-5 p-6">
+    <Card className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold">Séquence Story</h2>
-        <AutosaveIndicator status={status} />
+        <div>
+          <h2 className="text-base font-semibold">Storyboard Planner</h2>
+          <p className="text-xs text-muted">
+            5 stories : de l&apos;intro au call-to-action.
+          </p>
+        </div>
+        <AutosaveIndicator status={headerStatus} />
       </div>
 
-      <Field label="Objectif de la séquence" id="obj" value={state.objective}
-        onChange={(v) => setState((s) => ({ ...s, objective: v }))} />
-      <Field label="CTA soft" id="cta_soft" value={state.cta_soft}
-        onChange={(v) => setState((s) => ({ ...s, cta_soft: v }))}
-        placeholder="Ex : DM pour en savoir plus, sticker question..." />
-      <Field label="Format" id="format" value={state.format}
-        onChange={(v) => setState((s) => ({ ...s, format: v }))}
-        placeholder="facecam, repost, screenshot, b-roll..." />
-
-      <div className="space-y-3">
-        <Label>Stories</Label>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <Field
-            key={n}
-            label={`Story ${n}`}
-            id={`story${n}`}
-            value={state[`story${n}` as keyof typeof state]}
-            onChange={(v) => setState((s) => ({ ...s, [`story${n}`]: v }))}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+            What story do I want to tell ?
+          </Label>
+          <Textarea
+            className="min-h-20 text-sm"
+            value={header.objective}
+            onChange={(e) => setHeader((s) => ({ ...s, objective: e.target.value }))}
+            placeholder="Objectif de la séquence : transmettre quoi, à qui ?"
           />
-        ))}
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+            My engagement goals
+          </Label>
+          <Textarea
+            className="min-h-20 text-sm"
+            value={header.cta_soft}
+            onChange={(e) => setHeader((s) => ({ ...s, cta_soft: e.target.value }))}
+            placeholder="DM, sticker question, swipe up... que veux-tu que l'audience fasse ?"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {[1, 2, 3, 4, 5].map((slot) => {
+          const slide =
+            initialSlides.find((s) => s.slot_number === slot) ?? null;
+          return (
+            <PhoneCard
+              key={slot}
+              contentId={contentId}
+              slotNumber={slot}
+              slide={slide}
+            />
+          );
+        })}
       </div>
     </Card>
   );
 }
+
+function PhoneCard({
+  contentId,
+  slotNumber,
+  slide,
+}: {
+  contentId: string;
+  slotNumber: number;
+  slide: StorySlide | null;
+}) {
+  const [state, setState] = useState({
+    body: slide?.body ?? "",
+    image_url: slide?.image_url ?? null,
+  });
+
+  // Debounced autosave on body
+  const [, startTransition] = useTransition();
+  const initial = useRef(true);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (initial.current) {
+      initial.current = false;
+      return;
+    }
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      startTransition(async () => {
+        await upsertStorySlide(contentId, slotNumber, { body: state.body });
+      });
+    }, 600);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.body]);
+
+  const onImageChange = (url: string | null) => {
+    setState((s) => ({ ...s, image_url: url }));
+    startTransition(async () => {
+      await upsertStorySlide(contentId, slotNumber, { image_url: url });
+    });
+  };
+
+  const label =
+    slotNumber === 1
+      ? "Title / Introduction"
+      : slotNumber === 5
+        ? "Call to Action"
+        : STORY_SLOT_LABELS[slotNumber] ?? `Story ${slotNumber}`;
+
+  return (
+    <div className="flex flex-col items-center">
+      <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+        {label}
+      </span>
+
+      {/* Phone frame */}
+      <div className="w-full overflow-hidden rounded-[20px] border-4 border-foreground/80 bg-card shadow-sm">
+        <ImageUpload
+          contentId={contentId}
+          value={state.image_url}
+          aspectRatio="portrait"
+          onChange={onImageChange}
+          label="Ajouter une image"
+        />
+      </div>
+
+      <Textarea
+        className="mt-2 min-h-20 w-full text-xs"
+        value={state.body}
+        onChange={(e) => setState((s) => ({ ...s, body: e.target.value }))}
+        placeholder="Texte / dialogue / notes"
+      />
+    </div>
+  );
+}
+
+/* ============================ Shared ============================ */
 
 function Field({
   id,

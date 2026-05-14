@@ -113,17 +113,29 @@ export async function upsertStoryDetails(
     objective: string;
     cta_soft: string;
     format: string;
-    story1: string;
-    story2: string;
-    story3: string;
-    story4: string;
-    story5: string;
   }>,
 ) {
   const supabase = await createClient();
   const { error } = await supabase
     .from("story_details")
     .upsert({ content_id: contentId, ...patch });
+  if (error) return { error: error.message };
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true };
+}
+
+export async function upsertStorySlide(
+  contentId: string,
+  slotNumber: number,
+  patch: Partial<{ body: string | null; image_url: string | null }>,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("story_slides")
+    .upsert(
+      { content_id: contentId, slot_number: slotNumber, ...patch },
+      { onConflict: "content_id,slot_number" },
+    );
   if (error) return { error: error.message };
   revalidatePath(`/content/${contentId}`);
   return { ok: true };
@@ -176,6 +188,7 @@ export async function updateScene(
     camera_angle: string;
     on_screen_text: string;
     tag: string;
+    image_url: string | null;
   }>,
   contentId: string,
 ) {

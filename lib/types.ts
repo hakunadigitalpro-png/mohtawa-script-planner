@@ -54,11 +54,14 @@ export type StoryDetails = {
   objective: string | null;
   cta_soft: string | null;
   format: string | null;
-  story1: string | null;
-  story2: string | null;
-  story3: string | null;
-  story4: string | null;
-  story5: string | null;
+};
+
+export type StorySlide = {
+  id: string;
+  content_id: string;
+  slot_number: number;
+  body: string | null;
+  image_url: string | null;
 };
 
 export type StoryboardScene = {
@@ -69,6 +72,7 @@ export type StoryboardScene = {
   camera_angle: string | null;
   on_screen_text: string | null;
   tag: string | null;
+  image_url: string | null;
 };
 
 export type Performance = {

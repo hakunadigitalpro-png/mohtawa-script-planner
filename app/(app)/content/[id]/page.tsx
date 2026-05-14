@@ -15,6 +15,7 @@ import type {
   Content,
   ReelDetails,
   StoryDetails,
+  StorySlide,
   StoryboardScene,
   Performance,
 } from "@/lib/types";
@@ -35,9 +36,14 @@ export default async function ContentDetailPage({
 
   if (!content) notFound();
 
-  const [reelRes, storyRes, scenesRes, perfRes] = await Promise.all([
+  const [reelRes, storyRes, slidesRes, scenesRes, perfRes] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
+    supabase
+      .from("story_slides")
+      .select("*")
+      .eq("content_id", id)
+      .order("slot_number", { ascending: true }),
     supabase
       .from("storyboard_scenes")
       .select("*")
@@ -48,6 +54,7 @@ export default async function ContentDetailPage({
 
   const reel = (reelRes.data ?? null) as ReelDetails | null;
   const story = (storyRes.data ?? null) as StoryDetails | null;
+  const slides = (slidesRes.data ?? []) as StorySlide[];
   const scenes = (scenesRes.data ?? []) as StoryboardScene[];
   const perf = (perfRes.data ?? null) as Performance | null;
 
@@ -86,6 +93,7 @@ export default async function ContentDetailPage({
         content={c}
         reel={reel}
         story={story}
+        slides={slides}
         scenes={scenes}
         perf={perf}
       />

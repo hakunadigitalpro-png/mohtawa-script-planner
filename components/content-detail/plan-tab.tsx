@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { PLATFORMS, STATUSES, OBJECTIVES, CONTENT_TYPES } from "@/lib/constants";
+import { platformsForType, STATUSES, OBJECTIVES, CONTENT_TYPES } from "@/lib/constants";
 import { updateContent } from "@/app/(app)/contents/actions";
 import { useAutosave, AutosaveIndicator } from "./autosave-field";
 import type { Content } from "@/lib/types";
@@ -81,7 +81,7 @@ export function PlanTab({ content }: { content: Content }) {
             onChange={(e) => setState((s) => ({ ...s, platform: e.target.value }))}
           >
             <option value="">—</option>
-            {PLATFORMS.map((p) => (
+            {platformsForType(state.type).map((p) => (
               <option key={p.value} value={p.value}>{p.label}</option>
             ))}
           </Select>

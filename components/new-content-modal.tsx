@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CONTENT_TYPES, PLATFORMS } from "@/lib/constants";
+import { CONTENT_TYPES, platformsForType } from "@/lib/constants";
 import { createContent } from "@/app/(app)/contents/actions";
 
 export function NewContentButton({
@@ -49,8 +49,11 @@ export function NewContentModal({
   defaultType?: string;
   defaultDate?: string;
 }) {
+  const [type, setType] = useState(defaultType);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  const availablePlatforms = platformsForType(type);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -76,7 +79,12 @@ export function NewContentModal({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="type">Format</Label>
-                <Select id="type" name="type" defaultValue={defaultType}>
+                <Select
+                  id="type"
+                  name="type"
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                >
                   {CONTENT_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
@@ -86,7 +94,7 @@ export function NewContentModal({
                 <Label htmlFor="platform">Plateforme</Label>
                 <Select id="platform" name="platform" defaultValue="">
                   <option value="">—</option>
-                  {PLATFORMS.map((p) => (
+                  {availablePlatforms.map((p) => (
                     <option key={p.value} value={p.value}>{p.label}</option>
                   ))}
                 </Select>
