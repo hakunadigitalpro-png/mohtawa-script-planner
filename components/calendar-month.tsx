@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -22,7 +22,10 @@ import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/badge";
 import { typeColor } from "@/lib/constants";
 import { NewContentModal } from "@/components/new-content-modal";
+import { updateContent } from "@/app/(app)/contents/actions";
 import type { Content } from "@/lib/types";
+
+const DRAG_MIME = "application/x-mohtawa-content-id";
 
 export function CalendarMonth({
   initialMonth,
@@ -37,6 +40,8 @@ export function CalendarMonth({
 
   const [modalOpen, setModalOpen] = useState(false);
   const [pickedDate, setPickedDate] = useState<string | undefined>(undefined);
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
   const gridStart = startOfWeek(startOfMonth(cursor), { weekStartsOn: 1 });
   const gridEnd = endOfWeek(endOfMonth(cursor), { weekStartsOn: 1 });
@@ -60,6 +65,18 @@ export function CalendarMonth({
     return map;
   }, [contents]);
 
+  const onDrop = (e: React.DragEvent, targetDate: string) => {
+    e.preventDefault();
+    setDragOverKey(null);
+    const id = e.dataTransfer.getData(DRAG_MIME);
+    if (!id) return;
+    // Optimistic feel: kick off the update and refresh
+    startTransition(async () => {
+      await updateContent(id, { date: targetDate });
+      router.refresh();
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -77,6 +94,9 @@ export function CalendarMonth({
             Aujourd&apos;hui
           </Button>
         </div>
+        <p className="hidden text-xs text-muted md:block">
+          💡 Glisse une vidéo d&apos;un jour à l&apos;autre pour la replanifier.
+        </p>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -91,14 +111,27 @@ export function CalendarMonth({
             const items = byDay.get(key) ?? [];
             const otherMonth = !isSameMonth(d, cursor);
             const today = isSameDay(d, new Date());
+            const isDragOver = dragOverKey === key;
             return (
               <div
                 key={i}
                 className={cn(
-                  "group relative min-h-28 border-b border-r border-border p-1.5",
+                  "group relative min-h-28 border-b border-r border-border p-1.5 transition-colors",
                   otherMonth && "bg-secondary/50",
                   (i + 1) % 7 === 0 && "border-r-0",
+                  isDragOver && "bg-primary/5 ring-1 ring-primary/40 ring-inset",
                 )}
+                onDragOver={(e) => {
+                  if (e.dataTransfer.types.includes(DRAG_MIME)) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    if (dragOverKey !== key) setDragOverKey(key);
+                  }
+                }}
+                onDragLeave={() => {
+                  if (dragOverKey === key) setDragOverKey(null);
+                }}
+                onDrop={(e) => onDrop(e, key)}
               >
                 <div className="flex items-center justify-between">
                   <span
@@ -128,7 +161,13 @@ export function CalendarMonth({
                     <li key={c.id}>
                       <Link
                         href={`/content/${c.id}`}
-                        className="flex items-center gap-1 truncate rounded px-1 py-0.5 text-xs hover:bg-accent"
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData(DRAG_MIME, c.id);
+                          e.dataTransfer.setData("text/plain", c.title ?? "");
+                        }}
+                        className="flex cursor-grab items-center gap-1 truncate rounded px-1 py-0.5 text-xs hover:bg-accent active:cursor-grabbing"
                       >
                         <ColorDot color={typeColor(c.type)} />
                         <span className="truncate">{c.title || "Sans titre"}</span>

@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { AiGeneratorButton } from "@/components/ai-generator";
 import { STORY_SLOT_LABELS } from "@/lib/constants";
 import {
   upsertReelDetails,
@@ -55,14 +56,17 @@ function ReelScript({
 
   return (
     <Card className="space-y-5 p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">Structure du script</h2>
           <p className="text-xs text-muted">
             Une idée = un point. Structure d&apos;abord, tournage ensuite.
           </p>
         </div>
-        <AutosaveIndicator status={status} />
+        <div className="flex items-center gap-2">
+          <AutosaveIndicator status={status} />
+          <AiGeneratorButton contentId={contentId} type="reel" />
+        </div>
       </div>
 
       <Field label="Introduction" id="intro" placeholder="Présente le sujet en une ou deux phrases."
@@ -124,14 +128,17 @@ function StoryScript({
 
   return (
     <Card className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">Storyboard Planner</h2>
           <p className="text-xs text-muted">
             5 stories : de l&apos;intro au call-to-action.
           </p>
         </div>
-        <AutosaveIndicator status={headerStatus} />
+        <div className="flex items-center gap-2">
+          <AutosaveIndicator status={headerStatus} />
+          <AiGeneratorButton contentId={contentId} type="story" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

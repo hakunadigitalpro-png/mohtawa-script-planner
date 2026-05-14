@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge, ColorDot } from "@/components/ui/badge";
 import {
@@ -70,7 +70,18 @@ export default async function ContentDetailPage({
           <ArrowLeft className="size-4" />
           Retour
         </Link>
-        <DeleteContentButton contentId={c.id} />
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/print/${c.id}`}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium hover:bg-accent"
+          >
+            <FileDown className="size-3.5" />
+            Exporter PDF
+          </Link>
+          <DeleteContentButton contentId={c.id} />
+        </div>
       </div>
 
       <div className="space-y-2">

@@ -1,0 +1,243 @@
+/* Print page styles — used by /print/[id] (route hors du layout app/sidebar) */
+
+.print-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+  background: #ffffff;
+  color: #18181b;
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+}
+
+.print-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e4e4e7;
+}
+.print-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #71717a;
+  text-decoration: none;
+}
+.print-back:hover { color: #18181b; }
+.print-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: #18181b;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+}
+.print-button:hover { background: #27272a; }
+
+.print-header { margin-bottom: 32px; }
+.print-brand {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #71717a;
+  margin-bottom: 6px;
+}
+.print-title {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 8px;
+}
+.print-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+  color: #52525b;
+}
+
+.print-section {
+  margin-bottom: 28px;
+  page-break-inside: avoid;
+}
+.print-section h2 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #71717a;
+  margin: 0 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e4e4e7;
+}
+
+.print-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+  margin: 0;
+}
+.print-field, .print-block {
+  margin: 0;
+}
+.print-field-long {
+  grid-column: 1 / -1;
+}
+.print-field dt, .print-block dt {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71717a;
+  margin: 0 0 2px;
+}
+.print-field dd, .print-block dd {
+  margin: 0;
+  font-size: 14px;
+}
+
+.print-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+}
+.print-block dd {
+  white-space: pre-wrap;
+}
+
+.print-script-full {
+  margin-top: 20px;
+  padding: 16px;
+  background: #fafaf9;
+  border-radius: 6px;
+}
+.print-script-full h3 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71717a;
+  margin: 0 0 8px;
+}
+.print-script-full p {
+  margin: 0;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.print-storyboard {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.print-scene {
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  padding: 10px;
+  page-break-inside: avoid;
+}
+.print-scene-header {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71717a;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e4e4e7;
+}
+.print-scene-image {
+  margin-bottom: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  aspect-ratio: 16 / 9;
+  background: #f4f4f5;
+}
+.print-scene-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.print-scene-field {
+  margin-bottom: 6px;
+}
+.print-scene-field span {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71717a;
+  display: block;
+}
+.print-scene-field p {
+  margin: 1px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.print-stories {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.print-story-card {
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  padding: 8px;
+  page-break-inside: avoid;
+}
+.print-story-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #71717a;
+  text-align: center;
+  margin-bottom: 6px;
+}
+.print-story-image {
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f4f4f5;
+  margin-bottom: 6px;
+}
+.print-story-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.print-story-body {
+  font-size: 10px;
+  margin: 0;
+  line-height: 1.3;
+  word-wrap: break-word;
+}
+
+.print-footer {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid #e4e4e7;
+  text-align: center;
+  font-size: 11px;
+  color: #a1a1aa;
+}
+
+@media print {
+  body { background: #fff; }
+  .no-print, .print-actions { display: none !important; }
+  .print-page { padding: 0; max-width: none; }
+  .print-section { page-break-inside: avoid; }
+  .print-scene, .print-story-card { page-break-inside: avoid; }
+}
