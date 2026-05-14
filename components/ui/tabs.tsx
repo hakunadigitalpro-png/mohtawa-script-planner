@@ -50,7 +50,7 @@ export function TabsList({
     <div
       role="tablist"
       className={cn(
-        "inline-flex h-10 items-center gap-1 rounded-lg bg-secondary p-1",
+        "inline-flex h-11 items-center gap-1 rounded-full bg-card/70 p-1 border border-border/60 backdrop-blur",
         className,
       )}
     >
@@ -78,10 +78,10 @@ export function TabsTrigger({
       aria-selected={active}
       onClick={() => ctx.setValue(value)}
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+        "inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-all",
         active
-          ? "bg-card text-foreground shadow-sm"
-          : "text-muted hover:text-foreground",
+          ? "bg-accent text-accent-foreground shadow-sm"
+          : "text-muted-foreground hover:text-foreground",
         className,
       )}
     >
@@ -101,5 +101,5 @@ export function TabsContent({
 }) {
   const ctx = React.useContext(TabsContext);
   if (!ctx || ctx.value !== value) return null;
-  return <div className={cn("mt-4", className)}>{children}</div>;
+  return <div className={cn("mt-5", className)}>{children}</div>;
 }

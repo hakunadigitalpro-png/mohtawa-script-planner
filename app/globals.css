@@ -1,70 +1,114 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #fafaf9;
-  --color-foreground: #18181b;
-  --color-muted: #71717a;
-  --color-muted-foreground: #52525b;
-  --color-border: #e4e4e7;
-  --color-input: #e4e4e7;
-  --color-ring: #18181b;
+  /* ===== Brand palette ===== */
+  --color-ink: #000000;
+  --color-orange: #f67b56;
+  --color-orange-soft: #fde2d6;
+  --color-lavender: #c19be9;
+  --color-lavender-soft: #ece1f7;
+  --color-cream: #fef9f4;
 
+  /* ===== Surfaces ===== */
+  --color-background: #ffffff;
+  --color-foreground: #1a0f25;
   --color-card: #ffffff;
-  --color-card-foreground: #18181b;
+  --color-card-foreground: #1a0f25;
+  --color-muted: #8a7e94;
+  --color-muted-foreground: #6b6173;
+  --color-border: #ede6f0;
+  --color-input: #ede6f0;
+  --color-ring: #1a0f25;
 
-  --color-primary: #18181b;
-  --color-primary-foreground: #fafafa;
-
-  --color-secondary: #f4f4f5;
-  --color-secondary-foreground: #18181b;
-
-  --color-accent: #f4f4f5;
-  --color-accent-foreground: #18181b;
+  /* ===== Action variants ===== */
+  --color-primary: #1a0f25;
+  --color-primary-foreground: #ffffff;
+  --color-accent: #f67b56;
+  --color-accent-foreground: #ffffff;
+  --color-secondary: #f6f1f9;
+  --color-secondary-foreground: #1a0f25;
 
   --color-destructive: #dc2626;
-  --color-destructive-foreground: #fafafa;
+  --color-destructive-foreground: #ffffff;
 
-  --color-reel: #7c3aed;
-  --color-story: #f59e0b;
+  /* ===== Content type accents ===== */
+  --color-reel: #f67b56;
+  --color-story: #c19be9;
   --color-carousel: #06b6d4;
   --color-thread: #10b981;
   --color-post: #6366f1;
 
+  /* ===== Status accents (warm-toned) ===== */
   --color-status-idea: #94a3b8;
-  --color-status-script: #6366f1;
+  --color-status-script: #c19be9;
   --color-status-filming: #f59e0b;
-  --color-status-editing: #8b5cf6;
+  --color-status-editing: #a855f7;
   --color-status-scheduled: #06b6d4;
   --color-status-published: #10b981;
 
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  /* ===== Typography ===== */
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
 
-  --radius-sm: 0.375rem;
-  --radius: 0.5rem;
-  --radius-lg: 0.75rem;
+  /* ===== Radius (more generous) ===== */
+  --radius-sm: 0.5rem;
+  --radius: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
 }
 
 * {
   border-color: var(--color-border);
 }
 
-html,
-body {
-  background: var(--color-background);
+html, body {
   color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
+/* Warm gradient background applied to the app body */
+body {
+  background:
+    radial-gradient(80% 60% at 0% 0%, #fde7d9 0%, transparent 55%),
+    radial-gradient(70% 55% at 100% 0%, #e7d5f5 0%, transparent 50%),
+    radial-gradient(80% 70% at 50% 100%, #f9e6e0 0%, transparent 55%),
+    #fef9f4;
+  min-height: 100vh;
+}
+
 button {
   cursor: pointer;
+  font-family: inherit;
 }
 button:disabled {
   cursor: not-allowed;
 }
 
-input,
-textarea,
-select {
+input, textarea, select {
   font: inherit;
+}
+
+/* Hover-only tooltip for compact sidebar icons */
+.tooltip-trigger {
+  position: relative;
+}
+.tooltip-trigger > .tooltip-content {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #1a0f25;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 50;
+}
+.tooltip-trigger:hover > .tooltip-content {
+  opacity: 1;
 }

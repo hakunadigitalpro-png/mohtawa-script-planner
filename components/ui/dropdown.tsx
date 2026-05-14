@@ -85,7 +85,7 @@ export function DropdownContent({
     <div
       role="menu"
       className={cn(
-        "absolute z-30 mt-1 min-w-44 overflow-hidden rounded-md border border-border bg-card py-1 shadow-lg",
+        "absolute z-30 mt-2 min-w-48 overflow-hidden rounded-2xl border border-border/60 bg-card py-1.5 shadow-[0_12px_40px_-10px_rgba(26,15,37,0.18)]",
         align === "end" ? "right-0" : "left-0",
         className,
       )}
@@ -121,10 +121,10 @@ export function DropdownItem({
         ctx?.setOpen(false);
       }}
       className={cn(
-        "flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+        "flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
         destructive
           ? "text-destructive hover:bg-destructive/10"
-          : "hover:bg-accent hover:text-accent-foreground",
+          : "hover:bg-secondary hover:text-foreground",
         className,
       )}
     >
@@ -134,12 +134,12 @@ export function DropdownItem({
 }
 
 export function DropdownSeparator() {
-  return <div className="my-1 h-px bg-border" />;
+  return <div className="my-1 h-px bg-border/60" />;
 }
 
 export function DropdownLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+    <div className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
       {children}
     </div>
   );

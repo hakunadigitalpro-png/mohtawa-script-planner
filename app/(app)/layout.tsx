@@ -26,7 +26,7 @@ export default async function AppLayout({
     <div className="flex min-h-screen">
       <Sidebar brands={brands} active={active} userEmail={user.email ?? null} />
       <main className="flex-1 overflow-x-hidden">
-        <div className="mx-auto max-w-6xl px-6 py-8">{children}</div>
+        <div className="mx-auto max-w-6xl px-6 py-8 sm:py-10">{children}</div>
       </main>
     </div>
   );
