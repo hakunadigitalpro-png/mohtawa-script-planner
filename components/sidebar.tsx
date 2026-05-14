@@ -9,6 +9,8 @@ import {
   LogOut,
   Building2,
   User,
+  BarChart3,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandSwitcher } from "./brand-switcher";
@@ -17,6 +19,8 @@ import type { Brand } from "@/lib/types";
 const PRIMARY_NAV = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/calendar", label: "Calendrier", icon: CalendarDays },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/hooks", label: "Accroches", icon: BookOpen },
 ];
 
 const SECONDARY_NAV = [

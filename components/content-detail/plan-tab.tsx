@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { platformsForType, STATUSES, OBJECTIVES, CONTENT_TYPES } from "@/lib/constants";
 import { updateContent } from "@/app/(app)/contents/actions";
 import { useAutosave, AutosaveIndicator } from "./autosave-field";
+import { HooksPickerButton } from "@/components/hooks-picker";
 import type { Content } from "@/lib/types";
 
 export function PlanTab({ content }: { content: Content }) {
@@ -132,7 +133,12 @@ export function PlanTab({ content }: { content: Content }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="hook">Accroche</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="hook">Accroche</Label>
+          <HooksPickerButton
+            onPick={(text) => setState((s) => ({ ...s, hook: text }))}
+          />
+        </div>
         <Textarea
           id="hook"
           value={state.hook}
