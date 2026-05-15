@@ -7,13 +7,18 @@ import { Card } from "@/components/ui/card";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { AiGeneratorButton } from "@/components/ai-generator";
 import { STORY_SLOT_LABELS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import {
   upsertReelDetails,
   upsertStoryDetails,
   upsertStorySlide,
+  swapSlides,
 } from "@/app/(app)/contents/actions";
+import { useRouter } from "next/navigation";
 import { useAutosave, AutosaveIndicator } from "./autosave-field";
 import type { Content, ReelDetails, StoryDetails, StorySlide } from "@/lib/types";
+
+const SLIDE_DRAG_MIME = "application/x-mohtawa-slot-number";
 
 export function ScriptTab({
   content,
@@ -117,6 +122,7 @@ function StoryScript({
   story: StoryDetails | null;
   slides: StorySlide[];
 }) {
+  const router = useRouter();
   // Header autosave
   const [header, setHeader] = useState({
     objective: story?.objective ?? "",
@@ -126,13 +132,30 @@ function StoryScript({
     upsertStoryDetails(contentId, v),
   );
 
+  const [dragSlot, setDragSlot] = useState<number | null>(null);
+  const [overSlot, setOverSlot] = useState<number | null>(null);
+  const [, startTransition] = useTransition();
+
+  const onSlotDrop = (toSlot: number, e: React.DragEvent) => {
+    e.preventDefault();
+    setOverSlot(null);
+    const fromSlot = Number(e.dataTransfer.getData(SLIDE_DRAG_MIME));
+    setDragSlot(null);
+    if (!Number.isFinite(fromSlot) || fromSlot === toSlot) return;
+    startTransition(async () => {
+      await swapSlides(contentId, fromSlot, toSlot);
+      router.refresh();
+    });
+  };
+
   return (
     <Card className="space-y-6 p-6">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">Storyboard Planner</h2>
           <p className="text-xs text-muted">
-            5 stories : de l&apos;intro au call-to-action.
+            5 stories : de l&apos;intro au call-to-action. Glisse une story sur
+            une autre pour échanger leur contenu.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -171,12 +194,39 @@ function StoryScript({
           const slide =
             initialSlides.find((s) => s.slot_number === slot) ?? null;
           return (
-            <PhoneCard
+            <div
               key={slot}
-              contentId={contentId}
-              slotNumber={slot}
-              slide={slide}
-            />
+              onDragOver={(e) => {
+                if (!e.dataTransfer.types.includes(SLIDE_DRAG_MIME)) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                if (overSlot !== slot) setOverSlot(slot);
+              }}
+              onDragLeave={() => {
+                if (overSlot === slot) setOverSlot(null);
+              }}
+              onDrop={(e) => onSlotDrop(slot, e)}
+              className={cn(
+                "transition-all",
+                dragSlot === slot && "opacity-40",
+                overSlot === slot && dragSlot !== slot && "scale-[1.03]",
+              )}
+            >
+              <PhoneCard
+                contentId={contentId}
+                slotNumber={slot}
+                slide={slide}
+                onDragHandleStart={(e) => {
+                  setDragSlot(slot);
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData(SLIDE_DRAG_MIME, String(slot));
+                }}
+                onDragHandleEnd={() => {
+                  setDragSlot(null);
+                  setOverSlot(null);
+                }}
+              />
+            </div>
           );
         })}
       </div>
@@ -188,15 +238,27 @@ function PhoneCard({
   contentId,
   slotNumber,
   slide,
+  onDragHandleStart,
+  onDragHandleEnd,
 }: {
   contentId: string;
   slotNumber: number;
   slide: StorySlide | null;
+  onDragHandleStart?: (e: React.DragEvent) => void;
+  onDragHandleEnd?: () => void;
 }) {
   const [state, setState] = useState({
     body: slide?.body ?? "",
     image_url: slide?.image_url ?? null,
   });
+
+  // Resync after server swap / refresh
+  useEffect(() => {
+    setState({
+      body: slide?.body ?? "",
+      image_url: slide?.image_url ?? null,
+    });
+  }, [slide?.body, slide?.image_url]);
 
   // Debounced autosave on body
   const [, startTransition] = useTransition();
@@ -236,9 +298,16 @@ function PhoneCard({
 
   return (
     <div className="flex flex-col items-center">
-      <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+      <div
+        draggable
+        onDragStart={onDragHandleStart}
+        onDragEnd={onDragHandleEnd}
+        className="mb-1.5 inline-flex cursor-grab items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted active:cursor-grabbing"
+        title="Glisse pour échanger avec une autre story"
+      >
+        <span className="text-foreground/40">⋮⋮</span>
         {label}
-      </span>
+      </div>
 
       {/* Phone frame */}
       <div className="w-full overflow-hidden rounded-[20px] border-4 border-foreground/80 bg-card shadow-sm">

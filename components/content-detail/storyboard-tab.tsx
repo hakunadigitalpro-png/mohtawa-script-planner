@@ -1,24 +1,72 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { Plus, Trash2, GripVertical } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { addScene, deleteScene, updateScene } from "@/app/(app)/contents/actions";
+import { cn } from "@/lib/utils";
+import {
+  addScene,
+  deleteScene,
+  updateScene,
+  reorderScenes,
+} from "@/app/(app)/contents/actions";
 import type { StoryboardScene } from "@/lib/types";
+
+const DRAG_MIME = "application/x-mohtawa-scene-id";
 
 export function StoryboardTab({
   contentId,
-  scenes,
+  scenes: initialScenes,
 }: {
   contentId: string;
   scenes: StoryboardScene[];
 }) {
+  const [scenes, setScenes] = useState(initialScenes);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // Garde l'état local en sync si le parent re-fetch
+  useEffect(() => setScenes(initialScenes), [initialScenes]);
+
+  const onDragStart = (idx: number, e: React.DragEvent) => {
+    setDragIdx(idx);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData(DRAG_MIME, String(idx));
+  };
+
+  const onDragOver = (idx: number, e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverIdx !== idx) setDragOverIdx(idx);
+  };
+
+  const onDrop = (idx: number, e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverIdx(null);
+    const fromIdx = Number(e.dataTransfer.getData(DRAG_MIME));
+    setDragIdx(null);
+    if (Number.isNaN(fromIdx) || fromIdx === idx) return;
+
+    // Optimistic reorder
+    const next = [...scenes];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(idx, 0, moved);
+    setScenes(next);
+
+    startTransition(async () => {
+      await reorderScenes(
+        contentId,
+        next.map((s) => s.id),
+      );
+    });
+  };
 
   return (
     <Card className="space-y-5 p-6">
@@ -26,7 +74,7 @@ export function StoryboardTab({
         <div>
           <h2 className="text-base font-semibold">Storyboard</h2>
           <p className="text-xs text-muted">
-            Dessine les plans avant de tourner. Un visuel par scène.
+            Dessine les plans avant de tourner. Glisse les cartes pour réorganiser.
           </p>
         </div>
         <Button
@@ -40,14 +88,38 @@ export function StoryboardTab({
       </div>
 
       {scenes.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border p-10 text-center">
+        <div className="rounded-2xl border border-dashed border-border p-10 text-center">
           <p className="text-sm font-medium">Aucune scène pour le moment.</p>
           <p className="mt-1 text-xs text-muted">Clique sur « Ajouter une scène » pour commencer.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {scenes.map((scene) => (
-            <SceneCard key={scene.id} scene={scene} contentId={contentId} />
+          {scenes.map((scene, idx) => (
+            <div
+              key={scene.id}
+              draggable
+              onDragStart={(e) => onDragStart(idx, e)}
+              onDragOver={(e) => onDragOver(idx, e)}
+              onDragLeave={() => {
+                if (dragOverIdx === idx) setDragOverIdx(null);
+              }}
+              onDrop={(e) => onDrop(idx, e)}
+              onDragEnd={() => {
+                setDragIdx(null);
+                setDragOverIdx(null);
+              }}
+              className={cn(
+                "transition-all",
+                dragIdx === idx && "opacity-40",
+                dragOverIdx === idx && dragIdx !== idx && "scale-[1.02]",
+              )}
+            >
+              <SceneCard
+                scene={scene}
+                index={idx}
+                contentId={contentId}
+              />
+            </div>
           ))}
         </div>
       )}
@@ -57,9 +129,11 @@ export function StoryboardTab({
 
 function SceneCard({
   scene,
+  index,
   contentId,
 }: {
   scene: StoryboardScene;
+  index: number;
   contentId: string;
 }) {
   const [state, setState] = useState({
@@ -70,6 +144,16 @@ function SceneCard({
   });
   const [pending, startTransition] = useTransition();
 
+  // Sync if scene props change (after reorder server refresh)
+  useEffect(() => {
+    setState({
+      description: scene.description ?? "",
+      camera_angle: scene.camera_angle ?? "",
+      on_screen_text: scene.on_screen_text ?? "",
+      image_url: scene.image_url ?? null,
+    });
+  }, [scene.id, scene.description, scene.camera_angle, scene.on_screen_text, scene.image_url]);
+
   const save = (next: typeof state) => {
     startTransition(async () => {
       await updateScene(scene.id, next, contentId);
@@ -77,18 +161,21 @@ function SceneCard({
   };
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-      <div className="flex items-center justify-between border-b border-border bg-secondary/50 px-3 py-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-muted">
-          Plan {String(scene.scene_number).padStart(2, "0")}
-        </span>
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+      <div className="flex items-center justify-between border-b border-border/60 bg-secondary/50 px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <GripVertical className="size-3.5 cursor-grab text-muted active:cursor-grabbing" />
+          <span className="text-xs font-bold uppercase tracking-wider text-muted">
+            Plan {String(index + 1).padStart(2, "0")}
+          </span>
+        </div>
         <button
           type="button"
           onClick={() =>
             startTransition(async () => { await deleteScene(scene.id, contentId); })
           }
           disabled={pending}
-          className="rounded-md p-1 text-muted hover:bg-destructive/10 hover:text-destructive"
+          className="rounded-full p-1 text-muted hover:bg-destructive/10 hover:text-destructive"
           aria-label="Supprimer la scène"
         >
           <Trash2 className="size-3.5" />
@@ -126,11 +213,11 @@ function SceneCard({
             Caméra / Plan
           </Label>
           <Input
-            className="h-8 text-sm"
+            className="h-9 text-sm"
             value={state.camera_angle}
             onChange={(e) => setState((s) => ({ ...s, camera_angle: e.target.value }))}
             onBlur={() => save(state)}
-            placeholder="Plan large, Gros plan, Travelling..."
+            placeholder="Plan large, Gros plan..."
           />
         </div>
 
@@ -139,7 +226,7 @@ function SceneCard({
             Texte affiché
           </Label>
           <Input
-            className="h-8 text-sm"
+            className="h-9 text-sm"
             value={state.on_screen_text}
             onChange={(e) => setState((s) => ({ ...s, on_screen_text: e.target.value }))}
             onBlur={() => save(state)}

@@ -1,0 +1,455 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "saved": "Enregistré ✓",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "delete": "Supprimer",
+    "edit": "Éditer",
+    "rename": "Renommer",
+    "open": "Ouvrir",
+    "duplicate": "Dupliquer",
+    "back": "Retour",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "create": "Créer",
+    "search": "Rechercher",
+    "required": "Ce champ est requis.",
+    "networkError": "Une erreur est survenue. Réessaie dans quelques instants.",
+    "yes": "Oui",
+    "no": "Non",
+    "copy": "Copier",
+    "copied": "Copié"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "calendar": "Calendrier",
+    "analytics": "Analytics",
+    "hooks": "Accroches",
+    "brands": "Mes marques",
+    "profile": "Mon profil",
+    "logout": "Se déconnecter",
+    "mohtawa": "Mohtawa"
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Bon retour. On reprend là où tu t'es arrêté.",
+      "email": "Adresse email",
+      "emailPlaceholder": "nom@email.com",
+      "password": "Mot de passe",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Se connecter",
+      "submitLoading": "Connexion...",
+      "forgotPassword": "Mot de passe oublié ?",
+      "createAccount": "Créer un compte",
+      "errorInvalid": "Email ou mot de passe incorrect.",
+      "errorMissing": "Email et mot de passe requis."
+    },
+    "register": {
+      "title": "Créer un compte",
+      "subtitle": "Ton espace de création est prêt en moins d'une minute.",
+      "fullName": "Nom complet",
+      "email": "Adresse email",
+      "password": "Mot de passe",
+      "submit": "Créer mon espace",
+      "submitLoading": "Création...",
+      "haveAccount": "Déjà inscrit ?",
+      "signin": "Se connecter",
+      "errorPasswordTooShort": "Mot de passe trop court (6 caractères minimum).",
+      "successConfirmEmail": "Compte créé. Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi."
+    },
+    "reset": {
+      "title": "Réinitialiser le mot de passe",
+      "subtitle": "Indique ton email, on t'envoie un lien.",
+      "email": "Adresse email",
+      "submit": "Envoyer le lien",
+      "submitLoading": "Envoi...",
+      "backToLogin": "Retour à la connexion",
+      "errorEmailRequired": "Email requis.",
+      "success": "Si un compte existe, un email a été envoyé."
+    }
+  },
+  "onboarding": {
+    "welcomeTitle": "Bienvenue sur Mohtawa",
+    "welcomeSubtitle": "Commence par créer ta première marque. Tu pourras en ajouter d'autres plus tard (ex : ton compte perso, un client, une boîte).",
+    "brandName": "Nom de la marque",
+    "brandNamePlaceholder": "Ex : Mon compte perso",
+    "create": "Créer ma première marque",
+    "creating": "Création...",
+    "connectedAs": "Connecté en tant que {email}"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "subtitle": "{brand} · vue rapide de ton activité.",
+    "kpi": {
+      "total": "Total vidéos",
+      "drafts": "Brouillons",
+      "published": "Publiées",
+      "thisMonth": "Ce mois-ci"
+    },
+    "recent": "Vidéos récentes",
+    "resultsCount": "{count, plural, =0 {Aucun résultat} one {# résultat} other {# résultats}}",
+    "emptyTitle": "Aucune vidéo pour le moment.",
+    "emptySubtitle": "Commence par créer ta première vidéo.",
+    "noResultsTitle": "Aucun résultat.",
+    "noResultsSubtitle": "Essaie de modifier ou d'effacer les filtres.",
+    "filters": {
+      "searchPlaceholder": "Rechercher une vidéo par titre...",
+      "allStatuses": "Tous les statuts",
+      "allTypes": "Tous les formats",
+      "allPlatforms": "Toutes les plateformes",
+      "allMonths": "Tous les mois",
+      "clear": "Effacer les filtres"
+    }
+  },
+  "calendar": {
+    "title": "Calendrier",
+    "subtitle": "Visualise ton mois en un coup d'œil.",
+    "today": "Aujourd'hui",
+    "prevMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "dragHint": "💡 Glisse une vidéo d'un jour à l'autre pour la replanifier.",
+    "addOnDay": "Ajouter une vidéo ce jour",
+    "moreItems": "+{count} autres",
+    "weekdays": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Jeu",
+      "fri": "Ven",
+      "sat": "Sam",
+      "sun": "Dim"
+    }
+  },
+  "newContent": {
+    "title": "Nouvelle vidéo",
+    "subtitle": "Chaque vidéo commence par une idée claire.",
+    "format": "Format",
+    "platform": "Plateforme",
+    "videoTitle": "Titre",
+    "titlePlaceholder": "Ex : 3 erreurs que font les créateurs débutants",
+    "date": "Date de publication prévue",
+    "submit": "Créer et continuer",
+    "submitLoading": "Création...",
+    "noPlatform": "—",
+    "buttonLabel": "Nouvelle vidéo"
+  },
+  "content": {
+    "untitled": "Sans titre",
+    "deleteTitle": "Supprimer cette vidéo ?",
+    "deleteDescription": "Cette action est définitive.",
+    "deleteConfirm": "Confirmer",
+    "deleting": "Suppression...",
+    "exportPdf": "Exporter PDF",
+    "duplicateSuffix": "(copie)",
+    "untitledCopy": "Copie sans titre",
+    "actionMenu": {
+      "open": "Ouvrir",
+      "duplicate": "Dupliquer",
+      "changeStatus": "Changer le statut",
+      "delete": "Supprimer",
+      "confirmDelete": "Supprimer cette vidéo ? Cette action est définitive."
+    }
+  },
+  "tabs": {
+    "plan": "Plan",
+    "script": "Script",
+    "stories": "Stories",
+    "storyboard": "Storyboard",
+    "checklist": "Checklist",
+    "performance": "Performances"
+  },
+  "plan": {
+    "sectionTitle": "Informations générales",
+    "videoTitle": "Titre de la vidéo",
+    "videoTitlePlaceholder": "Ex : 3 erreurs que font les créateurs débutants",
+    "format": "Format",
+    "platform": "Plateforme",
+    "pillar": "Pilier de contenu",
+    "pillarPlaceholder": "Ex : Marketing digital",
+    "objective": "Objectif",
+    "date": "Date prévue",
+    "status": "Statut",
+    "hook": "Accroche",
+    "hookPlaceholder": "La première phrase qui arrête le scroll.",
+    "pickHook": "Choisir une accroche",
+    "cta": "Appel à l'action",
+    "ctaPlaceholder": "Abonne-toi / Commente / Télécharge...",
+    "tags": "Tags (séparés par des virgules)",
+    "tagsPlaceholder": "marketing, débutant, conseils"
+  },
+  "script": {
+    "title": "Structure du script",
+    "subtitle": "Une idée = un point. Structure d'abord, tournage ensuite.",
+    "intro": "Introduction",
+    "introPlaceholder": "Présente le sujet en une ou deux phrases.",
+    "mainPoints": "Points principaux",
+    "point1": "Point 1",
+    "point2": "Point 2",
+    "point3": "Point 3",
+    "transition": "Transition / B-roll",
+    "transitionPlaceholder": "Indique les plans ou éléments visuels à ajouter.",
+    "recap": "Récapitulatif",
+    "outro": "Conclusion (Outro)",
+    "fullScript": "Script complet (optionnel)",
+    "fullScriptPlaceholder": "Colle ou écris ton script complet ici.",
+    "generateWithAi": "Générer avec l'IA"
+  },
+  "stories": {
+    "title": "Storyboard Planner",
+    "subtitle": "5 stories : de l'intro au call-to-action.",
+    "whatStory": "What story do I want to tell ?",
+    "whatStoryPlaceholder": "Objectif de la séquence : transmettre quoi, à qui ?",
+    "engagementGoals": "My engagement goals",
+    "engagementGoalsPlaceholder": "DM, sticker question, swipe up... que veux-tu que l'audience fasse ?",
+    "slotPlaceholder": "Texte / dialogue / notes",
+    "slotLabels": {
+      "title": "Title / Introduction",
+      "cta": "Call to Action",
+      "default": "Story {n}"
+    }
+  },
+  "storyboard": {
+    "title": "Storyboard",
+    "subtitle": "Dessine les plans avant de tourner. Un visuel par scène.",
+    "addScene": "Ajouter une scène",
+    "emptyTitle": "Aucune scène pour le moment.",
+    "emptySubtitle": "Clique sur « Ajouter une scène » pour commencer.",
+    "planNumber": "Plan {n}",
+    "fields": {
+      "action": "Action / Dialogue",
+      "actionPlaceholder": "Ce qui se passe / ce qui est dit",
+      "camera": "Caméra / Plan",
+      "cameraPlaceholder": "Plan large, Gros plan, Travelling...",
+      "onScreenText": "Texte affiché",
+      "onScreenTextPlaceholder": "Texte qui apparaît à l'écran"
+    },
+    "deleteScene": "Supprimer la scène"
+  },
+  "checklist": {
+    "title": "Préparation de la vidéo",
+    "subtitle": "Avance étape par étape. {done}/{total} terminées.",
+    "items": {
+      "scriptReady": "Script finalisé",
+      "scenesReady": "Scènes validées",
+      "filmed": "Vidéo filmée",
+      "edited": "Montage terminé",
+      "published": "Vidéo publiée"
+    },
+    "markPublished": "Marquer comme publiée"
+  },
+  "performance": {
+    "title": "Résultats",
+    "subtitle": "Ce que tu mesures, tu peux l'améliorer.",
+    "views": "Vues",
+    "likes": "Likes",
+    "comments": "Commentaires",
+    "shares": "Partages",
+    "saves": "Sauvegardes",
+    "retention": "Rétention (%)",
+    "notes": "Analyse personnelle",
+    "notesPlaceholder": "Qu'est-ce qui a fonctionné ? Que modifier la prochaine fois ?"
+  },
+  "imageUpload": {
+    "addImage": "Ajouter une image",
+    "uploading": "Envoi...",
+    "limits": "JPG, PNG, WebP · 5 Mo max",
+    "unsupported": "Format non supporté.",
+    "tooLarge": "Image trop lourde (5 Mo max).",
+    "removeImage": "Retirer l'image",
+    "preview": "Aperçu",
+    "planAlt": "Plan {n}",
+    "planImage": "Image du plan"
+  },
+  "hooks": {
+    "title": "Bibliothèque d'accroches",
+    "subtitle": "Inspire-toi des formats qui marchent. Une accroche bien choisie = un scroll arrêté.",
+    "searchPlaceholder": "Rechercher une accroche...",
+    "allCategories": "✨ Toutes ({count})",
+    "noResults": "Aucune accroche trouvée. Essaye d'autres mots-clés.",
+    "use": "Utiliser",
+    "pickerTitle": "Bibliothèque d'accroches",
+    "pickerSubtitle": "Clique sur « Utiliser » pour remplacer l'accroche de ta vidéo.",
+    "categories": {
+      "curiosity": "Curiosité",
+      "mistake": "Erreurs",
+      "transformation": "Transformation",
+      "list": "Listes & How-to",
+      "controversy": "Controverse",
+      "question": "Question",
+      "urgency": "Urgence"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "{brand} · ce que tu mesures, tu peux l'améliorer.",
+    "kpi": {
+      "totalViews": "Total vues",
+      "publishedVideos": "Vidéos publiées",
+      "videosWithStats": "Vidéos avec stats"
+    },
+    "noDataTitle": "Pas encore de données de performance",
+    "noDataSubtitle": "Pour voir tes analytics se remplir, va sur une vidéo publiée et renseigne les Performances (vues, likes, partages...).",
+    "pillarRanking": {
+      "title": "Quels sujets performent le mieux ?",
+      "subtitle": "Classement par pilier de contenu — pour savoir de quoi reparler.",
+      "trendingBadge": "↗ {pillar} en progression (+{delta} vues ce mois)",
+      "emptyLabel": "Renseigne le pilier de contenu sur tes vidéos pour voir le classement."
+    },
+    "platformRanking": {
+      "title": "Par plateforme",
+      "subtitle": "Où ton contenu marche le mieux.",
+      "emptyLabel": "Aucune plateforme renseignée."
+    },
+    "typeRanking": {
+      "title": "Par format",
+      "subtitle": "Reel vs Story — le format qui paie.",
+      "emptyLabel": "—"
+    },
+    "topVideos": {
+      "title": "Top 5 vidéos",
+      "subtitle": "Les vidéos qui ont le plus marché.",
+      "emptyLabel": "Pas encore de vidéo avec des vues renseignées.",
+      "viewsLabel": "{count} vues"
+    },
+    "charts": {
+      "viewsByMonth": "Vues par mois",
+      "viewsByMonthSub": "Cumul sur les 6 derniers mois",
+      "publishedByMonth": "Vidéos publiées par mois",
+      "publishedByMonthSub": "Évolution de ta cadence",
+      "noData": "Pas encore de données."
+    },
+    "rankItemSecondary": "{count, plural, one {# vidéo} other {# vidéos}} · moy. {avg} vues"
+  },
+  "profile": {
+    "title": "Mon profil",
+    "subtitle": "Modifie ton nom et ta langue préférée.",
+    "infoTitle": "Informations",
+    "infoSubtitle": "Ton compte sur Mohtawa.",
+    "fullName": "Nom complet",
+    "email": "Adresse email",
+    "emailHint": "L'email n'est pas modifiable.",
+    "language": "Langue préférée",
+    "languageHint": "Choisis la langue de l'interface.",
+    "save": "Enregistrer les modifications",
+    "saving": "Enregistrement...",
+    "saved": "Modifications enregistrées.",
+    "sessionTitle": "Session",
+    "sessionSubtitle": "Connecté avec {email}.",
+    "signout": "Se déconnecter"
+  },
+  "brands": {
+    "title": "Mes marques",
+    "subtitle": "Gère les espaces de travail rattachés à ton compte.",
+    "newBrand": "Nouvelle marque",
+    "countTitle": "{count, plural, =0 {Aucune marque} one {# marque} other {# marques}}",
+    "countSubtitle": "Tu peux renommer ou supprimer tes propres marques. La suppression entraîne la perte définitive de toutes les vidéos associées.",
+    "videosCount": "{count, plural, =0 {Aucune vidéo} one {# vidéo} other {# vidéos}}",
+    "emptyList": "Aucune marque pour le moment.",
+    "deleteConfirmTitle": "Supprimer « {name} » ?",
+    "deleteConfirmText": "Toutes les vidéos, scripts, storyboards et statistiques liés à cette marque seront définitivement perdus. Cette action est irréversible.",
+    "deleteTypePrompt": "Pour confirmer, tape {name} :",
+    "deleteConfirm": "Confirmer la suppression",
+    "deleting": "Suppression...",
+    "createBrandTitle": "Nouvelle marque",
+    "brandNamePlaceholder": "Ex : Nutriclinic",
+    "brandNameLabel": "Nom de la marque",
+    "switchTooltip": "Marque",
+    "switchLabel": "Marque : {name}",
+    "noBrandLabel": "—",
+    "myBrands": "Mes marques",
+    "noBrandFound": "Aucune marque"
+  },
+  "ai": {
+    "buttonLabel": "Générer avec l'IA",
+    "reelTitle": "Générer le script de ton Reel avec l'IA",
+    "storyTitle": "Générer ta séquence Story avec l'IA",
+    "subtitle": "Donne-moi un sujet, je m'occupe du reste. Tu pourras tout éditer après.",
+    "topic": "Sujet de la vidéo",
+    "topicPlaceholder": "Ex : Les 3 erreurs que font les créateurs débutants sur Instagram",
+    "audience": "Audience cible (optionnel)",
+    "audiencePlaceholder": "Ex : entrepreneurs solo, marketeurs B2B, étudiants...",
+    "generate": "Générer",
+    "generating": "Génération...",
+    "regenerate": "Régénérer",
+    "apply": "Appliquer au script",
+    "applying": "Application...",
+    "errorTopic": "Indique un sujet pour générer.",
+    "previewHint": "💡 Tu pourras éditer chaque champ après avoir appliqué.",
+    "previewStoryHint": "💡 Tu pourras éditer chaque story et ajouter une image après avoir appliqué.",
+    "preview": {
+      "hook": "Accroche",
+      "intro": "Introduction",
+      "point1": "Point 1",
+      "point2": "Point 2",
+      "point3": "Point 3",
+      "transition": "Transition",
+      "recap": "Récap",
+      "cta": "CTA",
+      "outro": "Outro",
+      "objective": "Objectif",
+      "ctaSoft": "CTA soft",
+      "stories": "Stories"
+    },
+    "errors": {
+      "noApiKey": "L'IA n'est pas configurée. Ajoute OPENAI_API_KEY dans Vercel et redéploie.",
+      "auth": "Clé OpenAI invalide. Vérifie OPENAI_API_KEY.",
+      "rateLimit": "Trop de requêtes ou quota atteint. Réessaie dans une minute.",
+      "network": "Impossible de joindre l'IA. Réessaie.",
+      "parse": "L'IA a renvoyé un format invalide. Réessaie.",
+      "empty": "Réponse vide de l'IA.",
+      "api": "Erreur OpenAI ({status}). Réessaie.",
+      "unexpected": "Erreur inattendue. Réessaie.",
+      "expiredSession": "Session expirée. Reconnecte-toi.",
+      "nameRequired": "Le nom est requis.",
+      "nameTooLong": "Nom trop long (80 caractères max)."
+    }
+  },
+  "print": {
+    "back": "Retour à l'app",
+    "print": "Imprimer / Enregistrer en PDF",
+    "title": "Export PDF — Mohtawa",
+    "sections": {
+      "plan": "Plan",
+      "script": "Script",
+      "storyboard": "Storyboard",
+      "stories": "Storyboard Planner",
+      "performance": "Performances"
+    },
+    "fullScript": "Script complet"
+  },
+  "contentTypes": {
+    "reel": "Reel",
+    "story": "Story"
+  },
+  "platforms": {
+    "instagram": "Instagram",
+    "tiktok": "TikTok",
+    "youtube": "YouTube",
+    "facebook": "Facebook",
+    "linkedin": "LinkedIn"
+  },
+  "statuses": {
+    "idea": "Idée",
+    "script": "Script",
+    "filming": "Tournage",
+    "editing": "Montage",
+    "scheduled": "Programmée",
+    "published": "Publiée"
+  },
+  "objectives": {
+    "education": "Éducation",
+    "personal_brand": "Personal Brand",
+    "sales": "Vente",
+    "awareness": "Notoriété",
+    "engagement": "Engagement"
+  },
+  "sceneTags": {
+    "hook": "Accroche",
+    "content": "Contenu",
+    "transition": "Transition",
+    "cta": "CTA"
+  }
+}

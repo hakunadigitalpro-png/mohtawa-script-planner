@@ -323,3 +323,57 @@ export async function deleteScene(sceneId: string, contentId: string) {
   revalidatePath(`/content/${contentId}`);
   return { ok: true };
 }
+
+/* ============================ Sharing ============================ */
+
+export async function enableSharing(contentId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("enable_content_sharing", {
+    p_content_id: contentId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true as const, token: data as string };
+}
+
+export async function disableSharing(contentId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("disable_content_sharing", {
+    p_content_id: contentId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true as const };
+}
+
+/* ============================ Reordering ============================ */
+
+export async function reorderScenes(
+  contentId: string,
+  orderedIds: string[],
+) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reorder_storyboard_scenes", {
+    p_content_id: contentId,
+    p_ordered_ids: orderedIds,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true as const };
+}
+
+export async function swapSlides(
+  contentId: string,
+  slotA: number,
+  slotB: number,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("swap_story_slides", {
+    p_content_id: contentId,
+    p_slot_a: slotA,
+    p_slot_b: slotB,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true as const };
+}

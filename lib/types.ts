@@ -25,6 +25,7 @@ export type Content = {
   hook: string | null;
   cta: string | null;
   tags: string[] | null;
+  share_token: string | null;
   created_at: string;
   updated_at: string;
 };

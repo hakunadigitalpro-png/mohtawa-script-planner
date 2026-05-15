@@ -11,6 +11,7 @@ import {
 } from "@/lib/constants";
 import { DetailTabs } from "@/components/content-detail/detail-tabs";
 import { DeleteContentButton } from "@/components/content-detail/delete-button";
+import { ShareButton } from "@/components/content-detail/share-button";
 import type {
   Content,
   ReelDetails,
@@ -71,11 +72,12 @@ export default async function ContentDetailPage({
           Retour
         </Link>
         <div className="flex items-center gap-2">
+          <ShareButton contentId={c.id} initialToken={c.share_token} />
           <Link
             href={`/print/${c.id}`}
             target="_blank"
             rel="noopener"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium hover:bg-accent"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold hover:bg-secondary"
           >
             <FileDown className="size-3.5" />
             Exporter PDF

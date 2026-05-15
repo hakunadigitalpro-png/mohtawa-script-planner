@@ -1,0 +1,455 @@
+{
+  "common": {
+    "save": "حفظ",
+    "saving": "جاري الحفظ...",
+    "saved": "تم الحفظ ✓",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "rename": "إعادة تسمية",
+    "open": "فتح",
+    "duplicate": "تكرار",
+    "back": "رجوع",
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "create": "إنشاء",
+    "search": "بحث",
+    "required": "هذا الحقل مطلوب.",
+    "networkError": "حدث خطأ. حاول مرة أخرى بعد لحظات.",
+    "yes": "نعم",
+    "no": "لا",
+    "copy": "نسخ",
+    "copied": "تم النسخ"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "calendar": "التقويم",
+    "analytics": "التحليلات",
+    "hooks": "العناوين الجذابة",
+    "brands": "علاماتي التجارية",
+    "profile": "ملفي الشخصي",
+    "logout": "تسجيل الخروج",
+    "mohtawa": "محتوى"
+  },
+  "auth": {
+    "login": {
+      "title": "تسجيل الدخول",
+      "subtitle": "أهلاً بعودتك. لنكمل من حيث توقفت.",
+      "email": "البريد الإلكتروني",
+      "emailPlaceholder": "name@email.com",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "••••••••",
+      "submit": "تسجيل الدخول",
+      "submitLoading": "جاري تسجيل الدخول...",
+      "forgotPassword": "هل نسيت كلمة المرور؟",
+      "createAccount": "إنشاء حساب",
+      "errorInvalid": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+      "errorMissing": "البريد الإلكتروني وكلمة المرور مطلوبان."
+    },
+    "register": {
+      "title": "إنشاء حساب",
+      "subtitle": "مساحة الإبداع جاهزة في أقل من دقيقة.",
+      "fullName": "الاسم الكامل",
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "submit": "إنشاء مساحتي",
+      "submitLoading": "جاري الإنشاء...",
+      "haveAccount": "لديك حساب بالفعل؟",
+      "signin": "تسجيل الدخول",
+      "errorPasswordTooShort": "كلمة المرور قصيرة جداً (6 أحرف على الأقل).",
+      "successConfirmEmail": "تم إنشاء الحساب. تحقق من بريدك الإلكتروني للتأكيد، ثم سجّل الدخول."
+    },
+    "reset": {
+      "title": "إعادة تعيين كلمة المرور",
+      "subtitle": "أدخل بريدك الإلكتروني وسنرسل لك رابطاً.",
+      "email": "البريد الإلكتروني",
+      "submit": "إرسال الرابط",
+      "submitLoading": "جاري الإرسال...",
+      "backToLogin": "العودة لتسجيل الدخول",
+      "errorEmailRequired": "البريد الإلكتروني مطلوب.",
+      "success": "إذا كان لديك حساب، سيتم إرسال بريد إلكتروني."
+    }
+  },
+  "onboarding": {
+    "welcomeTitle": "مرحباً بك في محتوى",
+    "welcomeSubtitle": "ابدأ بإنشاء علامتك التجارية الأولى. يمكنك إضافة المزيد لاحقاً (مثل: حسابك الشخصي، عميل، أو شركة).",
+    "brandName": "اسم العلامة التجارية",
+    "brandNamePlaceholder": "مثال: حسابي الشخصي",
+    "create": "إنشاء أول علامة تجارية",
+    "creating": "جاري الإنشاء...",
+    "connectedAs": "متصل باسم {email}"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "subtitle": "{brand} · نظرة سريعة على نشاطك.",
+    "kpi": {
+      "total": "إجمالي الفيديوهات",
+      "drafts": "المسودات",
+      "published": "المنشورة",
+      "thisMonth": "هذا الشهر"
+    },
+    "recent": "الفيديوهات الأخيرة",
+    "resultsCount": "{count, plural, =0 {لا توجد نتائج} one {# نتيجة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}",
+    "emptyTitle": "لا توجد فيديوهات بعد.",
+    "emptySubtitle": "ابدأ بإنشاء أول فيديو لك.",
+    "noResultsTitle": "لا توجد نتائج.",
+    "noResultsSubtitle": "جرّب تعديل الفلاتر أو مسحها.",
+    "filters": {
+      "searchPlaceholder": "ابحث عن فيديو بالعنوان...",
+      "allStatuses": "كل الحالات",
+      "allTypes": "كل الصيغ",
+      "allPlatforms": "كل المنصات",
+      "allMonths": "كل الأشهر",
+      "clear": "مسح الفلاتر"
+    }
+  },
+  "calendar": {
+    "title": "التقويم",
+    "subtitle": "تصور شهرك بنظرة واحدة.",
+    "today": "اليوم",
+    "prevMonth": "الشهر السابق",
+    "nextMonth": "الشهر التالي",
+    "dragHint": "💡 اسحب فيديو من يوم لآخر لإعادة جدولته.",
+    "addOnDay": "إضافة فيديو في هذا اليوم",
+    "moreItems": "+{count} أخرى",
+    "weekdays": {
+      "mon": "إث",
+      "tue": "ثل",
+      "wed": "أر",
+      "thu": "خم",
+      "fri": "جم",
+      "sat": "سب",
+      "sun": "أح"
+    }
+  },
+  "newContent": {
+    "title": "فيديو جديد",
+    "subtitle": "كل فيديو يبدأ بفكرة واضحة.",
+    "format": "الصيغة",
+    "platform": "المنصة",
+    "videoTitle": "العنوان",
+    "titlePlaceholder": "مثال: 3 أخطاء يرتكبها المبتدئون في صناعة المحتوى",
+    "date": "تاريخ النشر المتوقع",
+    "submit": "إنشاء والمتابعة",
+    "submitLoading": "جاري الإنشاء...",
+    "noPlatform": "—",
+    "buttonLabel": "فيديو جديد"
+  },
+  "content": {
+    "untitled": "بدون عنوان",
+    "deleteTitle": "هل تريد حذف هذا الفيديو؟",
+    "deleteDescription": "هذا الإجراء نهائي ولا يمكن التراجع عنه.",
+    "deleteConfirm": "تأكيد",
+    "deleting": "جاري الحذف...",
+    "exportPdf": "تصدير PDF",
+    "duplicateSuffix": "(نسخة)",
+    "untitledCopy": "نسخة بدون عنوان",
+    "actionMenu": {
+      "open": "فتح",
+      "duplicate": "تكرار",
+      "changeStatus": "تغيير الحالة",
+      "delete": "حذف",
+      "confirmDelete": "هل تريد حذف هذا الفيديو؟ هذا الإجراء نهائي."
+    }
+  },
+  "tabs": {
+    "plan": "الخطة",
+    "script": "النص",
+    "stories": "الستوريات",
+    "storyboard": "ستوري بورد",
+    "checklist": "قائمة المهام",
+    "performance": "الأداء"
+  },
+  "plan": {
+    "sectionTitle": "المعلومات العامة",
+    "videoTitle": "عنوان الفيديو",
+    "videoTitlePlaceholder": "مثال: 3 أخطاء يرتكبها المبتدئون في صناعة المحتوى",
+    "format": "الصيغة",
+    "platform": "المنصة",
+    "pillar": "محور المحتوى",
+    "pillarPlaceholder": "مثال: التسويق الرقمي",
+    "objective": "الهدف",
+    "date": "التاريخ المتوقع",
+    "status": "الحالة",
+    "hook": "العنوان الجذاب",
+    "hookPlaceholder": "الجملة الأولى التي توقف التمرير.",
+    "pickHook": "اختر عنواناً جذاباً",
+    "cta": "الدعوة للعمل",
+    "ctaPlaceholder": "اشترك / علّق / حمّل...",
+    "tags": "الوسوم (مفصولة بفواصل)",
+    "tagsPlaceholder": "تسويق, مبتدئ, نصائح"
+  },
+  "script": {
+    "title": "هيكل النص",
+    "subtitle": "فكرة واحدة = نقطة واحدة. الهيكل أولاً، ثم التصوير.",
+    "intro": "المقدمة",
+    "introPlaceholder": "قدّم الموضوع في جملة أو جملتين.",
+    "mainPoints": "النقاط الرئيسية",
+    "point1": "النقطة 1",
+    "point2": "النقطة 2",
+    "point3": "النقطة 3",
+    "transition": "الانتقال / B-roll",
+    "transitionPlaceholder": "حدد اللقطات أو العناصر المرئية الإضافية.",
+    "recap": "الخلاصة",
+    "outro": "الخاتمة",
+    "fullScript": "النص الكامل (اختياري)",
+    "fullScriptPlaceholder": "الصق أو اكتب النص الكامل هنا.",
+    "generateWithAi": "توليد بالذكاء الاصطناعي"
+  },
+  "stories": {
+    "title": "مخطط الستوري",
+    "subtitle": "5 ستوريات: من المقدمة إلى الدعوة للعمل.",
+    "whatStory": "ما هي القصة التي أريد روايتها؟",
+    "whatStoryPlaceholder": "هدف السلسلة: ماذا تريد أن توصل، ولمن؟",
+    "engagementGoals": "أهداف التفاعل",
+    "engagementGoalsPlaceholder": "DM، ملصق سؤال، سحب لأعلى... ماذا تريد من الجمهور أن يفعل؟",
+    "slotPlaceholder": "نص / حوار / ملاحظات",
+    "slotLabels": {
+      "title": "العنوان / المقدمة",
+      "cta": "الدعوة للعمل",
+      "default": "ستوري {n}"
+    }
+  },
+  "storyboard": {
+    "title": "ستوري بورد",
+    "subtitle": "ارسم اللقطات قبل التصوير. صورة لكل مشهد.",
+    "addScene": "إضافة مشهد",
+    "emptyTitle": "لا توجد مشاهد بعد.",
+    "emptySubtitle": "اضغط على «إضافة مشهد» للبدء.",
+    "planNumber": "لقطة {n}",
+    "fields": {
+      "action": "الفعل / الحوار",
+      "actionPlaceholder": "ما يحدث / ما يُقال",
+      "camera": "الكاميرا / اللقطة",
+      "cameraPlaceholder": "لقطة عامة، لقطة قريبة، تتبع...",
+      "onScreenText": "النص الظاهر",
+      "onScreenTextPlaceholder": "النص الذي يظهر على الشاشة"
+    },
+    "deleteScene": "حذف المشهد"
+  },
+  "checklist": {
+    "title": "تحضير الفيديو",
+    "subtitle": "تقدم خطوة بخطوة. {done}/{total} مكتملة.",
+    "items": {
+      "scriptReady": "النص جاهز",
+      "scenesReady": "المشاهد مُعتمدة",
+      "filmed": "تم تصوير الفيديو",
+      "edited": "تم المونتاج",
+      "published": "تم نشر الفيديو"
+    },
+    "markPublished": "وضع علامة تم النشر"
+  },
+  "performance": {
+    "title": "النتائج",
+    "subtitle": "ما تقيسه، يمكنك تحسينه.",
+    "views": "المشاهدات",
+    "likes": "الإعجابات",
+    "comments": "التعليقات",
+    "shares": "المشاركات",
+    "saves": "الحفظات",
+    "retention": "معدل الاحتفاظ (%)",
+    "notes": "التحليل الشخصي",
+    "notesPlaceholder": "ما الذي نجح؟ ما الذي تغيره في المرة القادمة؟"
+  },
+  "imageUpload": {
+    "addImage": "إضافة صورة",
+    "uploading": "جاري الرفع...",
+    "limits": "JPG, PNG, WebP · 5 ميجا كحد أقصى",
+    "unsupported": "صيغة غير مدعومة.",
+    "tooLarge": "الصورة كبيرة جداً (5 ميجا كحد أقصى).",
+    "removeImage": "إزالة الصورة",
+    "preview": "معاينة",
+    "planAlt": "لقطة {n}",
+    "planImage": "صورة اللقطة"
+  },
+  "hooks": {
+    "title": "مكتبة العناوين الجذابة",
+    "subtitle": "استلهم من الصيغ التي تنجح. عنوان جذاب جيد = توقف التمرير.",
+    "searchPlaceholder": "ابحث عن عنوان جذاب...",
+    "allCategories": "✨ الكل ({count})",
+    "noResults": "لم يتم العثور على عناوين. جرّب كلمات أخرى.",
+    "use": "استخدم",
+    "pickerTitle": "مكتبة العناوين الجذابة",
+    "pickerSubtitle": "اضغط على «استخدم» لاستبدال عنوان فيديوك.",
+    "categories": {
+      "curiosity": "فضول",
+      "mistake": "أخطاء",
+      "transformation": "تحول",
+      "list": "قوائم وكيف",
+      "controversy": "جدل",
+      "question": "سؤال",
+      "urgency": "إلحاح"
+    }
+  },
+  "analytics": {
+    "title": "التحليلات",
+    "subtitle": "{brand} · ما تقيسه، يمكنك تحسينه.",
+    "kpi": {
+      "totalViews": "إجمالي المشاهدات",
+      "publishedVideos": "الفيديوهات المنشورة",
+      "videosWithStats": "فيديوهات بإحصائيات"
+    },
+    "noDataTitle": "لا توجد بيانات أداء بعد",
+    "noDataSubtitle": "لرؤية تحليلاتك تمتلئ، اذهب إلى فيديو منشور وأدخل الأداء (المشاهدات، الإعجابات، المشاركات...).",
+    "pillarRanking": {
+      "title": "أي المواضيع تحقق أفضل أداء؟",
+      "subtitle": "ترتيب حسب محور المحتوى — لتعرف عماذا تتحدث مرة أخرى.",
+      "trendingBadge": "↗ {pillar} في تصاعد (+{delta} مشاهدة هذا الشهر)",
+      "emptyLabel": "أدخل محور المحتوى على فيديوهاتك لرؤية الترتيب."
+    },
+    "platformRanking": {
+      "title": "حسب المنصة",
+      "subtitle": "أين ينجح محتواك أكثر.",
+      "emptyLabel": "لم يتم تحديد أي منصة."
+    },
+    "typeRanking": {
+      "title": "حسب الصيغة",
+      "subtitle": "Reel مقابل Story — الصيغة التي تستحق.",
+      "emptyLabel": "—"
+    },
+    "topVideos": {
+      "title": "أفضل 5 فيديوهات",
+      "subtitle": "الفيديوهات الأكثر نجاحاً.",
+      "emptyLabel": "لا يوجد فيديو بمشاهدات مسجلة بعد.",
+      "viewsLabel": "{count} مشاهدة"
+    },
+    "charts": {
+      "viewsByMonth": "المشاهدات حسب الشهر",
+      "viewsByMonthSub": "المجموع للأشهر الستة الماضية",
+      "publishedByMonth": "الفيديوهات المنشورة حسب الشهر",
+      "publishedByMonthSub": "تطور وتيرتك",
+      "noData": "لا توجد بيانات بعد."
+    },
+    "rankItemSecondary": "{count, plural, one {# فيديو} two {فيديوهان} few {# فيديوهات} many {# فيديو} other {# فيديو}} · معدل {avg} مشاهدة"
+  },
+  "profile": {
+    "title": "ملفي الشخصي",
+    "subtitle": "عدّل اسمك ولغتك المفضلة.",
+    "infoTitle": "المعلومات",
+    "infoSubtitle": "حسابك في محتوى.",
+    "fullName": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "emailHint": "البريد الإلكتروني غير قابل للتعديل.",
+    "language": "اللغة المفضلة",
+    "languageHint": "اختر لغة الواجهة.",
+    "save": "حفظ التعديلات",
+    "saving": "جاري الحفظ...",
+    "saved": "تم حفظ التعديلات.",
+    "sessionTitle": "الجلسة",
+    "sessionSubtitle": "متصل بـ {email}.",
+    "signout": "تسجيل الخروج"
+  },
+  "brands": {
+    "title": "علاماتي التجارية",
+    "subtitle": "أدر مساحات العمل المرتبطة بحسابك.",
+    "newBrand": "علامة تجارية جديدة",
+    "countTitle": "{count, plural, =0 {لا توجد علامات} one {# علامة تجارية} two {علامتان تجاريتان} few {# علامات تجارية} many {# علامة تجارية} other {# علامة تجارية}}",
+    "countSubtitle": "يمكنك إعادة تسمية أو حذف علاماتك التجارية الخاصة. الحذف يؤدي إلى فقدان جميع الفيديوهات المرتبطة بشكل نهائي.",
+    "videosCount": "{count, plural, =0 {لا توجد فيديوهات} one {# فيديو} two {فيديوهان} few {# فيديوهات} many {# فيديو} other {# فيديو}}",
+    "emptyList": "لا توجد علامات تجارية بعد.",
+    "deleteConfirmTitle": "هل تريد حذف «{name}»؟",
+    "deleteConfirmText": "جميع الفيديوهات والنصوص والستوري بوردات والإحصائيات المرتبطة بهذه العلامة التجارية ستضيع نهائياً. هذا الإجراء لا رجعة فيه.",
+    "deleteTypePrompt": "للتأكيد، اكتب {name}:",
+    "deleteConfirm": "تأكيد الحذف",
+    "deleting": "جاري الحذف...",
+    "createBrandTitle": "علامة تجارية جديدة",
+    "brandNamePlaceholder": "مثال: Nutriclinic",
+    "brandNameLabel": "اسم العلامة التجارية",
+    "switchTooltip": "العلامة التجارية",
+    "switchLabel": "العلامة التجارية: {name}",
+    "noBrandLabel": "—",
+    "myBrands": "علاماتي التجارية",
+    "noBrandFound": "لا توجد علامة تجارية"
+  },
+  "ai": {
+    "buttonLabel": "توليد بالذكاء الاصطناعي",
+    "reelTitle": "ولّد نص Reel الخاص بك بالذكاء الاصطناعي",
+    "storyTitle": "ولّد سلسلة ستوري بالذكاء الاصطناعي",
+    "subtitle": "أعطني موضوعاً وأنا أتولى الباقي. يمكنك تعديل كل شيء بعد ذلك.",
+    "topic": "موضوع الفيديو",
+    "topicPlaceholder": "مثال: 3 أخطاء يرتكبها المبتدئون على إنستجرام",
+    "audience": "الجمهور المستهدف (اختياري)",
+    "audiencePlaceholder": "مثال: رواد أعمال منفردون، مسوقون B2B، طلاب...",
+    "generate": "توليد",
+    "generating": "جاري التوليد...",
+    "regenerate": "إعادة التوليد",
+    "apply": "تطبيق على النص",
+    "applying": "جاري التطبيق...",
+    "errorTopic": "حدد موضوعاً للتوليد.",
+    "previewHint": "💡 يمكنك تعديل كل حقل بعد التطبيق.",
+    "previewStoryHint": "💡 يمكنك تعديل كل ستوري وإضافة صورة بعد التطبيق.",
+    "preview": {
+      "hook": "العنوان الجذاب",
+      "intro": "المقدمة",
+      "point1": "النقطة 1",
+      "point2": "النقطة 2",
+      "point3": "النقطة 3",
+      "transition": "الانتقال",
+      "recap": "الخلاصة",
+      "cta": "الدعوة للعمل",
+      "outro": "الخاتمة",
+      "objective": "الهدف",
+      "ctaSoft": "دعوة لطيفة",
+      "stories": "الستوريات"
+    },
+    "errors": {
+      "noApiKey": "الذكاء الاصطناعي غير مُعد. أضف OPENAI_API_KEY في Vercel ثم أعد النشر.",
+      "auth": "مفتاح OpenAI غير صالح. تحقق من OPENAI_API_KEY.",
+      "rateLimit": "طلبات كثيرة أو تجاوزت الحد. حاول مرة أخرى بعد دقيقة.",
+      "network": "تعذر الوصول إلى الذكاء الاصطناعي. حاول مرة أخرى.",
+      "parse": "الذكاء الاصطناعي أرجع تنسيقاً غير صالح. حاول مرة أخرى.",
+      "empty": "إجابة فارغة من الذكاء الاصطناعي.",
+      "api": "خطأ OpenAI ({status}). حاول مرة أخرى.",
+      "unexpected": "خطأ غير متوقع. حاول مرة أخرى.",
+      "expiredSession": "انتهت الجلسة. سجّل الدخول مرة أخرى.",
+      "nameRequired": "الاسم مطلوب.",
+      "nameTooLong": "الاسم طويل جداً (80 حرفاً كحد أقصى)."
+    }
+  },
+  "print": {
+    "back": "العودة إلى التطبيق",
+    "print": "طباعة / حفظ كـ PDF",
+    "title": "تصدير PDF — محتوى",
+    "sections": {
+      "plan": "الخطة",
+      "script": "النص",
+      "storyboard": "ستوري بورد",
+      "stories": "مخطط الستوري",
+      "performance": "الأداء"
+    },
+    "fullScript": "النص الكامل"
+  },
+  "contentTypes": {
+    "reel": "Reel",
+    "story": "Story"
+  },
+  "platforms": {
+    "instagram": "إنستجرام",
+    "tiktok": "تيك توك",
+    "youtube": "يوتيوب",
+    "facebook": "فيسبوك",
+    "linkedin": "لينكدإن"
+  },
+  "statuses": {
+    "idea": "فكرة",
+    "script": "نص",
+    "filming": "تصوير",
+    "editing": "مونتاج",
+    "scheduled": "مجدول",
+    "published": "منشور"
+  },
+  "objectives": {
+    "education": "تعليم",
+    "personal_brand": "علامة شخصية",
+    "sales": "مبيعات",
+    "awareness": "تعريف بالعلامة",
+    "engagement": "تفاعل"
+  },
+  "sceneTags": {
+    "hook": "عنوان جذاب",
+    "content": "محتوى",
+    "transition": "انتقال",
+    "cta": "دعوة للعمل"
+  }
+}

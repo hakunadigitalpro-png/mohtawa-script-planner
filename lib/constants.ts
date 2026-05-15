@@ -15,7 +15,6 @@ export const PLATFORMS = [
 
 export type Platform = (typeof PLATFORMS)[number]["value"];
 
-// Platforms autorisées par type de contenu.
 const PLATFORMS_BY_TYPE: Record<string, Platform[]> = {
   reel: ["instagram", "tiktok", "youtube", "facebook", "linkedin"],
   story: ["instagram", "tiktok"],
@@ -31,16 +30,8 @@ export const STATUSES = [
   { value: "script", label: "Script", color: "var(--color-status-script)" },
   { value: "filming", label: "Tournage", color: "var(--color-status-filming)" },
   { value: "editing", label: "Montage", color: "var(--color-status-editing)" },
-  {
-    value: "scheduled",
-    label: "Programmée",
-    color: "var(--color-status-scheduled)",
-  },
-  {
-    value: "published",
-    label: "Publiée",
-    color: "var(--color-status-published)",
-  },
+  { value: "scheduled", label: "Programmée", color: "var(--color-status-scheduled)" },
+  { value: "published", label: "Publiée", color: "var(--color-status-published)" },
 ] as const;
 
 export type Status = (typeof STATUSES)[number]["value"];
@@ -60,7 +51,6 @@ export const SCENE_TAGS = [
   { value: "cta", label: "CTA" },
 ] as const;
 
-// Labels par slot pour la séquence Story (5 cartes).
 export const STORY_SLOT_LABELS: Record<number, string> = {
   1: "Title / Introduction",
   2: "Story 2",
