@@ -44,59 +44,63 @@ export function DashboardFilters() {
   return (
     <div className="space-y-3">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+        <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
         <Input
           placeholder="Rechercher une vidéo par titre..."
-          className="pl-9"
+          className="pl-10"
           defaultValue={q}
           onChange={(e) => setParam("q", e.target.value)}
         />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Select
-          value={status}
-          onChange={(e) => setParam("status", e.target.value)}
-          className="h-9 w-auto min-w-40"
-        >
-          <option value="">Tous les statuts</option>
-          {STATUSES.map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </Select>
+        <div className="w-40">
+          <Select
+            value={status}
+            onValueChange={(v) => setParam("status", v)}
+            placeholder="Tous les statuts"
+            options={[
+              { value: "", label: "Tous les statuts" },
+              ...STATUSES.map((s) => ({ value: s.value, label: s.label })),
+            ]}
+          />
+        </div>
 
-        <Select
-          value={type}
-          onChange={(e) => setParam("type", e.target.value)}
-          className="h-9 w-auto min-w-36"
-        >
-          <option value="">Tous les formats</option>
-          {CONTENT_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-          ))}
-        </Select>
+        <div className="w-36">
+          <Select
+            value={type}
+            onValueChange={(v) => setParam("type", v)}
+            placeholder="Tous les formats"
+            options={[
+              { value: "", label: "Tous les formats" },
+              ...CONTENT_TYPES.map((t) => ({ value: t.value, label: t.label })),
+            ]}
+          />
+        </div>
 
-        <Select
-          value={platform}
-          onChange={(e) => setParam("platform", e.target.value)}
-          className="h-9 w-auto min-w-40"
-        >
-          <option value="">Toutes les plateformes</option>
-          {PLATFORMS.map((p) => (
-            <option key={p.value} value={p.value}>{p.label}</option>
-          ))}
-        </Select>
+        <div className="w-44">
+          <Select
+            value={platform}
+            onValueChange={(v) => setParam("platform", v)}
+            placeholder="Toutes les plateformes"
+            options={[
+              { value: "", label: "Toutes les plateformes" },
+              ...PLATFORMS.map((p) => ({ value: p.value, label: p.label })),
+            ]}
+          />
+        </div>
 
-        <Select
-          value={month}
-          onChange={(e) => setParam("month", e.target.value)}
-          className="h-9 w-auto min-w-40"
-        >
-          <option value="">Tous les mois</option>
-          {buildMonthOptions().map((m) => (
-            <option key={m.value} value={m.value}>{m.label}</option>
-          ))}
-        </Select>
+        <div className="w-44">
+          <Select
+            value={month}
+            onValueChange={(v) => setParam("month", v)}
+            placeholder="Tous les mois"
+            options={[
+              { value: "", label: "Tous les mois" },
+              ...buildMonthOptions(),
+            ]}
+          />
+        </div>
 
         {hasFilters && (
           <Button

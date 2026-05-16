@@ -67,25 +67,19 @@ export function PlanTab({ content }: { content: Content }) {
             id="type"
             value={state.type}
             disabled
-            onChange={(e) => setState((s) => ({ ...s, type: e.target.value }))}
-          >
-            {CONTENT_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
-          </Select>
+            onValueChange={(v) => setState((s) => ({ ...s, type: v }))}
+            options={CONTENT_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="platform">Plateforme</Label>
           <Select
             id="platform"
             value={state.platform}
-            onChange={(e) => setState((s) => ({ ...s, platform: e.target.value }))}
-          >
-            <option value="">—</option>
-            {platformsForType(state.type).map((p) => (
-              <option key={p.value} value={p.value}>{p.label}</option>
-            ))}
-          </Select>
+            onValueChange={(v) => setState((s) => ({ ...s, platform: v }))}
+            placeholder="—"
+            options={platformsForType(state.type).map((p) => ({ value: p.value, label: p.label }))}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="pillar">Pilier de contenu</Label>
@@ -101,13 +95,10 @@ export function PlanTab({ content }: { content: Content }) {
           <Select
             id="objective"
             value={state.objective}
-            onChange={(e) => setState((s) => ({ ...s, objective: e.target.value }))}
-          >
-            <option value="">—</option>
-            {OBJECTIVES.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </Select>
+            onValueChange={(v) => setState((s) => ({ ...s, objective: v }))}
+            placeholder="—"
+            options={OBJECTIVES.map((o) => ({ value: o.value, label: o.label }))}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="date">Date prévue</Label>
@@ -123,12 +114,9 @@ export function PlanTab({ content }: { content: Content }) {
           <Select
             id="status"
             value={state.status}
-            onChange={(e) => setState((s) => ({ ...s, status: e.target.value }))}
-          >
-            {STATUSES.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </Select>
+            onValueChange={(v) => setState((s) => ({ ...s, status: v }))}
+            options={STATUSES.map((s) => ({ value: s.value, label: s.label }))}
+          />
         </div>
       </div>
 

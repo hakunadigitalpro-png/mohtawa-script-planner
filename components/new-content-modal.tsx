@@ -50,6 +50,7 @@ export function NewContentModal({
   defaultDate?: string;
 }) {
   const [type, setType] = useState(defaultType);
+  const [platform, setPlatform] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -66,10 +67,10 @@ export function NewContentModal({
           action={(fd) =>
             startTransition(async () => {
               const res = await createContent({
-                type: String(fd.get("type") ?? "reel"),
+                type,
                 title: String(fd.get("title") ?? "").trim(),
                 date: (fd.get("date") as string) || null,
-                platform: (fd.get("platform") as string) || null,
+                platform: platform || null,
               });
               if (res?.error) setError(res.error);
             })
@@ -81,23 +82,23 @@ export function NewContentModal({
                 <Label htmlFor="type">Format</Label>
                 <Select
                   id="type"
-                  name="type"
                   value={type}
-                  onChange={(e) => setType(e.target.value)}
-                >
-                  {CONTENT_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </Select>
+                  onValueChange={(v) => {
+                    setType(v);
+                    setPlatform(""); // reset platform when type changes
+                  }}
+                  options={CONTENT_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="platform">Plateforme</Label>
-                <Select id="platform" name="platform" defaultValue="">
-                  <option value="">—</option>
-                  {availablePlatforms.map((p) => (
-                    <option key={p.value} value={p.value}>{p.label}</option>
-                  ))}
-                </Select>
+                <Select
+                  id="platform"
+                  value={platform}
+                  onValueChange={setPlatform}
+                  placeholder="—"
+                  options={availablePlatforms.map((p) => ({ value: p.value, label: p.label }))}
+                />
               </div>
             </div>
 
@@ -112,7 +113,7 @@ export function NewContentModal({
             </div>
 
             {error && (
-              <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <p className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
                 {error}
               </p>
             )}

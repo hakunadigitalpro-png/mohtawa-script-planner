@@ -1,46 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-  /* ===== Brand palette ===== */
-  --color-ink: #000000;
-  --color-orange: #f67b56;
-  --color-orange-soft: #fde2d6;
-  --color-lavender: #c19be9;
+  /* ===== Brand palette (saturated) ===== */
+  --color-ink: #0a0612;
+  --color-orange: #ff6b35;
+  --color-orange-strong: #ff5a1f;
+  --color-orange-soft: #ffe4d6;
+  --color-lavender: #9c7dd8;
+  --color-lavender-strong: #7c5ec7;
   --color-lavender-soft: #ece1f7;
-  --color-cream: #fef9f4;
+  --color-cream: #fbf7f1;
 
   /* ===== Surfaces ===== */
-  --color-background: #ffffff;
-  --color-foreground: #1a0f25;
+  --color-background: #fbf9f5;
+  --color-foreground: #0a0612;
   --color-card: #ffffff;
-  --color-card-foreground: #1a0f25;
+  --color-card-foreground: #0a0612;
   --color-muted: #8a7e94;
-  --color-muted-foreground: #6b6173;
-  --color-border: #ede6f0;
-  --color-input: #ede6f0;
-  --color-ring: #1a0f25;
+  --color-muted-foreground: #5a4f63;
+  --color-border: #e7e2eb;
+  --color-input: #e7e2eb;
+  --color-ring: #0a0612;
 
   /* ===== Action variants ===== */
-  --color-primary: #1a0f25;
+  --color-primary: #0a0612;
   --color-primary-foreground: #ffffff;
-  --color-accent: #f67b56;
+  --color-accent: #ff6b35;
   --color-accent-foreground: #ffffff;
-  --color-secondary: #f6f1f9;
-  --color-secondary-foreground: #1a0f25;
+  --color-secondary: #f3eef7;
+  --color-secondary-foreground: #0a0612;
 
   --color-destructive: #dc2626;
   --color-destructive-foreground: #ffffff;
 
   /* ===== Content type accents ===== */
-  --color-reel: #f67b56;
-  --color-story: #c19be9;
+  --color-reel: #ff6b35;
+  --color-story: #9c7dd8;
   --color-carousel: #06b6d4;
   --color-thread: #10b981;
   --color-post: #6366f1;
 
-  /* ===== Status accents (warm-toned) ===== */
+  /* ===== Status accents ===== */
   --color-status-idea: #94a3b8;
-  --color-status-script: #c19be9;
+  --color-status-script: #9c7dd8;
   --color-status-filming: #f59e0b;
   --color-status-editing: #a855f7;
   --color-status-scheduled: #06b6d4;
@@ -49,7 +51,7 @@
   /* ===== Typography ===== */
   --font-sans: var(--font-jakarta), system-ui, sans-serif;
 
-  /* ===== Radius (more generous) ===== */
+  /* ===== Radius (generous) ===== */
   --radius-sm: 0.5rem;
   --radius: 0.875rem;
   --radius-lg: 1.25rem;
@@ -66,13 +68,9 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Warm gradient background applied to the app body */
+/* Clean warm cream — pas de gradient diffus */
 body {
-  background:
-    radial-gradient(80% 60% at 0% 0%, #fde7d9 0%, transparent 55%),
-    radial-gradient(70% 55% at 100% 0%, #e7d5f5 0%, transparent 50%),
-    radial-gradient(80% 70% at 50% 100%, #f9e6e0 0%, transparent 55%),
-    #fef9f4;
+  background: var(--color-background);
   min-height: 100vh;
 }
 
@@ -99,7 +97,7 @@ input, textarea, select {
   transform: translateY(-50%);
   padding: 4px 10px;
   border-radius: 8px;
-  background: #1a0f25;
+  background: var(--color-ink);
   color: #fff;
   font-size: 12px;
   font-weight: 500;

@@ -90,7 +90,7 @@ export default async function DashboardPage({
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Kpi label="Total vidéos" value={total} />
+        <Kpi label="Total vidéos" value={total} accent />
         <Kpi label="Brouillons" value={drafts} />
         <Kpi label="Publiées" value={published} />
         <Kpi label="Ce mois-ci" value={thisMonth} />
@@ -137,13 +137,33 @@ export default async function DashboardPage({
   );
 }
 
-function Kpi({ label, value }: { label: string; value: number }) {
+function Kpi({
+  label,
+  value,
+  accent = false,
+}: {
+  label: string;
+  value: number;
+  accent?: boolean;
+}) {
   return (
-    <Card className="p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-muted">
+    <Card
+      className={
+        "p-5 " +
+        (accent
+          ? "border-0 bg-accent text-accent-foreground shadow-[0_10px_30px_-12px_rgba(255,107,53,0.45)]"
+          : "")
+      }
+    >
+      <div
+        className={
+          "text-xs font-bold uppercase tracking-wider " +
+          (accent ? "text-accent-foreground/85" : "text-muted")
+        }
+      >
         {label}
       </div>
-      <div className="mt-1 text-2xl font-semibold">{value}</div>
+      <div className="mt-2 text-3xl font-bold tracking-tight">{value}</div>
     </Card>
   );
 }

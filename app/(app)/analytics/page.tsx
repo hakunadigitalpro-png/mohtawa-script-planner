@@ -204,6 +204,7 @@ export default async function AnalyticsPage() {
           icon={<BarChart3 className="size-4" />}
           label="Total vues"
           value={fmtCompact(totalViews)}
+          accent
         />
         <KpiCard
           icon={<TrendingUp className="size-4" />}
@@ -385,18 +386,32 @@ function KpiCard({
   icon,
   label,
   value,
+  accent = false,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
+  accent?: boolean;
 }) {
   return (
-    <Card className="p-4">
-      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted">
+    <Card
+      className={
+        "p-5 " +
+        (accent
+          ? "border-0 bg-accent text-accent-foreground shadow-[0_10px_30px_-12px_rgba(255,107,53,0.45)]"
+          : "")
+      }
+    >
+      <div
+        className={
+          "flex items-center gap-2 text-xs font-bold uppercase tracking-wider " +
+          (accent ? "text-accent-foreground/85" : "text-muted")
+        }
+      >
         {icon}
         {label}
       </div>
-      <div className="mt-1 text-2xl font-semibold">{value}</div>
+      <div className="mt-2 text-3xl font-bold tracking-tight">{value}</div>
     </Card>
   );
 }

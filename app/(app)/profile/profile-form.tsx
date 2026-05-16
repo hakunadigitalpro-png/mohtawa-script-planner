@@ -7,6 +7,11 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { updateProfile } from "@/app/(app)/actions";
 
+const LANGUAGE_OPTIONS = [
+  { value: "fr", label: "Français" },
+  { value: "ar", label: "العربية (Arabe)" },
+];
+
 export function ProfileForm({
   email,
   fullName,
@@ -16,6 +21,7 @@ export function ProfileForm({
   fullName: string;
   language: string;
 }) {
+  const [lang, setLang] = useState(language);
   const [msg, setMsg] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -43,10 +49,13 @@ export function ProfileForm({
 
       <div className="space-y-2">
         <Label htmlFor="language">Langue préférée</Label>
-        <Select id="language" name="language" defaultValue={language}>
-          <option value="fr">Français</option>
-          <option value="ar">العربية (Arabe)</option>
-        </Select>
+        <Select
+          id="language"
+          name="language"
+          value={lang}
+          onValueChange={setLang}
+          options={LANGUAGE_OPTIONS}
+        />
         <p className="text-xs text-muted">
           La version arabe arrive bientôt.
         </p>
