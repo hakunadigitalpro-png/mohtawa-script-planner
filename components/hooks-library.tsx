@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Copy, Check, Search, Wand2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,10 @@ import {
   HOOKS,
   HOOK_CATEGORIES,
   categoryEmoji,
+  hookText,
   type HookCategory,
 } from "@/lib/hooks-data";
+import type { Locale } from "@/i18n/config";
 
 export function HooksLibrary({
   onPick,
@@ -23,6 +25,7 @@ export function HooksLibrary({
 }) {
   const t = useTranslations("hooks");
   const tCommon = useTranslations("common");
+  const locale = useLocale() as Locale;
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<HookCategory | "all">("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -41,10 +44,12 @@ export function HooksLibrary({
     const needle = q.trim().toLowerCase();
     return HOOKS.filter((h) => {
       if (cat !== "all" && h.category !== cat) return false;
-      if (needle && !h.text.toLowerCase().includes(needle)) return false;
+      // Search applies to the localized text only — what the user sees.
+      if (needle && !hookText(h, locale).toLowerCase().includes(needle))
+        return false;
       return true;
     });
-  }, [q, cat]);
+  }, [q, cat, locale]);
 
   const handleCopy = async (id: string, text: string) => {
     try {
@@ -92,40 +97,43 @@ export function HooksLibrary({
         </Card>
       ) : (
         <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          {filtered.map((h) => (
-            <li key={h.id}>
-              <Card className="flex h-full items-start gap-3 p-3">
-                <div className="text-lg leading-none" aria-hidden>
-                  {categoryEmoji(h.category)}
-                </div>
-                <p className="flex-1 text-sm leading-snug">{h.text}</p>
-                <div className="flex shrink-0 flex-col gap-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleCopy(h.id, h.text)}
-                    aria-label={tCommon("copy")}
-                  >
-                    {copiedId === h.id ? (
-                      <Check className="size-3.5" />
-                    ) : (
-                      <Copy className="size-3.5" />
-                    )}
-                  </Button>
-                  {onPick && (
+          {filtered.map((h) => {
+            const text = hookText(h, locale);
+            return (
+              <li key={h.id}>
+                <Card className="flex h-full items-start gap-3 p-3">
+                  <div className="text-lg leading-none" aria-hidden>
+                    {categoryEmoji(h.category)}
+                  </div>
+                  <p className="flex-1 text-sm leading-snug">{text}</p>
+                  <div className="flex shrink-0 flex-col gap-1">
                     <Button
                       size="sm"
-                      onClick={() => onPick(h.text)}
-                      aria-label={finalPickLabel}
+                      variant="outline"
+                      onClick={() => handleCopy(h.id, text)}
+                      aria-label={tCommon("copy")}
                     >
-                      <Wand2 className="size-3.5" />
-                      {finalPickLabel}
+                      {copiedId === h.id ? (
+                        <Check className="size-3.5" />
+                      ) : (
+                        <Copy className="size-3.5" />
+                      )}
                     </Button>
-                  )}
-                </div>
-              </Card>
-            </li>
-          ))}
+                    {onPick && (
+                      <Button
+                        size="sm"
+                        onClick={() => onPick(text)}
+                        aria-label={finalPickLabel}
+                      >
+                        <Wand2 className="size-3.5" />
+                        {finalPickLabel}
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
