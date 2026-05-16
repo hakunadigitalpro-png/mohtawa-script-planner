@@ -58,8 +58,8 @@ export default async function BrandsPage() {
         <CardHeader>
           <CardTitle>{brands.length} marque{brands.length > 1 ? "s" : ""}</CardTitle>
           <CardDescription>
-            Tu peux renommer ou supprimer tes propres marques. La suppression entraîne la perte
-            définitive de toutes les vidéos associées.
+            Clique sur une marque (ou sur « Gérer ») pour accéder à son équipe, ses piliers de contenu
+            et ses objectifs. Tu peux aussi la renommer ou la supprimer ici.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Pencil, Trash2, Check, X, Building2, Settings } from "lucide-react";
+import { Pencil, Trash2, Check, X, Building2, Users, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -119,7 +119,12 @@ function BrandRow({
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <div className="truncate text-sm font-medium">{brand.name}</div>
+            <Link
+              href={`/brands/${brand.id}`}
+              className="truncate text-sm font-medium hover:text-accent hover:underline"
+            >
+              {brand.name}
+            </Link>
             <Badge className="bg-secondary text-muted">
               {brand.role}
             </Badge>
@@ -135,11 +140,12 @@ function BrandRow({
         <div className="flex items-center gap-1">
           <Link
             href={`/brands/${brand.id}`}
-            className="flex size-10 items-center justify-center rounded-full text-muted hover:bg-secondary hover:text-foreground"
-            aria-label="Configurer"
-            title="Piliers et objectifs"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-secondary"
+            title="Équipe, piliers et objectifs"
           >
-            <Settings className="size-4" />
+            <Users className="size-3.5" />
+            Gérer
+            <ChevronRight className="size-3.5 text-muted" />
           </Link>
           {canEdit && (
             <Button
@@ -147,6 +153,7 @@ function BrandRow({
               size="icon"
               onClick={() => setEditing(true)}
               aria-label="Renommer"
+              title="Renommer"
             >
               <Pencil className="size-4" />
             </Button>
@@ -157,6 +164,7 @@ function BrandRow({
               size="icon"
               onClick={() => setDeleteOpen(true)}
               aria-label="Supprimer"
+              title="Supprimer la marque"
               className="text-muted hover:text-destructive"
             >
               <Trash2 className="size-4" />
