@@ -4,15 +4,25 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { SelectWithCreate } from "@/components/ui/select-with-create";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { platformsForType, STATUSES, OBJECTIVES, CONTENT_TYPES } from "@/lib/constants";
+import { platformsForType, STATUSES, CONTENT_TYPES } from "@/lib/constants";
 import { updateContent } from "@/app/(app)/contents/actions";
+import { createTaxonomy } from "@/app/(app)/brands/taxonomy-actions";
 import { useAutosave, AutosaveIndicator } from "./autosave-field";
 import { HooksPickerButton } from "@/components/hooks-picker";
 import type { Content } from "@/lib/types";
 
-export function PlanTab({ content }: { content: Content }) {
+export function PlanTab({
+  content,
+  brandPillars,
+  brandObjectives,
+}: {
+  content: Content;
+  brandPillars: { id: string; name: string }[];
+  brandObjectives: { id: string; name: string }[];
+}) {
   const [state, setState] = useState({
     title: content.title ?? "",
     type: content.type,
@@ -81,25 +91,45 @@ export function PlanTab({ content }: { content: Content }) {
             options={platformsForType(state.type).map((p) => ({ value: p.value, label: p.label }))}
           />
         </div>
+
         <div className="space-y-2">
           <Label htmlFor="pillar">Pilier de contenu</Label>
-          <Input
+          <SelectWithCreate
             id="pillar"
             value={state.pillar}
-            onChange={(e) => setState((s) => ({ ...s, pillar: e.target.value }))}
-            placeholder="Ex : Marketing digital"
+            onValueChange={(v) => setState((s) => ({ ...s, pillar: v }))}
+            options={brandPillars.map((p) => ({ value: p.name, label: p.name }))}
+            placeholder="Choisir un pilier"
+            inputLabel="Nom du pilier"
+            inputPlaceholder="Ex : Marketing digital"
+            createDialogTitle="Nouveau pilier"
+            createDialogDescription="Disponible pour toutes les vidéos de cette marque."
+            createLabel="Ajouter le pilier"
+            onCreate={async (name) =>
+              createTaxonomy("pillar", content.brand_id, name)
+            }
           />
         </div>
+
         <div className="space-y-2">
           <Label htmlFor="objective">Objectif</Label>
-          <Select
+          <SelectWithCreate
             id="objective"
             value={state.objective}
             onValueChange={(v) => setState((s) => ({ ...s, objective: v }))}
-            placeholder="—"
-            options={OBJECTIVES.map((o) => ({ value: o.value, label: o.label }))}
+            options={brandObjectives.map((o) => ({ value: o.name, label: o.name }))}
+            placeholder="Choisir un objectif"
+            inputLabel="Nom de l'objectif"
+            inputPlaceholder="Ex : Lead generation"
+            createDialogTitle="Nouvel objectif"
+            createDialogDescription="Disponible pour toutes les vidéos de cette marque."
+            createLabel="Ajouter l'objectif"
+            onCreate={async (name) =>
+              createTaxonomy("objective", content.brand_id, name)
+            }
           />
         </div>
+
         <div className="space-y-2">
           <Label htmlFor="date">Date prévue</Label>
           <Input

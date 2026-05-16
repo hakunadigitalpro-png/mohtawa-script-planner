@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, Check, X, Building2 } from "lucide-react";
+import Link from "next/link";
+import { Pencil, Trash2, Check, X, Building2, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -132,6 +133,14 @@ function BrandRow({
 
       {!editing && (
         <div className="flex items-center gap-1">
+          <Link
+            href={`/brands/${brand.id}`}
+            className="flex size-10 items-center justify-center rounded-full text-muted hover:bg-secondary hover:text-foreground"
+            aria-label="Configurer"
+            title="Piliers et objectifs"
+          >
+            <Settings className="size-4" />
+          </Link>
           {canEdit && (
             <Button
               variant="ghost"

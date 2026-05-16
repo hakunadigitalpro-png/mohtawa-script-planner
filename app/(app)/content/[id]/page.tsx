@@ -37,7 +37,7 @@ export default async function ContentDetailPage({
 
   if (!content) notFound();
 
-  const [reelRes, storyRes, slidesRes, scenesRes, perfRes] = await Promise.all([
+  const [reelRes, storyRes, slidesRes, scenesRes, perfRes, pillarsRes, objectivesRes] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
     supabase
@@ -51,6 +51,16 @@ export default async function ContentDetailPage({
       .eq("content_id", id)
       .order("scene_number", { ascending: true }),
     supabase.from("performances").select("*").eq("content_id", id).maybeSingle(),
+    supabase
+      .from("brand_pillars")
+      .select("id, name")
+      .eq("brand_id", content.brand_id)
+      .order("position", { ascending: true }),
+    supabase
+      .from("brand_objectives")
+      .select("id, name")
+      .eq("brand_id", content.brand_id)
+      .order("position", { ascending: true }),
   ]);
 
   const reel = (reelRes.data ?? null) as ReelDetails | null;
@@ -58,6 +68,8 @@ export default async function ContentDetailPage({
   const slides = (slidesRes.data ?? []) as StorySlide[];
   const scenes = (scenesRes.data ?? []) as StoryboardScene[];
   const perf = (perfRes.data ?? null) as Performance | null;
+  const pillars = (pillarsRes.data ?? []) as { id: string; name: string }[];
+  const objectives = (objectivesRes.data ?? []) as { id: string; name: string }[];
 
   const c = content as Content;
 
@@ -109,6 +121,8 @@ export default async function ContentDetailPage({
         slides={slides}
         scenes={scenes}
         perf={perf}
+        brandPillars={pillars}
+        brandObjectives={objectives}
       />
     </div>
   );

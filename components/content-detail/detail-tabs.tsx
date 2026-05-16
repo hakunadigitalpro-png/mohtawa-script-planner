@@ -22,6 +22,8 @@ export function DetailTabs({
   slides,
   scenes,
   perf,
+  brandPillars,
+  brandObjectives,
 }: {
   content: Content;
   reel: ReelDetails | null;
@@ -29,6 +31,8 @@ export function DetailTabs({
   slides: StorySlide[];
   scenes: StoryboardScene[];
   perf: Performance | null;
+  brandPillars: { id: string; name: string }[];
+  brandObjectives: { id: string; name: string }[];
 }) {
   const isStory = content.type === "story";
 
@@ -42,7 +46,11 @@ export function DetailTabs({
         <TabsTrigger value="performance">Performances</TabsTrigger>
       </TabsList>
       <TabsContent value="plan">
-        <PlanTab content={content} />
+        <PlanTab
+          content={content}
+          brandPillars={brandPillars}
+          brandObjectives={brandObjectives}
+        />
       </TabsContent>
       <TabsContent value="script">
         <ScriptTab content={content} reel={reel} story={story} slides={slides} />
