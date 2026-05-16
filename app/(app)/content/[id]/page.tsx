@@ -126,7 +126,7 @@ export default async function ContentDetailPage({
             href="/dashboard"
             className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
           >
-            <ArrowLeft className="size-4" />
+            <ArrowLeft className="size-4 rtl-flip" />
             Retour
           </Link>
           <div className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export default async function ContentDetailPage({
             <ColorDot color={typeColor(c.type)} />
             <span className="font-medium text-muted">{typeLabel(c.type)}</span>
             <Badge
-              className="ml-1 text-white"
+              className="ms-1 text-white"
               style={{ background: statusColor(c.status) }}
             >
               {statusLabel(c.status)}

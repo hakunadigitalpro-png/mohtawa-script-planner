@@ -88,7 +88,7 @@ export function ContentCard({ content }: { content: Content }) {
                 <ColorDot color={s.color} />
                 {s.label}
                 {s.value === content.status && (
-                  <CheckCircle2 className="ml-auto size-3.5 text-muted" />
+                  <CheckCircle2 className="ms-auto size-3.5 text-muted" />
                 )}
               </DropdownItem>
             ))}

@@ -195,7 +195,7 @@ function ModeCard({
       </span>
       <span>{label}</span>
       {active && (
-        <span className="absolute right-2 top-2 flex size-5 items-center justify-center rounded-full bg-accent text-accent-foreground">
+        <span className="absolute end-2 top-2 flex size-5 items-center justify-center rounded-full bg-accent text-accent-foreground">
           <Check className="size-3" strokeWidth={3} />
         </span>
       )}

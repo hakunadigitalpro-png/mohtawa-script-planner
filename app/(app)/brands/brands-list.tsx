@@ -145,7 +145,7 @@ function BrandRow({
           >
             <Users className="size-3.5" />
             Gérer
-            <ChevronRight className="size-3.5 text-muted" />
+            <ChevronRight className="size-3.5 text-muted rtl-flip" />
           </Link>
           {canEdit && (
             <Button

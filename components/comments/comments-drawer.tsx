@@ -71,7 +71,7 @@ export function CommentsDrawer({
       />
 
       {/* Panel */}
-      <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-border/60 bg-card shadow-[0_0_60px_-10px_rgba(10,6,18,0.25)]">
+      <aside className="fixed inset-y-0 end-0 z-50 flex w-full max-w-md flex-col border-s border-border/60 bg-card shadow-[0_0_60px_-10px_rgba(10,6,18,0.25)]">
         {drawer.mode === "thread" ? (
           <ThreadView
             targetType={drawer.targetType}
@@ -305,7 +305,7 @@ function InboxView({
               type="button"
               onClick={() => openThread(root.target_type, root.target_id)}
               className={cn(
-                "block w-full rounded-2xl border p-3 text-left transition hover:border-accent/30 hover:bg-secondary/50",
+                "block w-full rounded-2xl border p-3 text-start transition hover:border-accent/30 hover:bg-secondary/50",
                 unread
                   ? "border-accent/30 bg-accent/5"
                   : "border-border/60 bg-card",
@@ -411,7 +411,7 @@ function CommentThread({
       />
 
       {replies.length > 0 && (
-        <div className="mt-3 space-y-3 border-l-2 border-border/40 pl-4">
+        <div className="mt-3 space-y-3 border-s-2 border-border/40 ps-4">
           {replies.map((r) => (
             <CommentItem
               key={r.id}
@@ -425,7 +425,7 @@ function CommentThread({
         </div>
       )}
 
-      <div className="mt-3 pl-1">
+      <div className="mt-3 ps-1">
         {replying ? (
           <ReplyForm
             parentId={root.id}
@@ -443,7 +443,7 @@ function CommentThread({
               onClick={() => setReplying(true)}
               className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-foreground"
             >
-              <CornerDownRight className="size-3" />
+              <CornerDownRight className="size-3 rtl-flip" />
               Répondre
             </button>
           )
@@ -508,7 +508,7 @@ function CommentItem({
       </div>
 
       {(isRoot || isOwner) && (
-        <div className="mt-1.5 flex items-center gap-1 pl-9">
+        <div className="mt-1.5 flex items-center gap-1 ps-9">
           {isRoot && (
             <button
               type="button"

@@ -131,7 +131,7 @@ export function HelpList({
   return (
     <Tag
       className={cn(
-        "space-y-1.5 pl-5 text-sm text-foreground/90",
+        "space-y-1.5 ps-5 text-sm text-foreground/90",
         ordered ? "list-decimal" : "list-disc",
       )}
     >

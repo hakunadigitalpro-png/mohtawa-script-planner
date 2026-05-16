@@ -73,7 +73,7 @@ export function Select({
         aria-label={ariaLabel}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex h-11 w-full items-center justify-between rounded-full border border-input bg-card pl-4 pr-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 hover:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-50",
+          "flex h-11 w-full items-center justify-between rounded-full border border-input bg-card ps-4 pe-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 hover:border-foreground/30 disabled:cursor-not-allowed disabled:opacity-50",
           isPlaceholder && "text-muted",
           className,
         )}
@@ -94,7 +94,7 @@ export function Select({
         <ul
           role="listbox"
           className={cn(
-            "absolute left-0 right-0 top-full z-30 mt-2 max-h-64 overflow-y-auto rounded-2xl border border-border/60 bg-card py-1.5 shadow-[0_12px_40px_-10px_rgba(10,6,18,0.18)]",
+            "absolute start-0 end-0 top-full z-30 mt-2 max-h-64 overflow-y-auto rounded-2xl border border-border/60 bg-card py-1.5 shadow-[0_12px_40px_-10px_rgba(10,6,18,0.18)]",
             contentClassName,
           )}
         >
@@ -109,7 +109,7 @@ export function Select({
                   type="button"
                   onClick={() => handlePick(opt.value)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm transition-colors",
+                    "flex w-full items-center justify-between gap-2 px-4 py-2 text-start text-sm transition-colors",
                     active
                       ? "bg-secondary font-semibold"
                       : "hover:bg-secondary/70",

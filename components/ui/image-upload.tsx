@@ -120,7 +120,7 @@ export function ImageUpload({
             <button
               type="button"
               onClick={onRemove}
-              className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-black/60 text-white shadow hover:bg-black/80"
+              className="absolute end-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-black/60 text-white shadow hover:bg-black/80"
               aria-label="Retirer l'image"
             >
               <X className="size-4" />

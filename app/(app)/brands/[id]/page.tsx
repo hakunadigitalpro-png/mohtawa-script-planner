@@ -89,7 +89,7 @@ export default async function BrandDetailPage({
         href="/brands"
         className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
       >
-        <ArrowLeft className="size-4" />
+        <ArrowLeft className="size-4 rtl-flip" />
         Toutes les marques
       </Link>
 

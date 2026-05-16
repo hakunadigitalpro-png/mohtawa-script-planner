@@ -51,7 +51,7 @@ export function BarChart({
     <div className={cn("relative", className)}>
       <div className="flex">
         <div
-          className="flex shrink-0 flex-col-reverse justify-between pr-2 text-right text-[10px] text-muted"
+          className="flex shrink-0 flex-col-reverse justify-between pe-2 text-end text-[10px] text-muted"
           style={{ height }}
         >
           {yTicks.map((t, i) => (
@@ -60,10 +60,10 @@ export function BarChart({
         </div>
 
         <div
-          className="relative flex flex-1 items-end gap-1 border-l border-b border-border pl-2"
+          className="relative flex flex-1 items-end gap-1 border-s border-b border-border ps-2"
           style={{ height }}
         >
-          <div className="pointer-events-none absolute inset-0 ml-2 flex flex-col-reverse justify-between">
+          <div className="pointer-events-none absolute inset-0 ms-2 flex flex-col-reverse justify-between">
             {yTicks.map((_, i) => (
               <div
                 key={i}
@@ -98,7 +98,7 @@ export function BarChart({
         </div>
       </div>
 
-      <div className="ml-8 mt-1 flex gap-1 pl-2">
+      <div className="ms-8 mt-1 flex gap-1 ps-2">
         {data.map((d, i) => (
           <div
             key={i}

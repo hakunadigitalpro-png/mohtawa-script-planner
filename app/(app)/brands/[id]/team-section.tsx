@@ -148,9 +148,9 @@ function MembersList({
       <table className="w-full text-sm">
         <thead className="border-b border-border/60 bg-secondary/30 text-xs uppercase tracking-wide text-muted">
           <tr>
-            <th className="px-4 py-2.5 text-left font-medium">Membre</th>
-            <th className="px-4 py-2.5 text-left font-medium">Rôle</th>
-            <th className="px-4 py-2.5 text-left font-medium">Depuis</th>
+            <th className="px-4 py-2.5 text-start font-medium">Membre</th>
+            <th className="px-4 py-2.5 text-start font-medium">Rôle</th>
+            <th className="px-4 py-2.5 text-start font-medium">Depuis</th>
             <th className="px-4 py-2.5"></th>
           </tr>
         </thead>
@@ -232,7 +232,7 @@ function MemberRow({
             <div className="font-medium text-foreground">
               {member.email}
               {isSelf && (
-                <span className="ml-2 text-xs text-muted">(toi)</span>
+                <span className="ms-2 text-xs text-muted">(toi)</span>
               )}
             </div>
           </div>
@@ -262,7 +262,7 @@ function MemberRow({
       <td className="px-4 py-3 text-muted">
         {formatDateFr(new Date(member.joined_at))}
       </td>
-      <td className="px-4 py-3 text-right">
+      <td className="px-4 py-3 text-end">
         {canRemove && (
           <Button
             type="button"
@@ -369,7 +369,7 @@ function InvitationRow({
       <span className="text-xs text-muted">
         expire le {formatDateFr(new Date(invitation.expires_at))}
       </span>
-      <div className="ml-auto flex items-center gap-1.5">
+      <div className="ms-auto flex items-center gap-1.5">
         <Button
           type="button"
           variant="outline"

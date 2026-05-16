@@ -157,7 +157,7 @@ function TaxonomyChip({
 
   if (editing) {
     return (
-      <li className="flex items-center gap-1.5 rounded-full border border-border bg-card pl-3 pr-1 py-0.5">
+      <li className="flex items-center gap-1.5 rounded-full border border-border bg-card ps-3 pe-1 py-0.5">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -188,7 +188,7 @@ function TaxonomyChip({
   }
 
   return (
-    <li className="group flex items-center gap-1 rounded-full border border-border bg-card pl-3 pr-1 py-0.5 text-sm font-semibold">
+    <li className="group flex items-center gap-1 rounded-full border border-border bg-card ps-3 pe-1 py-0.5 text-sm font-semibold">
       <span>{item.name}</span>
       <button
         type="button"
@@ -208,7 +208,7 @@ function TaxonomyChip({
         <Trash2 className="size-3" />
       </button>
       {error && (
-        <span className="ml-2 text-xs text-destructive">{error}</span>
+        <span className="ms-2 text-xs text-destructive">{error}</span>
       )}
     </li>
   );

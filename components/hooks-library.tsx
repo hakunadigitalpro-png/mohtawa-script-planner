@@ -46,10 +46,10 @@ export function HooksLibrary({
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
+        <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
         <Input
           placeholder="Rechercher une accroche..."
-          className="pl-9"
+          className="ps-9"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />

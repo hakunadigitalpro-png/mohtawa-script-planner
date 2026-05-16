@@ -66,7 +66,7 @@ export function DialogContent({
       <button
         type="button"
         onClick={() => ctx?.setOpen(false)}
-        className="absolute right-4 top-4 inline-flex size-8 items-center justify-center rounded-full text-muted hover:bg-secondary hover:text-foreground"
+        className="absolute end-4 top-4 inline-flex size-8 items-center justify-center rounded-full text-muted hover:bg-secondary hover:text-foreground"
         aria-label="Fermer"
       >
         <X className="size-4" />

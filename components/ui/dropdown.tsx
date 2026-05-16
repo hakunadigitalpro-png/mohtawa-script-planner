@@ -37,7 +37,7 @@ export function Dropdown({
 
   return (
     <DropdownContext.Provider value={{ open, setOpen }}>
-      <div ref={ref} className={cn("relative inline-block", align === "end" ? "text-right" : "")}>
+      <div ref={ref} className={cn("relative inline-block", align === "end" ? "text-end" : "")}>
         {children}
       </div>
     </DropdownContext.Provider>
@@ -86,7 +86,7 @@ export function DropdownContent({
       role="menu"
       className={cn(
         "absolute z-30 mt-2 min-w-48 overflow-hidden rounded-2xl border border-border/60 bg-card py-1.5 shadow-[0_12px_40px_-10px_rgba(26,15,37,0.18)]",
-        align === "end" ? "right-0" : "left-0",
+        align === "end" ? "end-0" : "start-0",
         className,
       )}
     >
@@ -121,7 +121,7 @@ export function DropdownItem({
         ctx?.setOpen(false);
       }}
       className={cn(
-        "flex w-full items-center gap-2 px-4 py-2 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+        "flex w-full items-center gap-2 px-4 py-2 text-start text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
         destructive
           ? "text-destructive hover:bg-destructive/10"
           : "hover:bg-secondary hover:text-foreground",

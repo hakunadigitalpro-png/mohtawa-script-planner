@@ -22,7 +22,7 @@ export function CommentsInboxButton() {
       <MessageSquare className="size-3.5" />
       Commentaires
       {unreadCount > 0 && (
-        <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-bold text-accent-foreground">
+        <span className="absolute -end-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-bold text-accent-foreground">
           {unreadCount > 99 ? "99+" : unreadCount}
         </span>
       )}

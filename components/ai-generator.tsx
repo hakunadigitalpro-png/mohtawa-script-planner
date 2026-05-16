@@ -283,7 +283,7 @@ function StoryPreview({ data }: { data: StoryGeneration }) {
               key={s.slot}
               className="rounded border border-border bg-card p-2 text-sm"
             >
-              <span className="mr-2 font-semibold">#{s.slot}</span>
+              <span className="me-2 font-semibold">#{s.slot}</span>
               {s.body}
             </li>
           ))}
