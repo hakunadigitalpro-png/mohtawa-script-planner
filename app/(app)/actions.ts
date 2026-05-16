@@ -47,6 +47,43 @@ export async function updateProfile(formData: FormData) {
   return { ok: true };
 }
 
+const HEX_RE = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/;
+
+export async function updateTheme(opts: {
+  theme: "light" | "dark" | "custom";
+  accent?: string;
+  tint?: string;
+}) {
+  const { cookies } = await import("next/headers");
+  const store = await cookies();
+  const oneYear = 60 * 60 * 24 * 365;
+
+  store.set("mohtawa_theme", opts.theme, {
+    path: "/",
+    sameSite: "lax",
+    maxAge: oneYear,
+  });
+
+  if (opts.accent && HEX_RE.test(opts.accent)) {
+    store.set("mohtawa_accent", opts.accent, {
+      path: "/",
+      sameSite: "lax",
+      maxAge: oneYear,
+    });
+  }
+
+  if (opts.tint && HEX_RE.test(opts.tint)) {
+    store.set("mohtawa_tint", opts.tint, {
+      path: "/",
+      sameSite: "lax",
+      maxAge: oneYear,
+    });
+  }
+
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
 export async function createBrand(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "Le nom est requis." };

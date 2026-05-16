@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* ===== Brand palette (saturated) ===== */
+  /* ===== Brand palette ===== */
   --color-ink: #0a0612;
   --color-orange: #ff6b35;
   --color-orange-strong: #ff5a1f;
@@ -11,15 +11,15 @@
   --color-lavender-soft: #ece1f7;
   --color-cream: #fbf7f1;
 
-  /* ===== Surfaces ===== */
-  --color-background: #fbf9f5;
+  /* ===== Surfaces (default LIGHT) ===== */
+  --color-background: #fdf6ef;
   --color-foreground: #0a0612;
-  --color-card: #ffffff;
+  --color-card: #fffaf4;
   --color-card-foreground: #0a0612;
   --color-muted: #8a7e94;
   --color-muted-foreground: #5a4f63;
-  --color-border: #e7e2eb;
-  --color-input: #e7e2eb;
+  --color-border: #efe7e1;
+  --color-input: #efe7e1;
   --color-ring: #0a0612;
 
   /* ===== Action variants ===== */
@@ -27,7 +27,7 @@
   --color-primary-foreground: #ffffff;
   --color-accent: #ff6b35;
   --color-accent-foreground: #ffffff;
-  --color-secondary: #f3eef7;
+  --color-secondary: #f8efe9;
   --color-secondary-foreground: #0a0612;
 
   --color-destructive: #dc2626;
@@ -58,6 +58,24 @@
   --radius-xl: 1.75rem;
 }
 
+/* ============ DARK THEME ============ */
+html[data-theme="dark"] {
+  --color-background: #0e0814;
+  --color-foreground: #f8eee5;
+  --color-card: #1a1424;
+  --color-card-foreground: #f8eee5;
+  --color-muted: #8b8294;
+  --color-muted-foreground: #b0a7b9;
+  --color-border: #2a2235;
+  --color-input: #2a2235;
+  --color-ring: #ff6b35;
+
+  --color-primary: #ffffff;
+  --color-primary-foreground: #0a0612;
+  --color-secondary: #251c30;
+  --color-secondary-foreground: #f8eee5;
+}
+
 * {
   border-color: var(--color-border);
 }
@@ -68,10 +86,23 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Clean warm cream — pas de gradient diffus */
+/* ============ Warm gradient background (LIGHT) ============ */
 body {
-  background: var(--color-background);
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(75% 55% at 0% 0%, rgba(255, 196, 156, 0.55) 0%, transparent 60%),
+    radial-gradient(80% 65% at 100% 25%, rgba(196, 159, 230, 0.45) 0%, transparent 60%),
+    radial-gradient(85% 70% at 70% 100%, rgba(255, 180, 140, 0.35) 0%, transparent 60%);
+  background-attachment: fixed;
   min-height: 100vh;
+}
+
+/* Dark mode gradient — moodier, deeper warm/cool blend */
+html[data-theme="dark"] body {
+  background-image:
+    radial-gradient(70% 50% at 0% 0%, rgba(255, 107, 53, 0.18) 0%, transparent 60%),
+    radial-gradient(70% 55% at 100% 20%, rgba(156, 125, 216, 0.22) 0%, transparent 60%),
+    radial-gradient(80% 65% at 60% 100%, rgba(255, 107, 53, 0.12) 0%, transparent 60%);
 }
 
 button {
