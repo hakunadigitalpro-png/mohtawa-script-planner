@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Users, Crown, Shield, Pencil, Eye, Clock } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,6 +8,8 @@ import { formatDateFr } from "@/lib/utils";
 import { AcceptInviteForm } from "./accept-form";
 
 export const dynamic = "force-dynamic";
+
+type ErrorReason = "invalid_token" | "not_found" | "already_used" | "expired";
 
 type Preview =
   | {
@@ -18,14 +20,7 @@ type Preview =
       expires_at: string;
       note: string | null;
     }
-  | { error: "invalid_token" | "not_found" | "already_used" | "expired" };
-
-const ROLE_LABEL: Record<string, string> = {
-  owner: "Propriétaire",
-  admin: "Administrateur",
-  editor: "Éditeur",
-  viewer: "Lecteur",
-};
+  | { error: ErrorReason };
 
 const ROLE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   owner: Crown,
@@ -50,9 +45,7 @@ export default async function InvitePage({
   // Le RPC est SECURITY DEFINER mais demande grant authenticated → si non-auth
   // on doit gérer le cas "pas connecté" en proposant login/register.
   if (!user) {
-    return (
-      <UnauthedView token={token} />
-    );
+    return <UnauthedView token={token} />;
   }
 
   const { data, error } = await supabase.rpc("get_invitation_preview", {
@@ -65,6 +58,8 @@ export default async function InvitePage({
     return <ErrorView reason={preview.error} />;
   }
 
+  const t = await getTranslations("invite");
+  const tRoles = await getTranslations("team.roles");
   const RoleIcon = ROLE_ICON[preview.role] ?? Users;
 
   return (
@@ -75,22 +70,24 @@ export default async function InvitePage({
             <Users className="size-7 text-accent" />
           </div>
           <CardTitle className="text-center text-2xl">
-            Tu as été invité sur Mohtawa
+            {t("headerTitle")}
           </CardTitle>
           <CardDescription className="text-center">
-            <strong>{preview.inviter}</strong> t&apos;invite à rejoindre la marque{" "}
-            <strong>{preview.brand_name}</strong>.
+            {t.rich("headerSubtitle", {
+              inviter: preview.inviter,
+              brand: preview.brand_name,
+            })}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="rounded-2xl border border-border/60 bg-secondary/30 p-4">
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs uppercase tracking-wide text-muted">
-                Ton rôle
+                {t("yourRole")}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 text-xs font-semibold">
                 <RoleIcon className="size-3" />
-                {ROLE_LABEL[preview.role] ?? preview.role}
+                {tRoles(preview.role)}
               </span>
             </div>
             {preview.note && (
@@ -100,17 +97,17 @@ export default async function InvitePage({
             )}
             <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
               <Clock className="size-3" />
-              Valide jusqu&apos;au {formatDateFr(new Date(preview.expires_at))}
+              {t("validUntil", { date: formatDateFr(new Date(preview.expires_at)) })}
             </p>
           </div>
 
           <AcceptInviteForm token={token} brandId={preview.brand_id} />
 
           <p className="text-center text-xs text-muted">
-            Connecté en tant que <strong>{user.email}</strong>.{" "}
+            {t("connectedAs", { email: user.email ?? "" })}{" "}
             <form action="/auth/signout" method="post" className="inline">
               <button type="submit" className="underline hover:text-foreground">
-                Changer de compte
+                {t("switchAccount")}
               </button>
             </form>
           </p>
@@ -120,7 +117,8 @@ export default async function InvitePage({
   );
 }
 
-function UnauthedView({ token }: { token: string }) {
+async function UnauthedView({ token }: { token: string }) {
+  const t = await getTranslations("invite");
   const next = encodeURIComponent(`/invite/${token}`);
   return (
     <div className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6">
@@ -130,10 +128,10 @@ function UnauthedView({ token }: { token: string }) {
             <Users className="size-7 text-accent" />
           </div>
           <CardTitle className="text-center text-2xl">
-            Une invitation t&apos;attend
+            {t("unauthTitle")}
           </CardTitle>
           <CardDescription className="text-center">
-            Connecte-toi ou crée un compte pour accepter cette invitation.
+            {t("unauthSubtitle")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -141,13 +139,13 @@ function UnauthedView({ token }: { token: string }) {
             href={`/register?next=${next}`}
             className={buttonVariants({ className: "w-full" })}
           >
-            Créer un compte
+            {t("createAccount")}
           </Link>
           <Link
             href={`/login?next=${next}`}
             className={buttonVariants({ variant: "outline", className: "w-full" })}
           >
-            J&apos;ai déjà un compte
+            {t("haveAccount")}
           </Link>
         </CardContent>
       </Card>
@@ -155,45 +153,24 @@ function UnauthedView({ token }: { token: string }) {
   );
 }
 
-function ErrorView({
-  reason,
-}: {
-  reason: "invalid_token" | "not_found" | "already_used" | "expired";
-}) {
-  const messages: Record<typeof reason, { title: string; description: string }> = {
-    invalid_token: {
-      title: "Lien invalide",
-      description: "Ce lien d'invitation n'est pas valide. Vérifie que tu l'as copié en entier.",
-    },
-    not_found: {
-      title: "Lien introuvable",
-      description: "Cette invitation n'existe pas. Demande à la personne qui t'a invité de te générer un nouveau lien.",
-    },
-    already_used: {
-      title: "Invitation déjà acceptée",
-      description: "Ce lien a déjà été utilisé. Si tu es déjà membre, va directement sur ton tableau de bord.",
-    },
-    expired: {
-      title: "Invitation expirée",
-      description: "Ce lien a dépassé sa date de validité (30 jours). Demande un nouveau lien.",
-    },
-  };
-
-  const m = messages[reason];
+async function ErrorView({ reason }: { reason: ErrorReason }) {
+  const t = await getTranslations("invite");
+  const title = t(`errors.${reason}.title`);
+  const description = t(`errors.${reason}.description`);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle className="text-center">{m.title}</CardTitle>
-          <CardDescription className="text-center">{m.description}</CardDescription>
+          <CardTitle className="text-center">{title}</CardTitle>
+          <CardDescription className="text-center">{description}</CardDescription>
         </CardHeader>
         <CardContent>
           <Link
             href="/dashboard"
             className={buttonVariants({ variant: "outline", className: "w-full" })}
           >
-            Aller à mon tableau de bord
+            {t("backToDashboard")}
           </Link>
         </CardContent>
       </Card>

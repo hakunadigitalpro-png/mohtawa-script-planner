@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   X,
   Send,
@@ -105,11 +106,12 @@ function ThreadView({
   targetLabels: TargetLabels;
   onClose: () => void;
 }) {
+  const t = useTranslations("comments");
   const { comments, openInbox, contentId, refresh, currentUserId } = useComments();
   const router = useRouter();
 
   const targetLabel =
-    targetLabels[`${targetType}:${targetId}`] ?? defaultLabel(targetType, targetId);
+    targetLabels[`${targetType}:${targetId}`] ?? defaultLabel(t, targetType, targetId);
 
   // Threads racines pour ce target
   const roots = comments
@@ -141,14 +143,14 @@ function ThreadView({
     <>
       <DrawerHeader
         title={targetLabel}
-        subtitle={`${roots.length} commentaire${roots.length > 1 ? "s" : ""}`}
+        subtitle={t("headerSubtitleThread", { count: roots.length })}
         onClose={onClose}
         leftAction={
           <button
             type="button"
             onClick={() => openInbox("all")}
             className="inline-flex size-8 items-center justify-center rounded-full text-muted hover:bg-secondary hover:text-foreground"
-            aria-label="Retour à l'inbox"
+            aria-label={t("backToInbox")}
           >
             <Inbox className="size-4" />
           </button>
@@ -158,8 +160,8 @@ function ThreadView({
       <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
         {roots.length === 0 && (
           <EmptyState
-            title="Aucun commentaire ici"
-            description="Lance la discussion en ajoutant le premier commentaire."
+            title={t("emptyThreadTitle")}
+            description={t("emptyThreadDescription")}
           />
         )}
         {roots.map((root) => (
@@ -204,6 +206,7 @@ function InboxView({
   targetLabels: TargetLabels;
   onClose: () => void;
 }) {
+  const t = useTranslations("comments");
   const { comments, openThread, currentUserId, lastReadAt } = useComments();
   const [filter, setFilter] = React.useState<"all" | "unread" | "resolved">(
     initialFilter,
@@ -245,8 +248,8 @@ function InboxView({
   return (
     <>
       <DrawerHeader
-        title="Commentaires"
-        subtitle="Toute la discussion sur cette vidéo"
+        title={t("header")}
+        subtitle={t("headerSubtitleInbox")}
         onClose={onClose}
       />
 
@@ -254,9 +257,9 @@ function InboxView({
         <div className="flex gap-1.5">
           {(
             [
-              { value: "all", label: "Tous" },
-              { value: "unread", label: "Non lus" },
-              { value: "resolved", label: "Résolus" },
+              { value: "all", labelKey: "all" },
+              { value: "unread", labelKey: "unread" },
+              { value: "resolved", labelKey: "resolved" },
             ] as const
           ).map((f) => (
             <button
@@ -270,7 +273,7 @@ function InboxView({
                   : "text-muted hover:bg-secondary hover:text-foreground",
               )}
             >
-              {f.label}
+              {t(`filters.${f.labelKey}`)}
             </button>
           ))}
         </div>
@@ -282,12 +285,12 @@ function InboxView({
             <EmptyState
               title={
                 filter === "unread"
-                  ? "Pas de commentaire non lu"
+                  ? t("emptyInboxUnread")
                   : filter === "resolved"
-                  ? "Pas de commentaire résolu"
-                  : "Pas encore de commentaire"
+                  ? t("emptyInboxResolved")
+                  : t("emptyInboxAll")
               }
-              description="Clique sur le bouton 💬 d'un bloc pour démarrer la discussion."
+              description={t("emptyDescription")}
             />
           </div>
         )}
@@ -295,7 +298,7 @@ function InboxView({
         {filtered.map((root) => {
           const targetLabel =
             targetLabels[`${root.target_type}:${root.target_id}`] ??
-            defaultLabel(root.target_type, root.target_id);
+            defaultLabel(t, root.target_type, root.target_id);
           const replies = replyCountByRoot.get(root.id) ?? 0;
           const unread = isThreadUnread(root) && !root.resolved;
 
@@ -318,10 +321,10 @@ function InboxView({
                 <div className="flex items-center gap-2 text-xs text-muted">
                   {root.resolved && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100/70 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                      <Check className="size-3" /> Résolu
+                      <Check className="size-3" /> {t("resolvedBadge")}
                     </span>
                   )}
-                  <span>{relativeTimeFr(root.created_at)}</span>
+                  <span>{relativeTimeFr(t, root.created_at)}</span>
                 </div>
               </div>
               <div className="mt-1.5 text-sm font-medium text-foreground">
@@ -332,7 +335,7 @@ function InboxView({
               </p>
               {replies > 0 && (
                 <div className="mt-2 text-xs text-muted">
-                  {replies} réponse{replies > 1 ? "s" : ""}
+                  {t("repliesCount", { count: replies })}
                 </div>
               )}
             </button>
@@ -357,6 +360,7 @@ function DrawerHeader({
   onClose: () => void;
   leftAction?: React.ReactNode;
 }) {
+  const tCommon = useTranslations("common");
   return (
     <div className="flex items-center gap-2 border-b border-border/60 px-5 py-4">
       {leftAction}
@@ -370,7 +374,7 @@ function DrawerHeader({
         type="button"
         onClick={onClose}
         className="inline-flex size-8 items-center justify-center rounded-full text-muted hover:bg-secondary hover:text-foreground"
-        aria-label="Fermer"
+        aria-label={tCommon("cancel")}
       >
         <X className="size-4" />
       </button>
@@ -391,6 +395,7 @@ function CommentThread({
   contentId: string;
   onChanged: () => void;
 }) {
+  const t = useTranslations("comments");
   const [replying, setReplying] = React.useState(false);
 
   return (
@@ -444,7 +449,7 @@ function CommentThread({
               className="inline-flex items-center gap-1 text-xs font-medium text-muted hover:text-foreground"
             >
               <CornerDownRight className="size-3 rtl-flip" />
-              Répondre
+              {t("reply")}
             </button>
           )
         )}
@@ -466,6 +471,8 @@ function CommentItem({
   contentId: string;
   onChanged: () => void;
 }) {
+  const t = useTranslations("comments");
+  const tCommon = useTranslations("common");
   const [pending, startTransition] = React.useTransition();
 
   const onToggleResolve = () => {
@@ -480,7 +487,7 @@ function CommentItem({
   };
 
   const onDelete = () => {
-    if (!confirm("Supprimer ce commentaire ?\n\nLes éventuelles réponses seront aussi supprimées.")) return;
+    if (!confirm(t("deleteConfirm"))) return;
     startTransition(async () => {
       await deleteComment({ commentId: comment.id, contentId });
       onChanged();
@@ -499,7 +506,7 @@ function CommentItem({
           <div className="flex items-center gap-1.5 text-xs">
             <span className="font-semibold text-foreground">{authorShort}</span>
             <span className="text-muted">·</span>
-            <span className="text-muted">{relativeTimeFr(comment.created_at)}</span>
+            <span className="text-muted">{relativeTimeFr(t, comment.created_at)}</span>
           </div>
           <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-foreground/90">
             {comment.body}
@@ -523,11 +530,11 @@ function CommentItem({
             >
               {comment.resolved ? (
                 <>
-                  <RotateCcw className="size-3" /> Rouvrir
+                  <RotateCcw className="size-3" /> {t("reopen")}
                 </>
               ) : (
                 <>
-                  <Check className="size-3" /> Résoudre
+                  <Check className="size-3" /> {t("resolve")}
                 </>
               )}
             </button>
@@ -539,7 +546,7 @@ function CommentItem({
               disabled={pending}
               className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-muted hover:bg-destructive/10 hover:text-destructive"
             >
-              <Trash2 className="size-3" /> Supprimer
+              <Trash2 className="size-3" /> {tCommon("delete")}
             </button>
           )}
         </div>
@@ -559,6 +566,7 @@ function NewCommentForm({
   targetId: string;
   onSubmitted: () => void;
 }) {
+  const t = useTranslations("comments");
   const [body, setBody] = React.useState("");
   const [pending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
@@ -587,7 +595,7 @@ function NewCommentForm({
       <Textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="Écris un commentaire pour ton équipe…"
+        placeholder={t("newPlaceholder")}
         rows={3}
         className="resize-none"
       />
@@ -597,7 +605,7 @@ function NewCommentForm({
       <div className="flex justify-end">
         <Button type="submit" size="sm" disabled={pending || !body.trim()}>
           <Send className="size-3.5" />
-          {pending ? "Envoi…" : "Envoyer"}
+          {pending ? t("sending") : t("send")}
         </Button>
       </div>
     </form>
@@ -615,6 +623,8 @@ function ReplyForm({
   onCancel: () => void;
   onSubmitted: () => void;
 }) {
+  const t = useTranslations("comments");
+  const tCommon = useTranslations("common");
   const [body, setBody] = React.useState("");
   const [pending, startTransition] = React.useTransition();
 
@@ -634,17 +644,17 @@ function ReplyForm({
       <Textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="Réponse…"
+        placeholder={t("replyPlaceholder")}
         rows={2}
         autoFocus
         className="resize-none text-sm"
       />
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
-          Annuler
+          {tCommon("cancel")}
         </Button>
         <Button type="submit" size="sm" disabled={pending || !body.trim()}>
-          {pending ? "Envoi…" : "Envoyer"}
+          {pending ? t("sending") : t("send")}
         </Button>
       </div>
     </form>
@@ -667,54 +677,60 @@ function EmptyState({
 }
 
 // ============================================================
-// Helpers locaux
+// Helpers locaux (i18n-aware)
 // ============================================================
-function defaultLabel(type: CommentTargetType, id: string): string {
-  if (type === "plan") return `Plan · ${prettyPlanField(id)}`;
-  if (type === "script") return `Script · ${prettyScriptField(id)}`;
-  if (type === "scene") return "Scène";
-  if (type === "slide") return `Story · slot ${id}`;
+type Translator = (key: string, values?: Record<string, string | number>) => string;
+
+const PLAN_KEYS: Record<string, string> = {
+  general: "planGeneral",
+  title: "planTitle",
+  hook: "planHook",
+  cta: "planCta",
+  tags: "planTags",
+  pillar: "planPillar",
+  objective: "planObjective",
+  date: "planDate",
+};
+
+const SCRIPT_KEYS: Record<string, string> = {
+  intro: "scriptIntro",
+  point1: "scriptPoint1",
+  point2: "scriptPoint2",
+  point3: "scriptPoint3",
+  transition: "scriptTransition",
+  recap: "scriptRecap",
+  outro: "scriptOutro",
+  script_full: "scriptFull",
+};
+
+function defaultLabel(
+  t: Translator,
+  type: CommentTargetType,
+  id: string,
+): string {
+  if (type === "plan") {
+    const fieldKey = PLAN_KEYS[id];
+    const field = fieldKey ? t(`labels.${fieldKey}`) : id;
+    return t("labels.planField", { field });
+  }
+  if (type === "script") {
+    const fieldKey = SCRIPT_KEYS[id];
+    const field = fieldKey ? t(`labels.${fieldKey}`) : id;
+    return t("labels.scriptField", { field });
+  }
+  if (type === "scene") return t("labels.scene");
+  if (type === "slide") return t("labels.storySlot", { n: id });
   return type;
 }
 
-const PLAN_FIELDS: Record<string, string> = {
-  general: "Infos générales",
-  title: "Titre",
-  hook: "Accroche",
-  cta: "Appel à l'action",
-  tags: "Tags",
-  pillar: "Pilier",
-  objective: "Objectif",
-  date: "Date",
-};
-
-function prettyPlanField(id: string) {
-  return PLAN_FIELDS[id] ?? id;
-}
-
-const SCRIPT_FIELDS: Record<string, string> = {
-  intro: "Intro",
-  point1: "Point 1",
-  point2: "Point 2",
-  point3: "Point 3",
-  transition: "Transition",
-  recap: "Récap",
-  outro: "Outro",
-  script_full: "Script complet",
-};
-
-function prettyScriptField(id: string) {
-  return SCRIPT_FIELDS[id] ?? id;
-}
-
-function relativeTimeFr(iso: string): string {
+function relativeTimeFr(t: Translator, iso: string): string {
   const date = new Date(iso);
   const diff = (Date.now() - date.getTime()) / 1000;
-  if (diff < 60) return "à l'instant";
-  if (diff < 3600) return `il y a ${Math.floor(diff / 60)} min`;
-  if (diff < 86400) return `il y a ${Math.floor(diff / 3600)} h`;
-  if (diff < 7 * 86400) return `il y a ${Math.floor(diff / 86400)} j`;
-  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  if (diff < 60) return t("time.justNow");
+  if (diff < 3600) return t("time.minutes", { count: Math.floor(diff / 60) });
+  if (diff < 86400) return t("time.hours", { count: Math.floor(diff / 3600) });
+  if (diff < 7 * 86400) return t("time.days", { count: Math.floor(diff / 86400) });
+  return date.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
 // CornerDownRight icon is already imported, just unused import warning fix:

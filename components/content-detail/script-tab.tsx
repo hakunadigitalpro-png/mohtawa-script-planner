@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
@@ -47,6 +48,7 @@ function ReelScript({
   contentId: string;
   reel: ReelDetails | null;
 }) {
+  const t = useTranslations("script");
   const [state, setState] = useState({
     intro: reel?.intro ?? "",
     point1: reel?.point1 ?? "",
@@ -64,10 +66,8 @@ function ReelScript({
     <Card className="space-y-5 p-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold">Structure du script</h2>
-          <p className="text-xs text-muted">
-            Une idée = un point. Structure d&apos;abord, tournage ensuite.
-          </p>
+          <h2 className="text-base font-semibold">{t("title")}</h2>
+          <p className="text-xs text-muted">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <AutosaveIndicator status={status} />
@@ -75,33 +75,33 @@ function ReelScript({
         </div>
       </div>
 
-      <Field label="Introduction" id="intro" commentId="intro"
-        placeholder="Présente le sujet en une ou deux phrases."
+      <Field label={t("intro")} id="intro" commentId="intro"
+        placeholder={t("introPlaceholder")}
         value={state.intro} onChange={(v) => setState((s) => ({ ...s, intro: v }))} />
 
       <div className="space-y-4">
-        <Label>Points principaux</Label>
-        <Field label="Point 1" id="point1" commentId="point1" value={state.point1}
+        <Label>{t("mainPoints")}</Label>
+        <Field label={t("point1")} id="point1" commentId="point1" value={state.point1}
           onChange={(v) => setState((s) => ({ ...s, point1: v }))} />
-        <Field label="Point 2" id="point2" commentId="point2" value={state.point2}
+        <Field label={t("point2")} id="point2" commentId="point2" value={state.point2}
           onChange={(v) => setState((s) => ({ ...s, point2: v }))} />
-        <Field label="Point 3" id="point3" commentId="point3" value={state.point3}
+        <Field label={t("point3")} id="point3" commentId="point3" value={state.point3}
           onChange={(v) => setState((s) => ({ ...s, point3: v }))} />
       </div>
 
-      <Field label="Transition / B-roll" id="transition" commentId="transition"
-        placeholder="Indique les plans ou éléments visuels à ajouter."
+      <Field label={t("transition")} id="transition" commentId="transition"
+        placeholder={t("transitionPlaceholder")}
         value={state.transition} onChange={(v) => setState((s) => ({ ...s, transition: v }))} />
 
-      <Field label="Récapitulatif" id="recap" commentId="recap" value={state.recap}
+      <Field label={t("recap")} id="recap" commentId="recap" value={state.recap}
         onChange={(v) => setState((s) => ({ ...s, recap: v }))} />
 
-      <Field label="Conclusion (Outro)" id="outro" commentId="outro" value={state.outro}
+      <Field label={t("outro")} id="outro" commentId="outro" value={state.outro}
         onChange={(v) => setState((s) => ({ ...s, outro: v }))} />
 
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <Label htmlFor="script_full">Script complet (optionnel)</Label>
+          <Label htmlFor="script_full">{t("fullScript")}</Label>
           <CommentButton targetType="script" targetId="script_full" />
         </div>
         <Textarea
@@ -109,7 +109,7 @@ function ReelScript({
           className="min-h-40"
           value={state.script_full}
           onChange={(e) => setState((s) => ({ ...s, script_full: e.target.value }))}
-          placeholder="Colle ou écris ton script complet ici."
+          placeholder={t("fullScriptPlaceholder")}
         />
       </div>
     </Card>
@@ -128,6 +128,7 @@ function StoryScript({
   slides: StorySlide[];
 }) {
   const router = useRouter();
+  const t = useTranslations("stories");
   // Header autosave
   const [header, setHeader] = useState({
     objective: story?.objective ?? "",
@@ -157,11 +158,8 @@ function StoryScript({
     <Card className="space-y-6 p-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold">Storyboard Planner</h2>
-          <p className="text-xs text-muted">
-            5 stories : de l&apos;intro au call-to-action. Glisse une story sur
-            une autre pour échanger leur contenu.
-          </p>
+          <h2 className="text-base font-semibold">{t("title")}</h2>
+          <p className="text-xs text-muted">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <AutosaveIndicator status={headerStatus} />
@@ -172,24 +170,24 @@ function StoryScript({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
-            What story do I want to tell ?
+            {t("whatStory")}
           </Label>
           <Textarea
             className="min-h-20 text-sm"
             value={header.objective}
             onChange={(e) => setHeader((s) => ({ ...s, objective: e.target.value }))}
-            placeholder="Objectif de la séquence : transmettre quoi, à qui ?"
+            placeholder={t("whatStoryPlaceholder")}
           />
         </div>
         <div className="space-y-2">
           <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
-            My engagement goals
+            {t("engagementGoals")}
           </Label>
           <Textarea
             className="min-h-20 text-sm"
             value={header.cta_soft}
             onChange={(e) => setHeader((s) => ({ ...s, cta_soft: e.target.value }))}
-            placeholder="DM, sticker question, swipe up... que veux-tu que l'audience fasse ?"
+            placeholder={t("engagementGoalsPlaceholder")}
           />
         </div>
       </div>
@@ -252,6 +250,7 @@ function PhoneCard({
   onDragHandleStart?: (e: React.DragEvent) => void;
   onDragHandleEnd?: () => void;
 }) {
+  const t = useTranslations("stories");
   const [state, setState] = useState({
     body: slide?.body ?? "",
     image_url: slide?.image_url ?? null,
@@ -296,10 +295,10 @@ function PhoneCard({
 
   const label =
     slotNumber === 1
-      ? "Title / Introduction"
+      ? t("slotLabels.title")
       : slotNumber === 5
-        ? "Call to Action"
-        : STORY_SLOT_LABELS[slotNumber] ?? `Story ${slotNumber}`;
+        ? t("slotLabels.cta")
+        : STORY_SLOT_LABELS[slotNumber] ?? t("slotLabels.default", { n: slotNumber });
 
   return (
     <div className="flex flex-col items-center">
@@ -336,7 +335,7 @@ function PhoneCard({
         className="mt-2 min-h-20 w-full text-xs"
         value={state.body}
         onChange={(e) => setState((s) => ({ ...s, body: e.target.value }))}
-        placeholder="Texte / dialogue / notes"
+        placeholder={t("slotPlaceholder")}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlanTab } from "./plan-tab";
 import { ScriptTab } from "./script-tab";
@@ -34,16 +35,17 @@ export function DetailTabs({
   brandPillars: { id: string; name: string }[];
   brandObjectives: { id: string; name: string }[];
 }) {
+  const t = useTranslations("tabs");
   const isStory = content.type === "story";
 
   return (
     <Tabs defaultValue="plan">
       <TabsList>
-        <TabsTrigger value="plan">Plan</TabsTrigger>
-        <TabsTrigger value="script">{isStory ? "Stories" : "Script"}</TabsTrigger>
-        {!isStory && <TabsTrigger value="storyboard">Storyboard</TabsTrigger>}
-        <TabsTrigger value="checklist">Checklist</TabsTrigger>
-        <TabsTrigger value="performance">Performances</TabsTrigger>
+        <TabsTrigger value="plan">{t("plan")}</TabsTrigger>
+        <TabsTrigger value="script">{isStory ? t("stories") : t("script")}</TabsTrigger>
+        {!isStory && <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>}
+        <TabsTrigger value="checklist">{t("checklist")}</TabsTrigger>
+        <TabsTrigger value="performance">{t("performance")}</TabsTrigger>
       </TabsList>
       <TabsContent value="plan">
         <PlanTab

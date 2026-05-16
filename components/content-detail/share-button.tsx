@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Share2, Copy, Check, RefreshCcw, Globe, Lock } from "lucide-react";
 import {
   Dialog,
@@ -26,7 +27,9 @@ export function ShareButton({
   contentId: string;
   initialToken: string | null;
 }) {
+  const t = useTranslations("sharing");
   const [open, setOpen] = useState(false);
+  const enabled = !!initialToken;
   return (
     <>
       <Button
@@ -36,7 +39,7 @@ export function ShareButton({
         onClick={() => setOpen(true)}
       >
         <Share2 className="size-3.5" />
-        Partager
+        {enabled ? t("buttonOn") : t("buttonOff")}
       </Button>
       {open && (
         <ShareDialog
@@ -58,6 +61,8 @@ function ShareDialog({
   initialToken: string | null;
   onClose: () => void;
 }) {
+  const t = useTranslations("sharing");
+  const tCommon = useTranslations("common");
   const [token, setToken] = useState<string | null>(initialToken);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,12 +114,9 @@ function ShareDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="size-4" />
-            Partager cette vidéo
+            {t("dialogTitle")}
           </DialogTitle>
-          <DialogDescription>
-            Toute personne avec ce lien pourra consulter la fiche (lecture
-            seule). Désactive le lien quand tu veux pour révoquer l&apos;accès.
-          </DialogDescription>
+          <DialogDescription>{t("dialogDescription")}</DialogDescription>
         </DialogHeader>
 
         <DialogBody className="space-y-4">
@@ -133,12 +135,10 @@ function ShareDialog({
               </div>
               <div>
                 <div className="text-sm font-semibold">
-                  {enabled ? "Lien public actif" : "Vidéo privée"}
+                  {enabled ? t("buttonOn") : t("buttonOff")}
                 </div>
                 <div className="text-xs text-muted">
-                  {enabled
-                    ? "N'importe qui avec le lien peut voir."
-                    : "Active le lien pour partager avec quelqu'un."}
+                  {enabled ? t("warning") : t("indexedHint")}
                 </div>
               </div>
             </div>
@@ -149,7 +149,7 @@ function ShareDialog({
           {enabled && (
             <div className="space-y-2">
               <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                Lien de partage
+                {t("linkLabel")}
               </div>
               <div className="flex items-center gap-2">
                 <Input value={link} readOnly className="flex-1" />
@@ -158,7 +158,7 @@ function ShareDialog({
                   variant="outline"
                   size="icon"
                   onClick={onCopy}
-                  aria-label="Copier le lien"
+                  aria-label={t("copy")}
                 >
                   {copied ? (
                     <Check className="size-4" />
@@ -175,7 +175,7 @@ function ShareDialog({
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-foreground"
                 >
                   <RefreshCcw className="size-3.5" />
-                  Générer un nouveau lien (révoque l&apos;ancien)
+                  {t("regenerate")}
                 </button>
               </div>
             </div>
@@ -190,7 +190,7 @@ function ShareDialog({
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
-            Fermer
+            {tCommon("cancel")}
           </Button>
         </DialogFooter>
       </DialogContent>

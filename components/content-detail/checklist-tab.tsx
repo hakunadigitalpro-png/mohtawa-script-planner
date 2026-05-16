@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -8,11 +9,11 @@ import { upsertReelDetails, updateContent } from "@/app/(app)/contents/actions";
 import type { ReelDetails } from "@/lib/types";
 
 const ITEMS = [
-  { key: "script_ready", label: "Script finalisé" },
-  { key: "scenes_ready", label: "Scènes validées" },
-  { key: "filmed", label: "Vidéo filmée" },
-  { key: "edited", label: "Montage terminé" },
-  { key: "published", label: "Vidéo publiée" },
+  { key: "script_ready", labelKey: "scriptReady" },
+  { key: "scenes_ready", labelKey: "scenesReady" },
+  { key: "filmed", labelKey: "filmed" },
+  { key: "edited", labelKey: "edited" },
+  { key: "published", labelKey: "published" },
 ] as const;
 
 type Key = (typeof ITEMS)[number]["key"];
@@ -24,6 +25,7 @@ export function ChecklistTab({
   contentId: string;
   reel: ReelDetails | null;
 }) {
+  const t = useTranslations("checklist");
   const [state, setState] = useState<Record<Key, boolean>>(() => {
     const c = (reel?.checklist ?? {}) as Record<string, boolean>;
     return {
@@ -66,9 +68,9 @@ export function ChecklistTab({
   return (
     <Card className="space-y-5 p-6">
       <div>
-        <h2 className="text-base font-semibold">Préparation de la vidéo</h2>
+        <h2 className="text-base font-semibold">{t("title")}</h2>
         <p className="text-xs text-muted">
-          Avance étape par étape. {done}/{ITEMS.length} terminées.
+          {t("subtitle", { done, total: ITEMS.length })}
         </p>
       </div>
 
@@ -81,7 +83,7 @@ export function ChecklistTab({
               onCheckedChange={() => toggle(item.key)}
             />
             <label htmlFor={item.key} className="cursor-pointer text-sm">
-              {item.label}
+              {t(`items.${item.labelKey}`)}
             </label>
           </li>
         ))}
@@ -89,7 +91,7 @@ export function ChecklistTab({
 
       <div>
         <Button onClick={markPublished} disabled={pending}>
-          Marquer comme publiée
+          {t("markPublished")}
         </Button>
       </div>
     </Card>

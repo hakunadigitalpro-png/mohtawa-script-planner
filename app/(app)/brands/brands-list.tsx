@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Pencil, Trash2, Check, X, Building2, Users, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export function BrandsList({
   brands: BrandWithRole[];
   currentUserId: string;
 }) {
+  const t = useTranslations("brands");
   return (
     <ul className="divide-y divide-border">
       {brands.map((b) => (
@@ -40,7 +42,7 @@ export function BrandsList({
       ))}
       {brands.length === 0 && (
         <li className="px-6 py-10 text-center text-sm text-muted">
-          Aucune marque pour le moment.
+          {t("emptyList")}
         </li>
       )}
     </ul>
@@ -57,6 +59,8 @@ function BrandRow({
   canDelete: boolean;
   currentUserId: string;
 }) {
+  const t = useTranslations("brands");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(brand.name);
@@ -131,7 +135,7 @@ function BrandRow({
           </div>
         )}
         <div className="text-xs text-muted">
-          {brand.content_count} vidéo{brand.content_count !== 1 ? "s" : ""}
+          {t("videosCount", { count: brand.content_count })}
         </div>
         {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
       </div>
@@ -141,10 +145,9 @@ function BrandRow({
           <Link
             href={`/brands/${brand.id}`}
             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-secondary"
-            title="Équipe, piliers et objectifs"
           >
             <Users className="size-3.5" />
-            Gérer
+            {tCommon("open")}
             <ChevronRight className="size-3.5 text-muted rtl-flip" />
           </Link>
           {canEdit && (
@@ -152,8 +155,8 @@ function BrandRow({
               variant="ghost"
               size="icon"
               onClick={() => setEditing(true)}
-              aria-label="Renommer"
-              title="Renommer"
+              aria-label={tCommon("rename")}
+              title={tCommon("rename")}
             >
               <Pencil className="size-4" />
             </Button>
@@ -163,8 +166,8 @@ function BrandRow({
               variant="ghost"
               size="icon"
               onClick={() => setDeleteOpen(true)}
-              aria-label="Supprimer"
-              title="Supprimer la marque"
+              aria-label={tCommon("delete")}
+              title={tCommon("delete")}
               className="text-muted hover:text-destructive"
             >
               <Trash2 className="size-4" />
@@ -176,15 +179,12 @@ function BrandRow({
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Supprimer « {brand.name} » ?</DialogTitle>
-            <DialogDescription>
-              Toutes les vidéos, scripts, storyboards et statistiques liés à cette marque
-              seront définitivement perdus. Cette action est irréversible.
-            </DialogDescription>
+            <DialogTitle>{t("deleteConfirmTitle", { name: brand.name })}</DialogTitle>
+            <DialogDescription>{t("deleteConfirmText")}</DialogDescription>
           </DialogHeader>
           <DialogBody>
             <p className="text-sm text-muted">
-              Pour confirmer, tape <span className="font-mono font-semibold text-foreground">{brand.name}</span> :
+              {t("deleteTypePrompt", { name: brand.name })}
             </p>
             <Input
               className="mt-2"
@@ -195,14 +195,14 @@ function BrandRow({
           </DialogBody>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteOpen(false)}>
-              Annuler
+              {tCommon("cancel")}
             </Button>
             <Button
               variant="destructive"
               disabled={confirmText !== brand.name || pending}
               onClick={onDelete}
             >
-              {pending ? "Suppression..." : "Confirmer la suppression"}
+              {pending ? t("deleting") : t("deleteConfirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

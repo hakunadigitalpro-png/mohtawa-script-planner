@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -16,6 +17,14 @@ import { PillarHelp } from "@/components/field-help/pillar-help";
 import { CommentButton } from "@/components/comments";
 import type { Content } from "@/lib/types";
 
+function safeT(fn: (k: string) => string, key: string, fallback: string) {
+  try {
+    return fn(key);
+  } catch {
+    return fallback;
+  }
+}
+
 export function PlanTab({
   content,
   brandPillars,
@@ -25,6 +34,10 @@ export function PlanTab({
   brandPillars: { id: string; name: string }[];
   brandObjectives: { id: string; name: string }[];
 }) {
+  const t = useTranslations("plan");
+  const tType = useTranslations("contentTypes");
+  const tPlatform = useTranslations("platforms");
+  const tStatus = useTranslations("statuses");
   const [state, setState] = useState({
     title: content.title ?? "",
     type: content.type,
@@ -59,47 +72,53 @@ export function PlanTab({
     <Card className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold">Informations générales</h2>
+          <h2 className="text-base font-semibold">{t("sectionTitle")}</h2>
           <CommentButton targetType="plan" targetId="general" />
         </div>
         <AutosaveIndicator status={status} />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="title">Titre de la vidéo</Label>
+        <Label htmlFor="title">{t("videoTitle")}</Label>
         <Input
           id="title"
           value={state.title}
           onChange={(e) => setState((s) => ({ ...s, title: e.target.value }))}
-          placeholder="Ex : 3 erreurs que font les créateurs débutants"
+          placeholder={t("videoTitlePlaceholder")}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="type">Format</Label>
+          <Label htmlFor="type">{t("format")}</Label>
           <Select
             id="type"
             value={state.type}
             disabled
             onValueChange={(v) => setState((s) => ({ ...s, type: v }))}
-            options={CONTENT_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+            options={CONTENT_TYPES.map((ct) => ({
+              value: ct.value,
+              label: safeT(tType, ct.value, ct.label),
+            }))}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="platform">Plateforme</Label>
+          <Label htmlFor="platform">{t("platform")}</Label>
           <Select
             id="platform"
             value={state.platform}
             onValueChange={(v) => setState((s) => ({ ...s, platform: v }))}
             placeholder="—"
-            options={platformsForType(state.type).map((p) => ({ value: p.value, label: p.label }))}
+            options={platformsForType(state.type).map((p) => ({
+              value: p.value,
+              label: safeT(tPlatform, p.value, p.label),
+            }))}
           />
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center gap-1.5">
-            <Label htmlFor="pillar">Pilier de contenu</Label>
+            <Label htmlFor="pillar">{t("pillar")}</Label>
             <PillarHelp />
           </div>
           <SelectWithCreate
@@ -107,12 +126,12 @@ export function PlanTab({
             value={state.pillar}
             onValueChange={(v) => setState((s) => ({ ...s, pillar: v }))}
             options={brandPillars.map((p) => ({ value: p.name, label: p.name }))}
-            placeholder="Choisir un pilier"
-            inputLabel="Nom du pilier"
-            inputPlaceholder="Ex : Marketing digital"
-            createDialogTitle="Nouveau pilier"
-            createDialogDescription="Disponible pour toutes les vidéos de cette marque."
-            createLabel="Ajouter le pilier"
+            placeholder={t("pillarPlaceholder")}
+            inputLabel={t("pillar")}
+            inputPlaceholder={t("pillarPlaceholder")}
+            createDialogTitle={t("pillar")}
+            createDialogDescription=""
+            createLabel={t("pillar")}
             onCreate={async (name) =>
               createTaxonomy("pillar", content.brand_id, name)
             }
@@ -120,18 +139,18 @@ export function PlanTab({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="objective">Objectif</Label>
+          <Label htmlFor="objective">{t("objective")}</Label>
           <SelectWithCreate
             id="objective"
             value={state.objective}
             onValueChange={(v) => setState((s) => ({ ...s, objective: v }))}
             options={brandObjectives.map((o) => ({ value: o.name, label: o.name }))}
-            placeholder="Choisir un objectif"
-            inputLabel="Nom de l'objectif"
+            placeholder={t("objective")}
+            inputLabel={t("objective")}
             inputPlaceholder="Ex : Lead generation"
-            createDialogTitle="Nouvel objectif"
-            createDialogDescription="Disponible pour toutes les vidéos de cette marque."
-            createLabel="Ajouter l'objectif"
+            createDialogTitle={t("objective")}
+            createDialogDescription=""
+            createLabel={t("objective")}
             onCreate={async (name) =>
               createTaxonomy("objective", content.brand_id, name)
             }
@@ -139,7 +158,7 @@ export function PlanTab({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="date">Date prévue</Label>
+          <Label htmlFor="date">{t("date")}</Label>
           <Input
             id="date"
             type="date"
@@ -148,12 +167,15 @@ export function PlanTab({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="status">Statut</Label>
+          <Label htmlFor="status">{t("status")}</Label>
           <Select
             id="status"
             value={state.status}
             onValueChange={(v) => setState((s) => ({ ...s, status: v }))}
-            options={STATUSES.map((s) => ({ value: s.value, label: s.label }))}
+            options={STATUSES.map((s) => ({
+              value: s.value,
+              label: safeT(tStatus, s.value, s.label),
+            }))}
           />
         </div>
       </div>
@@ -161,7 +183,7 @@ export function PlanTab({
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Label htmlFor="hook">Accroche</Label>
+            <Label htmlFor="hook">{t("hook")}</Label>
             <CommentButton targetType="plan" targetId="hook" />
           </div>
           <HooksPickerButton
@@ -172,30 +194,30 @@ export function PlanTab({
           id="hook"
           value={state.hook}
           onChange={(e) => setState((s) => ({ ...s, hook: e.target.value }))}
-          placeholder="La première phrase qui arrête le scroll."
+          placeholder={t("hookPlaceholder")}
         />
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <Label htmlFor="cta">Appel à l&apos;action</Label>
+          <Label htmlFor="cta">{t("cta")}</Label>
           <CommentButton targetType="plan" targetId="cta" />
         </div>
         <Input
           id="cta"
           value={state.cta}
           onChange={(e) => setState((s) => ({ ...s, cta: e.target.value }))}
-          placeholder="Abonne-toi / Commente / Télécharge..."
+          placeholder={t("ctaPlaceholder")}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="tags">Tags (séparés par des virgules)</Label>
+        <Label htmlFor="tags">{t("tags")}</Label>
         <Input
           id="tags"
           value={state.tags}
           onChange={(e) => setState((s) => ({ ...s, tags: e.target.value }))}
-          placeholder="marketing, débutant, conseils"
+          placeholder={t("tagsPlaceholder")}
         />
       </div>
     </Card>

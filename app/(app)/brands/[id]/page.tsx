@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Layers, Target, Users } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { TaxonomyManager } from "./taxonomy-manager";
@@ -83,6 +84,8 @@ export default async function BrandDetailPage({
   const invitations = (invitationsRes.data ?? []) as InvitationRow[];
   const myRole = (selfMembershipRes.data?.role ?? "viewer") as BrandRole;
 
+  const t = await getTranslations("brandDetail");
+
   return (
     <div className="space-y-6">
       <Link
@@ -90,25 +93,21 @@ export default async function BrandDetailPage({
         className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
       >
         <ArrowLeft className="size-4 rtl-flip" />
-        Toutes les marques
+        {t("backToAll")}
       </Link>
 
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{brand.name}</h1>
-        <p className="text-sm text-muted">
-          Configure les piliers et objectifs, et gère ton équipe pour cette marque.
-        </p>
+        <p className="text-sm text-muted">{t("subtitle")}</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="size-4 text-accent" />
-            Équipe
+            {t("team.title")}
           </CardTitle>
-          <CardDescription>
-            Les personnes qui peuvent voir et modifier les vidéos de cette marque.
-          </CardDescription>
+          <CardDescription>{t("team.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <TeamSection
@@ -125,21 +124,18 @@ export default async function BrandDetailPage({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Layers className="size-4 text-accent" />
-            Piliers de contenu
+            {t("pillars.title")}
           </CardTitle>
-          <CardDescription>
-            Les thématiques récurrentes de la marque. Tu les retrouveras dans le menu
-            « Pilier » lors de la création d&apos;une vidéo.
-          </CardDescription>
+          <CardDescription>{t("pillars.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <TaxonomyManager
             kind="pillar"
             brandId={brand.id}
             items={pillars}
-            emptyLabel="Aucun pilier pour le moment. Ex : Marketing digital, Productivité, Personal branding..."
-            inputPlaceholder="Ex : Marketing digital"
-            addLabel="Ajouter un pilier"
+            emptyLabel={t("pillars.empty")}
+            inputPlaceholder={t("pillars.placeholder")}
+            addLabel={t("pillars.add")}
           />
         </CardContent>
       </Card>
@@ -148,21 +144,18 @@ export default async function BrandDetailPage({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="size-4 text-accent" />
-            Objectifs
+            {t("objectives.title")}
           </CardTitle>
-          <CardDescription>
-            Les objectifs business possibles pour les vidéos. Ajoute ceux qui
-            correspondent à cette marque.
-          </CardDescription>
+          <CardDescription>{t("objectives.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <TaxonomyManager
             kind="objective"
             brandId={brand.id}
             items={objectives}
-            emptyLabel="Aucun objectif. Ex : Éducation, Vente, Notoriété..."
-            inputPlaceholder="Ex : Lead generation"
-            addLabel="Ajouter un objectif"
+            emptyLabel={t("objectives.empty")}
+            inputPlaceholder={t("objectives.placeholder")}
+            addLabel={t("objectives.add")}
           />
         </CardContent>
       </Card>

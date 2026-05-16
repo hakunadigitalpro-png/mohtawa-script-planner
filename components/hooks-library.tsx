@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Copy, Check, Search, Wand2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,14 +16,26 @@ import {
 
 export function HooksLibrary({
   onPick,
-  pickLabel = "Utiliser",
+  pickLabel,
 }: {
   onPick?: (text: string) => void;
   pickLabel?: string;
 }) {
+  const t = useTranslations("hooks");
+  const tCommon = useTranslations("common");
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<HookCategory | "all">("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const safeT = (key: string, fallback: string) => {
+    try {
+      return t(`categories.${key}`);
+    } catch {
+      return fallback;
+    }
+  };
+
+  const finalPickLabel = pickLabel ?? t("use");
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -48,7 +61,7 @@ export function HooksLibrary({
       <div className="relative">
         <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
         <Input
-          placeholder="Rechercher une accroche..."
+          placeholder={t("searchPlaceholder")}
           className="ps-9"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -57,7 +70,7 @@ export function HooksLibrary({
 
       <div className="flex flex-wrap gap-2">
         <CategoryChip active={cat === "all"} onClick={() => setCat("all")}>
-          ✨ Toutes ({HOOKS.length})
+          {t("allCategories", { count: HOOKS.length })}
         </CategoryChip>
         {HOOK_CATEGORIES.map((c) => {
           const count = HOOKS.filter((h) => h.category === c.value).length;
@@ -67,7 +80,7 @@ export function HooksLibrary({
               active={cat === c.value}
               onClick={() => setCat(c.value)}
             >
-              {c.emoji} {c.label} ({count})
+              {c.emoji} {safeT(c.value, c.label)} ({count})
             </CategoryChip>
           );
         })}
@@ -75,7 +88,7 @@ export function HooksLibrary({
 
       {filtered.length === 0 ? (
         <Card className="p-8 text-center text-sm text-muted">
-          Aucune accroche trouvée. Essaye d&apos;autres mots-clés.
+          {t("noResults")}
         </Card>
       ) : (
         <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -91,7 +104,7 @@ export function HooksLibrary({
                     size="sm"
                     variant="outline"
                     onClick={() => handleCopy(h.id, h.text)}
-                    aria-label="Copier"
+                    aria-label={tCommon("copy")}
                   >
                     {copiedId === h.id ? (
                       <Check className="size-3.5" />
@@ -103,10 +116,10 @@ export function HooksLibrary({
                     <Button
                       size="sm"
                       onClick={() => onPick(h.text)}
-                      aria-label="Utiliser cette accroche"
+                      aria-label={finalPickLabel}
                     >
                       <Wand2 className="size-3.5" />
-                      {pickLabel}
+                      {finalPickLabel}
                     </Button>
                   )}
                 </div>

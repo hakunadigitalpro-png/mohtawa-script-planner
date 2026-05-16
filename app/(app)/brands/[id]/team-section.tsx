@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Copy,
   Link2,
@@ -53,26 +54,15 @@ type Invitation = {
   expires_at: string;
 };
 
-const ROLE_LABEL: Record<BrandRole, string> = {
-  owner: "Propriétaire",
-  admin: "Administrateur",
-  editor: "Éditeur",
-  viewer: "Lecteur",
-};
-
-const ROLE_DESCRIPTION: Record<BrandRole, string> = {
-  owner: "Tout faire, y compris supprimer la marque",
-  admin: "Tout faire sauf supprimer la marque",
-  editor: "Créer et modifier les vidéos",
-  viewer: "Consulter uniquement (lecture seule)",
-};
-
 const ROLE_ICON: Record<BrandRole, React.ComponentType<{ className?: string }>> = {
   owner: Crown,
   admin: Shield,
   editor: Pencil,
   viewer: Eye,
 };
+
+const ROLES: BrandRole[] = ["owner", "admin", "editor", "viewer"];
+const INVITABLE_ROLES: BrandRole[] = ["admin", "editor", "viewer"];
 
 export function TeamSection({
   brandId,
@@ -87,6 +77,7 @@ export function TeamSection({
   members: Member[];
   invitations: Invitation[];
 }) {
+  const t = useTranslations("team");
   const canManage = currentUserRole === "owner" || currentUserRole === "admin";
   const [inviteOpen, setInviteOpen] = useState(false);
 
@@ -94,13 +85,10 @@ export function TeamSection({
     <div className="space-y-6">
       {canManage && (
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-muted">
-            Invite ton équipe avec un lien à copier et envoyer où tu veux
-            (WhatsApp, mail, Slack…). Chaque lien expire au bout de 30 jours.
-          </p>
+          <p className="text-sm text-muted">{t("intro")}</p>
           <Button onClick={() => setInviteOpen(true)} size="sm">
             <Plus className="size-3.5" />
-            Créer un lien d&apos;invitation
+            {t("createLink")}
           </Button>
         </div>
       )}
@@ -143,14 +131,15 @@ function MembersList({
   canManage: boolean;
   members: Member[];
 }) {
+  const t = useTranslations("team");
   return (
     <div className="overflow-hidden rounded-2xl border border-border/60 bg-card">
       <table className="w-full text-sm">
         <thead className="border-b border-border/60 bg-secondary/30 text-xs uppercase tracking-wide text-muted">
           <tr>
-            <th className="px-4 py-2.5 text-start font-medium">Membre</th>
-            <th className="px-4 py-2.5 text-start font-medium">Rôle</th>
-            <th className="px-4 py-2.5 text-start font-medium">Depuis</th>
+            <th className="px-4 py-2.5 text-start font-medium">{t("memberHeader")}</th>
+            <th className="px-4 py-2.5 text-start font-medium">{t("roleHeader")}</th>
+            <th className="px-4 py-2.5 text-start font-medium">{t("joinedHeader")}</th>
             <th className="px-4 py-2.5"></th>
           </tr>
         </thead>
@@ -181,6 +170,8 @@ function MemberRow({
   isSelf: boolean;
   canManage: boolean;
 }) {
+  const t = useTranslations("team");
+  const tRoles = useTranslations("team.roles");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -203,8 +194,8 @@ function MemberRow({
 
   const onRemove = () => {
     const message = isSelf
-      ? `Quitter cette marque ?\n\nTu perdras l'accès à toutes les vidéos.`
-      : `Retirer ${member.email} de la marque ?`;
+      ? t("leaveConfirm")
+      : t("removeConfirm", { email: member.email });
     if (!confirm(message)) return;
     setError(null);
     startTransition(async () => {
@@ -232,7 +223,7 @@ function MemberRow({
             <div className="font-medium text-foreground">
               {member.email}
               {isSelf && (
-                <span className="ms-2 text-xs text-muted">(toi)</span>
+                <span className="ms-2 text-xs text-muted">{t("selfSuffix")}</span>
               )}
             </div>
           </div>
@@ -244,15 +235,13 @@ function MemberRow({
             value={member.role}
             onValueChange={(v) => onRoleChange(v as BrandRole)}
             disabled={pending}
-            options={(["owner", "admin", "editor", "viewer"] as BrandRole[]).map(
-              (r) => ({ value: r, label: ROLE_LABEL[r] }),
-            )}
+            options={ROLES.map((r) => ({ value: r, label: tRoles(r) }))}
             className="w-40"
           />
         ) : (
           <Badge className="gap-1.5 bg-secondary text-foreground">
             <RoleIcon className="size-3" />
-            {ROLE_LABEL[member.role]}
+            {tRoles(member.role)}
           </Badge>
         )}
         {error && (
@@ -271,12 +260,12 @@ function MemberRow({
             onClick={onRemove}
             disabled={pending}
             className="text-muted hover:text-destructive"
-            aria-label={isSelf ? "Quitter" : "Retirer"}
+            aria-label={isSelf ? t("leave") : t("remove")}
           >
             {isSelf ? (
               <>
                 <LogOut className="size-3.5" />
-                Quitter
+                {t("leave")}
               </>
             ) : (
               <Trash2 className="size-3.5" />
@@ -300,10 +289,11 @@ function InvitationsList({
   invitations: Invitation[];
   canManage: boolean;
 }) {
+  const t = useTranslations("team");
   return (
     <div className="space-y-2">
       <h3 className="text-sm font-semibold text-foreground">
-        Invitations en attente ({invitations.length})
+        {t("pendingTitle", { count: invitations.length })}
       </h3>
       <div className="space-y-2">
         {invitations.map((inv) => (
@@ -328,6 +318,9 @@ function InvitationRow({
   invitation: Invitation;
   canManage: boolean;
 }) {
+  const t = useTranslations("team");
+  const tRoles = useTranslations("team.roles");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -349,7 +342,7 @@ function InvitationRow({
   };
 
   const onRevoke = () => {
-    if (!confirm("Révoquer cette invitation ?\n\nLe lien ne fonctionnera plus.")) return;
+    if (!confirm(t("revokeConfirm"))) return;
     startTransition(async () => {
       const res = await revokeBrandInvitation(invitation.id, brandId);
       if ("ok" in res && res.ok) router.refresh();
@@ -361,13 +354,13 @@ function InvitationRow({
       <Link2 className="size-4 shrink-0 text-muted" />
       <Badge className="gap-1.5 bg-secondary text-foreground">
         <RoleIcon className="size-3" />
-        {ROLE_LABEL[invitation.role]}
+        {tRoles(invitation.role)}
       </Badge>
       {invitation.note && (
         <span className="text-muted">— {invitation.note}</span>
       )}
       <span className="text-xs text-muted">
-        expire le {formatDateFr(new Date(invitation.expires_at))}
+        {t("expiresOn", { date: formatDateFr(new Date(invitation.expires_at)) })}
       </span>
       <div className="ms-auto flex items-center gap-1.5">
         <Button
@@ -378,11 +371,11 @@ function InvitationRow({
         >
           {copied ? (
             <>
-              <Check className="size-3.5" /> Copié
+              <Check className="size-3.5" /> {t("copied")}
             </>
           ) : (
             <>
-              <Copy className="size-3.5" /> Copier le lien
+              <Copy className="size-3.5" /> {t("copyLink")}
             </>
           )}
         </Button>
@@ -394,7 +387,7 @@ function InvitationRow({
             onClick={onRevoke}
             disabled={pending}
             className="text-muted hover:text-destructive"
-            aria-label="Révoquer"
+            aria-label={tCommon("delete")}
           >
             <Trash2 className="size-3.5" />
           </Button>
@@ -416,6 +409,11 @@ function InviteDialog({
   onClose: () => void;
   brandId: string;
 }) {
+  const t = useTranslations("team");
+  const tDialog = useTranslations("team.dialog");
+  const tRoles = useTranslations("team.roles");
+  const tRoleDescriptions = useTranslations("team.roleDescriptions");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [role, setRole] = useState<BrandRole>("editor");
   const [note, setNote] = useState("");
@@ -469,11 +467,9 @@ function InviteDialog({
     <Dialog open={open} onOpenChange={onClose_}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Créer un lien d&apos;invitation</DialogTitle>
+          <DialogTitle>{tDialog("title")}</DialogTitle>
           <DialogDescription>
-            {generated
-              ? "Le lien est prêt. Copie-le et envoie-le à la personne que tu veux inviter."
-              : "Choisis le rôle que la personne aura quand elle rejoindra."}
+            {generated ? tDialog("subtitleDone") : tDialog("subtitleForm")}
           </DialogDescription>
         </DialogHeader>
 
@@ -485,23 +481,20 @@ function InviteDialog({
                   {generated.link}
                 </div>
               </div>
-              <p className="text-xs text-muted">
-                Tu peux toujours retrouver ce lien plus tard dans la liste « Invitations
-                en attente » en bas de cette page.
-              </p>
+              <p className="text-xs text-muted">{tDialog("linkHint")}</p>
             </DialogBody>
             <DialogFooter>
               <Button variant="outline" onClick={onClose_}>
-                Fermer
+                {tDialog("close")}
               </Button>
               <Button onClick={onCopy}>
                 {copied ? (
                   <>
-                    <Check className="size-4" /> Lien copié
+                    <Check className="size-4" /> {t("copied")}
                   </>
                 ) : (
                   <>
-                    <Copy className="size-4" /> Copier le lien
+                    <Copy className="size-4" /> {t("copyLink")}
                   </>
                 )}
               </Button>
@@ -511,33 +504,28 @@ function InviteDialog({
           <form onSubmit={onSubmit}>
             <DialogBody className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="invite-role">Rôle</Label>
+                <Label htmlFor="invite-role">{tDialog("role")}</Label>
                 <Select
                   id="invite-role"
                   value={role}
                   onValueChange={(v) => setRole(v as BrandRole)}
-                  options={(["admin", "editor", "viewer"] as BrandRole[]).map(
-                    (r) => ({ value: r, label: ROLE_LABEL[r] }),
-                  )}
+                  options={INVITABLE_ROLES.map((r) => ({
+                    value: r,
+                    label: tRoles(r),
+                  }))}
                 />
-                <p className="text-xs text-muted">
-                  {ROLE_DESCRIPTION[role]}
-                </p>
+                <p className="text-xs text-muted">{tRoleDescriptions(role)}</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="invite-note">
-                  Note (optionnel)
-                </Label>
+                <Label htmlFor="invite-note">{tDialog("note")}</Label>
                 <Input
                   id="invite-note"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Ex : pour Sami (monteur)"
+                  placeholder={tDialog("notePlaceholder")}
                   maxLength={80}
                 />
-                <p className="text-xs text-muted">
-                  Pour t&apos;aider à te souvenir à qui ce lien est destiné.
-                </p>
+                <p className="text-xs text-muted">{tDialog("noteHint")}</p>
               </div>
               {error && (
                 <p className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
@@ -547,10 +535,10 @@ function InviteDialog({
             </DialogBody>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose_}>
-                Annuler
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={pending}>
-                {pending ? "Génération…" : "Générer le lien"}
+                {pending ? tDialog("generating") : tDialog("generate")}
               </Button>
             </DialogFooter>
           </form>

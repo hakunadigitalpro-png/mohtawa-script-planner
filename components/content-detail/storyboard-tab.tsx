@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export function StoryboardTab({
   contentId: string;
   scenes: StoryboardScene[];
 }) {
+  const t = useTranslations("storyboard");
   const [scenes, setScenes] = useState(initialScenes);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -73,10 +75,8 @@ export function StoryboardTab({
     <Card className="space-y-5 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold">Storyboard</h2>
-          <p className="text-xs text-muted">
-            Dessine les plans avant de tourner. Glisse les cartes pour réorganiser.
-          </p>
+          <h2 className="text-base font-semibold">{t("title")}</h2>
+          <p className="text-xs text-muted">{t("subtitle")}</p>
         </div>
         <Button
           size="sm"
@@ -84,14 +84,14 @@ export function StoryboardTab({
           disabled={pending}
         >
           <Plus className="size-4" />
-          Ajouter une scène
+          {t("addScene")}
         </Button>
       </div>
 
       {scenes.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-10 text-center">
-          <p className="text-sm font-medium">Aucune scène pour le moment.</p>
-          <p className="mt-1 text-xs text-muted">Clique sur « Ajouter une scène » pour commencer.</p>
+          <p className="text-sm font-medium">{t("emptyTitle")}</p>
+          <p className="mt-1 text-xs text-muted">{t("emptySubtitle")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -137,6 +137,7 @@ function SceneCard({
   index: number;
   contentId: string;
 }) {
+  const t = useTranslations("storyboard");
   const [state, setState] = useState({
     description: scene.description ?? "",
     camera_angle: scene.camera_angle ?? "",
@@ -167,7 +168,7 @@ function SceneCard({
         <div className="flex items-center gap-1.5">
           <GripVertical className="size-3.5 cursor-grab text-muted active:cursor-grabbing" />
           <span className="text-xs font-bold uppercase tracking-wider text-muted">
-            Plan {String(index + 1).padStart(2, "0")}
+            {t("planNumber", { n: String(index + 1).padStart(2, "0") })}
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -179,7 +180,7 @@ function SceneCard({
             }
             disabled={pending}
             className="rounded-full p-1 text-muted hover:bg-destructive/10 hover:text-destructive"
-            aria-label="Supprimer la scène"
+            aria-label={t("deleteScene")}
           >
             <Trash2 className="size-3.5" />
           </button>
@@ -196,45 +197,45 @@ function SceneCard({
             setState(next);
             save(next);
           }}
-          label="Image du plan"
+          label={t("fields.action")}
         />
 
         <div className="space-y-1.5">
           <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
-            Action / Dialogue
+            {t("fields.action")}
           </Label>
           <Textarea
             className="min-h-16 text-sm"
             value={state.description}
             onChange={(e) => setState((s) => ({ ...s, description: e.target.value }))}
             onBlur={() => save(state)}
-            placeholder="Ce qui se passe / ce qui est dit"
+            placeholder={t("fields.actionPlaceholder")}
           />
         </div>
 
         <div className="space-y-1.5">
           <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
-            Caméra / Plan
+            {t("fields.camera")}
           </Label>
           <Input
             className="h-9 text-sm"
             value={state.camera_angle}
             onChange={(e) => setState((s) => ({ ...s, camera_angle: e.target.value }))}
             onBlur={() => save(state)}
-            placeholder="Plan large, Gros plan..."
+            placeholder={t("fields.cameraPlaceholder")}
           />
         </div>
 
         <div className="space-y-1.5">
           <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
-            Texte affiché
+            {t("fields.onScreenText")}
           </Label>
           <Input
             className="h-9 text-sm"
             value={state.on_screen_text}
             onChange={(e) => setState((s) => ({ ...s, on_screen_text: e.target.value }))}
             onBlur={() => save(state)}
-            placeholder="Texte qui apparaît à l'écran"
+            placeholder={t("fields.onScreenTextPlaceholder")}
           />
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ export function PerformanceTab({
   contentId: string;
   perf: Performance | null;
 }) {
+  const t = useTranslations("performance");
   const [state, setState] = useState({
     views: perf?.views?.toString() ?? "",
     likes: perf?.likes?.toString() ?? "",
@@ -55,29 +57,29 @@ export function PerformanceTab({
     <Card className="space-y-5 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold">Résultats</h2>
-          <p className="text-xs text-muted">Ce que tu mesures, tu peux l&apos;améliorer.</p>
+          <h2 className="text-base font-semibold">{t("title")}</h2>
+          <p className="text-xs text-muted">{t("subtitle")}</p>
         </div>
         <AutosaveIndicator status={status} />
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        {num("views", "Vues")}
-        {num("likes", "Likes")}
-        {num("comments", "Commentaires")}
-        {num("shares", "Partages")}
-        {num("saves", "Sauvegardes")}
-        {num("retention", "Rétention (%)")}
+        {num("views", t("views"))}
+        {num("likes", t("likes"))}
+        {num("comments", t("comments"))}
+        {num("shares", t("shares"))}
+        {num("saves", t("saves"))}
+        {num("retention", t("retention"))}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Analyse personnelle</Label>
+        <Label htmlFor="notes">{t("notes")}</Label>
         <Textarea
           id="notes"
           className="min-h-32"
           value={state.notes}
           onChange={(e) => setState((s) => ({ ...s, notes: e.target.value }))}
-          placeholder="Qu'est-ce qui a fonctionné ? Que modifier la prochaine fois ?"
+          placeholder={t("notesPlaceholder")}
         />
       </div>
     </Card>

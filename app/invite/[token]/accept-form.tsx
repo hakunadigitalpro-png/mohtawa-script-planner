@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { acceptBrandInvitation } from "@/app/(app)/brands/team-actions";
@@ -13,6 +14,7 @@ export function AcceptInviteForm({
   token: string;
   brandId: string;
 }) {
+  const t = useTranslations("invite");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -36,11 +38,11 @@ export function AcceptInviteForm({
     <div className="space-y-2">
       <Button onClick={onAccept} disabled={pending} className="w-full">
         {pending ? (
-          "Acceptation…"
+          t("accepting")
         ) : (
           <>
             <Check className="size-4" />
-            Accepter l&apos;invitation
+            {t("accept")}
           </>
         )}
       </Button>

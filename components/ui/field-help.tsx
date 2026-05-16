@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { Info, PlayCircle } from "lucide-react";
 import {
   Dialog,
@@ -73,6 +74,7 @@ export function FieldHelp({
 }
 
 function VideoLink({ url }: { url: string }) {
+  const t = useTranslations("fieldHelp");
   // On reste sur un simple lien externe (pas d'iframe) :
   // - plus léger, pas de cookies YouTube imposés à l'user
   // - ouvre dans un nouvel onglet → l'user peut continuer à lire l'aide
@@ -88,10 +90,10 @@ function VideoLink({ url }: { url: string }) {
       </span>
       <span className="flex-1">
         <span className="block text-sm font-semibold text-foreground">
-          Voir la vidéo explicative
+          {t("videoCta")}
         </span>
         <span className="block text-xs text-muted">
-          Ouvre YouTube dans un nouvel onglet
+          {t("videoCtaSub")}
         </span>
       </span>
     </a>

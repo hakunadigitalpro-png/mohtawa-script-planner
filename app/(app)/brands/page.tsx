@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { BrandsList } from "./brands-list";
@@ -14,6 +15,7 @@ type BrandWithRole = {
 
 export default async function BrandsPage() {
   const supabase = await createClient();
+  const t = await getTranslations("brands");
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -46,21 +48,16 @@ export default async function BrandsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Mes marques</h1>
-          <p className="text-sm text-muted">
-            Gère les espaces de travail rattachés à ton compte.
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
         <CreateBrandButton />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{brands.length} marque{brands.length > 1 ? "s" : ""}</CardTitle>
-          <CardDescription>
-            Clique sur une marque (ou sur « Gérer ») pour accéder à son équipe, ses piliers de contenu
-            et ses objectifs. Tu peux aussi la renommer ou la supprimer ici.
-          </CardDescription>
+          <CardTitle>{t("countTitle", { count: brands.length })}</CardTitle>
+          <CardDescription>{t("countSubtitle")}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <BrandsList brands={brands} currentUserId={user.id} />

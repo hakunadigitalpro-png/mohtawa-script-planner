@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, FileDown } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { Badge, ColorDot } from "@/components/ui/badge";
 import {
@@ -103,14 +104,39 @@ export default async function ContentDetailPage({
 
   const c = content as Content;
 
+  const tContent = await getTranslations("content");
+  const tCommon = await getTranslations("common");
+  const tStoryboard = await getTranslations("storyboard");
+  const tStories = await getTranslations("stories");
+  const tTabs = await getTranslations("tabs");
+  const tType = await getTranslations("contentTypes");
+  const tStatus = await getTranslations("statuses");
+
+  const safeT = (fn: (k: string) => string, key: string, fallback: string) => {
+    try {
+      return fn(key);
+    } catch {
+      return fallback;
+    }
+  };
+
   // Construction du dictionnaire target labels pour la sidebar des commentaires.
   // (Le mapping UUID → numéro de scène est calculable ici, depuis les scenes.)
   const targetLabels: Record<string, string> = {};
   scenes.forEach((s) => {
-    targetLabels[`scene:${s.id}`] = `Storyboard · Plan ${String(s.scene_number).padStart(2, "0")}`;
+    const planLabel = tStoryboard("planNumber", {
+      n: String(s.scene_number).padStart(2, "0"),
+    });
+    targetLabels[`scene:${s.id}`] = `${tTabs("storyboard")} · ${planLabel}`;
   });
   for (let i = 1; i <= 5; i++) {
-    targetLabels[`slide:${i}`] = `Story · Slot ${i}`;
+    const slotLabel =
+      i === 1
+        ? tStories("slotLabels.title")
+        : i === 5
+          ? tStories("slotLabels.cta")
+          : tStories("slotLabels.default", { n: i });
+    targetLabels[`slide:${i}`] = `${tTabs("stories")} · ${slotLabel}`;
   }
 
   return (
@@ -127,7 +153,7 @@ export default async function ContentDetailPage({
             className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
           >
             <ArrowLeft className="size-4 rtl-flip" />
-            Retour
+            {tCommon("back")}
           </Link>
           <div className="flex items-center gap-2">
             <CommentsInboxButton />
@@ -139,7 +165,7 @@ export default async function ContentDetailPage({
               className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold hover:bg-secondary"
             >
               <FileDown className="size-3.5" />
-              Exporter PDF
+              {tContent("exportPdf")}
             </Link>
             <DeleteContentButton contentId={c.id} />
           </div>
@@ -148,16 +174,18 @@ export default async function ContentDetailPage({
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <ColorDot color={typeColor(c.type)} />
-            <span className="font-medium text-muted">{typeLabel(c.type)}</span>
+            <span className="font-medium text-muted">
+              {safeT(tType, c.type, typeLabel(c.type))}
+            </span>
             <Badge
               className="ms-1 text-white"
               style={{ background: statusColor(c.status) }}
             >
-              {statusLabel(c.status)}
+              {safeT(tStatus, c.status, statusLabel(c.status))}
             </Badge>
           </div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {c.title || "Sans titre"}
+            {c.title || tContent("untitled")}
           </h1>
         </div>
 

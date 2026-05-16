@@ -1,6 +1,7 @@
 "use client";
 
 import { MessageSquare } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useComments } from "./comments-provider";
 
@@ -9,6 +10,7 @@ import { useComments } from "./comments-provider";
  * inbox globale et montre un badge rouge si des commentaires sont non lus.
  */
 export function CommentsInboxButton() {
+  const t = useTranslations("comments");
   const { unreadCount, openInbox } = useComments();
 
   return (
@@ -20,7 +22,7 @@ export function CommentsInboxButton() {
       className="relative"
     >
       <MessageSquare className="size-3.5" />
-      Commentaires
+      {t("headerButton")}
       {unreadCount > 0 && (
         <span className="absolute -end-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-bold text-accent-foreground">
           {unreadCount > 99 ? "99+" : unreadCount}

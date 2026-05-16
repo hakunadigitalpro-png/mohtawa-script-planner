@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Sparkles, RefreshCcw, Wand2 } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +36,7 @@ export function AiGeneratorButton({
   defaultTopic?: string;
   platform?: string;
 }) {
+  const t = useTranslations("ai");
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -45,7 +47,7 @@ export function AiGeneratorButton({
         onClick={() => setOpen(true)}
       >
         <Sparkles className="size-3.5 text-amber-500" />
-        Générer avec l&apos;IA
+        {t("buttonLabel")}
       </Button>
       {open && (
         <AiGeneratorModal
@@ -73,6 +75,8 @@ function AiGeneratorModal({
   platform?: string;
   onClose: () => void;
 }) {
+  const t = useTranslations("ai");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [topic, setTopic] = useState(defaultTopic ?? "");
   const [audience, setAudience] = useState("");
@@ -89,7 +93,7 @@ function AiGeneratorModal({
 
   const generate = () => {
     if (!topic.trim()) {
-      setError("Indique un sujet pour générer.");
+      setError(t("errorTopic"));
       return;
     }
     setError(null);
@@ -156,34 +160,32 @@ function AiGeneratorModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="size-4 text-amber-500" />
-            Générer {type === "reel" ? "le script de ton Reel" : "ta séquence Story"} avec l&apos;IA
+            {type === "reel" ? t("reelTitle") : t("storyTitle")}
           </DialogTitle>
-          <DialogDescription>
-            Donne-moi un sujet, je m&apos;occupe du reste. Tu pourras tout éditer après.
-          </DialogDescription>
+          <DialogDescription>{t("subtitle")}</DialogDescription>
         </DialogHeader>
 
         <DialogBody className="space-y-4">
           {!hasPreview && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="ai-topic">Sujet de la vidéo</Label>
+                <Label htmlFor="ai-topic">{t("topic")}</Label>
                 <Textarea
                   id="ai-topic"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  placeholder="Ex : Les 3 erreurs que font les créateurs débutants sur Instagram"
+                  placeholder={t("topicPlaceholder")}
                   className="min-h-20"
                   autoFocus
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="ai-audience">Audience cible (optionnel)</Label>
+                <Label htmlFor="ai-audience">{t("audience")}</Label>
                 <Input
                   id="ai-audience"
                   value={audience}
                   onChange={(e) => setAudience(e.target.value)}
-                  placeholder="Ex : entrepreneurs solo, marketeurs B2B, étudiants..."
+                  placeholder={t("audiencePlaceholder")}
                 />
               </div>
             </>
@@ -203,17 +205,17 @@ function AiGeneratorModal({
           {!hasPreview ? (
             <>
               <Button type="button" variant="outline" onClick={onClose}>
-                Annuler
+                {tCommon("cancel")}
               </Button>
               <Button type="button" onClick={generate} disabled={pending}>
                 <Wand2 className="size-3.5" />
-                {pending ? "Génération..." : "Générer"}
+                {pending ? t("generating") : t("generate")}
               </Button>
             </>
           ) : (
             <>
               <Button type="button" variant="ghost" onClick={onClose}>
-                Annuler
+                {tCommon("cancel")}
               </Button>
               <Button
                 type="button"
@@ -225,10 +227,10 @@ function AiGeneratorModal({
                 disabled={pending}
               >
                 <RefreshCcw className="size-3.5" />
-                Régénérer
+                {t("regenerate")}
               </Button>
               <Button type="button" onClick={apply} disabled={pending}>
-                {pending ? "Application..." : "Appliquer au script"}
+                {pending ? t("applying") : t("apply")}
               </Button>
             </>
           )}
@@ -250,32 +252,34 @@ function PreviewField({ label, value }: { label: string; value: string }) {
 }
 
 function ReelPreview({ data }: { data: ReelGeneration }) {
+  const t = useTranslations("ai.preview");
+  const tAi = useTranslations("ai");
   return (
     <div className="space-y-3 rounded-md border border-border bg-secondary/30 p-4">
-      <PreviewField label="Accroche" value={data.hook} />
-      <PreviewField label="Introduction" value={data.intro} />
-      <PreviewField label="Point 1" value={data.point1} />
-      <PreviewField label="Point 2" value={data.point2} />
-      <PreviewField label="Point 3" value={data.point3} />
-      <PreviewField label="Transition" value={data.transition} />
-      <PreviewField label="Récap" value={data.recap} />
-      <PreviewField label="CTA" value={data.cta} />
-      <PreviewField label="Outro" value={data.outro} />
-      <p className="text-xs text-muted">
-        💡 Tu pourras éditer chaque champ après avoir appliqué.
-      </p>
+      <PreviewField label={t("hook")} value={data.hook} />
+      <PreviewField label={t("intro")} value={data.intro} />
+      <PreviewField label={t("point1")} value={data.point1} />
+      <PreviewField label={t("point2")} value={data.point2} />
+      <PreviewField label={t("point3")} value={data.point3} />
+      <PreviewField label={t("transition")} value={data.transition} />
+      <PreviewField label={t("recap")} value={data.recap} />
+      <PreviewField label={t("cta")} value={data.cta} />
+      <PreviewField label={t("outro")} value={data.outro} />
+      <p className="text-xs text-muted">{tAi("previewHint")}</p>
     </div>
   );
 }
 
 function StoryPreview({ data }: { data: StoryGeneration }) {
+  const t = useTranslations("ai.preview");
+  const tAi = useTranslations("ai");
   return (
     <div className="space-y-3 rounded-md border border-border bg-secondary/30 p-4">
-      <PreviewField label="Objectif" value={data.objective} />
-      <PreviewField label="CTA soft" value={data.cta_soft} />
+      <PreviewField label={t("objective")} value={data.objective} />
+      <PreviewField label={t("ctaSoft")} value={data.cta_soft} />
       <div>
         <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
-          Stories
+          {t("stories")}
         </div>
         <ul className="mt-1 space-y-2">
           {data.slides.map((s) => (
@@ -289,9 +293,7 @@ function StoryPreview({ data }: { data: StoryGeneration }) {
           ))}
         </ul>
       </div>
-      <p className="text-xs text-muted">
-        💡 Tu pourras éditer chaque story et ajouter une image après avoir appliqué.
-      </p>
+      <p className="text-xs text-muted">{tAi("previewStoryHint")}</p>
     </div>
   );
 }

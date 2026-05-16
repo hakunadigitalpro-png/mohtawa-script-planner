@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Pencil, Trash2, Check, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ export function TaxonomyManager({
   addLabel: string;
 }) {
   const router = useRouter();
+  const tCommon = useTranslations("common");
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export function TaxonomyManager({
             className="max-w-xs"
           />
           <Button type="submit" size="sm" disabled={pending}>
-            {pending ? "..." : "Ajouter"}
+            {pending ? "..." : tCommon("create")}
           </Button>
           <Button
             type="button"
@@ -94,7 +96,7 @@ export function TaxonomyManager({
               setError(null);
             }}
           >
-            Annuler
+            {tCommon("cancel")}
           </Button>
         </form>
       ) : (
@@ -127,6 +129,8 @@ function TaxonomyChip({
   brandId: string;
   item: Item;
 }) {
+  const t = useTranslations("brandDetail.taxonomy");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(item.name);
@@ -147,7 +151,7 @@ function TaxonomyChip({
   };
 
   const onDelete = () => {
-    if (!confirm(`Supprimer « ${item.name} » ?\n\nLes vidéos qui l'utilisaient garderont la valeur en texte libre.`)) return;
+    if (!confirm(t("deleteConfirm", { name: item.name }))) return;
     startTransition(async () => {
       const res = await deleteTaxonomy(kind, item.id, brandId);
       if ("error" in res && res.error) setError(res.error);
@@ -194,7 +198,7 @@ function TaxonomyChip({
         type="button"
         onClick={() => setEditing(true)}
         className="flex size-7 items-center justify-center rounded-full text-muted opacity-0 transition hover:bg-secondary hover:text-foreground group-hover:opacity-100"
-        aria-label="Renommer"
+        aria-label={tCommon("rename")}
       >
         <Pencil className="size-3" />
       </button>
@@ -203,7 +207,7 @@ function TaxonomyChip({
         onClick={onDelete}
         disabled={pending}
         className="flex size-7 items-center justify-center rounded-full text-muted opacity-0 transition hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-        aria-label="Supprimer"
+        aria-label={tCommon("delete")}
       >
         <Trash2 className="size-3" />
       </button>

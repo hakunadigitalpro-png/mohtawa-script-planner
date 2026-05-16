@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +19,10 @@ export function HooksPickerButton({
 }: {
   onPick: (text: string) => void;
 }) {
+  const t = useTranslations("hooks");
+  const tPlan = useTranslations("plan");
   const [open, setOpen] = useState(false);
+
   return (
     <>
       <Button
@@ -28,15 +32,13 @@ export function HooksPickerButton({
         onClick={() => setOpen(true)}
       >
         <BookOpen className="size-3.5" />
-        Choisir une accroche
+        {tPlan("pickHook")}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Bibliothèque d&apos;accroches</DialogTitle>
-            <DialogDescription>
-              Clique sur « Utiliser » pour remplacer l&apos;accroche de ta vidéo.
-            </DialogDescription>
+            <DialogTitle>{t("pickerTitle")}</DialogTitle>
+            <DialogDescription>{t("pickerSubtitle")}</DialogDescription>
           </DialogHeader>
           <DialogBody className="max-h-[70vh] overflow-y-auto">
             <HooksLibrary
@@ -44,7 +46,7 @@ export function HooksPickerButton({
                 onPick(text);
                 setOpen(false);
               }}
-              pickLabel="Utiliser"
+              pickLabel={t("use")}
             />
           </DialogBody>
         </DialogContent>

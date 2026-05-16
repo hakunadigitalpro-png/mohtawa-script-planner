@@ -1,6 +1,7 @@
 "use client";
 
 import { MessageSquare, Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useComments } from "./comments-provider";
 import type { CommentTargetType } from "./types";
@@ -26,6 +27,7 @@ export function CommentButton({
   className?: string;
   ariaLabel?: string;
 }) {
+  const t = useTranslations("comments");
   const { openThread, countFor } = useComments();
   const { total, unread, resolved } = countFor(targetType, targetId);
 
@@ -46,7 +48,7 @@ export function CommentButton({
     <button
       type="button"
       onClick={onClick}
-      aria-label={ariaLabel ?? "Voir les commentaires"}
+      aria-label={ariaLabel ?? t("viewComments")}
       className={cn(
         "inline-flex shrink-0 items-center rounded-full border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         sizeClasses,

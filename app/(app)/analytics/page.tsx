@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TrendingUp, BarChart3, Sparkles, Target, Award } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -30,9 +31,9 @@ const getViews = (c: ContentWithPerf) => getPerf(c)?.views ?? 0;
 function monthKey(dateStr: string) {
   return dateStr.slice(0, 7);
 }
-function monthLabel(ym: string) {
+function monthLabel(ym: string, locale: string) {
   const [y, m] = ym.split("-").map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString("fr-FR", {
+  return new Date(y, m - 1, 1).toLocaleDateString(locale === "ar" ? "ar" : "fr-FR", {
     month: "short",
     year: "2-digit",
   });
@@ -75,6 +76,7 @@ function aggregateBy<T extends string>(
 function toRankedItems<T extends string>(
   agg: Map<T, Aggregate>,
   toLabel: (key: T) => string,
+  secondary: (count: number, avg: number) => string,
 ): RankedItem[] {
   return Array.from(agg.entries()).map(([key, { total, count }]) => {
     const avg = count > 0 ? Math.round(total / count) : 0;
@@ -82,7 +84,7 @@ function toRankedItems<T extends string>(
       key,
       label: toLabel(key),
       value: total,
-      secondary: `${count} vidéo${count > 1 ? "s" : ""} · moy. ${fmtCompact(avg)} vues`,
+      secondary: secondary(count, avg),
     };
   });
 }
@@ -90,6 +92,19 @@ function toRankedItems<T extends string>(
 export default async function AnalyticsPage() {
   const { active } = await resolveActiveBrand();
   if (!active) return null;
+
+  const t = await getTranslations("analytics");
+  const tType = await getTranslations("contentTypes");
+  const tPlatform = await getTranslations("platforms");
+  const locale = await getLocale();
+
+  const safeT = (fn: (k: string) => string, key: string, fallback: string) => {
+    try {
+      return fn(key);
+    } catch {
+      return fallback;
+    }
+  };
 
   const supabase = await createClient();
   const { data } = await supabase
@@ -106,15 +121,27 @@ export default async function AnalyticsPage() {
   const byPlatform = aggregateBy(rows, (c) => c.platform);
   const byType = aggregateBy(rows, (c) => c.type);
 
-  const pillarItems = toRankedItems(byPillar, (k) => k);
-  const platformItems = toRankedItems(byPlatform, (k) => platformLabel(k));
-  const typeItems = toRankedItems(byType, (k) => typeLabel(k));
+  const tContent = await getTranslations("content");
+  const secondaryFn = (count: number, avg: number) =>
+    t("rankItemSecondary", { count, avg: fmtCompact(avg) });
+
+  const pillarItems = toRankedItems(byPillar, (k) => k, secondaryFn);
+  const platformItems = toRankedItems(
+    byPlatform,
+    (k) => safeT(tPlatform, k, platformLabel(k)),
+    secondaryFn,
+  );
+  const typeItems = toRankedItems(
+    byType,
+    (k) => safeT(tType, k, typeLabel(k)),
+    secondaryFn,
+  );
 
   // Top 5 vidéos par vues
   const topVideos = rows
     .map((c) => ({
       id: c.id,
-      title: c.title || "Sans titre",
+      title: c.title || tContent("untitled"),
       pillar: c.pillar,
       platform: c.platform,
       type: c.type,
@@ -134,7 +161,7 @@ export default async function AnalyticsPage() {
     viewsByMonth[key] += getViews(c);
   }
   const viewsData: BarPoint[] = months.map((m) => ({
-    label: monthLabel(m),
+    label: monthLabel(m, locale),
     value: viewsByMonth[m] ?? 0,
   }));
 
@@ -146,7 +173,7 @@ export default async function AnalyticsPage() {
     publishedByMonth[key] += 1;
   }
   const publishedData: BarPoint[] = months.map((m) => ({
-    label: monthLabel(m),
+    label: monthLabel(m, locale),
     value: publishedByMonth[m] ?? 0,
   }));
 
@@ -192,9 +219,9 @@ export default async function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-sm text-muted">
-          {active.name} · ce que tu mesures, tu peux l&apos;améliorer.
+          {t("subtitle", { brand: active.name })}
         </p>
       </div>
 
@@ -202,18 +229,18 @@ export default async function AnalyticsPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <KpiCard
           icon={<BarChart3 className="size-4" />}
-          label="Total vues"
+          label={t("kpi.totalViews")}
           value={fmtCompact(totalViews)}
           accent
         />
         <KpiCard
           icon={<TrendingUp className="size-4" />}
-          label="Vidéos publiées"
+          label={t("kpi.publishedVideos")}
           value={String(totalPublished)}
         />
         <KpiCard
           icon={<Sparkles className="size-4" />}
-          label="Vidéos avec stats"
+          label={t("kpi.videosWithStats")}
           value={String(withStats)}
         />
       </div>
@@ -225,13 +252,8 @@ export default async function AnalyticsPage() {
               <BarChart3 className="size-5" />
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold">
-                Pas encore de données de performance
-              </h3>
-              <p className="mt-1 text-xs text-muted">
-                Pour voir tes analytics se remplir, va sur une vidéo publiée et
-                renseigne les <strong>Performances</strong> (vues, likes, partages...).
-              </p>
+              <h3 className="text-sm font-semibold">{t("noDataTitle")}</h3>
+              <p className="mt-1 text-xs text-muted">{t("noDataSubtitle")}</p>
             </div>
           </div>
         </Card>
@@ -244,16 +266,16 @@ export default async function AnalyticsPage() {
             <div>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Target className="size-4 text-amber-500" />
-                Quels sujets performent le mieux ?
+                {t("pillarRanking.title")}
               </CardTitle>
-              <CardDescription>
-                Classement par pilier de contenu — pour savoir de quoi reparler.
-              </CardDescription>
+              <CardDescription>{t("pillarRanking.subtitle")}</CardDescription>
             </div>
             {trendingPillar && (
               <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-                ↗ <span className="font-semibold">{trendingPillar.pillar}</span> en
-                progression (+{fmtCompact(trendingPillar.delta)} vues ce mois)
+                {t("pillarRanking.trendingBadge", {
+                  pillar: trendingPillar.pillar,
+                  delta: fmtCompact(trendingPillar.delta),
+                })}
               </div>
             )}
           </div>
@@ -262,7 +284,7 @@ export default async function AnalyticsPage() {
           <RankedList
             items={pillarItems}
             color="var(--color-reel)"
-            emptyLabel="Renseigne le pilier de contenu sur tes vidéos pour voir le classement."
+            emptyLabel={t("pillarRanking.emptyLabel")}
             format="compact"
           />
         </CardContent>
@@ -272,14 +294,14 @@ export default async function AnalyticsPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Par plateforme</CardTitle>
-            <CardDescription>Où ton contenu marche le mieux.</CardDescription>
+            <CardTitle className="text-base">{t("platformRanking.title")}</CardTitle>
+            <CardDescription>{t("platformRanking.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             <RankedList
               items={platformItems}
               color="var(--color-status-scheduled)"
-              emptyLabel="Aucune plateforme renseignée."
+              emptyLabel={t("platformRanking.emptyLabel")}
               format="compact"
             />
           </CardContent>
@@ -287,17 +309,14 @@ export default async function AnalyticsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Par format</CardTitle>
-            <CardDescription>Reel vs Story — le format qui paie.</CardDescription>
+            <CardTitle className="text-base">{t("typeRanking.title")}</CardTitle>
+            <CardDescription>{t("typeRanking.subtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             <RankedList
-              items={typeItems.map((i) => ({
-                ...i,
-                label: i.label,
-              }))}
+              items={typeItems}
               color="var(--color-story)"
-              emptyLabel="—"
+              emptyLabel={t("typeRanking.emptyLabel")}
               format="compact"
             />
           </CardContent>
@@ -309,14 +328,14 @@ export default async function AnalyticsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Award className="size-4 text-amber-500" />
-            Top 5 vidéos
+            {t("topVideos.title")}
           </CardTitle>
-          <CardDescription>Les vidéos qui ont le plus marché.</CardDescription>
+          <CardDescription>{t("topVideos.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {topVideos.length === 0 ? (
             <div className="px-6 pb-6 text-sm text-muted">
-              Pas encore de vidéo avec des vues renseignées.
+              {t("topVideos.emptyLabel")}
             </div>
           ) : (
             <ol className="divide-y divide-border">
@@ -339,14 +358,18 @@ export default async function AnalyticsPage() {
                           style={{ color: typeColor(v.type) }}
                         >
                           ●{" "}
-                          <span className="text-muted">{typeLabel(v.type)}</span>
+                          <span className="text-muted">
+                            {safeT(tType, v.type, typeLabel(v.type))}
+                          </span>
                         </span>
-                        {v.platform && <span>· {platformLabel(v.platform)}</span>}
+                        {v.platform && (
+                          <span>· {safeT(tPlatform, v.platform, platformLabel(v.platform))}</span>
+                        )}
                         {v.pillar && <span>· {v.pillar}</span>}
                       </div>
                     </div>
                     <div className="shrink-0 text-sm font-semibold tabular-nums">
-                      {fmtCompact(v.views)} vues
+                      {t("topVideos.viewsLabel", { count: fmtCompact(v.views) })}
                     </div>
                   </Link>
                 </li>
@@ -360,8 +383,8 @@ export default async function AnalyticsPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Vues par mois</CardTitle>
-            <CardDescription>Cumul sur les 6 derniers mois</CardDescription>
+            <CardTitle className="text-base">{t("charts.viewsByMonth")}</CardTitle>
+            <CardDescription>{t("charts.viewsByMonthSub")}</CardDescription>
           </CardHeader>
           <CardContent>
             <BarChart data={viewsData} color="var(--color-reel)" format="compact" />
@@ -370,8 +393,8 @@ export default async function AnalyticsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Vidéos publiées par mois</CardTitle>
-            <CardDescription>Évolution de ta cadence</CardDescription>
+            <CardTitle className="text-base">{t("charts.publishedByMonth")}</CardTitle>
+            <CardDescription>{t("charts.publishedByMonthSub")}</CardDescription>
           </CardHeader>
           <CardContent>
             <BarChart data={publishedData} color="var(--color-status-published)" />

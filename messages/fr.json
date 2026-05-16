@@ -342,10 +342,10 @@
   },
   "brands": {
     "title": "Mes marques",
-    "subtitle": "Gère les espaces de travail rattachés à ton compte.",
+    "subtitle": "Clique sur une marque pour accéder à son équipe, ses piliers et ses objectifs.",
     "newBrand": "Nouvelle marque",
     "countTitle": "{count, plural, =0 {Aucune marque} one {# marque} other {# marques}}",
-    "countSubtitle": "Tu peux renommer ou supprimer tes propres marques. La suppression entraîne la perte définitive de toutes les vidéos associées.",
+    "countSubtitle": "Clique sur une marque pour gérer son équipe, ses piliers et objectifs. Tu peux aussi la renommer ou la supprimer.",
     "videosCount": "{count, plural, =0 {Aucune vidéo} one {# vidéo} other {# vidéos}}",
     "emptyList": "Aucune marque pour le moment.",
     "deleteConfirmTitle": "Supprimer « {name} » ?",
@@ -361,6 +361,217 @@
     "noBrandLabel": "—",
     "myBrands": "Mes marques",
     "noBrandFound": "Aucune marque"
+  },
+  "brandDetail": {
+    "backToAll": "Toutes les marques",
+    "subtitle": "Configure les piliers, les objectifs et gère ton équipe pour cette marque.",
+    "team": {
+      "title": "Équipe",
+      "subtitle": "Les personnes qui peuvent voir et modifier les vidéos de cette marque."
+    },
+    "pillars": {
+      "title": "Piliers de contenu",
+      "subtitle": "Les thématiques récurrentes de la marque. Tu les retrouveras dans le menu « Pilier » lors de la création d'une vidéo.",
+      "empty": "Aucun pilier pour le moment. Ex : Marketing digital, Productivité, Personal branding…",
+      "placeholder": "Ex : Marketing digital",
+      "add": "Ajouter un pilier"
+    },
+    "objectives": {
+      "title": "Objectifs",
+      "subtitle": "Les objectifs business possibles pour les vidéos. Ajoute ceux qui correspondent à cette marque.",
+      "empty": "Aucun objectif. Ex : Éducation, Vente, Notoriété…",
+      "placeholder": "Ex : Lead generation",
+      "add": "Ajouter un objectif"
+    },
+    "taxonomy": {
+      "deleteConfirm": "Supprimer « {name} » ?\n\nLes vidéos qui l'utilisaient garderont la valeur en texte libre."
+    }
+  },
+  "team": {
+    "intro": "Invite ton équipe avec un lien à copier et envoyer où tu veux (WhatsApp, mail, Slack…). Chaque lien expire au bout de 30 jours.",
+    "createLink": "Créer un lien d'invitation",
+    "memberHeader": "Membre",
+    "roleHeader": "Rôle",
+    "joinedHeader": "Depuis",
+    "selfSuffix": "(toi)",
+    "leave": "Quitter",
+    "remove": "Retirer",
+    "leaveConfirm": "Quitter cette marque ?\n\nTu perdras l'accès à toutes les vidéos.",
+    "removeConfirm": "Retirer {email} de la marque ?",
+    "pendingTitle": "Invitations en attente ({count})",
+    "expiresOn": "expire le {date}",
+    "copyLink": "Copier le lien",
+    "copied": "Copié",
+    "revokeConfirm": "Révoquer cette invitation ?\n\nLe lien ne fonctionnera plus.",
+    "dialog": {
+      "title": "Créer un lien d'invitation",
+      "subtitleForm": "Choisis le rôle que la personne aura quand elle rejoindra.",
+      "subtitleDone": "Le lien est prêt. Copie-le et envoie-le à la personne que tu veux inviter.",
+      "role": "Rôle",
+      "note": "Note (optionnel)",
+      "notePlaceholder": "Ex : pour Sami (monteur)",
+      "noteHint": "Pour t'aider à te souvenir à qui ce lien est destiné.",
+      "linkHint": "Tu peux toujours retrouver ce lien plus tard dans la liste « Invitations en attente » en bas de cette page.",
+      "close": "Fermer",
+      "generate": "Générer le lien",
+      "generating": "Génération…"
+    },
+    "roles": {
+      "owner": "Propriétaire",
+      "admin": "Administrateur",
+      "editor": "Éditeur",
+      "viewer": "Lecteur"
+    },
+    "roleDescriptions": {
+      "owner": "Tout faire, y compris supprimer la marque",
+      "admin": "Tout faire sauf supprimer la marque",
+      "editor": "Créer et modifier les vidéos",
+      "viewer": "Consulter uniquement (lecture seule)"
+    }
+  },
+  "comments": {
+    "header": "Commentaires",
+    "headerButton": "Commentaires",
+    "headerSubtitleThread": "{count, plural, =0 {Aucun commentaire} one {# commentaire} other {# commentaires}}",
+    "headerSubtitleInbox": "Toute la discussion sur cette vidéo",
+    "filters": {
+      "all": "Tous",
+      "unread": "Non lus",
+      "resolved": "Résolus"
+    },
+    "emptyThreadTitle": "Aucun commentaire ici",
+    "emptyThreadDescription": "Lance la discussion en ajoutant le premier commentaire.",
+    "emptyInboxAll": "Pas encore de commentaire",
+    "emptyInboxUnread": "Pas de commentaire non lu",
+    "emptyInboxResolved": "Pas de commentaire résolu",
+    "emptyDescription": "Clique sur le bouton 💬 d'un bloc pour démarrer la discussion.",
+    "resolvedBadge": "Résolu",
+    "repliesCount": "{count, plural, one {# réponse} other {# réponses}}",
+    "newPlaceholder": "Écris un commentaire pour ton équipe…",
+    "send": "Envoyer",
+    "sending": "Envoi…",
+    "reply": "Répondre",
+    "replyPlaceholder": "Réponse…",
+    "resolve": "Résoudre",
+    "reopen": "Rouvrir",
+    "deleteConfirm": "Supprimer ce commentaire ?\n\nLes éventuelles réponses seront aussi supprimées.",
+    "backToInbox": "Retour à l'inbox",
+    "viewComments": "Voir les commentaires",
+    "labels": {
+      "scene": "Scène",
+      "storyboardPlan": "Storyboard · Plan {n}",
+      "storySlot": "Story · Slot {n}",
+      "planField": "Plan · {field}",
+      "scriptField": "Script · {field}",
+      "planGeneral": "Infos générales",
+      "planHook": "Accroche",
+      "planCta": "Appel à l'action",
+      "planTitle": "Titre",
+      "planTags": "Tags",
+      "planPillar": "Pilier",
+      "planObjective": "Objectif",
+      "planDate": "Date",
+      "scriptIntro": "Intro",
+      "scriptPoint1": "Point 1",
+      "scriptPoint2": "Point 2",
+      "scriptPoint3": "Point 3",
+      "scriptTransition": "Transition",
+      "scriptRecap": "Récap",
+      "scriptOutro": "Outro",
+      "scriptFull": "Script complet"
+    },
+    "time": {
+      "justNow": "à l'instant",
+      "minutes": "il y a {count} min",
+      "hours": "il y a {count} h",
+      "days": "il y a {count} j"
+    }
+  },
+  "sharing": {
+    "buttonOff": "Partager",
+    "buttonOn": "Partagée",
+    "enable": "Activer le partage",
+    "disable": "Désactiver le partage",
+    "regenerate": "Régénérer le lien",
+    "copy": "Copier",
+    "copied": "Copié",
+    "dialogTitle": "Partager cette vidéo",
+    "dialogDescription": "Donne le lien à qui tu veux. Pas de connexion requise — c'est en lecture seule.",
+    "linkLabel": "Lien public",
+    "warning": "Ce lien est public et utilisable par toute personne qui le reçoit. Tu peux le désactiver à tout moment.",
+    "indexedHint": "Cette page n'est pas indexée par Google."
+  },
+  "deleteContent": {
+    "button": "Supprimer",
+    "confirmTitle": "Supprimer cette vidéo ?",
+    "confirmDescription": "Cette action est définitive et ne peut pas être annulée.",
+    "deleting": "Suppression…",
+    "confirm": "Confirmer la suppression"
+  },
+  "invite": {
+    "headerTitle": "Tu as été invité sur Mohtawa",
+    "headerSubtitle": "{inviter} t'invite à rejoindre la marque {brand}.",
+    "yourRole": "Ton rôle",
+    "validUntil": "Valide jusqu'au {date}",
+    "accept": "Accepter l'invitation",
+    "accepting": "Acceptation…",
+    "connectedAs": "Connecté en tant que {email}.",
+    "switchAccount": "Changer de compte",
+    "unauthTitle": "Une invitation t'attend",
+    "unauthSubtitle": "Connecte-toi ou crée un compte pour accepter cette invitation.",
+    "createAccount": "Créer un compte",
+    "haveAccount": "J'ai déjà un compte",
+    "errors": {
+      "invalid_token": {
+        "title": "Lien invalide",
+        "description": "Ce lien d'invitation n'est pas valide. Vérifie que tu l'as copié en entier."
+      },
+      "not_found": {
+        "title": "Lien introuvable",
+        "description": "Cette invitation n'existe pas. Demande à la personne qui t'a invité de te générer un nouveau lien."
+      },
+      "already_used": {
+        "title": "Invitation déjà acceptée",
+        "description": "Ce lien a déjà été utilisé. Si tu es déjà membre, va directement sur ton tableau de bord."
+      },
+      "expired": {
+        "title": "Invitation expirée",
+        "description": "Ce lien a dépassé sa date de validité (30 jours). Demande un nouveau lien."
+      }
+    },
+    "backToDashboard": "Aller à mon tableau de bord"
+  },
+  "fieldHelp": {
+    "videoCta": "Voir la vidéo explicative",
+    "videoCtaSub": "Ouvre YouTube dans un nouvel onglet",
+    "pillar": {
+      "description": "Les thématiques phares de ta marque. Bien choisis, ils transforment un compte qui poste au hasard en vraie stratégie.",
+      "whatIs": "C'est quoi, concrètement ?",
+      "whatIsP1": "Un pilier de contenu est une grande thématique que tu vas couvrir régulièrement. Considère-le comme une colonne de ta stratégie : chaque vidéo que tu produis doit pouvoir être rangée dans un pilier.",
+      "whatIsP2": "La règle d'or : entre 3 et 5 piliers maximum. Moins, tu vas vite tourner en rond. Plus, ton audience ne comprendra plus de quoi tu parles.",
+      "methodTitle": "La méthode en 5 étapes",
+      "step1": "Pose ton objectif et ta cible. Pourquoi tu communiques (notoriété, communauté, ventes) ? À qui tu parles ?",
+      "step2": "Brainstorme en vrac. Liste tout : conseils, questions de clients, coulisses, anecdotes. Vise 30-50 idées brutes.",
+      "step3": "Regroupe en 3 à 5 piliers. Range tes idées par grandes familles. Si une famille n'a que 3-4 idées → c'est pas un pilier.",
+      "step4Intro": "Équilibre tes piliers selon la méthode Know-Like-Trust :",
+      "step4a": "Éducatif — tu démontres ton expertise (conseils, tutos)",
+      "step4b": "Relationnel — tu montres les coulisses, l'équipe, ton quotidien",
+      "step4c": "Inspirant — tes valeurs, ta vision, ce qui fait réagir",
+      "step4d": "Promotionnel — tes offres, tes résultats, tes témoignages clients",
+      "step5": "Crée ta banque d'idées. Dans Mohtawa, chaque pilier devient un filtre : tu pourras y rattacher tes Reels et Stories à mesure que les idées arrivent.",
+      "testTitle": "Le test de validation",
+      "test": "Pour chaque pilier, demande-toi : « Est-ce que je peux générer au moins 30 idées de vidéos sans transpirer ? » Si oui → c'est un vrai pilier. Si non → fusionne-le ou abandonne-le.",
+      "examplesTitle": "3 exemples concrets",
+      "example1": "Coach business — Astuces marketing (éducatif), Routine entrepreneur (coulisses), Mindset & discipline (inspirant), Témoignages clients (promo)",
+      "example2": "Marque de cosmétiques naturels — Conseils beauté (éducatif), Fabrication en atelier (coulisses), Zéro déchet & valeurs (inspirant), Présentation produits (promo)",
+      "example3": "Restaurant local — Recettes & techniques (éducatif), Une journée en cuisine (coulisses), Producteurs locaux (inspirant), Plat du jour & événements (promo)",
+      "mohtawaTitle": "Comment Mohtawa utilise tes piliers",
+      "mohtawa1": "Tu retrouves la liste dans le menu déroulant « Pilier de contenu » de chaque vidéo (juste au-dessus).",
+      "mohtawa2": "Le bouton orange + à droite du menu te permet d'en ajouter un nouveau à la volée, sans quitter la fiche vidéo.",
+      "mohtawa3": "Dans l'onglet Analytics, tes piliers sont classés par performance : tu vois lequel ramène le plus de vues.",
+      "mohtawa4": "Tu peux gérer toute ta taxonomie (ajouter, renommer, supprimer) depuis la page Marques → [ta marque].",
+      "tip": "Conseil : commence avec 3 piliers seulement. Tu pourras toujours en ajouter un 4ᵉ ou 5ᵉ plus tard, une fois que tu maîtrises les premiers."
+    }
   },
   "ai": {
     "buttonLabel": "Générer avec l'IA",
