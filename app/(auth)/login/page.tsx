@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,9 @@ import { login } from "./actions";
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "";
+  const registerHref = next ? `/register?next=${encodeURIComponent(next)}` : "/register";
 
   return (
     <Card>
@@ -28,6 +32,7 @@ export default function LoginPage() {
           }
           className="space-y-4"
         >
+          {next && <input type="hidden" name="next" value={next} />}
           <div className="space-y-2">
             <Label htmlFor="email">Adresse email</Label>
             <Input id="email" name="email" type="email" placeholder="nom@email.com" required autoFocus />
@@ -51,7 +56,7 @@ export default function LoginPage() {
             <Link href="/reset-password" className="text-muted hover:text-foreground">
               Mot de passe oublié ?
             </Link>
-            <Link href="/register" className="font-medium hover:underline">
+            <Link href={registerHref} className="font-medium hover:underline">
               Créer un compte
             </Link>
           </div>

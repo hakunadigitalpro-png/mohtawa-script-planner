@@ -42,7 +42,8 @@ export async function updateSession(request: NextRequest) {
     path === "/" ||
     isAuthRoute ||
     path.startsWith("/auth/") ||
-    path.startsWith("/share/");
+    path.startsWith("/share/") ||
+    path.startsWith("/invite/");
 
   if (!user && !isPublic) {
     url.pathname = "/login";

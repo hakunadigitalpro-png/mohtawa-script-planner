@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,9 @@ import { register } from "./actions";
 export default function RegisterPage() {
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "";
+  const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
 
   return (
     <Card>
@@ -29,6 +33,7 @@ export default function RegisterPage() {
           }
           className="space-y-4"
         >
+          {next && <input type="hidden" name="next" value={next} />}
           <div className="space-y-2">
             <Label htmlFor="full_name">Nom complet</Label>
             <Input id="full_name" name="full_name" type="text" required autoFocus />
@@ -61,7 +66,7 @@ export default function RegisterPage() {
 
           <p className="text-center text-sm text-muted">
             Déjà inscrit ?{" "}
-            <Link href="/login" className="font-medium text-foreground hover:underline">
+            <Link href={loginHref} className="font-medium text-foreground hover:underline">
               Se connecter
             </Link>
           </p>

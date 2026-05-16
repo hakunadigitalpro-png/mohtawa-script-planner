@@ -1,11 +1,29 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ArrowLeft, Layers, Target } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
+import { ArrowLeft, Layers, Target, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { TaxonomyManager } from "./taxonomy-manager";
+import { TeamSection } from "./team-section";
+import type { BrandRole } from "../team-actions";
 
 type Taxonomy = { id: string; name: string };
+
+type MemberRow = {
+  user_id: string;
+  email: string;
+  role: BrandRole;
+  joined_at: string;
+};
+
+type InvitationRow = {
+  id: string;
+  role: BrandRole;
+  token: string;
+  note: string | null;
+  created_at: string;
+  expires_at: string;
+};
 
 export default async function BrandDetailPage({
   params,
@@ -15,6 +33,11 @@ export default async function BrandDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
   const { data: brand } = await supabase
     .from("brands")
     .select("id, name")
@@ -22,7 +45,13 @@ export default async function BrandDetailPage({
     .maybeSingle();
   if (!brand) notFound();
 
-  const [pillarsRes, objectivesRes] = await Promise.all([
+  const [
+    pillarsRes,
+    objectivesRes,
+    membersRes,
+    invitationsRes,
+    selfMembershipRes,
+  ] = await Promise.all([
     supabase
       .from("brand_pillars")
       .select("id, name")
@@ -33,10 +62,26 @@ export default async function BrandDetailPage({
       .select("id, name")
       .eq("brand_id", id)
       .order("position", { ascending: true }),
+    supabase.rpc("list_brand_members_with_emails", { p_brand_id: id }),
+    supabase
+      .from("brand_invitations")
+      .select("id, role, token, note, created_at, expires_at")
+      .eq("brand_id", id)
+      .is("used_at", null)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("brand_members")
+      .select("role")
+      .eq("brand_id", id)
+      .eq("user_id", user.id)
+      .maybeSingle(),
   ]);
 
   const pillars = (pillarsRes.data ?? []) as Taxonomy[];
   const objectives = (objectivesRes.data ?? []) as Taxonomy[];
+  const members = (membersRes.data ?? []) as MemberRow[];
+  const invitations = (invitationsRes.data ?? []) as InvitationRow[];
+  const myRole = (selfMembershipRes.data?.role ?? "viewer") as BrandRole;
 
   return (
     <div className="space-y-6">
@@ -51,9 +96,30 @@ export default async function BrandDetailPage({
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{brand.name}</h1>
         <p className="text-sm text-muted">
-          Configure les piliers et objectifs réutilisables pour cette marque.
+          Configure les piliers et objectifs, et gère ton équipe pour cette marque.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="size-4 text-accent" />
+            Équipe
+          </CardTitle>
+          <CardDescription>
+            Les personnes qui peuvent voir et modifier les vidéos de cette marque.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TeamSection
+            brandId={brand.id}
+            currentUserId={user.id}
+            currentUserRole={myRole}
+            members={members}
+            invitations={invitations}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
