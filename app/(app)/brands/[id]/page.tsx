@@ -85,8 +85,8 @@ export default async function BrandDetailPage({
             Objectifs
           </CardTitle>
           <CardDescription>
-            Les objectifs business possibles pour les vidéos. 5 défauts sont
-            pré-remplis ; tu peux les modifier ou en ajouter.
+            Les objectifs business possibles pour les vidéos. Ajoute ceux qui
+            correspondent à cette marque.
           </CardDescription>
         </CardHeader>
         <CardContent>
