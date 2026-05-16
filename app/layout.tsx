@@ -1,11 +1,23 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Cairo } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { getThemeFromCookies, htmlDataTheme } from "@/lib/theme";
+import { dirOf, isRtl, type Locale } from "@/i18n/config";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+// Cairo : Google Font conçue pour l'arabe + supporte aussi le latin.
+// On la charge en CSS variable et on la bascule via la classe `.font-arabic`
+// quand la locale est RTL.
+const cairo = Cairo({
+  variable: "--font-cairo",
+  subsets: ["arabic", "latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
 
@@ -18,8 +30,14 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { theme, accent, tint } = await getThemeFromCookies();
+  const [{ theme, accent, tint }, locale, messages] = await Promise.all([
+    getThemeFromCookies(),
+    getLocale(),
+    getMessages(),
+  ]);
   const dataTheme = htmlDataTheme(theme);
+  const dir = dirOf(locale);
+  const rtl = isRtl(locale);
 
   // Override CSS vars when the user is in custom mode.
   const styleOverrides: React.CSSProperties = {};
@@ -31,8 +49,24 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="fr" data-theme={dataTheme} style={styleOverrides}>
-      <body className={`${jakarta.variable} antialiased`}>{children}</body>
+    <html
+      lang={locale}
+      dir={dir}
+      data-theme={dataTheme}
+      style={styleOverrides}
+    >
+      <body
+        className={`${jakarta.variable} ${cairo.variable} antialiased ${
+          rtl ? "font-arabic" : ""
+        }`}
+      >
+        <NextIntlClientProvider
+          locale={locale as Locale}
+          messages={messages}
+        >
+          {children}
+        </NextIntlClientProvider>
+      </body>
     </html>
   );
 }

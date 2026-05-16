@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -14,19 +15,20 @@ export function NewContentButton({
   defaultType,
   defaultDate,
   variant = "default",
-  label = "Nouvelle vidéo",
+  label,
 }: {
   defaultType?: string;
   defaultDate?: string;
   variant?: "default" | "outline" | "secondary";
   label?: string;
 }) {
+  const t = useTranslations("newContent");
   const [open, setOpen] = useState(false);
   return (
     <>
       <Button variant={variant} onClick={() => setOpen(true)}>
         <Plus className="size-4" />
-        {label}
+        {label ?? t("buttonLabel")}
       </Button>
       <NewContentModal
         open={open}
@@ -49,6 +51,10 @@ export function NewContentModal({
   defaultType?: string;
   defaultDate?: string;
 }) {
+  const t = useTranslations("newContent");
+  const tCommon = useTranslations("common");
+  const tType = useTranslations("contentTypes");
+  const tPlatform = useTranslations("platforms");
   const [type, setType] = useState(defaultType);
   const [platform, setPlatform] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -56,12 +62,24 @@ export function NewContentModal({
 
   const availablePlatforms = platformsForType(type);
 
+  const safeT = (
+    fn: (k: string) => string,
+    key: string,
+    fallback: string,
+  ) => {
+    try {
+      return fn(key);
+    } catch {
+      return fallback;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nouvelle vidéo</DialogTitle>
-          <DialogDescription>Chaque vidéo commence par une idée claire.</DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("subtitle")}</DialogDescription>
         </DialogHeader>
         <form
           action={(fd) =>
@@ -79,7 +97,7 @@ export function NewContentModal({
           <DialogBody className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="type">Format</Label>
+                <Label htmlFor="type">{t("format")}</Label>
                 <Select
                   id="type"
                   value={type}
@@ -87,28 +105,34 @@ export function NewContentModal({
                     setType(v);
                     setPlatform(""); // reset platform when type changes
                   }}
-                  options={CONTENT_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+                  options={CONTENT_TYPES.map((ct) => ({
+                    value: ct.value,
+                    label: safeT(tType, ct.value, ct.label),
+                  }))}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="platform">Plateforme</Label>
+                <Label htmlFor="platform">{t("platform")}</Label>
                 <Select
                   id="platform"
                   value={platform}
                   onValueChange={setPlatform}
-                  placeholder="—"
-                  options={availablePlatforms.map((p) => ({ value: p.value, label: p.label }))}
+                  placeholder={t("noPlatform")}
+                  options={availablePlatforms.map((p) => ({
+                    value: p.value,
+                    label: safeT(tPlatform, p.value, p.label),
+                  }))}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="title">Titre</Label>
-              <Input id="title" name="title" placeholder="Ex : 3 erreurs que font les créateurs débutants" />
+              <Label htmlFor="title">{t("videoTitle")}</Label>
+              <Input id="title" name="title" placeholder={t("titlePlaceholder")} />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="date">Date de publication prévue</Label>
+              <Label htmlFor="date">{t("date")}</Label>
               <Input id="date" name="date" type="date" defaultValue={defaultDate} />
             </div>
 
@@ -120,10 +144,10 @@ export function NewContentModal({
           </DialogBody>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Annuler
+              {tCommon("cancel")}
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Création..." : "Créer et continuer"}
+              {pending ? t("submitLoading") : t("submit")}
             </Button>
           </DialogFooter>
         </form>

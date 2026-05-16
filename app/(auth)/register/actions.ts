@@ -11,6 +11,13 @@ function safeNext(value: unknown): string {
   return value;
 }
 
+/**
+ * Returns error codes. The page maps these to localized strings.
+ *  - "passwordTooShort"   → mot de passe trop court
+ *  - "needConfirm"        → success path : afficher message "vérifie ta boîte mail"
+ *  - any other string     → message brut renvoyé par Supabase (en anglais en général,
+ *                           on l'affiche tel quel)
+ */
 export async function register(formData: FormData) {
   const fullName = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
@@ -18,7 +25,7 @@ export async function register(formData: FormData) {
   const next = safeNext(formData.get("next"));
 
   if (!email || !password || password.length < 6) {
-    return { error: "Mot de passe trop court (6 caractères minimum)." };
+    return { error: "passwordTooShort" as const };
   }
 
   const supabase = await createClient();
@@ -30,14 +37,11 @@ export async function register(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  // Si email confirmations désactivées : on a déjà la session → on file à `next`.
+  // Email confirmations désactivées : on a déjà la session → on file à `next`.
   if (data.session) {
     revalidatePath("/", "layout");
     redirect(next);
   }
 
-  return {
-    success:
-      "Compte créé. Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.",
-  };
+  return { success: "confirmEmail" as const };
 }

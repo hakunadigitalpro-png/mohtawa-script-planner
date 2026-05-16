@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { setActiveBrandId } from "@/lib/brand";
+import { LOCALES, LOCALE_COOKIE, type Locale } from "@/i18n/config";
 
 export async function switchBrand(brandId: string) {
   await setActiveBrandId(brandId);
@@ -82,6 +83,44 @@ export async function updateTheme(opts: {
 
   revalidatePath("/", "layout");
   return { ok: true };
+}
+
+/**
+ * Bascule la locale UI de l'utilisateur (cookie `mohtawa_locale`, 1 an).
+ * Lu en SSR par i18n/request.ts → pas de flash, le HTML arrive avec
+ * le bon `lang` et `dir`.
+ */
+export async function setLocale(locale: Locale) {
+  if (!LOCALES.includes(locale)) {
+    return { error: "Locale invalide." };
+  }
+
+  const { cookies } = await import("next/headers");
+  const store = await cookies();
+  store.set(LOCALE_COOKIE, locale, {
+    path: "/",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+
+  // Synchronise aussi en metadata Supabase (pour cross-device).
+  // Best-effort : si on n'est pas authentifié, on passe.
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.auth.updateUser({
+        data: { language: locale },
+      });
+    }
+  } catch {
+    // ignore
+  }
+
+  revalidatePath("/", "layout");
+  return { ok: true as const };
 }
 
 export async function createBrand(formData: FormData) {

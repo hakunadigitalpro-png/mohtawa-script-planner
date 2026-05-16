@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { CalendarMonth } from "@/components/calendar-month";
@@ -12,6 +13,7 @@ export default async function CalendarPage({
   const { active } = await resolveActiveBrand();
   if (!active) return null;
 
+  const t = await getTranslations("calendar");
   const params = await searchParams;
   const now = new Date();
   const ym = params.m && /^\d{4}-\d{2}$/.test(params.m)
@@ -38,10 +40,8 @@ export default async function CalendarPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Calendrier</h1>
-          <p className="text-sm text-muted">
-            Visualise ton mois en un coup d&apos;œil.
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
         <NewContentButton />
       </div>

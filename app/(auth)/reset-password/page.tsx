@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,28 +10,34 @@ import { Button } from "@/components/ui/button";
 import { resetPassword } from "./actions";
 
 export default function ResetPasswordPage() {
+  const t = useTranslations("auth.reset");
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Réinitialiser le mot de passe</CardTitle>
-        <CardDescription>Indique ton email, on t&apos;envoie un lien.</CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("subtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form
           action={(fd) =>
             startTransition(async () => {
               const res = await resetPassword(fd);
-              if (res?.error) setMessage({ type: "error", text: res.error });
-              else if (res?.success) setMessage({ type: "success", text: res.success });
+              if (res?.error === "emailRequired") {
+                setMessage({ type: "error", text: t("errorEmailRequired") });
+              } else if (res?.error) {
+                setMessage({ type: "error", text: res.error });
+              } else if (res?.success === "sent") {
+                setMessage({ type: "success", text: t("success") });
+              }
             })
           }
           className="space-y-4"
         >
           <div className="space-y-2">
-            <Label htmlFor="email">Adresse email</Label>
+            <Label htmlFor="email">{t("email")}</Label>
             <Input id="email" name="email" type="email" required autoFocus />
           </div>
 
@@ -48,12 +55,12 @@ export default function ResetPasswordPage() {
           )}
 
           <Button type="submit" disabled={pending} className="w-full">
-            {pending ? "Envoi..." : "Envoyer le lien"}
+            {pending ? t("submitLoading") : t("submit")}
           </Button>
 
           <p className="text-center text-sm text-muted">
             <Link href="/login" className="hover:text-foreground">
-              Retour à la connexion
+              {t("backToLogin")}
             </Link>
           </p>
         </form>

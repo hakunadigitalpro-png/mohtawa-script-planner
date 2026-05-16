@@ -1,19 +1,20 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { CONTENT_TYPES, PLATFORMS, STATUSES } from "@/lib/constants";
 
-function buildMonthOptions() {
+function buildMonthOptions(locale: string) {
   const opts: { value: string; label: string }[] = [];
   const now = new Date();
   for (let i = 6; i >= -6; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = d.toLocaleDateString("fr-FR", {
+    const label = d.toLocaleDateString(locale === "ar" ? "ar" : "fr-FR", {
       month: "long",
       year: "numeric",
     });
@@ -25,6 +26,11 @@ function buildMonthOptions() {
 export function DashboardFilters() {
   const router = useRouter();
   const sp = useSearchParams();
+  const t = useTranslations("dashboard.filters");
+  const tStatus = useTranslations("statuses");
+  const tType = useTranslations("contentTypes");
+  const tPlatform = useTranslations("platforms");
+  const locale = useLocale();
 
   const q = sp.get("q") ?? "";
   const status = sp.get("status") ?? "";
@@ -41,13 +47,27 @@ export function DashboardFilters() {
 
   const hasFilters = !!(q || status || type || platform || month);
 
+  // Map status/type/platform values to their translated labels. We rely on
+  // the i18n keys having the exact same value as the constant key.
+  const safeT = (
+    fn: (k: string) => string,
+    key: string,
+    fallback: string,
+  ) => {
+    try {
+      return fn(key);
+    } catch {
+      return fallback;
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
+        <Search className="pointer-events-none absolute start-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
         <Input
-          placeholder="Rechercher une vidéo par titre..."
-          className="pl-10"
+          placeholder={t("searchPlaceholder")}
+          className="ps-10"
           defaultValue={q}
           onChange={(e) => setParam("q", e.target.value)}
         />
@@ -58,10 +78,13 @@ export function DashboardFilters() {
           <Select
             value={status}
             onValueChange={(v) => setParam("status", v)}
-            placeholder="Tous les statuts"
+            placeholder={t("allStatuses")}
             options={[
-              { value: "", label: "Tous les statuts" },
-              ...STATUSES.map((s) => ({ value: s.value, label: s.label })),
+              { value: "", label: t("allStatuses") },
+              ...STATUSES.map((s) => ({
+                value: s.value,
+                label: safeT(tStatus, s.value, s.label),
+              })),
             ]}
           />
         </div>
@@ -70,10 +93,13 @@ export function DashboardFilters() {
           <Select
             value={type}
             onValueChange={(v) => setParam("type", v)}
-            placeholder="Tous les formats"
+            placeholder={t("allTypes")}
             options={[
-              { value: "", label: "Tous les formats" },
-              ...CONTENT_TYPES.map((t) => ({ value: t.value, label: t.label })),
+              { value: "", label: t("allTypes") },
+              ...CONTENT_TYPES.map((ct) => ({
+                value: ct.value,
+                label: safeT(tType, ct.value, ct.label),
+              })),
             ]}
           />
         </div>
@@ -82,10 +108,13 @@ export function DashboardFilters() {
           <Select
             value={platform}
             onValueChange={(v) => setParam("platform", v)}
-            placeholder="Toutes les plateformes"
+            placeholder={t("allPlatforms")}
             options={[
-              { value: "", label: "Toutes les plateformes" },
-              ...PLATFORMS.map((p) => ({ value: p.value, label: p.label })),
+              { value: "", label: t("allPlatforms") },
+              ...PLATFORMS.map((p) => ({
+                value: p.value,
+                label: safeT(tPlatform, p.value, p.label),
+              })),
             ]}
           />
         </div>
@@ -94,10 +123,10 @@ export function DashboardFilters() {
           <Select
             value={month}
             onValueChange={(v) => setParam("month", v)}
-            placeholder="Tous les mois"
+            placeholder={t("allMonths")}
             options={[
-              { value: "", label: "Tous les mois" },
-              ...buildMonthOptions(),
+              { value: "", label: t("allMonths") },
+              ...buildMonthOptions(locale),
             ]}
           />
         </div>
@@ -109,7 +138,7 @@ export function DashboardFilters() {
             onClick={() => router.replace("/dashboard")}
           >
             <X className="size-3.5" />
-            Effacer les filtres
+            {t("clear")}
           </Button>
         )}
       </div>

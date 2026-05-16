@@ -50,6 +50,7 @@
 
   /* ===== Typography ===== */
   --font-sans: var(--font-jakarta), system-ui, sans-serif;
+  --font-arabic: var(--font-cairo), "Cairo", system-ui, sans-serif;
 
   /* ===== Radius (generous) ===== */
   --radius-sm: 0.5rem;
@@ -86,6 +87,21 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* When the body has .font-arabic (set by root layout when locale is RTL),
+   we switch to Cairo for nicer Arabic typography. */
+body.font-arabic {
+  font-family: var(--font-arabic);
+}
+
+/* ============ RTL ICON HELPERS ============
+   Lucide icons that have a clear "directional" meaning need to flip
+   horizontally in RTL contexts. We tag them with `.rtl-flip` so we can
+   target them with a CSS-only rule (no React logic per icon).
+   Usage: <ArrowLeft className="size-4 rtl-flip" /> */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
 /* ============ Warm gradient background (LIGHT) ============ */
 body {
   background-color: var(--color-background);
@@ -117,13 +133,15 @@ input, textarea, select {
   font: inherit;
 }
 
-/* Hover-only tooltip for compact sidebar icons */
+/* Hover-only tooltip for compact sidebar icons.
+   Uses logical properties so it works in both LTR (tooltip on the right)
+   and RTL (tooltip on the left) without extra rules. */
 .tooltip-trigger {
   position: relative;
 }
 .tooltip-trigger > .tooltip-content {
   position: absolute;
-  left: calc(100% + 12px);
+  inset-inline-start: calc(100% + 12px);
   top: 50%;
   transform: translateY(-50%);
   padding: 4px 10px;

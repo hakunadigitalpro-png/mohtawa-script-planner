@@ -1,7 +1,9 @@
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { LocaleSwitcherFull } from "@/components/locale-switcher";
 import { getThemeFromCookies } from "@/lib/theme";
 
 export default async function ProfilePage() {
@@ -11,29 +13,37 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
+  const t = await getTranslations("profile");
   const meta = (user.user_metadata ?? {}) as Record<string, string>;
   const { theme, accent, tint } = await getThemeFromCookies();
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Mon profil</h1>
-        <p className="text-sm text-muted">
-          Modifie ton nom, ta langue et l&apos;apparence.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-sm text-muted">{t("subtitle")}</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Informations</CardTitle>
-          <CardDescription>Ton compte sur Mohtawa.</CardDescription>
+          <CardTitle>{t("infoTitle")}</CardTitle>
+          <CardDescription>{t("infoSubtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <ProfileForm
             email={user.email ?? ""}
             fullName={meta.full_name ?? ""}
-            language={meta.language ?? "fr"}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("language")}</CardTitle>
+          <CardDescription>{t("languageHint")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LocaleSwitcherFull />
         </CardContent>
       </Card>
 
@@ -55,8 +65,8 @@ export default async function ProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Session</CardTitle>
-          <CardDescription>Connecté avec {user.email}.</CardDescription>
+          <CardTitle>{t("sessionTitle")}</CardTitle>
+          <CardDescription>{t("sessionSubtitle", { email: user.email ?? "" })}</CardDescription>
         </CardHeader>
         <CardContent>
           <form action="/auth/signout" method="post">
@@ -64,7 +74,7 @@ export default async function ProfilePage() {
               type="submit"
               className="rounded-full border border-border bg-card px-5 py-2 text-sm font-semibold hover:bg-secondary"
             >
-              Se déconnecter
+              {t("signout")}
             </button>
           </form>
         </CardContent>

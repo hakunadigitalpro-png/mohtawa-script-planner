@@ -1,27 +1,25 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { updateProfile } from "@/app/(app)/actions";
 
-const LANGUAGE_OPTIONS = [
-  { value: "fr", label: "Français" },
-  { value: "ar", label: "العربية (Arabe)" },
-];
-
+/**
+ * The language selector lives in its own card (LocaleSwitcherFull) since
+ * it controls the UI locale via a dedicated server action. This form only
+ * handles the user's full name.
+ */
 export function ProfileForm({
   email,
   fullName,
-  language,
 }: {
   email: string;
   fullName: string;
-  language: string;
 }) {
-  const [lang, setLang] = useState(language);
+  const t = useTranslations("profile");
   const [msg, setMsg] = useState<{ type: "ok" | "error"; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -31,34 +29,20 @@ export function ProfileForm({
         startTransition(async () => {
           const res = await updateProfile(fd);
           if (res?.error) setMsg({ type: "error", text: res.error });
-          else setMsg({ type: "ok", text: "Modifications enregistrées." });
+          else setMsg({ type: "ok", text: t("saved") });
         })
       }
       className="space-y-4"
     >
       <div className="space-y-2">
-        <Label htmlFor="full_name">Nom complet</Label>
+        <Label htmlFor="full_name">{t("fullName")}</Label>
         <Input id="full_name" name="full_name" defaultValue={fullName} />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">Adresse email</Label>
+        <Label htmlFor="email">{t("email")}</Label>
         <Input id="email" type="email" defaultValue={email} disabled />
-        <p className="text-xs text-muted">L&apos;email n&apos;est pas modifiable.</p>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="language">Langue préférée</Label>
-        <Select
-          id="language"
-          name="language"
-          value={lang}
-          onValueChange={setLang}
-          options={LANGUAGE_OPTIONS}
-        />
-        <p className="text-xs text-muted">
-          La version arabe arrive bientôt.
-        </p>
+        <p className="text-xs text-muted">{t("emailHint")}</p>
       </div>
 
       {msg && (
@@ -75,7 +59,7 @@ export function ProfileForm({
       )}
 
       <Button type="submit" disabled={pending}>
-        {pending ? "Enregistrement..." : "Enregistrer les modifications"}
+        {pending ? t("saving") : t("save")}
       </Button>
     </form>
   );

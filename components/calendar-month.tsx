@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
   startOfMonth,
@@ -16,7 +17,7 @@ import {
   isSameDay,
   parseISO,
 } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, ar } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/badge";
@@ -36,6 +37,10 @@ export function CalendarMonth({
 }) {
   const router = useRouter();
   const sp = useSearchParams();
+  const t = useTranslations("calendar");
+  const tContent = useTranslations("content");
+  const locale = useLocale();
+  const dateLocale = locale === "ar" ? ar : fr;
   const cursor = useMemo(() => parseISO(initialMonth), [initialMonth]);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -81,28 +86,28 @@ export function CalendarMonth({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => goto(addMonths(cursor, -1))} aria-label="Mois précédent">
-            <ChevronLeft className="size-4" />
+          <Button variant="outline" size="icon" onClick={() => goto(addMonths(cursor, -1))} aria-label={t("prevMonth")}>
+            <ChevronLeft className="size-4 rtl-flip" />
           </Button>
           <h2 className="min-w-44 text-center text-lg font-semibold capitalize">
-            {format(cursor, "MMMM yyyy", { locale: fr })}
+            {format(cursor, "MMMM yyyy", { locale: dateLocale })}
           </h2>
-          <Button variant="outline" size="icon" onClick={() => goto(addMonths(cursor, 1))} aria-label="Mois suivant">
-            <ChevronRight className="size-4" />
+          <Button variant="outline" size="icon" onClick={() => goto(addMonths(cursor, 1))} aria-label={t("nextMonth")}>
+            <ChevronRight className="size-4 rtl-flip" />
           </Button>
           <Button variant="ghost" size="sm" onClick={() => goto(new Date())}>
-            Aujourd&apos;hui
+            {t("today")}
           </Button>
         </div>
         <p className="hidden text-xs text-muted md:block">
-          💡 Glisse une vidéo d&apos;un jour à l&apos;autre pour la replanifier.
+          {t("dragHint")}
         </p>
       </div>
 
       <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_2px_12px_-4px_rgba(26,15,37,0.06)]">
         <div className="grid grid-cols-7 border-b border-border/60 bg-secondary/50 text-[11px] font-bold uppercase tracking-wider text-muted">
-          {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map((d) => (
-            <div key={d} className="px-2 py-2.5 text-center">{d}</div>
+          {(["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const).map((d) => (
+            <div key={d} className="px-2 py-2.5 text-center">{t(`weekdays.${d}`)}</div>
           ))}
         </div>
         <div className="grid grid-cols-7">
@@ -116,9 +121,9 @@ export function CalendarMonth({
               <div
                 key={i}
                 className={cn(
-                  "group relative min-h-28 border-b border-r border-border/60 p-2 transition-all",
+                  "group relative min-h-28 border-b border-e border-border/60 p-2 transition-all",
                   otherMonth && "bg-secondary/30",
-                  (i + 1) % 7 === 0 && "border-r-0",
+                  (i + 1) % 7 === 0 && "border-e-0",
                   isDragOver && "bg-accent/10 ring-2 ring-accent ring-inset",
                 )}
                 onDragOver={(e) => {
@@ -151,7 +156,7 @@ export function CalendarMonth({
                       setModalOpen(true);
                     }}
                     className="flex size-6 items-center justify-center rounded-full text-muted opacity-0 transition hover:bg-accent hover:text-accent-foreground group-hover:opacity-100"
-                    aria-label="Ajouter une vidéo ce jour"
+                    aria-label={t("addOnDay")}
                   >
                     <Plus className="size-3.5" />
                   </button>
@@ -170,13 +175,13 @@ export function CalendarMonth({
                         className="flex cursor-grab items-center gap-1.5 truncate rounded-full bg-secondary/50 px-2 py-1 text-[11px] font-medium hover:bg-secondary active:cursor-grabbing"
                       >
                         <ColorDot color={typeColor(c.type)} />
-                        <span className="truncate">{c.title || "Sans titre"}</span>
+                        <span className="truncate">{c.title || tContent("untitled")}</span>
                       </Link>
                     </li>
                   ))}
                   {items.length > 3 && (
                     <li className="px-2 text-[11px] font-medium text-muted">
-                      +{items.length - 3} autres
+                      {t("moreItems", { count: items.length - 3 })}
                     </li>
                   )}
                 </ul>

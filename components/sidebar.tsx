@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -15,18 +16,26 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandSwitcher } from "./brand-switcher";
+import { LocaleSwitcherCompact } from "./locale-switcher";
 import type { Brand } from "@/lib/types";
 
-const PRIMARY_NAV = [
-  { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-  { href: "/calendar", label: "Calendrier", icon: CalendarDays },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/hooks", label: "Accroches", icon: BookOpen },
+type NavItem = {
+  href: string;
+  /** Clé i18n dans `nav.*` */
+  key: "dashboard" | "calendar" | "analytics" | "hooks" | "brands" | "profile";
+  icon: LucideIcon;
+};
+
+const PRIMARY_NAV: NavItem[] = [
+  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { href: "/calendar", key: "calendar", icon: CalendarDays },
+  { href: "/analytics", key: "analytics", icon: BarChart3 },
+  { href: "/hooks", key: "hooks", icon: BookOpen },
 ];
 
-const SECONDARY_NAV = [
-  { href: "/brands", label: "Mes marques", icon: Building2 },
-  { href: "/profile", label: "Mon profil", icon: User },
+const SECONDARY_NAV: NavItem[] = [
+  { href: "/brands", key: "brands", icon: Building2 },
+  { href: "/profile", key: "profile", icon: User },
 ];
 
 export function Sidebar({
@@ -39,13 +48,14 @@ export function Sidebar({
   userEmail: string | null;
 }) {
   const pathname = usePathname();
+  const t = useTranslations("nav");
 
   return (
     <aside className="sticky top-0 flex h-screen w-20 shrink-0 flex-col items-center gap-3 py-5">
       {/* Logo */}
       <div className="tooltip-trigger flex size-12 shrink-0 items-center justify-center rounded-2xl bg-ink text-white shadow-sm">
         <Sparkles className="size-5" />
-        <span className="tooltip-content">Mohtawa</span>
+        <span className="tooltip-content">{t("mohtawa")}</span>
       </div>
 
       <div className="h-px w-8 bg-border/80" />
@@ -61,7 +71,7 @@ export function Sidebar({
           <NavIcon
             key={item.href}
             href={item.href}
-            label={item.label}
+            label={t(item.key)}
             Icon={item.icon}
             active={pathname === item.href || pathname.startsWith(item.href + "/")}
           />
@@ -71,13 +81,16 @@ export function Sidebar({
       {/* Spacer */}
       <div className="flex-1" />
 
+      {/* Locale switcher */}
+      <LocaleSwitcherCompact />
+
       {/* Secondary nav */}
       <nav className="flex flex-col items-center gap-2">
         {SECONDARY_NAV.map((item) => (
           <NavIcon
             key={item.href}
             href={item.href}
-            label={item.label}
+            label={t(item.key)}
             Icon={item.icon}
             active={pathname === item.href || pathname.startsWith(item.href + "/")}
           />
@@ -89,11 +102,11 @@ export function Sidebar({
         <button
           type="submit"
           className="flex size-11 items-center justify-center rounded-full bg-card/80 text-muted-foreground transition hover:bg-card hover:text-foreground"
-          aria-label={userEmail ? `Déconnexion (${userEmail})` : "Déconnexion"}
+          aria-label={userEmail ? `${t("logout")} (${userEmail})` : t("logout")}
         >
           <LogOut className="size-4" />
         </button>
-        <span className="tooltip-content">Se déconnecter</span>
+        <span className="tooltip-content">{t("logout")}</span>
       </form>
     </aside>
   );

@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { Card } from "@/components/ui/card";
@@ -22,6 +23,7 @@ export default async function DashboardPage({
   const { active } = await resolveActiveBrand();
   if (!active) return null;
 
+  const t = await getTranslations("dashboard");
   const params = await searchParams;
 
   const supabase = await createClient();
@@ -81,19 +83,19 @@ export default async function DashboardPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted">
-            {active.name} · vue rapide de ton activité.
+            {t("subtitle", { brand: active.name })}
           </p>
         </div>
         <NewContentButton />
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Kpi label="Total vidéos" value={total} accent />
-        <Kpi label="Brouillons" value={drafts} />
-        <Kpi label="Publiées" value={published} />
-        <Kpi label="Ce mois-ci" value={thisMonth} />
+        <Kpi label={t("kpi.total")} value={total} accent />
+        <Kpi label={t("kpi.drafts")} value={drafts} />
+        <Kpi label={t("kpi.published")} value={published} />
+        <Kpi label={t("kpi.thisMonth")} value={thisMonth} />
       </div>
 
       <DashboardFilters />
@@ -101,23 +103,23 @@ export default async function DashboardPage({
       <section>
         <h2 className="mb-3 text-sm font-semibold text-muted">
           {hasFilters
-            ? `${contents.length} résultat${contents.length !== 1 ? "s" : ""}`
-            : "Vidéos récentes"}
+            ? t("resultsCount", { count: contents.length })
+            : t("recent")}
         </h2>
         {contents.length === 0 ? (
           <Card className="flex flex-col items-center justify-center gap-2 p-10 text-center">
             {hasFilters ? (
               <>
-                <p className="text-base font-medium">Aucun résultat.</p>
+                <p className="text-base font-medium">{t("noResultsTitle")}</p>
                 <p className="text-sm text-muted">
-                  Essaie de modifier ou d&apos;effacer les filtres.
+                  {t("noResultsSubtitle")}
                 </p>
               </>
             ) : (
               <>
-                <p className="text-base font-medium">Aucune vidéo pour le moment.</p>
+                <p className="text-base font-medium">{t("emptyTitle")}</p>
                 <p className="text-sm text-muted">
-                  Commence par créer ta première vidéo.
+                  {t("emptySubtitle")}
                 </p>
                 <div className="mt-2">
                   <NewContentButton />

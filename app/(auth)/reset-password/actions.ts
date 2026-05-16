@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 
 export async function resetPassword(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
-  if (!email) return { error: "Email requis." };
+  if (!email) return { error: "emailRequired" as const };
 
   const h = await headers();
   const origin = h.get("origin") ?? h.get("x-forwarded-host") ?? "";
@@ -16,5 +16,5 @@ export async function resetPassword(formData: FormData) {
   });
 
   if (error) return { error: error.message };
-  return { success: "Si un compte existe, un email a été envoyé." };
+  return { success: "sent" as const };
 }

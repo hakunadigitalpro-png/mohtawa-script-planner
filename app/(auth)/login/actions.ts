@@ -4,10 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-/**
- * Valide qu'une URL de redirection est interne (commence par `/` mais pas `//`),
- * pour éviter les open-redirects.
- */
 function safeNext(value: unknown): string {
   if (typeof value !== "string") return "/dashboard";
   if (!value.startsWith("/")) return "/dashboard";
@@ -15,20 +11,25 @@ function safeNext(value: unknown): string {
   return value;
 }
 
+/**
+ * Server actions return error CODES (not localized strings). The page
+ * client component maps the code to a `t(...)` call so the error appears
+ * in the user's current locale.
+ */
 export async function login(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const next = safeNext(formData.get("next"));
 
   if (!email || !password) {
-    return { error: "Email et mot de passe requis." };
+    return { error: "missing" as const };
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: "Email ou mot de passe incorrect." };
+    return { error: "invalid" as const };
   }
 
   revalidatePath("/", "layout");
