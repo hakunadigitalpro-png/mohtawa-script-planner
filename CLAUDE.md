@@ -95,7 +95,9 @@ supabase/migrations/
 ├── 0004_video_only.sql      # Reel+Story only, images, story_slides, bucket
 ├── 0005_share_and_reorder.sql
 ├── 0006_brand_pillars_objectives.sql
-└── 0007_remove_default_objectives.sql
+├── 0007_remove_default_objectives.sql
+├── 0008_team_invitations.sql      # Invitations par lien + gestion membres
+└── 0009_comments.sql              # Commentaires + threads + read state
 
 messages/                    # i18n (FR/AR prêts, non câblés)
 i18n/                        # Config next-intl (non câblé)
@@ -117,6 +119,8 @@ brands(id, name, created_by, created_at)
        ├─► brand_members(brand_id, user_id, role)
        ├─► brand_pillars(id, brand_id, name, color, position)
        ├─► brand_objectives(id, brand_id, name, position)
+       ├─► brand_invitations(id, brand_id, role, token, note, created_by,
+       │                     expires_at, used_at, used_by)
        └─► contents(id, brand_id, user_id, type, title, date, platform,
                     status, pillar, objective, hook, cta, tags,
                     share_token, created_at, updated_at)
@@ -128,8 +132,12 @@ brands(id, name, created_by, created_at)
                   ├─► storyboard_scenes(id, content_id, scene_number,
                   │                     description, camera_angle, on_screen_text,
                   │                     tag, image_url)
-                  └─► performances(content_id, views, likes, comments, shares,
-                                  saves, retention, notes, updated_at)
+                  ├─► performances(content_id, views, likes, comments, shares,
+                  │                saves, retention, notes, updated_at)
+                  ├─► content_comments(id, content_id, target_type, target_id,
+                  │                    parent_id, user_id, body, resolved,
+                  │                    created_at, updated_at)
+                  └─► content_reads(user_id, content_id, last_comment_read_at)
 
 storage.objects (bucket "content-media")
        Path: {content_id}/{uuid}.{ext}
@@ -160,6 +168,15 @@ Patterns :
 | `get_shared_content(text)` | Renvoie un bundle JSON complet d'une vidéo via son token (public) |
 | `reorder_storyboard_scenes(uuid, uuid[])` | Renumérote atomiquement en évitant le conflit UNIQUE |
 | `swap_story_slides(uuid, int, int)` | Échange body+image_url entre 2 slots de story |
+| `create_brand_invitation(uuid, role, text)` | Génère un token + insère la row d'invitation |
+| `get_invitation_preview(text)` | Renvoie un preview pour la page /invite/[token] (SECURITY DEFINER) |
+| `accept_brand_invitation(text)` | Ajoute l'user comme membre + marque le token utilisé |
+| `update_member_role(uuid, uuid, role)` | Change le rôle d'un membre (garde-fou ≥1 owner) |
+| `remove_brand_member(uuid, uuid)` | Retire un membre / leave self |
+| `list_brand_members_with_emails(uuid)` | Liste les membres + leurs emails (SECURITY DEFINER) |
+| `list_content_comments_with_authors(uuid)` | Charge tous les commentaires d'une vidéo + email auteur |
+| `mark_content_read(uuid)` | Met `last_comment_read_at = now()` pour l'user courant |
+| `count_unread_comments()` | Compte par vidéo le nombre de non-lus pour l'user courant |
 
 ### Triggers
 
@@ -198,14 +215,26 @@ Helpers d'accès :
 
 Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe uniquement pour l'instant). À l'inscription, `supabase.auth.signUp` est appelé puis si une session est créée immédiatement on redirige vers `/dashboard`.
 
-### 2. Multi-marques
-**Routes** : `/brands`, `/brands/[id]`
+### 2. Multi-marques & équipe
+**Routes** : `/brands`, `/brands/[id]`, `/invite/[token]`
 
 - Une marque = un workspace isolé
 - Un user peut être membre de N marques (roles : `owner`, `admin`, `editor`, `viewer`)
 - **Marque active** stockée en cookie `active_brand` (résolue par `lib/brand.ts`)
 - Switcher dans la sidebar (composant `<BrandSwitcher>`)
-- `/brands/[id]` permet de gérer les **piliers** et **objectifs** spécifiques à la marque
+- `/brands/[id]` regroupe :
+  - **Équipe** : liste des membres avec changement de rôle + retrait, et invitations en attente
+  - **Piliers** et **Objectifs** spécifiques à la marque
+
+#### Invitations par lien magique (Sprint 1)
+- Owner/admin clique « Créer un lien d'invitation » → choisit le rôle + note
+- Génère un token base64url (30 jours de validité)
+- Lien copiable : `mohtawa.tn/invite/{token}`
+- L'invité ouvre le lien → preview de l'invitation (marque, rôle, inviter)
+  - S'il est connecté : bouton « Accepter » → ajouté à `brand_members` + redirige
+  - S'il n'est pas connecté : boutons login/register avec `?next=/invite/{token}` pour revenir après auth
+- Les actions (create / revoke / accept / update_role / remove_member) sont dans `app/(app)/brands/team-actions.ts`
+- Garde-fou : on ne peut pas retirer / rétrograder le dernier owner d'une marque
 
 ### 3. Dashboard
 **Route** : `/dashboard`
@@ -292,7 +321,27 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 - Top 5 vidéos cliquables
 - Badge "↗ en progression" sur le pilier qui gagne le plus de vues ce mois vs précédent
 
-### 11. Profil & Thème
+### 11. Commentaires & collaboration (Sprint 2)
+**Composants** : `components/comments/`
+
+- Système de commentaires en threads (réponses imbriquées) sur chaque bloc d'une vidéo
+- 4 cibles supportées :
+  - `plan` → champs du Plan (`general`, `hook`, `cta`)
+  - `script` → blocs du script Reel (`intro`, `point1`, `point2`, `point3`, `transition`, `recap`, `outro`, `script_full`)
+  - `scene` → chaque scène du storyboard (target_id = UUID de la scène)
+  - `slide` → chaque slot 1-5 d'une story (target_id = slot_number)
+- **`<CommentButton>`** : petit "💬" cliquable à côté de chaque item commentable, avec compteur + badge orange si non lu + ✓ vert si thread résolu
+- **`<CommentsDrawer>`** : panneau latéral droit, 2 modes :
+  - **Thread** : un seul thread (target précis) + formulaire d'ajout
+  - **Inbox** : liste de tous les threads filtrable (Tous / Non lus / Résolus), inspirée de Boords
+- **`<CommentsInboxButton>`** : bouton dans le header de la fiche vidéo, montre le compteur de non-lus
+- **`<CommentsProvider>`** : context React qui charge les commentaires de la vidéo une seule fois (props initiales depuis le Server Component) et expose helpers + drawer state
+- **Statut "résolu"** : porté par le commentaire racine, toggleable par n'importe quel membre (pas seulement l'auteur)
+- **Permissions** : édition/suppression par l'auteur (+ delete par owner/admin de la brand), création/lecture par tout membre
+- **Notifications** : in-app uniquement (pas d'email pour l'instant). Le badge non-lu = nombre de commentaires créés après `content_reads.last_comment_read_at` par d'autres users que moi
+- Marquage "tout lu" : à l'ouverture du drawer, on appelle `mark_content_read(content_id)` qui upsert `now()`
+
+### 12. Profil & Thème
 **Route** : `/profile`
 
 - Nom complet, email (readonly), langue préférée
@@ -475,6 +524,9 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 | Export PDF (page imprimable) | ✅ |
 | Image uploads (storyboard scenes, story slides) | ✅ |
 | Sidebar compacte avec tooltips | ✅ |
+| **Équipe : invitations par lien + gestion rôles** | ✅ |
+| **Commentaires en threads sur tous les blocs vidéo** | ✅ |
+| **Inbox commentaires + compteur non-lus** | ✅ |
 
 ---
 
@@ -483,8 +535,7 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 | Bloc | Priorité | Note |
 |---|---|---|
 | **i18n FR + AR + RTL** | Moyenne | Infrastructure prête (`messages/*.json` + `i18n/`), wiring à finir après stabilisation du wording |
-| **Email notifications** | Basse | Reminders avant date de publication, mail de bienvenue |
-| **Invites équipe** | Basse | `brand_members` a déjà les rôles, manque le flow d'invitation par email |
+| **Email notifications** | Basse | Reminders avant date de publication, mail de bienvenue, mention sur commentaire |
 | **Mobile polish** | Moyenne | Quelques pages assument desktop (calendrier surtout) |
 | **Analytics avancées** | Basse | Filtre par période, comparaison vs période précédente, export CSV |
 | **Templates** | Basse | Reel/Story pré-remplis (réutiliser une fiche comme template) |
@@ -507,6 +558,8 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 | `0005_share_and_reorder.sql` | `share_token`, RPC public partage, reorder/swap atomiques |
 | `0006_brand_pillars_objectives.sql` | Tables piliers + objectifs par marque |
 | `0007_remove_default_objectives.sql` | Drop le seed des 5 objectifs par défaut |
+| `0008_team_invitations.sql` | Table `brand_invitations` + RPC create/accept/revoke/role/member |
+| `0009_comments.sql` | Tables `content_comments` + `content_reads` + RPC list/mark/count |
 
 ### Variables d'environnement
 

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, FileDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -12,6 +12,12 @@ import {
 import { DetailTabs } from "@/components/content-detail/detail-tabs";
 import { DeleteContentButton } from "@/components/content-detail/delete-button";
 import { ShareButton } from "@/components/content-detail/share-button";
+import {
+  CommentsProvider,
+  CommentsDrawer,
+  CommentsInboxButton,
+} from "@/components/comments";
+import type { Comment } from "@/components/comments";
 import type {
   Content,
   ReelDetails,
@@ -29,6 +35,11 @@ export default async function ContentDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
   const { data: content } = await supabase
     .from("contents")
     .select("*")
@@ -37,7 +48,17 @@ export default async function ContentDetailPage({
 
   if (!content) notFound();
 
-  const [reelRes, storyRes, slidesRes, scenesRes, perfRes, pillarsRes, objectivesRes] = await Promise.all([
+  const [
+    reelRes,
+    storyRes,
+    slidesRes,
+    scenesRes,
+    perfRes,
+    pillarsRes,
+    objectivesRes,
+    commentsRes,
+    readRes,
+  ] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
     supabase
@@ -61,6 +82,13 @@ export default async function ContentDetailPage({
       .select("id, name")
       .eq("brand_id", content.brand_id)
       .order("position", { ascending: true }),
+    supabase.rpc("list_content_comments_with_authors", { p_content_id: id }),
+    supabase
+      .from("content_reads")
+      .select("last_comment_read_at")
+      .eq("content_id", id)
+      .eq("user_id", user.id)
+      .maybeSingle(),
   ]);
 
   const reel = (reelRes.data ?? null) as ReelDetails | null;
@@ -70,60 +98,82 @@ export default async function ContentDetailPage({
   const perf = (perfRes.data ?? null) as Performance | null;
   const pillars = (pillarsRes.data ?? []) as { id: string; name: string }[];
   const objectives = (objectivesRes.data ?? []) as { id: string; name: string }[];
+  const comments = (commentsRes.data ?? []) as Comment[];
+  const lastReadAt = readRes.data?.last_comment_read_at ?? "1970-01-01T00:00:00Z";
 
   const c = content as Content;
 
+  // Construction du dictionnaire target labels pour la sidebar des commentaires.
+  // (Le mapping UUID → numéro de scène est calculable ici, depuis les scenes.)
+  const targetLabels: Record<string, string> = {};
+  scenes.forEach((s) => {
+    targetLabels[`scene:${s.id}`] = `Storyboard · Plan ${String(s.scene_number).padStart(2, "0")}`;
+  });
+  for (let i = 1; i <= 5; i++) {
+    targetLabels[`slide:${i}`] = `Story · Slot ${i}`;
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Retour
-        </Link>
-        <div className="flex items-center gap-2">
-          <ShareButton contentId={c.id} initialToken={c.share_token} />
+    <CommentsProvider
+      contentId={c.id}
+      currentUserId={user.id}
+      initialComments={comments}
+      initialLastReadAt={lastReadAt}
+    >
+      <div className="space-y-6">
+        <div className="flex items-center justify-between gap-4">
           <Link
-            href={`/print/${c.id}`}
-            target="_blank"
-            rel="noopener"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold hover:bg-secondary"
+            href="/dashboard"
+            className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
           >
-            <FileDown className="size-3.5" />
-            Exporter PDF
+            <ArrowLeft className="size-4" />
+            Retour
           </Link>
-          <DeleteContentButton contentId={c.id} />
+          <div className="flex items-center gap-2">
+            <CommentsInboxButton />
+            <ShareButton contentId={c.id} initialToken={c.share_token} />
+            <Link
+              href={`/print/${c.id}`}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold hover:bg-secondary"
+            >
+              <FileDown className="size-3.5" />
+              Exporter PDF
+            </Link>
+            <DeleteContentButton contentId={c.id} />
+          </div>
         </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <ColorDot color={typeColor(c.type)} />
+            <span className="font-medium text-muted">{typeLabel(c.type)}</span>
+            <Badge
+              className="ml-1 text-white"
+              style={{ background: statusColor(c.status) }}
+            >
+              {statusLabel(c.status)}
+            </Badge>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {c.title || "Sans titre"}
+          </h1>
+        </div>
+
+        <DetailTabs
+          content={c}
+          reel={reel}
+          story={story}
+          slides={slides}
+          scenes={scenes}
+          perf={perf}
+          brandPillars={pillars}
+          brandObjectives={objectives}
+        />
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm">
-          <ColorDot color={typeColor(c.type)} />
-          <span className="font-medium text-muted">{typeLabel(c.type)}</span>
-          <Badge
-            className="ml-1 text-white"
-            style={{ background: statusColor(c.status) }}
-          >
-            {statusLabel(c.status)}
-          </Badge>
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {c.title || "Sans titre"}
-        </h1>
-      </div>
-
-      <DetailTabs
-        content={c}
-        reel={reel}
-        story={story}
-        slides={slides}
-        scenes={scenes}
-        perf={perf}
-        brandPillars={pillars}
-        brandObjectives={objectives}
-      />
-    </div>
+      <CommentsDrawer targetLabels={targetLabels} />
+    </CommentsProvider>
   );
 }

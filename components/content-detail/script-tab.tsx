@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { AiGeneratorButton } from "@/components/ai-generator";
+import { CommentButton } from "@/components/comments";
 import { STORY_SLOT_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import {
@@ -74,31 +75,35 @@ function ReelScript({
         </div>
       </div>
 
-      <Field label="Introduction" id="intro" placeholder="Présente le sujet en une ou deux phrases."
+      <Field label="Introduction" id="intro" commentId="intro"
+        placeholder="Présente le sujet en une ou deux phrases."
         value={state.intro} onChange={(v) => setState((s) => ({ ...s, intro: v }))} />
 
       <div className="space-y-4">
         <Label>Points principaux</Label>
-        <Field label="Point 1" id="point1" value={state.point1}
+        <Field label="Point 1" id="point1" commentId="point1" value={state.point1}
           onChange={(v) => setState((s) => ({ ...s, point1: v }))} />
-        <Field label="Point 2" id="point2" value={state.point2}
+        <Field label="Point 2" id="point2" commentId="point2" value={state.point2}
           onChange={(v) => setState((s) => ({ ...s, point2: v }))} />
-        <Field label="Point 3" id="point3" value={state.point3}
+        <Field label="Point 3" id="point3" commentId="point3" value={state.point3}
           onChange={(v) => setState((s) => ({ ...s, point3: v }))} />
       </div>
 
-      <Field label="Transition / B-roll" id="transition"
+      <Field label="Transition / B-roll" id="transition" commentId="transition"
         placeholder="Indique les plans ou éléments visuels à ajouter."
         value={state.transition} onChange={(v) => setState((s) => ({ ...s, transition: v }))} />
 
-      <Field label="Récapitulatif" id="recap" value={state.recap}
+      <Field label="Récapitulatif" id="recap" commentId="recap" value={state.recap}
         onChange={(v) => setState((s) => ({ ...s, recap: v }))} />
 
-      <Field label="Conclusion (Outro)" id="outro" value={state.outro}
+      <Field label="Conclusion (Outro)" id="outro" commentId="outro" value={state.outro}
         onChange={(v) => setState((s) => ({ ...s, outro: v }))} />
 
       <div className="space-y-2">
-        <Label htmlFor="script_full">Script complet (optionnel)</Label>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="script_full">Script complet (optionnel)</Label>
+          <CommentButton targetType="script" targetId="script_full" />
+        </div>
         <Textarea
           id="script_full"
           className="min-h-40"
@@ -298,15 +303,22 @@ function PhoneCard({
 
   return (
     <div className="flex flex-col items-center">
-      <div
-        draggable
-        onDragStart={onDragHandleStart}
-        onDragEnd={onDragHandleEnd}
-        className="mb-1.5 inline-flex cursor-grab items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted active:cursor-grabbing"
-        title="Glisse pour échanger avec une autre story"
-      >
-        <span className="text-foreground/40">⋮⋮</span>
-        {label}
+      <div className="mb-1.5 flex w-full items-center justify-between gap-1">
+        <div
+          draggable
+          onDragStart={onDragHandleStart}
+          onDragEnd={onDragHandleEnd}
+          className="inline-flex cursor-grab items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted active:cursor-grabbing"
+          title="Glisse pour échanger avec une autre story"
+        >
+          <span className="text-foreground/40">⋮⋮</span>
+          {label}
+        </div>
+        <CommentButton
+          targetType="slide"
+          targetId={String(slotNumber)}
+          size="sm"
+        />
       </div>
 
       {/* Phone frame */}
@@ -338,16 +350,24 @@ function Field({
   value,
   onChange,
   placeholder,
+  commentId,
 }: {
   id: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  /** Si fourni → affiche un bouton de commentaire à côté du label (target_type = "script"). */
+  commentId?: string;
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center gap-2">
+        <Label htmlFor={id}>{label}</Label>
+        {commentId && (
+          <CommentButton targetType="script" targetId={commentId} />
+        )}
+      </div>
       <Textarea
         id={id}
         value={value}

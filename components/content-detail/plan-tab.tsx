@@ -12,6 +12,8 @@ import { updateContent } from "@/app/(app)/contents/actions";
 import { createTaxonomy } from "@/app/(app)/brands/taxonomy-actions";
 import { useAutosave, AutosaveIndicator } from "./autosave-field";
 import { HooksPickerButton } from "@/components/hooks-picker";
+import { PillarHelp } from "@/components/field-help/pillar-help";
+import { CommentButton } from "@/components/comments";
 import type { Content } from "@/lib/types";
 
 export function PlanTab({
@@ -56,7 +58,10 @@ export function PlanTab({
   return (
     <Card className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold">Informations générales</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-semibold">Informations générales</h2>
+          <CommentButton targetType="plan" targetId="general" />
+        </div>
         <AutosaveIndicator status={status} />
       </div>
 
@@ -93,7 +98,10 @@ export function PlanTab({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="pillar">Pilier de contenu</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="pillar">Pilier de contenu</Label>
+            <PillarHelp />
+          </div>
           <SelectWithCreate
             id="pillar"
             value={state.pillar}
@@ -152,7 +160,10 @@ export function PlanTab({
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="hook">Accroche</Label>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="hook">Accroche</Label>
+            <CommentButton targetType="plan" targetId="hook" />
+          </div>
           <HooksPickerButton
             onPick={(text) => setState((s) => ({ ...s, hook: text }))}
           />
@@ -166,7 +177,10 @@ export function PlanTab({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="cta">Appel à l&apos;action</Label>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="cta">Appel à l&apos;action</Label>
+          <CommentButton targetType="plan" targetId="cta" />
+        </div>
         <Input
           id="cta"
           value={state.cta}

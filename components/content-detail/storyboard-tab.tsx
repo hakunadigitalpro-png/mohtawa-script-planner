@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { CommentButton } from "@/components/comments";
 import { cn } from "@/lib/utils";
 import {
   addScene,
@@ -169,17 +170,20 @@ function SceneCard({
             Plan {String(index + 1).padStart(2, "0")}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            startTransition(async () => { await deleteScene(scene.id, contentId); })
-          }
-          disabled={pending}
-          className="rounded-full p-1 text-muted hover:bg-destructive/10 hover:text-destructive"
-          aria-label="Supprimer la scène"
-        >
-          <Trash2 className="size-3.5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <CommentButton targetType="scene" targetId={scene.id} size="sm" />
+          <button
+            type="button"
+            onClick={() =>
+              startTransition(async () => { await deleteScene(scene.id, contentId); })
+            }
+            disabled={pending}
+            className="rounded-full p-1 text-muted hover:bg-destructive/10 hover:text-destructive"
+            aria-label="Supprimer la scène"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3 p-3">
