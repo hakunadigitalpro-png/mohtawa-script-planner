@@ -251,7 +251,19 @@
     },
     "markPublished": "Mark as published",
     "filmedAutoHint": "Calculated automatically from your scenes",
-    "filmedAutoFraction": "{done}/{total} filmed"
+    "filmedAutoFraction": "{done}/{total} filmed",
+    "equipment": {
+      "title": "Gear to bring",
+      "emptyHint": "No gear added yet. E.g. camera, tripod, lapel mic, LED ring, SD card…"
+    },
+    "preparation": {
+      "title": "Shoot preparation",
+      "emptyHint": "No prep added yet. E.g. location booked, outfit ready, set built, notes printed…"
+    },
+    "addItem": "Add an item",
+    "addItemPlaceholder": "Type an item and press Enter",
+    "recentItems": "Recent items (from your last 3 videos)",
+    "deleteItem": "Delete item"
   },
   "performance": {
     "title": "Results",

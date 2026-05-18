@@ -251,7 +251,19 @@
     },
     "markPublished": "Marquer comme publiée",
     "filmedAutoHint": "Calculé automatiquement depuis tes scènes",
-    "filmedAutoFraction": "{done}/{total} filmées"
+    "filmedAutoFraction": "{done}/{total} filmées",
+    "equipment": {
+      "title": "Matériel à prévoir",
+      "emptyHint": "Aucun matériel ajouté. Ex : caméra, trépied, micro-cravate, anneau LED, carte SD…"
+    },
+    "preparation": {
+      "title": "Préparation tournage",
+      "emptyHint": "Aucune préparation ajoutée. Ex : lieu réservé, tenue prête, décor monté, notes imprimées…"
+    },
+    "addItem": "Ajouter un item",
+    "addItemPlaceholder": "Tape un item et appuie sur Entrée",
+    "recentItems": "Items récents (basés sur tes 3 dernières vidéos)",
+    "deleteItem": "Supprimer l'item"
   },
   "performance": {
     "title": "Résultats",

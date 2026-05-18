@@ -26,6 +26,7 @@ import type {
   StorySlide,
   StoryboardScene,
   Performance,
+  ChecklistItem,
 } from "@/lib/types";
 
 export default async function ContentDetailPage({
@@ -59,6 +60,9 @@ export default async function ContentDetailPage({
     objectivesRes,
     commentsRes,
     readRes,
+    checklistItemsRes,
+    suggEquipmentRes,
+    suggPreparationRes,
   ] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
@@ -90,6 +94,24 @@ export default async function ContentDetailPage({
       .eq("content_id", id)
       .eq("user_id", user.id)
       .maybeSingle(),
+    supabase
+      .from("content_checklist_items")
+      .select("*")
+      .eq("content_id", id)
+      .order("category", { ascending: true })
+      .order("position", { ascending: true }),
+    // Suggestions pour les items récurrents (matériel + préparation), basées
+    // sur les 3 dernières vidéos de la marque — voir migration 0011.
+    supabase.rpc("recent_brand_checklist_labels", {
+      p_brand_id: content.brand_id,
+      p_category: "equipment",
+      p_limit: 12,
+    }),
+    supabase.rpc("recent_brand_checklist_labels", {
+      p_brand_id: content.brand_id,
+      p_category: "preparation",
+      p_limit: 12,
+    }),
   ]);
 
   const reel = (reelRes.data ?? null) as ReelDetails | null;
@@ -101,6 +123,15 @@ export default async function ContentDetailPage({
   const objectives = (objectivesRes.data ?? []) as { id: string; name: string }[];
   const comments = (commentsRes.data ?? []) as Comment[];
   const lastReadAt = readRes.data?.last_comment_read_at ?? "1970-01-01T00:00:00Z";
+  const checklistItems = (checklistItemsRes.data ?? []) as ChecklistItem[];
+  const equipmentSuggestions = (suggEquipmentRes.data ?? []) as {
+    label: string;
+    usage_count: number;
+  }[];
+  const preparationSuggestions = (suggPreparationRes.data ?? []) as {
+    label: string;
+    usage_count: number;
+  }[];
 
   const c = content as Content;
 
@@ -198,6 +229,9 @@ export default async function ContentDetailPage({
           perf={perf}
           brandPillars={pillars}
           brandObjectives={objectives}
+          checklistItems={checklistItems}
+          equipmentSuggestions={equipmentSuggestions}
+          preparationSuggestions={preparationSuggestions}
         />
       </div>
 

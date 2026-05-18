@@ -80,6 +80,18 @@ export type StoryboardScene = {
   filmed: boolean;
 };
 
+export type ChecklistItemCategory = "equipment" | "preparation";
+
+export type ChecklistItem = {
+  id: string;
+  content_id: string;
+  category: ChecklistItemCategory;
+  label: string;
+  position: number;
+  done: boolean;
+  created_at: string;
+};
+
 export type Performance = {
   content_id: string;
   views: number | null;

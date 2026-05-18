@@ -163,6 +163,22 @@ export async function duplicateContent(id: string) {
     }
   }
 
+  // Duplicate checklist items (preserve label/category/position, reset `done`).
+  // Marche pour les Reels ET les Stories.
+  const { data: items } = await supabase
+    .from("content_checklist_items")
+    .select("category, label, position")
+    .eq("content_id", id);
+  if (items && items.length) {
+    await supabase.from("content_checklist_items").insert(
+      items.map((it) => ({
+        ...it,
+        content_id: newId,
+        done: false,
+      })),
+    );
+  }
+
   // Duplicate story_details + story_slides
   if (src.type === "story") {
     const { data: sd } = await supabase
@@ -327,6 +343,89 @@ export async function deleteScene(sceneId: string, contentId: string) {
   if (error) return { error: error.message };
   revalidatePath(`/content/${contentId}`);
   return { ok: true };
+}
+
+/* ============================ Checklist items (V2 — migration 0011) ============================ */
+// Items "matériel à prévoir" et "préparation tournage" gérés par video.
+// Atomic actions : add / toggle / delete sont chacune une sauvegarde immédiate.
+
+type ChecklistCategory = "equipment" | "preparation";
+
+export async function createChecklistItem(
+  contentId: string,
+  category: ChecklistCategory,
+  label: string,
+) {
+  const trimmed = label.trim();
+  if (!trimmed) return { error: "Le libellé est requis." };
+
+  const supabase = await createClient();
+
+  // Calcule la position max actuelle dans cette catégorie pour append à la fin.
+  const { data: existing } = await supabase
+    .from("content_checklist_items")
+    .select("position")
+    .eq("content_id", contentId)
+    .eq("category", category)
+    .order("position", { ascending: false })
+    .limit(1);
+  const nextPosition = (existing?.[0]?.position ?? -1) + 1;
+
+  const { error } = await supabase.from("content_checklist_items").insert({
+    content_id: contentId,
+    category,
+    label: trimmed,
+    position: nextPosition,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true as const };
+}
+
+export async function toggleChecklistItem(
+  itemId: string,
+  contentId: string,
+  done: boolean,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("content_checklist_items")
+    .update({ done })
+    .eq("id", itemId);
+  if (error) return { error: error.message };
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true as const };
+}
+
+export async function deleteChecklistItem(itemId: string, contentId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("content_checklist_items")
+    .delete()
+    .eq("id", itemId);
+  if (error) return { error: error.message };
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true as const };
+}
+
+/**
+ * Récupère les items les plus utilisés sur les 3 dernières vidéos de la
+ * marque, pour les proposer en suggestion dans le composant "Ajouter un item".
+ * Pas d'auth requise côté app — la RPC vérifie l'appartenance à la marque.
+ */
+export async function getRecentChecklistLabels(
+  brandId: string,
+  category: ChecklistCategory,
+): Promise<{ label: string; usage_count: number }[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("recent_brand_checklist_labels", {
+    p_brand_id: brandId,
+    p_category: category,
+    p_limit: 12,
+  });
+  if (error || !data) return [];
+  return data as { label: string; usage_count: number }[];
 }
 
 /* ============================ Sharing ============================ */

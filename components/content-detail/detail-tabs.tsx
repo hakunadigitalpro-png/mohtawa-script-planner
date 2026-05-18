@@ -14,6 +14,7 @@ import type {
   StorySlide,
   StoryboardScene,
   Performance,
+  ChecklistItem,
 } from "@/lib/types";
 
 export function DetailTabs({
@@ -25,6 +26,9 @@ export function DetailTabs({
   perf,
   brandPillars,
   brandObjectives,
+  checklistItems,
+  equipmentSuggestions,
+  preparationSuggestions,
 }: {
   content: Content;
   reel: ReelDetails | null;
@@ -34,6 +38,9 @@ export function DetailTabs({
   perf: Performance | null;
   brandPillars: { id: string; name: string }[];
   brandObjectives: { id: string; name: string }[];
+  checklistItems: ChecklistItem[];
+  equipmentSuggestions: { label: string; usage_count: number }[];
+  preparationSuggestions: { label: string; usage_count: number }[];
 }) {
   const t = useTranslations("tabs");
   const isStory = content.type === "story";
@@ -68,6 +75,9 @@ export function DetailTabs({
           reel={reel}
           scenes={isStory ? undefined : scenes}
           slides={isStory ? slides : undefined}
+          checklistItems={checklistItems}
+          equipmentSuggestions={equipmentSuggestions}
+          preparationSuggestions={preparationSuggestions}
         />
       </TabsContent>
       <TabsContent value="performance">

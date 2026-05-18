@@ -251,7 +251,19 @@
     },
     "markPublished": "وضع علامة تم النشر",
     "filmedAutoHint": "محسوب تلقائياً من المشاهد",
-    "filmedAutoFraction": "{done}/{total} مُصوَّر"
+    "filmedAutoFraction": "{done}/{total} مُصوَّر",
+    "equipment": {
+      "title": "المعدات المطلوبة",
+      "emptyHint": "لم تتم إضافة أي معدات بعد. مثال: كاميرا، حامل ثلاثي، ميكروفون، حلقة إضاءة، بطاقة SD…"
+    },
+    "preparation": {
+      "title": "تحضيرات التصوير",
+      "emptyHint": "لم تتم إضافة أي تحضيرات بعد. مثال: الموقع محجوز، الملابس جاهزة، الديكور مُركَّب، الملاحظات مطبوعة…"
+    },
+    "addItem": "إضافة عنصر",
+    "addItemPlaceholder": "اكتب عنصراً واضغط Enter",
+    "recentItems": "العناصر الأخيرة (من آخر 3 فيديوهات)",
+    "deleteItem": "حذف العنصر"
   },
   "performance": {
     "title": "النتائج",
