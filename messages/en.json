@@ -20,7 +20,10 @@
     "yes": "Yes",
     "no": "No",
     "copy": "Copy",
-    "copied": "Copied"
+    "copied": "Copied",
+    "discard": "Discard",
+    "unsavedChanges": "Unsaved changes",
+    "upToDate": "All saved"
   },
   "nav": {
     "dashboard": "Dashboard",

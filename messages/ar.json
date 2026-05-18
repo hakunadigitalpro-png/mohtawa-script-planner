@@ -20,7 +20,10 @@
     "yes": "نعم",
     "no": "لا",
     "copy": "نسخ",
-    "copied": "تم النسخ"
+    "copied": "تم النسخ",
+    "discard": "تجاهل",
+    "unsavedChanges": "تعديلات غير محفوظة",
+    "upToDate": "كل شيء محفوظ"
   },
   "nav": {
     "dashboard": "لوحة التحكم",

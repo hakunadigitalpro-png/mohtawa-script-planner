@@ -100,6 +100,19 @@ export function TabsContent({
   children: React.ReactNode;
 }) {
   const ctx = React.useContext(TabsContext);
-  if (!ctx || ctx.value !== value) return null;
-  return <div className={cn("mt-5", className)}>{children}</div>;
+  if (!ctx) return null;
+  const active = ctx.value === value;
+  // On garde TOUS les onglets montés (juste cachés via `hidden`) pour préserver
+  // l'état local de chaque onglet (form data, dirty flags, etc.).
+  // Sinon un user qui édite l'onglet Plan, clique sur Script puis revient sur
+  // Plan, perdrait ses modifs non sauvegardées (unmount = state wipe).
+  return (
+    <div
+      role="tabpanel"
+      hidden={!active}
+      className={cn("mt-5", !active && "hidden", className)}
+    >
+      {children}
+    </div>
+  );
 }

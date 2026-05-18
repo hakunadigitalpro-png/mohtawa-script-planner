@@ -20,7 +20,10 @@
     "yes": "Oui",
     "no": "Non",
     "copy": "Copier",
-    "copied": "Copié"
+    "copied": "Copié",
+    "discard": "Annuler",
+    "unsavedChanges": "Modifications non sauvegardées",
+    "upToDate": "Tout est à jour"
   },
   "nav": {
     "dashboard": "Tableau de bord",
