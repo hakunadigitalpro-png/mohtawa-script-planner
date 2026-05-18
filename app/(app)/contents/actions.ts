@@ -238,7 +238,11 @@ export async function upsertStoryDetails(
 export async function upsertStorySlide(
   contentId: string,
   slotNumber: number,
-  patch: Partial<{ body: string | null; image_url: string | null }>,
+  patch: Partial<{
+    body: string | null;
+    image_url: string | null;
+    filmed: boolean;
+  }>,
 ) {
   const supabase = await createClient();
   const { error } = await supabase
@@ -300,6 +304,7 @@ export async function updateScene(
     on_screen_text: string;
     tag: string;
     image_url: string | null;
+    filmed: boolean;
   }>,
   contentId: string,
 ) {

@@ -63,6 +63,8 @@ export type StorySlide = {
   slot_number: number;
   body: string | null;
   image_url: string | null;
+  /** Marqué filmé par l'utilisateur (migration 0010). Indépendant de la checklist macro. */
+  filmed: boolean;
 };
 
 export type StoryboardScene = {
@@ -74,6 +76,8 @@ export type StoryboardScene = {
   on_screen_text: string | null;
   tag: string | null;
   image_url: string | null;
+  /** Marquée filmée par l'utilisateur (migration 0010). Indépendant de la checklist macro. */
+  filmed: boolean;
 };
 
 export type Performance = {

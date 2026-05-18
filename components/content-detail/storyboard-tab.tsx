@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -20,6 +20,8 @@ import {
 } from "@/app/(app)/contents/actions";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
+import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { StoryboardScene } from "@/lib/types";
 
 const DRAG_MIME = "application/x-mohtawa-scene-id";
@@ -142,24 +144,30 @@ export function StoryboardTab({
   return (
     <div className="space-y-4">
       <Card className="space-y-5 p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold">{t("title")}</h2>
             <p className="text-xs text-muted">{t("subtitle")}</p>
           </div>
-          <Button
-            size="sm"
-            onClick={() =>
-              startTransition(async () => {
-                await addScene(contentId);
-                router.refresh();
-              })
-            }
-            disabled={pending}
-          >
-            <Plus className="size-4" />
-            {t("addScene")}
-          </Button>
+          <div className="flex items-center gap-3">
+            <FilmedProgress
+              {...computeFilmedStatus(initialScenes, undefined)}
+              variant="scenes"
+            />
+            <Button
+              size="sm"
+              onClick={() =>
+                startTransition(async () => {
+                  await addScene(contentId);
+                  router.refresh();
+                })
+              }
+              disabled={pending}
+            >
+              <Plus className="size-4" />
+              {t("addScene")}
+            </Button>
+          </div>
         </div>
 
         {state.scenes.length === 0 ? (
@@ -198,6 +206,7 @@ export function StoryboardTab({
                   <SceneCard
                     sceneForm={sceneForm}
                     serverImageUrl={serverScene?.image_url ?? null}
+                    serverFilmed={serverScene?.filmed ?? false}
                     index={idx}
                     contentId={contentId}
                     onFieldChange={(key, value) =>
@@ -224,12 +233,14 @@ export function StoryboardTab({
 function SceneCard({
   sceneForm,
   serverImageUrl,
+  serverFilmed,
   index,
   contentId,
   onFieldChange,
 }: {
   sceneForm: SceneFormState;
   serverImageUrl: string | null;
+  serverFilmed: boolean;
   index: number;
   contentId: string;
   onFieldChange: (
@@ -241,6 +252,14 @@ function SceneCard({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
+  // Optimistic filmed : on update visuel immédiat, on resync depuis serverFilmed
+  // après router.refresh. Pas dans le form state car c'est une action atomique
+  // (un clic = un save immédiat, comme l'upload image).
+  const [optimisticFilmed, setOptimisticFilmed] = useState(serverFilmed);
+  useEffect(() => {
+    setOptimisticFilmed(serverFilmed);
+  }, [serverFilmed]);
+
   const onImageChange = (url: string | null) => {
     startTransition(async () => {
       await updateScene(sceneForm.id, { image_url: url }, contentId);
@@ -248,14 +267,46 @@ function SceneCard({
     });
   };
 
+  const onToggleFilmed = () => {
+    const next = !optimisticFilmed;
+    setOptimisticFilmed(next);
+    startTransition(async () => {
+      const res = await updateScene(sceneForm.id, { filmed: next }, contentId);
+      if (res && "error" in res && res.error) {
+        // Revert si erreur serveur
+        setOptimisticFilmed(!next);
+      }
+      router.refresh();
+    });
+  };
+
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-      <div className="flex items-center justify-between border-b border-border/60 bg-secondary/50 px-3 py-2">
+    <div
+      className={cn(
+        "flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-all",
+        optimisticFilmed
+          ? "border-emerald-300/60 opacity-90"
+          : "border-border/60",
+      )}
+    >
+      <div
+        className={cn(
+          "flex items-center justify-between border-b px-3 py-2",
+          optimisticFilmed
+            ? "border-emerald-300/40 bg-emerald-50/40"
+            : "border-border/60 bg-secondary/50",
+        )}
+      >
         <div className="flex items-center gap-1.5">
           <GripVertical className="size-3.5 cursor-grab text-muted active:cursor-grabbing" />
           <span className="text-xs font-bold uppercase tracking-wider text-muted">
             {t("planNumber", { n: String(index + 1).padStart(2, "0") })}
           </span>
+          {optimisticFilmed && (
+            <span className="ms-1 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+              {t("filmedBadge")}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <CommentButton targetType="scene" targetId={sceneForm.id} size="sm" />
@@ -320,6 +371,31 @@ function SceneCard({
             placeholder={t("fields.onScreenTextPlaceholder")}
           />
         </div>
+
+        {/* Toggle "Filmé" — atomic action (clic = save immédiat). */}
+        <label
+          className={cn(
+            "mt-2 flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition",
+            optimisticFilmed
+              ? "border-emerald-300/60 bg-emerald-50/60"
+              : "border-border/60 bg-secondary/30 hover:bg-secondary/60",
+            pending && "opacity-60",
+          )}
+        >
+          <Checkbox
+            checked={optimisticFilmed}
+            onCheckedChange={onToggleFilmed}
+            disabled={pending}
+          />
+          <span
+            className={cn(
+              "text-xs font-semibold",
+              optimisticFilmed ? "text-emerald-700" : "text-foreground",
+            )}
+          >
+            {t("filmed")}
+          </span>
+        </label>
       </div>
     </div>
   );

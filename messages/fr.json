@@ -212,7 +212,11 @@
       "title": "Title / Introduction",
       "cta": "Call to Action",
       "default": "Story {n}"
-    }
+    },
+    "filmed": "Filmée",
+    "filmedBadge": "✓ Filmée",
+    "markFilmed": "Marquer comme filmée",
+    "filmedProgress": "{done} sur {total} filmées"
   },
   "storyboard": {
     "title": "Storyboard",
@@ -229,7 +233,11 @@
       "onScreenText": "Texte affiché",
       "onScreenTextPlaceholder": "Texte qui apparaît à l'écran"
     },
-    "deleteScene": "Supprimer la scène"
+    "deleteScene": "Supprimer la scène",
+    "filmed": "Filmée",
+    "filmedBadge": "✓ Filmée",
+    "markFilmed": "Marquer comme filmée",
+    "filmedProgress": "{done} sur {total} filmées"
   },
   "checklist": {
     "title": "Préparation de la vidéo",
@@ -241,7 +249,9 @@
       "edited": "Montage terminé",
       "published": "Vidéo publiée"
     },
-    "markPublished": "Marquer comme publiée"
+    "markPublished": "Marquer comme publiée",
+    "filmedAutoHint": "Calculé automatiquement depuis tes scènes",
+    "filmedAutoFraction": "{done}/{total} filmées"
   },
   "performance": {
     "title": "Résultats",

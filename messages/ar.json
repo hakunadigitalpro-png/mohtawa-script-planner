@@ -212,7 +212,11 @@
       "title": "العنوان / المقدمة",
       "cta": "الدعوة للعمل",
       "default": "ستوري {n}"
-    }
+    },
+    "filmed": "تم التصوير",
+    "filmedBadge": "✓ مُصوَّر",
+    "markFilmed": "تحديد كمُصوَّر",
+    "filmedProgress": "{done} من {total} مُصوَّر"
   },
   "storyboard": {
     "title": "ستوري بورد",
@@ -229,7 +233,11 @@
       "onScreenText": "النص الظاهر",
       "onScreenTextPlaceholder": "النص الذي يظهر على الشاشة"
     },
-    "deleteScene": "حذف المشهد"
+    "deleteScene": "حذف المشهد",
+    "filmed": "تم التصوير",
+    "filmedBadge": "✓ مُصوَّر",
+    "markFilmed": "تحديد كمُصوَّر",
+    "filmedProgress": "{done} من {total} مُصوَّر"
   },
   "checklist": {
     "title": "تحضير الفيديو",
@@ -241,7 +249,9 @@
       "edited": "تم المونتاج",
       "published": "تم نشر الفيديو"
     },
-    "markPublished": "وضع علامة تم النشر"
+    "markPublished": "وضع علامة تم النشر",
+    "filmedAutoHint": "محسوب تلقائياً من المشاهد",
+    "filmedAutoFraction": "{done}/{total} مُصوَّر"
   },
   "performance": {
     "title": "النتائج",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
+import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { Content, ReelDetails, StoryDetails, StorySlide } from "@/lib/types";
 
 const SLIDE_DRAG_MIME = "application/x-mohtawa-slot-number";
@@ -248,12 +250,18 @@ function StoryScript({
   return (
     <div className="space-y-4">
       <Card className="space-y-6 p-6">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold">{t("title")}</h2>
             <p className="text-xs text-muted">{t("subtitle")}</p>
           </div>
-          <AiGeneratorButton contentId={contentId} type="story" />
+          <div className="flex items-center gap-3">
+            <FilmedProgress
+              {...computeFilmedStatus(undefined, initialSlides)}
+              variant="stories"
+            />
+            <AiGeneratorButton contentId={contentId} type="story" />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -313,6 +321,7 @@ function StoryScript({
                   slotNumber={slot}
                   body={state.bodies[slot - 1]}
                   imageUrl={slide?.image_url ?? null}
+                  serverFilmed={slide?.filmed ?? false}
                   onBodyChange={(v) =>
                     setState((s) => ({
                       ...s,
@@ -326,6 +335,15 @@ function StoryScript({
                     startTransition(async () => {
                       await upsertStorySlide(contentId, slot, {
                         image_url: url,
+                      });
+                      router.refresh();
+                    });
+                  }}
+                  onToggleFilmed={(next) => {
+                    // Toggle filmed = action atomique
+                    startTransition(async () => {
+                      await upsertStorySlide(contentId, slot, {
+                        filmed: next,
                       });
                       router.refresh();
                     });
@@ -361,8 +379,10 @@ function PhoneCard({
   slotNumber,
   body,
   imageUrl,
+  serverFilmed,
   onBodyChange,
   onImageChange,
+  onToggleFilmed,
   onDragHandleStart,
   onDragHandleEnd,
 }: {
@@ -370,12 +390,26 @@ function PhoneCard({
   slotNumber: number;
   body: string;
   imageUrl: string | null;
+  serverFilmed: boolean;
   onBodyChange: (v: string) => void;
   onImageChange: (url: string | null) => void;
+  onToggleFilmed: (next: boolean) => void;
   onDragHandleStart?: (e: React.DragEvent) => void;
   onDragHandleEnd?: () => void;
 }) {
   const t = useTranslations("stories");
+
+  // Optimistic state pour le toggle "filmé" (un clic = visuel immédiat).
+  const [optimisticFilmed, setOptimisticFilmed] = useState(serverFilmed);
+  useEffect(() => {
+    setOptimisticFilmed(serverFilmed);
+  }, [serverFilmed]);
+
+  const handleToggle = () => {
+    const next = !optimisticFilmed;
+    setOptimisticFilmed(next);
+    onToggleFilmed(next);
+  };
 
   const label =
     slotNumber === 1
@@ -386,7 +420,12 @@ function PhoneCard({
           t("slotLabels.default", { n: slotNumber });
 
   return (
-    <div className="flex flex-col items-center">
+    <div
+      className={cn(
+        "flex flex-col items-center transition-all",
+        optimisticFilmed && "opacity-90",
+      )}
+    >
       <div className="mb-1.5 flex w-full items-center justify-between gap-1">
         <div
           draggable
@@ -397,6 +436,11 @@ function PhoneCard({
         >
           <span className="text-foreground/40">⋮⋮</span>
           {label}
+          {optimisticFilmed && (
+            <span className="ms-1 inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+              {t("filmedBadge")}
+            </span>
+          )}
         </div>
         <CommentButton
           targetType="slide"
@@ -406,7 +450,14 @@ function PhoneCard({
       </div>
 
       {/* Phone frame */}
-      <div className="w-full overflow-hidden rounded-[20px] border-4 border-foreground/80 bg-card shadow-sm">
+      <div
+        className={cn(
+          "w-full overflow-hidden rounded-[20px] border-4 bg-card shadow-sm transition-colors",
+          optimisticFilmed
+            ? "border-emerald-500/80"
+            : "border-foreground/80",
+        )}
+      >
         <ImageUpload
           contentId={contentId}
           value={imageUrl}
@@ -422,6 +473,29 @@ function PhoneCard({
         onChange={(e) => onBodyChange(e.target.value)}
         placeholder={t("slotPlaceholder")}
       />
+
+      {/* Toggle "Filmé" — atomic action */}
+      <label
+        className={cn(
+          "mt-1.5 flex w-full cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-1 transition",
+          optimisticFilmed
+            ? "border-emerald-300/60 bg-emerald-50/60"
+            : "border-border/60 bg-secondary/30 hover:bg-secondary/60",
+        )}
+      >
+        <Checkbox
+          checked={optimisticFilmed}
+          onCheckedChange={handleToggle}
+        />
+        <span
+          className={cn(
+            "text-[10px] font-semibold uppercase tracking-wider",
+            optimisticFilmed ? "text-emerald-700" : "text-muted",
+          )}
+        >
+          {t("filmed")}
+        </span>
+      </label>
     </div>
   );
 }

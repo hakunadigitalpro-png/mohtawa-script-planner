@@ -212,7 +212,11 @@
       "title": "Title / Introduction",
       "cta": "Call to Action",
       "default": "Story {n}"
-    }
+    },
+    "filmed": "Filmed",
+    "filmedBadge": "✓ Filmed",
+    "markFilmed": "Mark as filmed",
+    "filmedProgress": "{done} of {total} filmed"
   },
   "storyboard": {
     "title": "Storyboard",
@@ -229,7 +233,11 @@
       "onScreenText": "On-screen text",
       "onScreenTextPlaceholder": "Text that appears on screen"
     },
-    "deleteScene": "Delete scene"
+    "deleteScene": "Delete scene",
+    "filmed": "Filmed",
+    "filmedBadge": "✓ Filmed",
+    "markFilmed": "Mark as filmed",
+    "filmedProgress": "{done} of {total} filmed"
   },
   "checklist": {
     "title": "Video preparation",
@@ -241,7 +249,9 @@
       "edited": "Editing done",
       "published": "Video published"
     },
-    "markPublished": "Mark as published"
+    "markPublished": "Mark as published",
+    "filmedAutoHint": "Calculated automatically from your scenes",
+    "filmedAutoFraction": "{done}/{total} filmed"
   },
   "performance": {
     "title": "Results",

@@ -63,7 +63,12 @@ export function DetailTabs({
         </TabsContent>
       )}
       <TabsContent value="checklist">
-        <ChecklistTab contentId={content.id} reel={reel} />
+        <ChecklistTab
+          contentId={content.id}
+          reel={reel}
+          scenes={isStory ? undefined : scenes}
+          slides={isStory ? slides : undefined}
+        />
       </TabsContent>
       <TabsContent value="performance">
         <PerformanceTab contentId={content.id} perf={perf} />
