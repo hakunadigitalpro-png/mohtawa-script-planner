@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Trash2, Sparkles } from "lucide-react";
+import { Trash2, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
@@ -202,7 +202,6 @@ function AddItemForm({
           e.preventDefault();
           addLabel(value);
         }}
-        className="flex items-center gap-2"
       >
         <Input
           value={value}
@@ -212,14 +211,6 @@ function AddItemForm({
           className="h-9 text-sm"
           disabled={pending}
         />
-        <button
-          type="submit"
-          disabled={pending || !value.trim()}
-          aria-label={t("addItem")}
-          className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground transition hover:bg-accent/90 disabled:opacity-50"
-        >
-          <Plus className="size-4" />
-        </button>
       </form>
 
       {open && filteredSuggestions.length > 0 && (
