@@ -1,0 +1,849 @@
+{
+  "common": {
+    "save": "Save",
+    "saving": "Saving...",
+    "saved": "Saved ✓",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "rename": "Rename",
+    "open": "Open",
+    "duplicate": "Duplicate",
+    "back": "Back",
+    "loading": "Loading...",
+    "error": "Error",
+    "create": "Create",
+    "search": "Search",
+    "required": "This field is required.",
+    "networkError": "Something went wrong. Please try again in a moment.",
+    "yes": "Yes",
+    "no": "No",
+    "copy": "Copy",
+    "copied": "Copied"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "calendar": "Calendar",
+    "analytics": "Analytics",
+    "hooks": "Hooks",
+    "brands": "My brands",
+    "profile": "Profile",
+    "logout": "Sign out",
+    "mohtawa": "Mohtawa"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Welcome back. Pick up where you left off.",
+      "email": "Email address",
+      "emailPlaceholder": "name@email.com",
+      "password": "Password",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Sign in",
+      "submitLoading": "Signing in...",
+      "forgotPassword": "Forgot password?",
+      "createAccount": "Create an account",
+      "errorInvalid": "Invalid email or password.",
+      "errorMissing": "Email and password required."
+    },
+    "register": {
+      "title": "Create an account",
+      "subtitle": "Your creative workspace is ready in under a minute.",
+      "fullName": "Full name",
+      "email": "Email address",
+      "password": "Password",
+      "submit": "Create my workspace",
+      "submitLoading": "Creating...",
+      "haveAccount": "Already have an account?",
+      "signin": "Sign in",
+      "errorPasswordTooShort": "Password too short (6 characters minimum).",
+      "successConfirmEmail": "Account created. Check your inbox to confirm your email, then sign in."
+    },
+    "reset": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we'll send you a link.",
+      "email": "Email address",
+      "submit": "Send link",
+      "submitLoading": "Sending...",
+      "backToLogin": "Back to sign in",
+      "errorEmailRequired": "Email required.",
+      "success": "If an account exists, an email has been sent."
+    }
+  },
+  "onboarding": {
+    "welcomeTitle": "Welcome to Mohtawa",
+    "welcomeSubtitle": "Start by creating your first brand. You can add more later (e.g. your personal account, a client, a company).",
+    "brandName": "Brand name",
+    "brandNamePlaceholder": "e.g. My personal account",
+    "create": "Create my first brand",
+    "creating": "Creating...",
+    "connectedAs": "Signed in as {email}"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "{brand} · quick view of your activity.",
+    "kpi": {
+      "total": "Total videos",
+      "drafts": "Drafts",
+      "published": "Published",
+      "thisMonth": "This month"
+    },
+    "recent": "Recent videos",
+    "resultsCount": "{count, plural, =0 {No results} one {# result} other {# results}}",
+    "emptyTitle": "No videos yet.",
+    "emptySubtitle": "Start by creating your first video.",
+    "noResultsTitle": "No results.",
+    "noResultsSubtitle": "Try changing or clearing the filters.",
+    "filters": {
+      "searchPlaceholder": "Search a video by title...",
+      "allStatuses": "All statuses",
+      "allTypes": "All formats",
+      "allPlatforms": "All platforms",
+      "allMonths": "All months",
+      "clear": "Clear filters"
+    }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "subtitle": "See your month at a glance.",
+    "today": "Today",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "dragHint": "💡 Drag a video from one day to another to reschedule it.",
+    "addOnDay": "Add a video on this day",
+    "moreItems": "+{count} more",
+    "weekdays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
+  },
+  "newContent": {
+    "title": "New video",
+    "subtitle": "Every video starts with a clear idea.",
+    "format": "Format",
+    "platform": "Platform",
+    "videoTitle": "Title",
+    "titlePlaceholder": "e.g. 3 mistakes new creators make",
+    "date": "Planned publish date",
+    "submit": "Create and continue",
+    "submitLoading": "Creating...",
+    "noPlatform": "—",
+    "buttonLabel": "New video"
+  },
+  "content": {
+    "untitled": "Untitled",
+    "deleteTitle": "Delete this video?",
+    "deleteDescription": "This action cannot be undone.",
+    "deleteConfirm": "Confirm",
+    "deleting": "Deleting...",
+    "exportPdf": "Export PDF",
+    "duplicateSuffix": "(copy)",
+    "untitledCopy": "Untitled copy",
+    "actionMenu": {
+      "open": "Open",
+      "duplicate": "Duplicate",
+      "changeStatus": "Change status",
+      "delete": "Delete",
+      "confirmDelete": "Delete this video? This action cannot be undone."
+    }
+  },
+  "tabs": {
+    "plan": "Plan",
+    "script": "Script",
+    "stories": "Stories",
+    "storyboard": "Storyboard",
+    "checklist": "Checklist",
+    "performance": "Performance"
+  },
+  "plan": {
+    "sectionTitle": "General information",
+    "videoTitle": "Video title",
+    "videoTitlePlaceholder": "e.g. 3 mistakes new creators make",
+    "format": "Format",
+    "platform": "Platform",
+    "pillar": "Content pillar",
+    "pillarPlaceholder": "e.g. Digital marketing",
+    "objective": "Goal",
+    "date": "Planned date",
+    "status": "Status",
+    "hook": "Hook",
+    "hookPlaceholder": "The first line that stops the scroll.",
+    "pickHook": "Pick a hook",
+    "cta": "Call to action",
+    "ctaPlaceholder": "Follow / Comment / Download...",
+    "tags": "Tags (comma separated)",
+    "tagsPlaceholder": "marketing, beginner, tips"
+  },
+  "script": {
+    "title": "Script structure",
+    "subtitle": "One idea = one point. Structure first, shoot second.",
+    "intro": "Intro",
+    "introPlaceholder": "Introduce the topic in one or two sentences.",
+    "mainPoints": "Key points",
+    "point1": "Point 1",
+    "point2": "Point 2",
+    "point3": "Point 3",
+    "transition": "Transition / B-roll",
+    "transitionPlaceholder": "List the shots or visuals to add.",
+    "recap": "Recap",
+    "outro": "Outro",
+    "fullScript": "Full script (optional)",
+    "fullScriptPlaceholder": "Paste or type your full script here.",
+    "generateWithAi": "Generate with AI"
+  },
+  "stories": {
+    "title": "Storyboard Planner",
+    "subtitle": "5 stories: from intro to call-to-action.",
+    "whatStory": "What story do I want to tell?",
+    "whatStoryPlaceholder": "What's the goal of this sequence: what to convey, to whom?",
+    "engagementGoals": "My engagement goals",
+    "engagementGoalsPlaceholder": "DM, sticker question, swipe up... what do you want the audience to do?",
+    "slotPlaceholder": "Text / dialogue / notes",
+    "slotLabels": {
+      "title": "Title / Introduction",
+      "cta": "Call to Action",
+      "default": "Story {n}"
+    }
+  },
+  "storyboard": {
+    "title": "Storyboard",
+    "subtitle": "Sketch the shots before you shoot. One visual per scene.",
+    "addScene": "Add a scene",
+    "emptyTitle": "No scenes yet.",
+    "emptySubtitle": "Click \"Add a scene\" to get started.",
+    "planNumber": "Shot {n}",
+    "fields": {
+      "action": "Action / Dialogue",
+      "actionPlaceholder": "What's happening / what's being said",
+      "camera": "Camera / Shot",
+      "cameraPlaceholder": "Wide shot, Close-up, Tracking...",
+      "onScreenText": "On-screen text",
+      "onScreenTextPlaceholder": "Text that appears on screen"
+    },
+    "deleteScene": "Delete scene"
+  },
+  "checklist": {
+    "title": "Video preparation",
+    "subtitle": "Go step by step. {done}/{total} completed.",
+    "items": {
+      "scriptReady": "Script finalized",
+      "scenesReady": "Scenes approved",
+      "filmed": "Video filmed",
+      "edited": "Editing done",
+      "published": "Video published"
+    },
+    "markPublished": "Mark as published"
+  },
+  "performance": {
+    "title": "Results",
+    "subtitle": "What you measure, you can improve.",
+    "views": "Views",
+    "likes": "Likes",
+    "comments": "Comments",
+    "shares": "Shares",
+    "saves": "Saves",
+    "retention": "Retention (%)",
+    "notes": "Personal notes",
+    "notesPlaceholder": "What worked? What to change next time?"
+  },
+  "imageUpload": {
+    "addImage": "Add an image",
+    "uploading": "Uploading...",
+    "limits": "JPG, PNG, WebP · 5 MB max",
+    "unsupported": "Unsupported format.",
+    "tooLarge": "Image too large (5 MB max).",
+    "removeImage": "Remove image",
+    "preview": "Preview",
+    "planAlt": "Shot {n}",
+    "planImage": "Shot image"
+  },
+  "hooks": {
+    "title": "Hooks library",
+    "subtitle": "Get inspired by formats that work. The right hook = a stopped scroll.",
+    "searchPlaceholder": "Search a hook...",
+    "allCategories": "✨ All ({count})",
+    "noResults": "No hook found. Try different keywords.",
+    "use": "Use",
+    "pickerTitle": "Hooks library",
+    "pickerSubtitle": "Click \"Use\" to replace your video's hook.",
+    "categories": {
+      "curiosity": "Curiosity",
+      "mistake": "Mistakes",
+      "transformation": "Transformation",
+      "list": "Lists & How-to",
+      "controversy": "Controversy",
+      "question": "Question",
+      "urgency": "Urgency"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "{brand} · what you measure, you can improve.",
+    "kpi": {
+      "totalViews": "Total views",
+      "publishedVideos": "Published videos",
+      "videosWithStats": "Videos with stats"
+    },
+    "noDataTitle": "No performance data yet",
+    "noDataSubtitle": "To see your analytics fill up, open a published video and enter the Performance numbers (views, likes, shares...).",
+    "pillarRanking": {
+      "title": "Which topics perform best?",
+      "subtitle": "Ranking by content pillar — so you know what to talk about next.",
+      "trendingBadge": "↗ {pillar} trending up (+{delta} views this month)",
+      "emptyLabel": "Set the content pillar on your videos to see the ranking."
+    },
+    "platformRanking": {
+      "title": "By platform",
+      "subtitle": "Where your content lands best.",
+      "emptyLabel": "No platform set."
+    },
+    "typeRanking": {
+      "title": "By format",
+      "subtitle": "Reel vs Story — the format that pays.",
+      "emptyLabel": "—"
+    },
+    "topVideos": {
+      "title": "Top 5 videos",
+      "subtitle": "Your best performers.",
+      "emptyLabel": "No video with views yet.",
+      "viewsLabel": "{count} views"
+    },
+    "charts": {
+      "viewsByMonth": "Views per month",
+      "viewsByMonthSub": "Last 6 months",
+      "publishedByMonth": "Videos published per month",
+      "publishedByMonthSub": "Your output trend",
+      "noData": "No data yet."
+    },
+    "rankItemSecondary": "{count, plural, one {# video} other {# videos}} · avg. {avg} views"
+  },
+  "profile": {
+    "title": "My profile",
+    "subtitle": "Update your name and preferred language.",
+    "infoTitle": "Information",
+    "infoSubtitle": "Your account on Mohtawa.",
+    "fullName": "Full name",
+    "email": "Email address",
+    "emailHint": "Email cannot be changed.",
+    "language": "Preferred language",
+    "languageHint": "Choose the interface language.",
+    "save": "Save changes",
+    "saving": "Saving...",
+    "saved": "Changes saved.",
+    "sessionTitle": "Session",
+    "sessionSubtitle": "Signed in with {email}.",
+    "signout": "Sign out"
+  },
+  "brands": {
+    "title": "My brands",
+    "subtitle": "Click on a brand to manage its team, pillars and goals.",
+    "newBrand": "New brand",
+    "countTitle": "{count, plural, =0 {No brands} one {# brand} other {# brands}}",
+    "countSubtitle": "Click on a brand to manage its team, pillars and goals. You can also rename or delete it.",
+    "videosCount": "{count, plural, =0 {No videos} one {# video} other {# videos}}",
+    "emptyList": "No brands yet.",
+    "deleteConfirmTitle": "Delete \"{name}\"?",
+    "deleteConfirmText": "All videos, scripts, storyboards and stats tied to this brand will be permanently lost. This cannot be undone.",
+    "deleteTypePrompt": "To confirm, type {name}:",
+    "deleteConfirm": "Confirm deletion",
+    "deleting": "Deleting...",
+    "createBrandTitle": "New brand",
+    "brandNamePlaceholder": "e.g. Nutriclinic",
+    "brandNameLabel": "Brand name",
+    "switchTooltip": "Brand",
+    "switchLabel": "Brand: {name}",
+    "noBrandLabel": "—",
+    "myBrands": "My brands",
+    "noBrandFound": "No brand"
+  },
+  "brandDetail": {
+    "backToAll": "All brands",
+    "subtitle": "Set up pillars, goals and manage the team for this brand.",
+    "team": {
+      "title": "Team",
+      "subtitle": "People who can view and edit videos for this brand."
+    },
+    "pillars": {
+      "title": "Content pillars",
+      "subtitle": "The recurring themes for this brand. You'll find them in the \"Pillar\" menu when creating a video.",
+      "empty": "No pillars yet. E.g. Digital marketing, Productivity, Personal branding…",
+      "placeholder": "e.g. Digital marketing",
+      "add": "Add a pillar"
+    },
+    "objectives": {
+      "title": "Goals",
+      "subtitle": "The business goals possible for this brand's videos. Add the ones that fit.",
+      "empty": "No goals yet. E.g. Education, Sales, Awareness…",
+      "placeholder": "e.g. Lead generation",
+      "add": "Add a goal"
+    },
+    "taxonomy": {
+      "deleteConfirm": "Delete \"{name}\"?\n\nVideos using it will keep the value as plain text."
+    }
+  },
+  "team": {
+    "intro": "Invite your team with a link you can send anywhere (WhatsApp, email, Slack…). Each link expires after 30 days.",
+    "createLink": "Create invite link",
+    "memberHeader": "Member",
+    "roleHeader": "Role",
+    "joinedHeader": "Joined",
+    "selfSuffix": "(you)",
+    "leave": "Leave",
+    "remove": "Remove",
+    "leaveConfirm": "Leave this brand?\n\nYou'll lose access to all its videos.",
+    "removeConfirm": "Remove {email} from the brand?",
+    "pendingTitle": "Pending invitations ({count})",
+    "expiresOn": "expires on {date}",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "revokeConfirm": "Revoke this invitation?\n\nThe link will stop working.",
+    "dialog": {
+      "title": "Create invite link",
+      "subtitleForm": "Choose the role this person will have once they join.",
+      "subtitleDone": "Your link is ready. Copy it and send it to whoever you want to invite.",
+      "role": "Role",
+      "note": "Note (optional)",
+      "notePlaceholder": "e.g. for Sami (editor)",
+      "noteHint": "To help you remember who this link is for.",
+      "linkHint": "You can always find this link later in the \"Pending invitations\" list below.",
+      "close": "Close",
+      "generate": "Generate link",
+      "generating": "Generating…"
+    },
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    },
+    "roleDescriptions": {
+      "owner": "Full access, including brand deletion",
+      "admin": "Full access except brand deletion",
+      "editor": "Create and edit videos",
+      "viewer": "View only (read-only)"
+    }
+  },
+  "comments": {
+    "header": "Comments",
+    "headerButton": "Comments",
+    "headerSubtitleThread": "{count, plural, =0 {No comments} one {# comment} other {# comments}}",
+    "headerSubtitleInbox": "All discussion on this video",
+    "filters": {
+      "all": "All",
+      "unread": "Unread",
+      "resolved": "Resolved"
+    },
+    "emptyThreadTitle": "No comments here",
+    "emptyThreadDescription": "Start the discussion by adding the first comment.",
+    "emptyInboxAll": "No comments yet",
+    "emptyInboxUnread": "No unread comments",
+    "emptyInboxResolved": "No resolved comments",
+    "emptyDescription": "Click the 💬 button on any block to start a discussion.",
+    "resolvedBadge": "Resolved",
+    "repliesCount": "{count, plural, one {# reply} other {# replies}}",
+    "newPlaceholder": "Write a comment for your team…",
+    "send": "Send",
+    "sending": "Sending…",
+    "reply": "Reply",
+    "replyPlaceholder": "Reply…",
+    "resolve": "Resolve",
+    "reopen": "Reopen",
+    "deleteConfirm": "Delete this comment?\n\nAny replies will also be deleted.",
+    "backToInbox": "Back to inbox",
+    "viewComments": "View comments",
+    "labels": {
+      "scene": "Scene",
+      "storyboardPlan": "Storyboard · Shot {n}",
+      "storySlot": "Story · Slot {n}",
+      "planField": "Plan · {field}",
+      "scriptField": "Script · {field}",
+      "planGeneral": "General info",
+      "planHook": "Hook",
+      "planCta": "Call to action",
+      "planTitle": "Title",
+      "planTags": "Tags",
+      "planPillar": "Pillar",
+      "planObjective": "Goal",
+      "planDate": "Date",
+      "scriptIntro": "Intro",
+      "scriptPoint1": "Point 1",
+      "scriptPoint2": "Point 2",
+      "scriptPoint3": "Point 3",
+      "scriptTransition": "Transition",
+      "scriptRecap": "Recap",
+      "scriptOutro": "Outro",
+      "scriptFull": "Full script"
+    },
+    "time": {
+      "justNow": "just now",
+      "minutes": "{count} min ago",
+      "hours": "{count} h ago",
+      "days": "{count} d ago"
+    }
+  },
+  "sharing": {
+    "buttonOff": "Share",
+    "buttonOn": "Shared",
+    "enable": "Enable sharing",
+    "disable": "Disable sharing",
+    "regenerate": "Regenerate link",
+    "copy": "Copy",
+    "copied": "Copied",
+    "dialogTitle": "Share this video",
+    "dialogDescription": "Give the link to anyone. No sign-in needed — it's read-only.",
+    "linkLabel": "Public link",
+    "warning": "This link is public and can be used by anyone who receives it. You can disable it any time.",
+    "indexedHint": "This page is not indexed by Google."
+  },
+  "deleteContent": {
+    "button": "Delete",
+    "confirmTitle": "Delete this video?",
+    "confirmDescription": "This action is final and cannot be undone.",
+    "deleting": "Deleting…",
+    "confirm": "Confirm deletion"
+  },
+  "invite": {
+    "headerTitle": "You've been invited to Mohtawa",
+    "headerSubtitle": "{inviter} invites you to join the brand {brand}.",
+    "yourRole": "Your role",
+    "validUntil": "Valid until {date}",
+    "accept": "Accept invitation",
+    "accepting": "Accepting…",
+    "connectedAs": "Signed in as {email}.",
+    "switchAccount": "Switch account",
+    "unauthTitle": "An invitation is waiting for you",
+    "unauthSubtitle": "Sign in or create an account to accept this invitation.",
+    "createAccount": "Create an account",
+    "haveAccount": "I already have an account",
+    "errors": {
+      "invalid_token": {
+        "title": "Invalid link",
+        "description": "This invitation link is invalid. Make sure you copied it in full."
+      },
+      "not_found": {
+        "title": "Link not found",
+        "description": "This invitation doesn't exist. Ask the person who invited you to generate a new link."
+      },
+      "already_used": {
+        "title": "Invitation already used",
+        "description": "This link has already been used. If you're already a member, head to your dashboard."
+      },
+      "expired": {
+        "title": "Invitation expired",
+        "description": "This link has passed its expiration date (30 days). Ask for a new one."
+      }
+    },
+    "backToDashboard": "Go to my dashboard"
+  },
+  "fieldHelp": {
+    "videoCta": "Watch the explainer video",
+    "videoCtaSub": "Opens YouTube in a new tab",
+    "pillar": {
+      "description": "The flagship themes of your brand. Picked well, they turn a random-posting account into a real strategy.",
+      "whatIs": "What is it, concretely?",
+      "whatIsP1": "A content pillar is a broad theme you'll cover regularly. Think of it as a column of your strategy: every video you produce should fit under one pillar.",
+      "whatIsP2": "The golden rule: between 3 and 5 pillars max. Fewer, and you'll repeat yourself. More, and your audience will lose the plot.",
+      "methodTitle": "The 5-step method",
+      "step1": "Set your goal and target. Why are you posting (awareness, community, sales)? Who are you talking to?",
+      "step2": "Brainstorm wide. List everything: tips, customer questions, behind-the-scenes, stories. Aim for 30-50 raw ideas.",
+      "step3": "Group into 3-5 pillars. Organize ideas into broad families. If a family only has 3-4 ideas → it's not a pillar.",
+      "step4Intro": "Balance your pillars using the Know-Like-Trust method:",
+      "step4a": "Educational — you demonstrate your expertise (tips, tutorials)",
+      "step4b": "Relational — you show behind-the-scenes, the team, your daily life",
+      "step4c": "Inspirational — your values, your vision, what triggers a reaction",
+      "step4d": "Promotional — your offers, your results, customer testimonials",
+      "step5": "Build your idea bank. In Mohtawa, each pillar becomes a filter: you'll attach Reels and Stories to it as ideas come.",
+      "testTitle": "The validation test",
+      "test": "For each pillar, ask yourself: \"Can I come up with at least 30 video ideas without breaking a sweat?\" If yes → it's a real pillar. If not → merge it or drop it.",
+      "examplesTitle": "3 concrete examples",
+      "example1": "Business coach — Marketing tips (educational), Entrepreneur routine (behind-the-scenes), Mindset & discipline (inspirational), Client testimonials (promo)",
+      "example2": "Natural cosmetics brand — Beauty tips (educational), Workshop production (behind-the-scenes), Zero waste & values (inspirational), Product showcases (promo)",
+      "example3": "Local restaurant — Recipes & techniques (educational), A day in the kitchen (behind-the-scenes), Local producers (inspirational), Dish of the day & events (promo)",
+      "mohtawaTitle": "How Mohtawa uses your pillars",
+      "mohtawa1": "You'll find the list in the \"Content pillar\" dropdown of each video (just above).",
+      "mohtawa2": "The orange + button to the right of the menu lets you add a new pillar on the fly, without leaving the video.",
+      "mohtawa3": "In the Analytics tab, your pillars are ranked by performance: you can see which one brings in the most views.",
+      "mohtawa4": "You can manage your full taxonomy (add, rename, delete) from Brands → [your brand].",
+      "tip": "Tip: start with 3 pillars only. You can always add a 4th or 5th later, once you've mastered the first ones."
+    }
+  },
+  "ai": {
+    "buttonLabel": "Generate with AI",
+    "reelTitle": "Generate your Reel script with AI",
+    "storyTitle": "Generate your Story sequence with AI",
+    "subtitle": "Give me a topic, I handle the rest. You can edit everything after.",
+    "topic": "Video topic",
+    "topicPlaceholder": "e.g. The 3 mistakes new creators make on Instagram",
+    "audience": "Target audience (optional)",
+    "audiencePlaceholder": "e.g. solo founders, B2B marketers, students...",
+    "generate": "Generate",
+    "generating": "Generating...",
+    "regenerate": "Regenerate",
+    "apply": "Apply to script",
+    "applying": "Applying...",
+    "errorTopic": "Enter a topic to generate.",
+    "previewHint": "💡 You'll be able to edit every field after applying.",
+    "previewStoryHint": "💡 You'll be able to edit each story and add an image after applying.",
+    "preview": {
+      "hook": "Hook",
+      "intro": "Intro",
+      "point1": "Point 1",
+      "point2": "Point 2",
+      "point3": "Point 3",
+      "transition": "Transition",
+      "recap": "Recap",
+      "cta": "CTA",
+      "outro": "Outro",
+      "objective": "Goal",
+      "ctaSoft": "Soft CTA",
+      "stories": "Stories"
+    },
+    "errors": {
+      "noApiKey": "AI is not configured. Add OPENAI_API_KEY in Vercel and redeploy.",
+      "auth": "Invalid OpenAI key. Check OPENAI_API_KEY.",
+      "rateLimit": "Too many requests or quota reached. Try again in a minute.",
+      "network": "Could not reach AI. Try again.",
+      "parse": "AI returned an invalid format. Try again.",
+      "empty": "Empty AI response.",
+      "api": "OpenAI error ({status}). Try again.",
+      "unexpected": "Unexpected error. Try again.",
+      "expiredSession": "Session expired. Please sign in again.",
+      "nameRequired": "Name is required.",
+      "nameTooLong": "Name too long (80 characters max)."
+    }
+  },
+  "print": {
+    "back": "Back to app",
+    "print": "Print / Save as PDF",
+    "title": "PDF Export — Mohtawa",
+    "sections": {
+      "plan": "Plan",
+      "script": "Script",
+      "storyboard": "Storyboard",
+      "stories": "Storyboard Planner",
+      "performance": "Performance"
+    },
+    "fullScript": "Full script"
+  },
+  "contentTypes": {
+    "reel": "Reel",
+    "story": "Story"
+  },
+  "platforms": {
+    "instagram": "Instagram",
+    "tiktok": "TikTok",
+    "youtube": "YouTube",
+    "facebook": "Facebook",
+    "linkedin": "LinkedIn"
+  },
+  "statuses": {
+    "idea": "Idea",
+    "script": "Script",
+    "filming": "Filming",
+    "editing": "Editing",
+    "scheduled": "Scheduled",
+    "published": "Published"
+  },
+  "objectives": {
+    "education": "Education",
+    "personal_brand": "Personal Brand",
+    "sales": "Sales",
+    "awareness": "Awareness",
+    "engagement": "Engagement"
+  },
+  "sceneTags": {
+    "hook": "Hook",
+    "content": "Content",
+    "transition": "Transition",
+    "cta": "CTA"
+  },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "how": "How it works",
+      "personas": "Who it's for",
+      "faq": "FAQ",
+      "signin": "Sign in",
+      "signup": "Try free"
+    },
+    "hero": {
+      "betaBadge": "Free beta open",
+      "title1": "Plan your video production",
+      "titleAccent": "end to end",
+      "subtitle": "Editorial calendar, AI-assisted scripts, visual storyboard, analytics. For creators who want to stop juggling Notion docs and Google Sheets.",
+      "ctaPrimary": "Try it free",
+      "ctaSecondary": "See how it works",
+      "trust": "No credit card · Trilingual EN/FR/AR · Native RTL support"
+    },
+    "features": {
+      "eyebrow": "A complete toolkit",
+      "title": "Everything you need, nothing you don't",
+      "subtitle": "From the editorial calendar to performance analysis, including script and storyboard.",
+      "f1": {
+        "title": "Planning",
+        "description": "Monthly calendar, drag & drop, multi-brand. Your whole production at a glance."
+      },
+      "f2": {
+        "title": "AI scripts",
+        "description": "Generate a structured Reel or Story script in 10 seconds. Edit, approve, shoot."
+      },
+      "f3": {
+        "title": "Visual storyboard",
+        "description": "Break down your Reel shot by shot with image uploads, camera angles, on-screen text."
+      },
+      "f4": {
+        "title": "Pillar analytics",
+        "description": "Discover which content pillar performs. Rankings, top videos, monthly trend."
+      }
+    },
+    "how": {
+      "eyebrow": "In 4 steps",
+      "title": "From creative blur to published video",
+      "subtitle": "The same flow for every video: no more scattered files, no more forgotten steps.",
+      "step1": {
+        "title": "Plan",
+        "description": "Choose the format (Reel or Story), the pillar, the platform, the date. Everything in one place."
+      },
+      "step2": {
+        "title": "Write (or let AI help)",
+        "description": "Structured script for Reels, phone storyboard for Stories. AI suggests in one click."
+      },
+      "step3": {
+        "title": "Storyboard shot by shot",
+        "description": "Upload your shots, set the angle, the on-screen text. Drag & drop to reorder."
+      },
+      "step4": {
+        "title": "Measure and improve",
+        "description": "Enter your performance numbers and see which pillars convert best. Compound loop."
+      },
+      "cta": "Start now"
+    },
+    "personas": {
+      "eyebrow": "Built for",
+      "title": "Solo, agency or studio",
+      "subtitle": "Mohtawa fits your setup.",
+      "p1": {
+        "tag": "Most common",
+        "title": "Solo creators",
+        "description": "Coaches, trainers, infopreneurs producing 3-5 videos per week who want to stop managing everything in scattered files."
+      },
+      "p2": {
+        "tag": "Multi-brand",
+        "title": "Agencies",
+        "description": "Run several brands in parallel. Invite your team, separate workspaces, share with clients in read-only mode."
+      },
+      "p3": {
+        "tag": "Pro workflow",
+        "title": "Studios & freelancers",
+        "description": "Structured process from client brief to shoot. PDF export ready for set, public link for sign-off."
+      }
+    },
+    "why": {
+      "eyebrow": "What's different",
+      "title": "Built for MENA, not a US clone",
+      "subtitle": "Anglo-Saxon tools treat Arabic as an add-on. We made it core.",
+      "items": {
+        "bilingual": {
+          "title": "Trilingual EN/FR/AR",
+          "description": "Interface fully translated with native RTL. Not a patch, it's in our DNA."
+        },
+        "ai": {
+          "title": "AI built in",
+          "description": "Script generation via GPT-4o-mini. No hidden costs, it's included."
+        },
+        "team": {
+          "title": "Team collaboration",
+          "description": "Magic-link invites, 4 roles, threaded comments on every block."
+        },
+        "share": {
+          "title": "Share & export",
+          "description": "Read-only public link for your clients, PDF export of the storyboard for the shoot."
+        }
+      }
+    },
+    "beta": {
+      "badge": "Beta program",
+      "title": "Join the early creators",
+      "description": "Mohtawa is in free beta. In exchange for your feedback, keep lifetime free access when we launch paid plans.",
+      "perks": {
+        "p1": "Unlimited access to all features",
+        "p2": "Direct support by message",
+        "p3": "Lifetime free access after launch",
+        "p4": "Your feedback shapes the product"
+      },
+      "cta": "Join the beta"
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "title": "Everything you might be wondering",
+      "items": {
+        "q1": {
+          "question": "Is it really free?",
+          "answer": "Yes, 100% free during the beta. No credit card, no trial period. Beta testers will keep lifetime free access when we launch paid plans."
+        },
+        "q2": {
+          "question": "Is my data private?",
+          "answer": "Yes. Your videos, scripts and performance numbers are hosted on Supabase (Postgres + RLS) and only accessible to you and your team. We don't sell anything and we don't train AI models on your data."
+        },
+        "q3": {
+          "question": "How does the AI work?",
+          "answer": "We use OpenAI's GPT-4o-mini to generate structured scripts. You give the title, goal and pillar — the AI proposes a full structure (hook, points, CTA, outro) you can edit freely."
+        },
+        "q4": {
+          "question": "Does Mohtawa publish for me?",
+          "answer": "No. Mohtawa is a planner, not an auto-poster. You publish yourself on Instagram, TikTok or YouTube. We help you prepare, structure, measure."
+        },
+        "q5": {
+          "question": "Is Arabic well supported?",
+          "answer": "Yes — full interface in Arabic with native RTL, a dedicated Cairo font, and the 70-hook library fully translated. Switch EN/FR/AR any time."
+        },
+        "q6": {
+          "question": "Can I work with a team?",
+          "answer": "Yes. Invite teammates with a magic link, with 4 roles (owner, admin, editor, viewer). Threaded comments on every block, notification inbox, \"resolved\" status."
+        },
+        "q7": {
+          "question": "Does it work on mobile?",
+          "answer": "The app is responsive and usable on mobile. Some pages (calendar, storyboard) are better on desktop. A dedicated mobile experience is coming soon."
+        },
+        "q8": {
+          "question": "How do I delete my account?",
+          "answer": "Email us from your account and we'll delete everything in under 24h. No data retained."
+        }
+      }
+    },
+    "finalCta": {
+      "title": "Ready to structure your production?",
+      "description": "Join the free beta. No credit card, full access, direct support.",
+      "primary": "Try it free",
+      "secondary": "Sign in"
+    },
+    "footer": {
+      "tagline": "The video planner built for creators in MENA, France, and the world.",
+      "product": "Product",
+      "productLinks": {
+        "features": "Features",
+        "how": "How it works",
+        "personas": "Who it's for",
+        "faq": "FAQ"
+      },
+      "company": "Mohtawa",
+      "companyLinks": {
+        "beta": "Beta program",
+        "contact": "Contact"
+      },
+      "legal": "Legal",
+      "legalLinks": {
+        "privacy": "Privacy",
+        "terms": "Terms"
+      },
+      "rights": "All rights reserved.",
+      "made": "Made with ❤️ in Tunisia"
+    }
+  }
+}

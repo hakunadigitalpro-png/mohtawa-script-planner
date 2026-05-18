@@ -662,5 +662,188 @@
     "content": "Contenu",
     "transition": "Transition",
     "cta": "CTA"
+  },
+  "landing": {
+    "nav": {
+      "features": "Fonctionnalités",
+      "how": "Comment ça marche",
+      "personas": "Pour qui",
+      "faq": "FAQ",
+      "signin": "Se connecter",
+      "signup": "Essayer gratuit"
+    },
+    "hero": {
+      "betaBadge": "Bêta gratuite ouverte",
+      "title1": "Pilote ta production vidéo",
+      "titleAccent": "de A à Z",
+      "subtitle": "Plan éditorial, scripts assistés par IA, storyboard visuel, analytics. Pour les créateurs francophones et arabophones qui veulent arrêter de bricoler dans Notion.",
+      "ctaPrimary": "Essayer gratuitement",
+      "ctaSecondary": "Voir comment ça marche",
+      "trust": "Pas de carte bancaire · Trilingue FR/AR/EN · RTL natif"
+    },
+    "features": {
+      "eyebrow": "Une boîte à outils complète",
+      "title": "Tout ce qu'il te faut, rien de superflu",
+      "subtitle": "Du calendrier éditorial jusqu'à l'analyse des performances, en passant par le script et le storyboard.",
+      "f1": {
+        "title": "Planification",
+        "description": "Calendrier mensuel, drag & drop, multi-marques. Toute ta production en un coup d'œil."
+      },
+      "f2": {
+        "title": "Scripts IA",
+        "description": "Génère un script Reel ou Story structuré en 10 secondes. Édite, valide, tourne."
+      },
+      "f3": {
+        "title": "Storyboard visuel",
+        "description": "Découpe ton Reel scène par scène avec upload d'image, angle caméra, texte affiché."
+      },
+      "f4": {
+        "title": "Analytics par pilier",
+        "description": "Découvre quel pilier de contenu performe. Classements, top vidéos, progression mensuelle."
+      }
+    },
+    "how": {
+      "eyebrow": "En 4 étapes",
+      "title": "Du flou créatif à la vidéo publiée",
+      "subtitle": "Le même flux pour chaque vidéo : plus de fichiers éparpillés, plus d'oublis.",
+      "step1": {
+        "title": "Planifie",
+        "description": "Choisis le format (Reel ou Story), le pilier, la plateforme, la date. Tout est centralisé."
+      },
+      "step2": {
+        "title": "Écris (ou laisse l'IA t'aider)",
+        "description": "Script structuré pour les Reels, storyboard téléphone pour les Stories. L'IA propose en un clic."
+      },
+      "step3": {
+        "title": "Storyboard scène par scène",
+        "description": "Upload tes plans, indique l'angle, le texte à afficher. Drag & drop pour réordonner."
+      },
+      "step4": {
+        "title": "Mesure et améliore",
+        "description": "Saisis tes performances et vois quels piliers convertissent le plus. Boucle vertueuse."
+      },
+      "cta": "Commencer maintenant"
+    },
+    "personas": {
+      "eyebrow": "Pensé pour",
+      "title": "Solo, en agence ou en studio",
+      "subtitle": "Mohtawa s'adapte à ton organisation.",
+      "p1": {
+        "tag": "Le plus courant",
+        "title": "Créateurs solo",
+        "description": "Coachs, formateurs, infopreneurs qui produisent 3-5 vidéos par semaine et veulent arrêter de tout gérer dans des fichiers éparpillés."
+      },
+      "p2": {
+        "tag": "Multi-marques",
+        "title": "Agences",
+        "description": "Gérez plusieurs marques en parallèle. Invitez votre équipe, séparez les workspaces, partagez avec vos clients en lecture seule."
+      },
+      "p3": {
+        "tag": "Process pro",
+        "title": "Studios & freelances",
+        "description": "Process structuré du brief client au tournage. Export PDF prêt pour le shooting, lien public pour validation."
+      }
+    },
+    "why": {
+      "eyebrow": "Ce qui change",
+      "title": "Pensé pour MENA, pas un copié-collé US",
+      "subtitle": "Les outils anglo-saxons traitent l'arabe comme un add-on. Nous, on l'a mis au cœur.",
+      "items": {
+        "bilingual": {
+          "title": "Trilingue FR/AR/EN natif",
+          "description": "Interface 100% traduite avec RTL parfait pour l'arabe. Pas un patch, c'est dans l'ADN."
+        },
+        "ai": {
+          "title": "IA intégrée",
+          "description": "Génération de scripts FR via GPT-4o-mini. Aucun coût caché, c'est inclus."
+        },
+        "team": {
+          "title": "Travail en équipe",
+          "description": "Invitations par lien magique, 4 rôles, commentaires en threads sur chaque bloc."
+        },
+        "share": {
+          "title": "Partage et export",
+          "description": "Lien public lecture seule pour tes clients, export PDF du storyboard pour le tournage."
+        }
+      }
+    },
+    "beta": {
+      "badge": "Programme bêta",
+      "title": "Rejoins les premiers créateurs",
+      "description": "Mohtawa est en bêta gratuite. En échange de ton retour d'expérience, garde un accès gratuit à vie quand on lancera les plans payants.",
+      "perks": {
+        "p1": "Accès illimité à toutes les fonctionnalités",
+        "p2": "Support direct par message",
+        "p3": "Accès gratuit à vie après la sortie",
+        "p4": "Tes retours façonnent le produit"
+      },
+      "cta": "Rejoindre la bêta"
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "title": "Tout ce que tu te demandes",
+      "items": {
+        "q1": {
+          "question": "C'est vraiment gratuit ?",
+          "answer": "Oui, 100% gratuit pendant la bêta. Pas de carte bancaire, pas de période d'essai. Les beta testers garderont un accès gratuit à vie quand on lancera les plans payants."
+        },
+        "q2": {
+          "question": "Mes données sont-elles privées ?",
+          "answer": "Oui. Tes vidéos, scripts et performances sont hébergés sur Supabase (Postgres + RLS) et accessibles uniquement par toi et ton équipe. On ne revend rien et on n'entraîne aucun modèle IA sur tes données."
+        },
+        "q3": {
+          "question": "Comment fonctionne l'IA ?",
+          "answer": "On utilise GPT-4o-mini d'OpenAI pour générer des scripts structurés. Tu donnes le titre, l'objectif et le pilier — l'IA propose une structure complète (hook, points, CTA, outro) que tu peux éditer librement."
+        },
+        "q4": {
+          "question": "Mohtawa publie-t-il à ma place ?",
+          "answer": "Non. Mohtawa est un planificateur, pas un autoresponder. Tu publies toi-même sur Instagram, TikTok ou YouTube. On t'aide à préparer, structurer, mesurer."
+        },
+        "q5": {
+          "question": "L'arabe est-il bien géré ?",
+          "answer": "Oui — interface complète en arabe avec RTL parfait, police Cairo dédiée, et la bibliothèque de 70 accroches traduite. Tu switches FR/AR/EN à tout moment."
+        },
+        "q6": {
+          "question": "Je peux travailler en équipe ?",
+          "answer": "Oui. Invite tes collaborateurs par lien magique, avec 4 rôles (owner, admin, editor, viewer). Commentaires en threads sur chaque bloc de vidéo, inbox de notifications, marquage 'résolu'."
+        },
+        "q7": {
+          "question": "Ça marche sur mobile ?",
+          "answer": "L'app est responsive et utilisable sur mobile. Certaines pages (calendrier, storyboard) sont mieux sur desktop. Une expérience mobile dédiée arrive bientôt."
+        },
+        "q8": {
+          "question": "Comment supprimer mon compte ?",
+          "answer": "Écris-nous depuis ton compte, on supprime tout en moins de 24h. Aucune donnée conservée."
+        }
+      }
+    },
+    "finalCta": {
+      "title": "Prêt à structurer ta production ?",
+      "description": "Rejoins la bêta gratuite. Pas de carte bancaire, accès à tout, support direct.",
+      "primary": "Essayer gratuitement",
+      "secondary": "Se connecter"
+    },
+    "footer": {
+      "tagline": "Le planificateur vidéo pensé pour les créateurs francophones et arabophones.",
+      "product": "Produit",
+      "productLinks": {
+        "features": "Fonctionnalités",
+        "how": "Comment ça marche",
+        "personas": "Pour qui",
+        "faq": "FAQ"
+      },
+      "company": "Mohtawa",
+      "companyLinks": {
+        "beta": "Programme bêta",
+        "contact": "Contact"
+      },
+      "legal": "Légal",
+      "legalLinks": {
+        "privacy": "Confidentialité",
+        "terms": "Conditions"
+      },
+      "rights": "Tous droits réservés.",
+      "made": "Fait avec ❤️ en Tunisie"
+    }
   }
 }

@@ -118,7 +118,7 @@ export function LocaleSwitcherFull() {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {LOCALES.map((loc) => {
         const active = loc === locale;
         return (
