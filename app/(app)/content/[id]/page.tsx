@@ -188,7 +188,11 @@ export default async function ContentDetailPage({
           </Link>
           <div className="flex items-center gap-2">
             <CommentsInboxButton />
-            <ShareButton contentId={c.id} initialToken={c.share_token} />
+            <ShareButton
+              contentId={c.id}
+              initialToken={c.share_token}
+              initialMode={c.share_mode}
+            />
             <Link
               href={`/print/${c.id}`}
               target="_blank"

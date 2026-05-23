@@ -26,6 +26,8 @@ export type Content = {
   cta: string | null;
   tags: string[] | null;
   share_token: string | null;
+  /** 'read' = lien public en lecture seule, 'comment' = invités peuvent commenter. */
+  share_mode: "read" | "comment";
   created_at: string;
   updated_at: string;
 };

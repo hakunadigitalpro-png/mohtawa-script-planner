@@ -482,6 +482,7 @@
     "deleteConfirm": "Delete this comment?\n\nAny replies will also be deleted.",
     "backToInbox": "Back to inbox",
     "viewComments": "View comments",
+    "guestBadge": "Guest",
     "labels": {
       "scene": "Scene",
       "storyboardPlan": "Storyboard · Shot {n}",
@@ -524,7 +525,12 @@
     "dialogDescription": "Give the link to anyone. No sign-in needed — it's read-only.",
     "linkLabel": "Public link",
     "warning": "This link is public and can be used by anyone who receives it. You can disable it any time.",
-    "indexedHint": "This page is not indexed by Google."
+    "indexedHint": "This page is not indexed by Google.",
+    "modeLabel": "Permissions",
+    "modeReadTitle": "Read-only",
+    "modeReadDesc": "Guests can view but not modify anything",
+    "modeCommentTitle": "Comments allowed",
+    "modeCommentDesc": "Guests can leave feedback on any block"
   },
   "deleteContent": {
     "button": "Delete",

@@ -482,6 +482,7 @@
     "deleteConfirm": "حذف هذا التعليق؟\n\nسيتم حذف أي ردود محتملة أيضاً.",
     "backToInbox": "العودة إلى صندوق الوارد",
     "viewComments": "عرض التعليقات",
+    "guestBadge": "ضيف",
     "labels": {
       "scene": "مشهد",
       "storyboardPlan": "ستوري بورد · لقطة {n}",
@@ -524,7 +525,12 @@
     "dialogDescription": "أعط الرابط لمن تريد. لا يتطلب تسجيل دخول — للقراءة فقط.",
     "linkLabel": "رابط عام",
     "warning": "هذا الرابط عام ويمكن استخدامه من قبل أي شخص يستقبله. يمكنك إيقافه في أي وقت.",
-    "indexedHint": "هذه الصفحة غير مفهرسة من قبل Google."
+    "indexedHint": "هذه الصفحة غير مفهرسة من قبل Google.",
+    "modeLabel": "الصلاحيات",
+    "modeReadTitle": "قراءة فقط",
+    "modeReadDesc": "الضيوف يطّلعون فقط، بدون أي تعديل",
+    "modeCommentTitle": "السماح بالتعليقات",
+    "modeCommentDesc": "يمكن للضيوف ترك ملاحظات على كل بلوك"
   },
   "deleteContent": {
     "button": "حذف",

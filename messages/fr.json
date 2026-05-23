@@ -482,6 +482,7 @@
     "deleteConfirm": "Supprimer ce commentaire ?\n\nLes éventuelles réponses seront aussi supprimées.",
     "backToInbox": "Retour à l'inbox",
     "viewComments": "Voir les commentaires",
+    "guestBadge": "Invité",
     "labels": {
       "scene": "Scène",
       "storyboardPlan": "Storyboard · Plan {n}",
@@ -524,7 +525,12 @@
     "dialogDescription": "Donne le lien à qui tu veux. Pas de connexion requise — c'est en lecture seule.",
     "linkLabel": "Lien public",
     "warning": "Ce lien est public et utilisable par toute personne qui le reçoit. Tu peux le désactiver à tout moment.",
-    "indexedHint": "Cette page n'est pas indexée par Google."
+    "indexedHint": "Cette page n'est pas indexée par Google.",
+    "modeLabel": "Permissions",
+    "modeReadTitle": "Lecture seule",
+    "modeReadDesc": "Les invités voient mais ne peuvent rien modifier",
+    "modeCommentTitle": "Commentaires autorisés",
+    "modeCommentDesc": "Les invités peuvent laisser des retours sur chaque bloc"
   },
   "deleteContent": {
     "button": "Supprimer",

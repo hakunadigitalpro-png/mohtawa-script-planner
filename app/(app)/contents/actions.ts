@@ -450,6 +450,24 @@ export async function disableSharing(contentId: string) {
   return { ok: true as const };
 }
 
+/**
+ * Switch entre 'read' (lecture seule) et 'comment' (invités peuvent commenter).
+ * Utilisé par le toggle dans le ShareButton dialog. Migration 0012.
+ */
+export async function updateShareMode(
+  contentId: string,
+  mode: "read" | "comment",
+) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_share_mode", {
+    p_content_id: contentId,
+    p_mode: mode,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true as const };
+}
+
 /* ============================ Reordering ============================ */
 
 export async function reorderScenes(

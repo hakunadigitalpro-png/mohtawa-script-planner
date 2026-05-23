@@ -29,6 +29,18 @@ import type { Comment, CommentTargetType } from "./types";
 type TargetLabels = Record<string, string>;
 
 /**
+ * Retourne le label affiché pour l'auteur d'un commentaire :
+ *  - Pour un membre de l'équipe : la partie locale de l'email ("ali" pour ali@team.com)
+ *  - Pour un invité (commentaire laissé via lien partagé) : son guest_name
+ */
+function getAuthorLabel(comment: Comment): string {
+  if (comment.is_guest) {
+    return comment.guest_name?.trim() || "Invité";
+  }
+  return comment.author_email?.split("@")[0] ?? "anon";
+}
+
+/**
  * Drawer global de commentaires (panneau latéral droit).
  * 2 modes :
  *   - "thread" : un seul thread (un item commentable) avec form
@@ -327,8 +339,13 @@ function InboxView({
                   <span>{relativeTimeFr(t, root.created_at)}</span>
                 </div>
               </div>
-              <div className="mt-1.5 text-sm font-medium text-foreground">
-                {root.author_email.split("@")[0]}
+              <div className="mt-1.5 flex items-center gap-1.5 text-sm font-medium text-foreground">
+                <span>{getAuthorLabel(root)}</span>
+                {root.is_guest && (
+                  <span className="rounded-full bg-orange-soft/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-orange-strong">
+                    {t("guestBadge")}
+                  </span>
+                )}
               </div>
               <p className="mt-0.5 line-clamp-2 text-sm text-foreground/80">
                 {root.body}
@@ -494,17 +511,29 @@ function CommentItem({
     });
   };
 
-  const authorShort = comment.author_email?.split("@")[0] ?? "anon";
+  const authorLabel = getAuthorLabel(comment);
 
   return (
     <div>
       <div className="flex items-start gap-2">
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-bold uppercase">
-          {authorShort.charAt(0)}
+        <div
+          className={cn(
+            "flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold uppercase",
+            comment.is_guest
+              ? "bg-orange-soft/80 text-orange-strong"
+              : "bg-secondary",
+          )}
+        >
+          {authorLabel.charAt(0)}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 text-xs">
-            <span className="font-semibold text-foreground">{authorShort}</span>
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            <span className="font-semibold text-foreground">{authorLabel}</span>
+            {comment.is_guest && (
+              <span className="rounded-full bg-orange-soft/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-orange-strong">
+                {t("guestBadge")}
+              </span>
+            )}
             <span className="text-muted">·</span>
             <span className="text-muted">{relativeTimeFr(t, comment.created_at)}</span>
           </div>
