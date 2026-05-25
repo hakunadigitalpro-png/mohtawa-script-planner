@@ -192,9 +192,12 @@ set search_path = public
 stable
 as $$
 begin
-  -- Only brand members can see team-side comments listing
+  -- Only brand members can see team-side comments listing.
+  -- IMPORTANT : on alias `contents` en `ct` parce que `id` (sans qualificateur)
+  -- est ambigu — PostgreSQL ne sait pas si c'est la colonne `id` de la
+  -- table OU la colonne `id` du RETURNS TABLE de cette fonction.
   if not public.is_brand_member(
-    (select brand_id from public.contents where id = p_content_id)
+    (select brand_id from public.contents ct where ct.id = p_content_id)
   ) then
     return;
   end if;
