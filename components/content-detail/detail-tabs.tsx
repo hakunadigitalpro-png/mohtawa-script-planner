@@ -44,6 +44,9 @@ export function DetailTabs({
 }) {
   const t = useTranslations("tabs");
   const isStory = content.type === "story";
+  // L'onglet Performance ne sert à rien tant que la vidéo n'est pas publiée
+  // (pas encore de données à saisir). On le masque pour réduire le bruit visuel.
+  const isPublished = content.status === "published";
 
   return (
     <Tabs defaultValue="plan">
@@ -52,7 +55,7 @@ export function DetailTabs({
         <TabsTrigger value="script">{isStory ? t("stories") : t("script")}</TabsTrigger>
         {!isStory && <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>}
         <TabsTrigger value="checklist">{t("checklist")}</TabsTrigger>
-        <TabsTrigger value="performance">{t("performance")}</TabsTrigger>
+        {isPublished && <TabsTrigger value="performance">{t("performance")}</TabsTrigger>}
       </TabsList>
       <TabsContent value="plan">
         <PlanTab
@@ -80,9 +83,11 @@ export function DetailTabs({
           preparationSuggestions={preparationSuggestions}
         />
       </TabsContent>
-      <TabsContent value="performance">
-        <PerformanceTab contentId={content.id} perf={perf} />
-      </TabsContent>
+      {isPublished && (
+        <TabsContent value="performance">
+          <PerformanceTab contentId={content.id} perf={perf} />
+        </TabsContent>
+      )}
     </Tabs>
   );
 }
