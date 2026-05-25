@@ -513,6 +513,19 @@
       "days": "منذ {count} ي"
     }
   },
+  "notifications": {
+    "ariaLabel": "الإشعارات",
+    "tooltip": "الإشعارات",
+    "title": "الإشعارات",
+    "empty": "لا توجد إشعارات بعد.",
+    "markAllRead": "تحديد الكل كمقروء",
+    "guestBadge": "ضيف",
+    "untitled": "بدون عنوان",
+    "targetPlan": "الخطة",
+    "targetScript": "النص",
+    "targetScene": "المشهد",
+    "targetSlide": "الشريحة"
+  },
   "sharing": {
     "buttonOff": "مشاركة",
     "buttonOn": "تمت المشاركة",

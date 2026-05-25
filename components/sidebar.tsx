@@ -17,6 +17,8 @@ import {
 import { cn } from "@/lib/utils";
 import { BrandSwitcher } from "./brand-switcher";
 import { LocaleSwitcherCompact } from "./locale-switcher";
+import { NotificationsBell } from "./notifications/notifications-bell";
+import type { Notification } from "./notifications/types";
 import type { Brand } from "@/lib/types";
 
 type NavItem = {
@@ -42,10 +44,14 @@ export function Sidebar({
   brands,
   active,
   userEmail,
+  userId,
+  initialNotifications,
 }: {
   brands: Brand[];
   active: Brand | null;
   userEmail: string | null;
+  userId: string;
+  initialNotifications: Notification[];
 }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
@@ -64,6 +70,12 @@ export function Sidebar({
       <BrandSwitcher brands={brands} active={active} />
 
       <div className="h-px w-8 bg-border/80" />
+
+      {/* Notifications */}
+      <NotificationsBell
+        userId={userId}
+        initialNotifications={initialNotifications}
+      />
 
       {/* Primary nav */}
       <nav className="flex flex-col items-center gap-2">

@@ -59,6 +59,44 @@ export function CommentsProvider({
     if (data) setComments(data as Comment[]);
   }, [contentId, supabase]);
 
+  // Realtime : nouveau commentaire (équipe ou invité) → on rappelle la RPC.
+  // On ne reconstruit pas la row depuis l'event brut parce qu'il manque
+  // l'email auteur / le flag is_guest qui viennent du LEFT JOIN auth.users.
+  // Bonus : on écoute aussi UPDATE pour le toggle "resolved" en live.
+  React.useEffect(() => {
+    const channel = supabase
+      .channel(`comments:content:${contentId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "content_comments",
+          filter: `content_id=eq.${contentId}`,
+        },
+        () => {
+          void refresh();
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "content_comments",
+          filter: `content_id=eq.${contentId}`,
+        },
+        () => {
+          void refresh();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [contentId, refresh, supabase]);
+
   const openThread = React.useCallback(
     (targetType: CommentTargetType, targetId: string) => {
       setDrawer({ open: true, mode: "thread", targetType, targetId });

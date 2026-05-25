@@ -513,6 +513,19 @@
       "days": "{count} d ago"
     }
   },
+  "notifications": {
+    "ariaLabel": "Notifications",
+    "tooltip": "Notifications",
+    "title": "Notifications",
+    "empty": "No notifications yet.",
+    "markAllRead": "Mark all read",
+    "guestBadge": "Guest",
+    "untitled": "Untitled",
+    "targetPlan": "Plan",
+    "targetScript": "Script",
+    "targetScene": "Scene",
+    "targetSlide": "Slide"
+  },
   "sharing": {
     "buttonOff": "Share",
     "buttonOn": "Shared",
