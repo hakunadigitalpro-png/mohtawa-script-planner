@@ -15,6 +15,12 @@ type Ctx = {
   comments: Comment[];
   refresh: () => Promise<void>;
   lastReadAt: string;
+  /**
+   * Met à jour `lastReadAt` à maintenant (client) pour que les compteurs
+   * `unreadCount` / `countFor` retombent à 0 sans devoir recharger la page.
+   * Le drawer appelle ça en parallèle de `markContentRead()` côté serveur.
+   */
+  bumpLastReadAt: () => void;
   // Drawer state (panneau de commentaires global)
   drawer: DrawerState;
   openThread: (targetType: CommentTargetType, targetId: string) => void;
@@ -47,8 +53,17 @@ export function CommentsProvider({
   children: React.ReactNode;
 }) {
   const [comments, setComments] = React.useState<Comment[]>(initialComments);
-  const [lastReadAt] = React.useState(initialLastReadAt);
+  const [lastReadAt, setLastReadAt] = React.useState(initialLastReadAt);
   const [drawer, setDrawer] = React.useState<DrawerState>({ open: false });
+
+  /**
+   * Bump local du lastReadAt à `now()`. Le drawer appelle ça quand on
+   * l'ouvre, en parallèle du markContentRead serveur, pour que les badges
+   * de non-lus tombent à 0 immédiatement sans refresh.
+   */
+  const bumpLastReadAt = React.useCallback(() => {
+    setLastReadAt(new Date().toISOString());
+  }, []);
 
   const supabase = React.useMemo(() => createClient(), []);
 
@@ -182,6 +197,7 @@ export function CommentsProvider({
     comments,
     refresh,
     lastReadAt,
+    bumpLastReadAt,
     drawer,
     openThread,
     openInbox,

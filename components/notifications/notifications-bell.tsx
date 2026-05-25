@@ -37,10 +37,21 @@ export function NotificationsBell({
     [notifications],
   );
 
-  // -------- Realtime : nouvelle notif → on recharge la liste --------
+  // -------- Realtime : nouvelle notif OU notif marquée lue --------
   // On ne peut pas reconstruire la row enrichie (titre vidéo + guest_name etc.)
   // depuis l'event Realtime brut, donc on rappelle la RPC pour la fraîcheur.
+  //
+  // On écoute UPDATE aussi parce que mark_content_read (depuis migration 0014)
+  // flippe les notifs read=true côté serveur quand le user ouvre le drawer
+  // commentaires sur la page /content/[id] — il faut que la cloche le voie.
   React.useEffect(() => {
+    const refreshList = async () => {
+      const { data } = await supabase.rpc("list_my_notifications", {
+        p_limit: 20,
+      });
+      if (data) setNotifications(data as Notification[]);
+    };
+
     const channel = supabase
       .channel(`notifications:user:${userId}`)
       .on(
@@ -51,11 +62,20 @@ export function NotificationsBell({
           table: "notifications",
           filter: `user_id=eq.${userId}`,
         },
-        async () => {
-          const { data } = await supabase.rpc("list_my_notifications", {
-            p_limit: 20,
-          });
-          if (data) setNotifications(data as Notification[]);
+        () => {
+          void refreshList();
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          void refreshList();
         },
       )
       .subscribe();
