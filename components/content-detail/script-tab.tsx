@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Plus } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
@@ -40,16 +39,102 @@ export function ScriptTab({
   if (content.type === "story") {
     return <StoryScript contentId={content.id} story={story} slides={slides} />;
   }
-  return <ReelScript contentId={content.id} reel={reel} />;
+  return <ReelScript contentId={content.id} content={content} reel={reel} />;
 }
 
 /* ============================== REEL ============================== */
 
+/**
+ * Structure pédagogique d'un Reel : 3 phases × 7 blocs. La fiche est
+ * toujours rendue intégralement (garde la valeur de coaching) mais
+ * compactée visuellement :
+ *  - Phase dividers fins (1 ligne) qui regroupent les blocs en
+ *    Ouverture / Développement / Clôture.
+ *  - Chaque bloc rendu avec un label + timing + textarea auto-resize
+ *    (min ~48px quand vide, grandit avec le contenu).
+ *  - Le placeholder du textarea est un EXEMPLE concret pour expliquer
+ *    en pratique à quoi sert le bloc (au lieu d'un sous-titre abstrait).
+ *  - Rappel du Hook (depuis Plan) en lecture seule au début pour que
+ *    la créatrice rédige l'Intro en cohérence avec son hook.
+ *  - Estimation de durée globale en header (4 mots/sec en FR parlé).
+ */
+const REEL_BLOCKS = [
+  // Ouverture
+  {
+    key: "intro",
+    label: "Intro",
+    timing: "~5-10s",
+    placeholder:
+      "Ex : Voici les 3 erreurs qui tuent ton compte Instagram. La 2e va te surprendre.",
+    phase: "ouverture",
+  },
+  // Développement
+  {
+    key: "point1",
+    label: "Point 1",
+    timing: "~10s",
+    placeholder:
+      "Ex : Erreur #1 — Tu publies sans calendrier. Résultat : tu posts quand l'inspiration vient = jamais.",
+    phase: "developpement",
+  },
+  {
+    key: "point2",
+    label: "Point 2",
+    timing: "~10s",
+    placeholder:
+      "Ex : Erreur #2 — Tu copies les autres au lieu de trouver ta voix unique.",
+    phase: "developpement",
+  },
+  {
+    key: "point3",
+    label: "Point 3",
+    timing: "~10s",
+    placeholder:
+      "Ex : Erreur #3 — Tu mesures les likes au lieu des sauvegardes.",
+    phase: "developpement",
+  },
+  {
+    key: "transition",
+    label: "Transition / B-roll",
+    timing: "~2-3s × N",
+    placeholder:
+      "Ex : Plan d'ouverture sur le téléphone, B-roll bureau, capture d'écran Insights.",
+    phase: "developpement",
+  },
+  // Clôture
+  {
+    key: "recap",
+    label: "Récap",
+    timing: "~5s",
+    placeholder:
+      "Ex : Calendrier + voix unique + bonne métrique = compte qui grandit.",
+    phase: "cloture",
+  },
+  {
+    key: "outro",
+    label: "Outro",
+    timing: "~5-10s",
+    placeholder:
+      "Ex : Sauvegarde ce Reel pour t'en souvenir. Dis-moi en commentaire ton #1.",
+    phase: "cloture",
+  },
+] as const;
+
+type ReelBlockKey = (typeof REEL_BLOCKS)[number]["key"];
+
+const PHASES = [
+  { id: "ouverture", icon: "🎬", label: "Ouverture", timing: "10-15s" },
+  { id: "developpement", icon: "💡", label: "Développement", timing: "30-45s" },
+  { id: "cloture", icon: "🎯", label: "Clôture", timing: "10-15s" },
+] as const;
+
 function ReelScript({
   contentId,
+  content,
   reel,
 }: {
   contentId: string;
+  content: Content;
   reel: ReelDetails | null;
 }) {
   const t = useTranslations("script");
@@ -80,157 +165,100 @@ function ReelScript({
   const { state, setState, isDirty, isSaving, handleSave, handleReset } =
     useExplicitSave(initial, async (v) => upsertReelDetails(contentId, v));
 
-  // -------- Progressive disclosure (Idée 1) --------
-  // Au lieu d'afficher d'un bloc tous les champs Point 2/3 + Transition +
-  // Récap + Outro, on les révèle un par un via un bouton "+ Ajouter le bloc
-  // suivant". Réduit la friction cognitive ("trop long, où je commence ?").
-  // Règles :
-  //  - Intro + Point 1 sont TOUJOURS visibles.
-  //  - Un bloc est révélé d'office si la vidéo existante a déjà du contenu
-  //    dedans (re-éditer une vidéo ne doit jamais masquer du contenu).
-  //  - Le bouton "+ Ajouter…" n'apparaît que si le dernier bloc visible est
-  //    rempli (effet 'guidé', évite d'ouvrir 5 textareas vides d'un coup).
-  const PROGRESSIVE_BLOCKS = [
-    { key: "point2", label: t("point2") },
-    { key: "point3", label: t("point3") },
-    { key: "transition", label: t("transition") },
-    { key: "recap", label: t("recap") },
-    { key: "outro", label: t("outro") },
-  ] as const;
+  // Estimation de durée : ~4 mots/sec en FR parlé. On somme les mots des
+  // 7 blocs. Donne un feedback visuel sur la longueur (cible 30-75s pour
+  // un Reel qui performe).
+  const estimatedSeconds = useMemo(() => {
+    const totalWords = REEL_BLOCKS.map(
+      (b) => state[b.key as keyof typeof state] as string,
+    )
+      .map((s) => s.trim().split(/\s+/).filter(Boolean).length)
+      .reduce((a, b) => a + b, 0);
+    return Math.round(totalWords / 4);
+  }, [state]);
 
-  // État initial : tous les blocs qui ont déjà du contenu côté serveur
-  const initialRevealed = useMemo(() => {
-    const s = new Set<string>();
-    for (const b of PROGRESSIVE_BLOCKS) {
-      const v = reel?.[b.key as keyof ReelDetails];
-      if (typeof v === "string" && v.trim().length > 0) s.add(b.key);
+  const durationColor =
+    estimatedSeconds === 0
+      ? "text-muted"
+      : estimatedSeconds >= 30 && estimatedSeconds <= 75
+        ? "text-emerald-700"
+        : "text-amber-600";
+
+  // Groupe les blocs par phase pour le rendu
+  const blocksByPhase = useMemo(() => {
+    const map: Record<string, typeof REEL_BLOCKS[number][]> = {};
+    for (const b of REEL_BLOCKS) {
+      (map[b.phase] ??= []).push(b);
     }
-    return s;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reel?.point2, reel?.point3, reel?.transition, reel?.recap, reel?.outro]);
-
-  const [revealed, setRevealed] = useState<Set<string>>(initialRevealed);
-
-  // Resync quand le serveur pousse du nouveau contenu (ex : génération IA
-  // remplit tous les champs → on les révèle tous). On MERGE pour ne jamais
-  // re-masquer ce que l'user a déjà ouvert manuellement.
-  useEffect(() => {
-    setRevealed((prev) => {
-      const merged = new Set(prev);
-      for (const k of initialRevealed) merged.add(k);
-      return merged;
-    });
-  }, [initialRevealed]);
-
-  // Le bouton "+ Ajouter…" pointe vers le 1er bloc non révélé dans l'ordre
-  const nextBlock = PROGRESSIVE_BLOCKS.find((b) => !revealed.has(b.key));
-
-  // Le dernier bloc visible (intro/point1 toujours là, puis les révélés).
-  // Si vide → on cache le bouton pour forcer le "remplis avant d'ajouter".
-  const lastVisibleKey: keyof typeof state = (() => {
-    let k: string = "point1";
-    for (const b of PROGRESSIVE_BLOCKS) if (revealed.has(b.key)) k = b.key;
-    return k as keyof typeof state;
-  })();
-  const lastVisibleFilled =
-    typeof state[lastVisibleKey] === "string" &&
-    (state[lastVisibleKey] as string).trim().length > 0;
-
-  const showAddButton = Boolean(nextBlock) && lastVisibleFilled;
-
-  const reveal = (key: string) => {
-    setRevealed((s) => {
-      const next = new Set(s);
-      next.add(key);
-      return next;
-    });
-  };
-
-  // Helper pour rendre un bloc progressif. Le `setState` lookup est par key.
-  const renderBlock = (key: string, label: string, placeholder?: string) => (
-    <Field
-      label={label}
-      id={key}
-      commentId={key}
-      placeholder={placeholder}
-      value={(state[key as keyof typeof state] as string) ?? ""}
-      onChange={(v) => setState((s) => ({ ...s, [key]: v }))}
-    />
-  );
+    return map;
+  }, []);
 
   return (
     <div className="space-y-4">
-      <Card className="space-y-5 p-6">
-        <div className="flex items-center justify-between gap-3">
+      <Card className="space-y-4 p-6">
+        {/* Header : titre + estimation durée + bouton IA */}
+        <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold">{t("title")}</h2>
-            <p className="text-xs text-muted">{t("subtitle")}</p>
+            <p className="text-xs text-muted">
+              {t("subtitle")} ·{" "}
+              <span className={cn("font-semibold", durationColor)}>
+                Estimé : {estimatedSeconds}s / 60s
+              </span>
+            </p>
           </div>
           <AiGeneratorButton contentId={contentId} type="reel" />
         </div>
 
-        <Field
-          label={t("intro")}
-          id="intro"
-          commentId="intro"
-          placeholder={t("introPlaceholder")}
-          value={state.intro}
-          onChange={(v) => setState((s) => ({ ...s, intro: v }))}
-        />
-
-        <div className="space-y-4">
-          <Label>{t("mainPoints")}</Label>
-          <Field
-            label={t("point1")}
-            id="point1"
-            commentId="point1"
-            value={state.point1}
-            onChange={(v) => setState((s) => ({ ...s, point1: v }))}
-          />
-
-          {/* Blocs progressifs : ne sont rendus que s'ils ont été révélés
-              (soit par le bouton, soit parce qu'ils ont déjà du contenu). */}
-          {revealed.has("point2") &&
-            renderBlock("point2", t("point2"))}
-          {revealed.has("point3") &&
-            renderBlock("point3", t("point3"))}
-          {revealed.has("transition") &&
-            renderBlock("transition", t("transition"), t("transitionPlaceholder"))}
-          {revealed.has("recap") &&
-            renderBlock("recap", t("recap"))}
-          {revealed.has("outro") &&
-            renderBlock("outro", t("outro"))}
-        </div>
-
-        {/* Bouton "+ Ajouter le bloc suivant" : guidé, n'apparaît que quand
-            le dernier bloc est rempli. */}
-        {showAddButton && nextBlock && (
-          <button
-            type="button"
-            onClick={() => reveal(nextBlock.key)}
-            className={cn(
-              "flex w-full items-center justify-center gap-2 rounded-2xl",
-              "border-2 border-dashed border-border/60 px-4 py-3",
-              "text-sm font-semibold text-muted transition",
-              "hover:border-accent/60 hover:bg-accent/5 hover:text-accent",
-            )}
-            aria-label={`Ajouter ${nextBlock.label}`}
-          >
-            <Plus className="size-4" />
-            Ajouter {nextBlock.label}
-          </button>
+        {/* Rappel du Hook (read-only, depuis Plan) */}
+        {content.hook && (
+          <div className="rounded-2xl border border-accent/20 bg-accent/5 px-4 py-2.5">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-accent">
+              Hook (depuis le Plan)
+            </div>
+            <p className="mt-0.5 text-sm italic text-foreground/80">
+              « {content.hook} »
+            </p>
+          </div>
         )}
 
-        <div className="space-y-2">
+        {/* Les 3 phases */}
+        {PHASES.map((phase) => (
+          <div key={phase.id} className="space-y-2.5">
+            <PhaseDivider
+              icon={phase.icon}
+              label={phase.label}
+              timing={phase.timing}
+            />
+            {blocksByPhase[phase.id]?.map((block) => (
+              <CompactField
+                key={block.key}
+                blockKey={block.key}
+                label={block.label}
+                timing={block.timing}
+                placeholder={block.placeholder}
+                value={state[block.key as keyof typeof state] as string}
+                onChange={(v) =>
+                  setState((s) => ({ ...s, [block.key]: v }))
+                }
+              />
+            ))}
+          </div>
+        ))}
+
+        {/* Script complet (optionnel, séparé visuellement) */}
+        <div className="space-y-2 border-t border-border/60 pt-4">
           <div className="flex items-center gap-2">
             <Label htmlFor="script_full">{t("fullScript")}</Label>
             <CommentButton targetType="script" targetId="script_full" />
           </div>
           <Textarea
             id="script_full"
-            className="min-h-40"
+            className="min-h-32"
             value={state.script_full}
-            onChange={(e) => setState((s) => ({ ...s, script_full: e.target.value }))}
+            onChange={(e) =>
+              setState((s) => ({ ...s, script_full: e.target.value }))
+            }
             placeholder={t("fullScriptPlaceholder")}
           />
         </div>
@@ -241,6 +269,88 @@ function ReelScript({
         isSaving={isSaving}
         onSave={handleSave}
         onReset={handleReset}
+      />
+    </div>
+  );
+}
+
+/** Divider fin (1 ligne) pour annoncer une phase (Ouverture / etc.). */
+function PhaseDivider({
+  icon,
+  label,
+  timing,
+}: {
+  icon: string;
+  label: string;
+  timing: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <span className="text-sm">{icon}</span>
+      <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/80">
+        {label}
+      </span>
+      <span className="text-[10px] font-medium text-muted">· {timing}</span>
+      <div className="h-px flex-1 bg-border/60" />
+    </div>
+  );
+}
+
+/**
+ * Bloc de script compact : label + timing + textarea auto-resize qui
+ * commence petit (48px) et grandit avec le contenu (`field-sizing: content`).
+ * Le placeholder est un VRAI exemple concret pour expliquer à quoi sert le
+ * bloc en pratique (pédagogie sans sub-headline qui prend de la place).
+ */
+function CompactField({
+  blockKey,
+  label,
+  timing,
+  placeholder,
+  value,
+  onChange,
+}: {
+  blockKey: ReelBlockKey;
+  label: string;
+  timing: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  // Compte de mots local pour feedback de durée sur le bloc (~4 mots/sec)
+  const wordCount = value.trim().split(/\s+/).filter(Boolean).length;
+  const blockSeconds = Math.round(wordCount / 4);
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <Label
+            htmlFor={blockKey}
+            className="text-xs font-semibold text-foreground"
+          >
+            {label}
+          </Label>
+          <span className="text-[10px] font-medium text-muted">· {timing}</span>
+          <CommentButton targetType="script" targetId={blockKey} />
+        </div>
+        {wordCount > 0 && (
+          <span className="text-[10px] text-muted">
+            {wordCount} mots · ~{blockSeconds}s
+          </span>
+        )}
+      </div>
+      <Textarea
+        id={blockKey}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={cn(
+          // min-h plus petit que le default (96px) pour éviter le scroll
+          "min-h-12 text-sm",
+          // auto-resize sur navigateurs modernes (Chrome 123+, Safari 17.5+)
+          "[field-sizing:content]",
+        )}
       />
     </div>
   );
@@ -572,38 +682,3 @@ function PhoneCard({
   );
 }
 
-/* ============================ Shared ============================ */
-
-function Field({
-  id,
-  label,
-  value,
-  onChange,
-  placeholder,
-  commentId,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  /** Si fourni → affiche un bouton de commentaire à côté du label (target_type = "script"). */
-  commentId?: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <Label htmlFor={id}>{label}</Label>
-        {commentId && (
-          <CommentButton targetType="script" targetId={commentId} />
-        )}
-      </div>
-      <Textarea
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-      />
-    </div>
-  );
-}
