@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { AiGeneratorButton } from "@/components/ai-generator";
 import { CommentButton } from "@/components/comments";
+import { ScriptHelp } from "@/components/field-help/script-help";
 import { STORY_SLOT_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import {
@@ -199,7 +200,10 @@ function ReelScript({
         {/* Header : titre + estimation durée + bouton IA */}
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold">{t("title")}</h2>
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-base font-semibold">{t("title")}</h2>
+              <ScriptHelp />
+            </div>
             <p className="text-xs text-muted">
               {t("subtitle")} ·{" "}
               <span className={cn("font-semibold", durationColor)}>
