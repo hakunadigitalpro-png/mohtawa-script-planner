@@ -52,10 +52,10 @@
   --color-status-published: #10b981;
 
   /* ===== Typography =====
-     Manrope est appliqué via la className next/font directement sur
+     DM Sans est appliqué via la className next/font directement sur
      body (cf. layout.tsx). Cette variable sert juste si quelque chose
      applique la classe Tailwind `font-sans` explicitement. */
-  --font-sans: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-arabic: var(--font-cairo), "Cairo", system-ui, sans-serif;
 
@@ -88,12 +88,12 @@ html[data-theme="dark"] {
   border-color: var(--color-border);
 }
 
-/* La className Manrope est appliquée sur <body> via next/font, donc
-   tous les enfants héritent de Manrope par défaut. On garde quand même
+/* La className DM Sans est appliquée sur <body> via next/font, donc
+   tous les enfants héritent de DM Sans par défaut. On garde quand même
    une fallback chain explicite côté html pour éviter toute exception. */
 html, body {
   color: var(--color-foreground);
-  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "tnum";
@@ -105,10 +105,11 @@ body.font-arabic * {
   font-family: var(--font-arabic), "Cairo", sans-serif;
 }
 
-/* Titres : tracking légèrement serré pour densifier les headlines
-   sans casser le rendu rond/friendly de Manrope. */
+/* Titres : tracking légèrement serré pour densifier les headlines.
+   DM Sans est plutôt neutre, donc un -0.02em donne un rendu plus
+   "punchy" sur les gros titres sans sacrifier la lisibilité. */
 h1, h2, h3, h4 {
-  letter-spacing: -0.015em;
+  letter-spacing: -0.02em;
 }
 
 /* Smooth scroll pour les ancres de la landing (#features, #how...) */
