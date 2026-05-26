@@ -1,11 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  /* ===== Brand palette ===== */
-  --color-ink: #0a0612;
-  --color-orange: #ff6b35;
-  --color-orange-strong: #ff5a1f;
-  --color-orange-soft: #ffe4d6;
+  /* ===== Brand palette =====
+     Refresh intensité (revue UI Mariam) : orange plus saturé pour faire
+     "pop" les CTAs, ink légèrement plus profond pour le texte. */
+  --color-ink: #08040f;
+  --color-orange: #ff5722;
+  --color-orange-strong: #ed4607;
+  --color-orange-soft: #ffe0cf;
   --color-lavender: #9c7dd8;
   --color-lavender-strong: #7c5ec7;
   --color-lavender-soft: #ece1f7;
@@ -13,28 +15,29 @@
 
   /* ===== Surfaces (default LIGHT) ===== */
   --color-background: #fdf6ef;
-  --color-foreground: #0a0612;
-  --color-card: #fffaf4;
-  --color-card-foreground: #0a0612;
-  --color-muted: #8a7e94;
-  --color-muted-foreground: #5a4f63;
-  --color-border: #efe7e1;
-  --color-input: #efe7e1;
-  --color-ring: #0a0612;
+  --color-foreground: #08040f;
+  --color-card: #ffffff;
+  --color-card-foreground: #08040f;
+  /* Muted boosté pour une meilleure lisibilité des labels */
+  --color-muted: #6b6273;
+  --color-muted-foreground: #443a4f;
+  --color-border: #ece2d8;
+  --color-input: #ece2d8;
+  --color-ring: #ff5722;
 
   /* ===== Action variants ===== */
-  --color-primary: #0a0612;
+  --color-primary: #08040f;
   --color-primary-foreground: #ffffff;
-  --color-accent: #ff6b35;
+  --color-accent: #ff5722;
   --color-accent-foreground: #ffffff;
   --color-secondary: #f8efe9;
-  --color-secondary-foreground: #0a0612;
+  --color-secondary-foreground: #08040f;
 
   --color-destructive: #dc2626;
   --color-destructive-foreground: #ffffff;
 
   /* ===== Content type accents ===== */
-  --color-reel: #ff6b35;
+  --color-reel: #ff5722;
   --color-story: #9c7dd8;
   --color-carousel: #06b6d4;
   --color-thread: #10b981;
@@ -65,14 +68,14 @@ html[data-theme="dark"] {
   --color-foreground: #f8eee5;
   --color-card: #1a1424;
   --color-card-foreground: #f8eee5;
-  --color-muted: #8b8294;
-  --color-muted-foreground: #b0a7b9;
+  --color-muted: #9a8fa6;
+  --color-muted-foreground: #c4bbcd;
   --color-border: #2a2235;
   --color-input: #2a2235;
-  --color-ring: #ff6b35;
+  --color-ring: #ff5722;
 
   --color-primary: #ffffff;
-  --color-primary-foreground: #0a0612;
+  --color-primary-foreground: #08040f;
   --color-secondary: #251c30;
   --color-secondary-foreground: #f8eee5;
 }
@@ -85,6 +88,17 @@ html, body {
   color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  /* Active les ligatures + chiffres tabulaires d'Inter pour un rendu
+     plus "SaaS pro" (numéros alignés dans les tableaux, ligatures
+     propres dans le corps de texte). */
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+  letter-spacing: -0.01em;
+}
+
+/* Titres : un poil plus serré pour un rendu plus dense / impactant
+   (la grande tendance design 2025 pour les headlines SaaS). */
+h1, h2, h3, h4 {
+  letter-spacing: -0.02em;
 }
 
 /* Smooth scroll pour les ancres de la landing (#features, #how...) */
@@ -107,13 +121,16 @@ body.font-arabic {
   transform: scaleX(-1);
 }
 
-/* ============ Warm gradient background (LIGHT) ============ */
+/* ============ Warm gradient background (LIGHT) ============
+   Saturations boostées (revue UI Mariam) pour que les CTAs orange et
+   les chips colorés ressortent vraiment sur le fond plutôt que de se
+   fondre dans le pastel. */
 body {
   background-color: var(--color-background);
   background-image:
-    radial-gradient(75% 55% at 0% 0%, rgba(255, 196, 156, 0.55) 0%, transparent 60%),
-    radial-gradient(80% 65% at 100% 25%, rgba(196, 159, 230, 0.45) 0%, transparent 60%),
-    radial-gradient(85% 70% at 70% 100%, rgba(255, 180, 140, 0.35) 0%, transparent 60%);
+    radial-gradient(75% 55% at 0% 0%, rgba(255, 170, 120, 0.65) 0%, transparent 60%),
+    radial-gradient(80% 65% at 100% 25%, rgba(180, 138, 222, 0.55) 0%, transparent 60%),
+    radial-gradient(85% 70% at 70% 100%, rgba(255, 150, 100, 0.45) 0%, transparent 60%);
   background-attachment: fixed;
   min-height: 100vh;
 }
