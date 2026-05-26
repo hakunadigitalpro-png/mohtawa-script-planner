@@ -87,6 +87,8 @@ export type StoryboardScene = {
   image_url: string | null;
   /** Marquée filmée par l'utilisateur (migration 0010). Indépendant de la checklist macro. */
   filmed: boolean;
+  /** Notes de montage / post-prod (migration 0016) : filtres, effets, transitions, son. */
+  editing_notes: string | null;
 };
 
 export type ChecklistItemCategory = "equipment" | "preparation";

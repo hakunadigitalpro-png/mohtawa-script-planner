@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Trash2, GripVertical, Sparkles } from "lucide-react";
+import { Plus, Trash2, GripVertical, Sparkles, Scissors } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -41,6 +41,7 @@ type SceneFormState = {
   description: string;
   camera_angle: string;
   on_screen_text: string;
+  editing_notes: string;
 };
 
 export function StoryboardTab({
@@ -61,7 +62,7 @@ export function StoryboardTab({
   const scenesHash = initialScenes
     .map(
       (s) =>
-        `${s.id}:${s.description ?? ""}:${s.camera_angle ?? ""}:${s.on_screen_text ?? ""}`,
+        `${s.id}:${s.description ?? ""}:${s.camera_angle ?? ""}:${s.on_screen_text ?? ""}:${s.editing_notes ?? ""}`,
     )
     .join("|");
 
@@ -72,6 +73,7 @@ export function StoryboardTab({
         description: s.description ?? "",
         camera_angle: s.camera_angle ?? "",
         on_screen_text: s.on_screen_text ?? "",
+        editing_notes: s.editing_notes ?? "",
       })),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,6 +90,7 @@ export function StoryboardTab({
               description: scene.description,
               camera_angle: scene.camera_angle,
               on_screen_text: scene.on_screen_text,
+              editing_notes: scene.editing_notes,
             },
             contentId,
           ),
@@ -101,7 +104,7 @@ export function StoryboardTab({
 
   const updateSceneField = (
     sceneId: string,
-    key: "description" | "camera_angle" | "on_screen_text",
+    key: "description" | "camera_angle" | "on_screen_text" | "editing_notes",
     value: string,
   ) => {
     setState((s) => ({
@@ -254,7 +257,7 @@ function SceneCard({
   index: number;
   contentId: string;
   onFieldChange: (
-    key: "description" | "camera_angle" | "on_screen_text",
+    key: "description" | "camera_angle" | "on_screen_text" | "editing_notes",
     value: string,
   ) => void;
 }) {
@@ -523,6 +526,21 @@ function SceneCard({
             value={sceneForm.on_screen_text}
             onChange={(e) => onFieldChange("on_screen_text", e.target.value)}
             placeholder={t("fields.onScreenTextPlaceholder")}
+          />
+        </div>
+
+        {/* Remarques de montage (Idée 3) — filtres, effets, transitions,
+            musique, sound design. Champ libre par scène. */}
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+            <Scissors className="size-3" />
+            Montage / Post-prod
+          </Label>
+          <Textarea
+            className="min-h-12 text-sm [field-sizing:content]"
+            value={sceneForm.editing_notes}
+            onChange={(e) => onFieldChange("editing_notes", e.target.value)}
+            placeholder="Ex : Filtre vintage, transition cut net vers le Plan 04, ajouter une whoosh-sound."
           />
         </div>
 

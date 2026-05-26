@@ -352,6 +352,7 @@ export async function updateScene(
     tag: string;
     image_url: string | null;
     filmed: boolean;
+    editing_notes: string;
   }>,
   contentId: string,
 ) {
