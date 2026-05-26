@@ -84,14 +84,27 @@ html[data-theme="dark"] {
   border-color: var(--color-border);
 }
 
+/* Fallback chain explicite : si Manrope ne charge pas (réseau, cache,
+   etc), on tombe sur des fonts système 100% SANS-serif. Aucun "serif"
+   ne doit jamais apparaître. */
 html, body {
   color: var(--color-foreground);
-  font-family: var(--font-sans);
+  font-family: var(--font-sans), "Manrope", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
-  /* Chiffres tabulaires pour aligner les stats/tableaux. Manrope
-     fonctionne bien avec un tracking neutre — pas besoin du négatif
-     qu'on appliquait sur Inter. */
   font-feature-settings: "tnum";
+}
+
+/* Force tous les descendants à hériter — empêche un default browser
+   serif éventuel de remonter sur un élément non stylé. */
+body, body * {
+  font-family: inherit;
+}
+
+/* Cairo prend le relais pour les locales RTL (arabe). */
+body.font-arabic,
+body.font-arabic * {
+  font-family: var(--font-arabic), "Cairo", sans-serif;
 }
 
 /* Titres : tracking légèrement serré pour densifier les headlines
@@ -105,11 +118,9 @@ html {
   scroll-behavior: smooth;
 }
 
-/* When the body has .font-arabic (set by root layout when locale is RTL),
-   we switch to Cairo for nicer Arabic typography. */
-body.font-arabic {
-  font-family: var(--font-arabic);
-}
+/* La règle font-family pour body.font-arabic est définie plus haut
+   dans le bloc fallback chain — on l'a couplée à `body * { font-family
+   : inherit }` pour qu'elle se propage sur tous les enfants. */
 
 /* ============ RTL ICON HELPERS ============
    Lucide icons that have a clear "directional" meaning need to flip
