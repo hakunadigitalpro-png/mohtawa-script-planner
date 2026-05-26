@@ -207,51 +207,102 @@ export function ShareView({
           </div>
         </div>
 
-        {/* Plan — un seul bouton Commenter au niveau Section ("Informations
-            générales"). Les sous-champs (Accroche, CTA) ne sont PAS
-            commentables : décision UX pour limiter la surface client-facing. */}
+        {/* Plan — visible uniquement si au moins un champ est rempli.
+            Chaque sous-champ (Accroche, CTA) garde son bouton commenter inline
+            pour que le client puisse réagir au détail. */}
         {(c.pillar || c.objective || c.hook || c.cta) && (
           <Section
-            title="Informations générales"
+            title="Plan"
             headerExtra={
-              <Btn type="plan" id="general" label="Informations générales" />
+              <Btn type="plan" id="general" label="Plan · Infos générales" />
             }
           >
             <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {c.pillar && <Field label="Pilier" value={c.pillar} />}
               {c.objective && <Field label="Objectif" value={c.objective} />}
-              {c.hook && <Field label="Accroche" value={c.hook} long />}
-              {c.cta && <Field label="Call to Action" value={c.cta} long />}
+              {c.hook && (
+                <Field
+                  label="Accroche"
+                  value={c.hook}
+                  long
+                  inlineExtra={<Btn type="plan" id="hook" label="Accroche" />}
+                />
+              )}
+              {c.cta && (
+                <Field
+                  label="Call to Action"
+                  value={c.cta}
+                  long
+                  inlineExtra={
+                    <Btn type="plan" id="cta" label="Call to Action" />
+                  }
+                />
+              )}
             </dl>
           </Section>
         )}
 
-        {/* Reel script — affiché pour contexte mais PAS commentable. Le client
-            n'a pas à donner d'avis sur le détail du script ; il peut le faire
-            globalement via "Informations générales" si besoin. */}
+        {/* Reel script — affiché uniquement si la vidéo est un Reel ET au
+            moins un bloc est rempli. Chaque bloc rempli a son bouton commenter
+            inline. */}
         {!isStory && bundle.reel && (
-          <Section title="Script">
+          <Section
+            title="Script"
+            headerExtra={
+              <Btn type="script" id="script_full" label="Script · Complet" />
+            }
+          >
             <div className="space-y-4">
               {bundle.reel.intro && (
-                <Block label="Introduction" value={bundle.reel.intro} />
+                <Block
+                  label="Introduction"
+                  value={bundle.reel.intro}
+                  extra={<Btn type="script" id="intro" label="Script · Intro" />}
+                />
               )}
               {bundle.reel.point1 && (
-                <Block label="Point 1" value={bundle.reel.point1} />
+                <Block
+                  label="Point 1"
+                  value={bundle.reel.point1}
+                  extra={<Btn type="script" id="point1" label="Script · Point 1" />}
+                />
               )}
               {bundle.reel.point2 && (
-                <Block label="Point 2" value={bundle.reel.point2} />
+                <Block
+                  label="Point 2"
+                  value={bundle.reel.point2}
+                  extra={<Btn type="script" id="point2" label="Script · Point 2" />}
+                />
               )}
               {bundle.reel.point3 && (
-                <Block label="Point 3" value={bundle.reel.point3} />
+                <Block
+                  label="Point 3"
+                  value={bundle.reel.point3}
+                  extra={<Btn type="script" id="point3" label="Script · Point 3" />}
+                />
               )}
               {bundle.reel.transition && (
-                <Block label="Transition / B-roll" value={bundle.reel.transition} />
+                <Block
+                  label="Transition / B-roll"
+                  value={bundle.reel.transition}
+                  extra={
+                    <Btn type="script" id="transition" label="Script · Transition" />
+                  }
+                />
               )}
               {bundle.reel.recap && (
-                <Block label="Récap" value={bundle.reel.recap} />
+                <Block
+                  label="Récap"
+                  value={bundle.reel.recap}
+                  extra={<Btn type="script" id="recap" label="Script · Récap" />}
+                />
               )}
               {bundle.reel.outro && (
-                <Block label="Outro" value={bundle.reel.outro} />
+                <Block
+                  label="Outro"
+                  value={bundle.reel.outro}
+                  extra={<Btn type="script" id="outro" label="Script · Outro" />}
+                />
               )}
             </div>
             {bundle.reel.script_full && (
