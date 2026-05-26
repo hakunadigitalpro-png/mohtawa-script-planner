@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
+import { Plus } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
@@ -79,6 +80,84 @@ function ReelScript({
   const { state, setState, isDirty, isSaving, handleSave, handleReset } =
     useExplicitSave(initial, async (v) => upsertReelDetails(contentId, v));
 
+  // -------- Progressive disclosure (Idée 1) --------
+  // Au lieu d'afficher d'un bloc tous les champs Point 2/3 + Transition +
+  // Récap + Outro, on les révèle un par un via un bouton "+ Ajouter le bloc
+  // suivant". Réduit la friction cognitive ("trop long, où je commence ?").
+  // Règles :
+  //  - Intro + Point 1 sont TOUJOURS visibles.
+  //  - Un bloc est révélé d'office si la vidéo existante a déjà du contenu
+  //    dedans (re-éditer une vidéo ne doit jamais masquer du contenu).
+  //  - Le bouton "+ Ajouter…" n'apparaît que si le dernier bloc visible est
+  //    rempli (effet 'guidé', évite d'ouvrir 5 textareas vides d'un coup).
+  const PROGRESSIVE_BLOCKS = [
+    { key: "point2", label: t("point2") },
+    { key: "point3", label: t("point3") },
+    { key: "transition", label: t("transition") },
+    { key: "recap", label: t("recap") },
+    { key: "outro", label: t("outro") },
+  ] as const;
+
+  // État initial : tous les blocs qui ont déjà du contenu côté serveur
+  const initialRevealed = useMemo(() => {
+    const s = new Set<string>();
+    for (const b of PROGRESSIVE_BLOCKS) {
+      const v = reel?.[b.key as keyof ReelDetails];
+      if (typeof v === "string" && v.trim().length > 0) s.add(b.key);
+    }
+    return s;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reel?.point2, reel?.point3, reel?.transition, reel?.recap, reel?.outro]);
+
+  const [revealed, setRevealed] = useState<Set<string>>(initialRevealed);
+
+  // Resync quand le serveur pousse du nouveau contenu (ex : génération IA
+  // remplit tous les champs → on les révèle tous). On MERGE pour ne jamais
+  // re-masquer ce que l'user a déjà ouvert manuellement.
+  useEffect(() => {
+    setRevealed((prev) => {
+      const merged = new Set(prev);
+      for (const k of initialRevealed) merged.add(k);
+      return merged;
+    });
+  }, [initialRevealed]);
+
+  // Le bouton "+ Ajouter…" pointe vers le 1er bloc non révélé dans l'ordre
+  const nextBlock = PROGRESSIVE_BLOCKS.find((b) => !revealed.has(b.key));
+
+  // Le dernier bloc visible (intro/point1 toujours là, puis les révélés).
+  // Si vide → on cache le bouton pour forcer le "remplis avant d'ajouter".
+  const lastVisibleKey: keyof typeof state = (() => {
+    let k: string = "point1";
+    for (const b of PROGRESSIVE_BLOCKS) if (revealed.has(b.key)) k = b.key;
+    return k as keyof typeof state;
+  })();
+  const lastVisibleFilled =
+    typeof state[lastVisibleKey] === "string" &&
+    (state[lastVisibleKey] as string).trim().length > 0;
+
+  const showAddButton = Boolean(nextBlock) && lastVisibleFilled;
+
+  const reveal = (key: string) => {
+    setRevealed((s) => {
+      const next = new Set(s);
+      next.add(key);
+      return next;
+    });
+  };
+
+  // Helper pour rendre un bloc progressif. Le `setState` lookup est par key.
+  const renderBlock = (key: string, label: string, placeholder?: string) => (
+    <Field
+      label={label}
+      id={key}
+      commentId={key}
+      placeholder={placeholder}
+      value={(state[key as keyof typeof state] as string) ?? ""}
+      onChange={(v) => setState((s) => ({ ...s, [key]: v }))}
+    />
+  );
+
   return (
     <div className="space-y-4">
       <Card className="space-y-5 p-6">
@@ -108,46 +187,39 @@ function ReelScript({
             value={state.point1}
             onChange={(v) => setState((s) => ({ ...s, point1: v }))}
           />
-          <Field
-            label={t("point2")}
-            id="point2"
-            commentId="point2"
-            value={state.point2}
-            onChange={(v) => setState((s) => ({ ...s, point2: v }))}
-          />
-          <Field
-            label={t("point3")}
-            id="point3"
-            commentId="point3"
-            value={state.point3}
-            onChange={(v) => setState((s) => ({ ...s, point3: v }))}
-          />
+
+          {/* Blocs progressifs : ne sont rendus que s'ils ont été révélés
+              (soit par le bouton, soit parce qu'ils ont déjà du contenu). */}
+          {revealed.has("point2") &&
+            renderBlock("point2", t("point2"))}
+          {revealed.has("point3") &&
+            renderBlock("point3", t("point3"))}
+          {revealed.has("transition") &&
+            renderBlock("transition", t("transition"), t("transitionPlaceholder"))}
+          {revealed.has("recap") &&
+            renderBlock("recap", t("recap"))}
+          {revealed.has("outro") &&
+            renderBlock("outro", t("outro"))}
         </div>
 
-        <Field
-          label={t("transition")}
-          id="transition"
-          commentId="transition"
-          placeholder={t("transitionPlaceholder")}
-          value={state.transition}
-          onChange={(v) => setState((s) => ({ ...s, transition: v }))}
-        />
-
-        <Field
-          label={t("recap")}
-          id="recap"
-          commentId="recap"
-          value={state.recap}
-          onChange={(v) => setState((s) => ({ ...s, recap: v }))}
-        />
-
-        <Field
-          label={t("outro")}
-          id="outro"
-          commentId="outro"
-          value={state.outro}
-          onChange={(v) => setState((s) => ({ ...s, outro: v }))}
-        />
+        {/* Bouton "+ Ajouter le bloc suivant" : guidé, n'apparaît que quand
+            le dernier bloc est rempli. */}
+        {showAddButton && nextBlock && (
+          <button
+            type="button"
+            onClick={() => reveal(nextBlock.key)}
+            className={cn(
+              "flex w-full items-center justify-center gap-2 rounded-2xl",
+              "border-2 border-dashed border-border/60 px-4 py-3",
+              "text-sm font-semibold text-muted transition",
+              "hover:border-accent/60 hover:bg-accent/5 hover:text-accent",
+            )}
+            aria-label={`Ajouter ${nextBlock.label}`}
+          >
+            <Plus className="size-4" />
+            Ajouter {nextBlock.label}
+          </button>
+        )}
 
         <div className="space-y-2">
           <div className="flex items-center gap-2">
