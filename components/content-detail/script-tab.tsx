@@ -9,6 +9,7 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import { AiGeneratorButton } from "@/components/ai-generator";
 import { CommentButton } from "@/components/comments";
 import { ScriptHelp } from "@/components/field-help/script-help";
+import { HooksPickerButton } from "@/components/hooks-picker";
 import { STORY_SLOT_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import {
@@ -62,8 +63,11 @@ export function ScriptTab({
 const REEL_BLOCKS = [
   // Ouverture
   {
+    // key reste "intro" (mapping DB inchangé : reel_details.intro)
+    // mais le label affiché devient "Accroche" — c'est sémantiquement la
+    // même chose qu'on avait dans le Plan, maintenant centralisé ici.
     key: "intro",
-    label: "Intro",
+    label: "Accroche",
     timing: "~5-10s",
     placeholder:
       "Ex : Voici les 3 erreurs qui tuent ton compte Instagram. La 2e va te surprendre.",
@@ -245,6 +249,19 @@ function ReelScript({
                 onChange={(v) =>
                   setState((s) => ({ ...s, [block.key]: v }))
                 }
+                // Pour l'Accroche (ex-Intro), on injecte le bouton
+                // "Choisir une accroche" qui ouvre la bibliothèque de 70
+                // hooks (anciennement sur le Plan, déplacé ici suite à
+                // la revue de principe Idée 11).
+                headerExtra={
+                  block.key === "intro" ? (
+                    <HooksPickerButton
+                      onPick={(text) =>
+                        setState((s) => ({ ...s, intro: text }))
+                      }
+                    />
+                  ) : undefined
+                }
               />
             ))}
           </div>
@@ -313,6 +330,7 @@ function CompactField({
   placeholder,
   value,
   onChange,
+  headerExtra,
 }: {
   blockKey: ReelBlockKey;
   label: string;
@@ -320,6 +338,8 @@ function CompactField({
   placeholder: string;
   value: string;
   onChange: (v: string) => void;
+  /** Élément optionnel rendu à droite de l'en-tête du bloc (ex: bouton "Choisir une accroche" pour l'Accroche). */
+  headerExtra?: React.ReactNode;
 }) {
   // Compte de mots local pour feedback de durée sur le bloc (~4 mots/sec)
   const wordCount = value.trim().split(/\s+/).filter(Boolean).length;
@@ -338,11 +358,14 @@ function CompactField({
           <span className="text-[10px] font-medium text-muted">· {timing}</span>
           <CommentButton targetType="script" targetId={blockKey} />
         </div>
-        {wordCount > 0 && (
-          <span className="text-[10px] text-muted">
-            {wordCount} mots · ~{blockSeconds}s
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {headerExtra}
+          {wordCount > 0 && (
+            <span className="text-[10px] text-muted">
+              {wordCount} mots · ~{blockSeconds}s
+            </span>
+          )}
+        </div>
       </div>
       <Textarea
         id={blockKey}

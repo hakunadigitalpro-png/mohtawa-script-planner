@@ -64,6 +64,7 @@ export async function updateContent(
     status: string;
     tags: string[];
     video_url: string | null;
+    caption: string | null;
   }>,
 ) {
   const supabase = await createClient();
@@ -254,6 +255,23 @@ export async function upsertReelDetails(
     .from("reel_details")
     .upsert({ content_id: contentId, ...patch });
   if (error) return { error: error.message };
+
+  // Idée 11 (revue UX) : Accroche et Outro sont maintenant édités UNIQUEMENT
+  // dans l'onglet Script (intro / outro). Mais les consommateurs legacy
+  // (share view, print, analytics, AI prompts qui lisent contents.hook/cta)
+  // continuent à lire contents.hook et contents.cta. On les synchronise ici
+  // pour ne rien casser pendant la transition. Suppression possible quand
+  // on aura migré tous les readers.
+  const legacySync: { hook?: string | null; cta?: string | null } = {};
+  if (patch.intro !== undefined) {
+    legacySync.hook = patch.intro?.trim() ? patch.intro : null;
+  }
+  if (patch.outro !== undefined) {
+    legacySync.cta = patch.outro?.trim() ? patch.outro : null;
+  }
+  if (Object.keys(legacySync).length > 0) {
+    await supabase.from("contents").update(legacySync).eq("id", contentId);
+  }
 
   // Auto-status (0015) : si la checklist a bougé (script_ready, edited…),
   // on recompute. Les autres champs (intro, points…) n'impactent pas le

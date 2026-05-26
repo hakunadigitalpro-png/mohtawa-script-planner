@@ -6,14 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MultiSelectWithCreate } from "@/components/ui/multi-select-with-create";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { platformsForType, STATUSES, CONTENT_TYPES } from "@/lib/constants";
 import { updateContent } from "@/app/(app)/contents/actions";
 import { createTaxonomy } from "@/app/(app)/brands/taxonomy-actions";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
-import { HooksPickerButton } from "@/components/hooks-picker";
 import { PillarHelp } from "@/components/field-help/pillar-help";
 import { CommentButton } from "@/components/comments";
 import type { Content } from "@/lib/types";
@@ -58,9 +56,6 @@ export function PlanTab({
       objectives: content.objectives ?? [],
       date: content.date ?? "",
       status: content.status,
-      hook: content.hook ?? "",
-      cta: content.cta ?? "",
-      tags: (content.tags ?? []).join(", "),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -71,9 +66,6 @@ export function PlanTab({
       objectivesKey,
       content.date,
       content.status,
-      content.hook,
-      content.cta,
-      content.tags,
     ],
   );
 
@@ -88,12 +80,6 @@ export function PlanTab({
         objectives: v.objectives,
         date: v.date || null,
         status: v.status,
-        hook: v.hook || null,
-        cta: v.cta || null,
-        tags: v.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter(Boolean),
       }),
     );
 
@@ -227,46 +213,10 @@ export function PlanTab({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="hook">{t("hook")}</Label>
-              <CommentButton targetType="plan" targetId="hook" />
-            </div>
-            <HooksPickerButton
-              onPick={(text) => setState((s) => ({ ...s, hook: text }))}
-            />
-          </div>
-          <Textarea
-            id="hook"
-            value={state.hook}
-            onChange={(e) => setState((s) => ({ ...s, hook: e.target.value }))}
-            placeholder={t("hookPlaceholder")}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="cta">{t("cta")}</Label>
-            <CommentButton targetType="plan" targetId="cta" />
-          </div>
-          <Input
-            id="cta"
-            value={state.cta}
-            onChange={(e) => setState((s) => ({ ...s, cta: e.target.value }))}
-            placeholder={t("ctaPlaceholder")}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="tags">{t("tags")}</Label>
-          <Input
-            id="tags"
-            value={state.tags}
-            onChange={(e) => setState((s) => ({ ...s, tags: e.target.value }))}
-            placeholder={t("tagsPlaceholder")}
-          />
-        </div>
+        {/* Idée 11 (revue UX) : Accroche, CTA, Tags ont été retirés du Plan.
+            L'Accroche vit maintenant dans l'onglet Script (renommé "Intro"
+            → "Accroche"). Le CTA vit dans l'Outro. Les tags ne servaient à
+            rien et ont été simplement enlevés. */}
       </Card>
 
       <SaveFooter

@@ -6,6 +6,7 @@ import { PlanTab } from "./plan-tab";
 import { ScriptTab } from "./script-tab";
 import { StoryboardTab } from "./storyboard-tab";
 import { ChecklistTab } from "./checklist-tab";
+import { CaptionTab } from "./caption-tab";
 import { PerformanceTab } from "./performance-tab";
 import type {
   Content,
@@ -55,6 +56,7 @@ export function DetailTabs({
         <TabsTrigger value="script">{isStory ? t("stories") : t("script")}</TabsTrigger>
         {!isStory && <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>}
         <TabsTrigger value="checklist">{t("checklist")}</TabsTrigger>
+        <TabsTrigger value="caption">Caption</TabsTrigger>
         {isPublished && <TabsTrigger value="performance">{t("performance")}</TabsTrigger>}
       </TabsList>
       <TabsContent value="plan">
@@ -82,6 +84,9 @@ export function DetailTabs({
           equipmentSuggestions={equipmentSuggestions}
           preparationSuggestions={preparationSuggestions}
         />
+      </TabsContent>
+      <TabsContent value="caption">
+        <CaptionTab contentId={content.id} caption={content.caption} />
       </TabsContent>
       {isPublished && (
         <TabsContent value="performance">

@@ -47,6 +47,12 @@ export type Content = {
    * Migration 0017.
    */
   video_url: string | null;
+  /**
+   * Texte qui accompagne la vidéo lors de la publication (hashtags,
+   * mention, contexte). Migration 0019. Géré dans son propre onglet
+   * "Caption" entre Checklist et Performance.
+   */
+  caption: string | null;
   created_at: string;
   updated_at: string;
 };
