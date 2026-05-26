@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
-import { Inter, Cairo } from "next/font/google";
+import { Manrope, Cairo } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { getThemeFromCookies, htmlDataTheme } from "@/lib/theme";
 import { dirOf, isRtl, type Locale } from "@/i18n/config";
 import "./globals.css";
 
-// Police latine : Inter — la référence SaaS moderne (Linear, Notion,
-// Vercel…). Plus de variantes de graisse pour pouvoir vraiment booster
-// les titres. On garde le nom de variable --font-jakarta pour ne pas
-// avoir à toucher chaque @theme/className → c'est juste un alias.
-const inter = Inter({
+// Police latine : Manrope — sans-serif géométrique semi-arrondi, look
+// "SaaS premium" (AdCreative.ai, Beehiiv, etc). Plus friendly qu'Inter,
+// plus moderne que Plus Jakarta Sans. On garde la variable
+// --font-jakarta comme alias pour ne pas toucher tout le code.
+const manrope = Manrope({
   variable: "--font-jakarta",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 // Cairo : Google Font conçue pour l'arabe + supporte aussi le latin.
@@ -60,7 +60,7 @@ export default async function RootLayout({
       style={styleOverrides}
     >
       <body
-        className={`${inter.variable} ${cairo.variable} antialiased ${
+        className={`${manrope.variable} ${cairo.variable} antialiased ${
           rtl ? "font-arabic" : ""
         }`}
       >

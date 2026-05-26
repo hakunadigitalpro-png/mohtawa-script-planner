@@ -88,17 +88,16 @@ html, body {
   color: var(--color-foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  /* Active les ligatures + chiffres tabulaires d'Inter pour un rendu
-     plus "SaaS pro" (numéros alignés dans les tableaux, ligatures
-     propres dans le corps de texte). */
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
-  letter-spacing: -0.01em;
+  /* Chiffres tabulaires pour aligner les stats/tableaux. Manrope
+     fonctionne bien avec un tracking neutre — pas besoin du négatif
+     qu'on appliquait sur Inter. */
+  font-feature-settings: "tnum";
 }
 
-/* Titres : un poil plus serré pour un rendu plus dense / impactant
-   (la grande tendance design 2025 pour les headlines SaaS). */
+/* Titres : tracking légèrement serré pour densifier les headlines
+   sans casser le rendu rond/friendly de Manrope. */
 h1, h2, h3, h4 {
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
 }
 
 /* Smooth scroll pour les ancres de la landing (#features, #how...) */
