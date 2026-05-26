@@ -27,6 +27,7 @@ import type {
   StoryboardScene,
   Performance,
   ChecklistItem,
+  ContentPublication,
 } from "@/lib/types";
 
 export default async function ContentDetailPage({
@@ -63,6 +64,7 @@ export default async function ContentDetailPage({
     checklistItemsRes,
     suggEquipmentRes,
     suggPreparationRes,
+    publicationsRes,
   ] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
@@ -112,6 +114,12 @@ export default async function ContentDetailPage({
       p_category: "preparation",
       p_limit: 12,
     }),
+    supabase
+      .from("content_publications")
+      .select("*")
+      .eq("content_id", id)
+      .order("scheduled_date", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: true }),
   ]);
 
   const reel = (reelRes.data ?? null) as ReelDetails | null;
@@ -132,6 +140,7 @@ export default async function ContentDetailPage({
     label: string;
     usage_count: number;
   }[];
+  const publications = (publicationsRes.data ?? []) as ContentPublication[];
 
   const c = content as Content;
 
@@ -236,6 +245,7 @@ export default async function ContentDetailPage({
           checklistItems={checklistItems}
           equipmentSuggestions={equipmentSuggestions}
           preparationSuggestions={preparationSuggestions}
+          publications={publications}
         />
       </div>
 

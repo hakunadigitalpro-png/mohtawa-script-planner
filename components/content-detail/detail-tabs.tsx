@@ -16,6 +16,7 @@ import type {
   StoryboardScene,
   Performance,
   ChecklistItem,
+  ContentPublication,
 } from "@/lib/types";
 
 export function DetailTabs({
@@ -30,6 +31,7 @@ export function DetailTabs({
   checklistItems,
   equipmentSuggestions,
   preparationSuggestions,
+  publications,
 }: {
   content: Content;
   reel: ReelDetails | null;
@@ -42,6 +44,7 @@ export function DetailTabs({
   checklistItems: ChecklistItem[];
   equipmentSuggestions: { label: string; usage_count: number }[];
   preparationSuggestions: { label: string; usage_count: number }[];
+  publications: ContentPublication[];
 }) {
   const t = useTranslations("tabs");
   const isStory = content.type === "story";
@@ -66,6 +69,7 @@ export function DetailTabs({
           content={content}
           brandPillars={brandPillars}
           brandObjectives={brandObjectives}
+          publications={publications}
         />
       </TabsContent>
       <TabsContent value="script">

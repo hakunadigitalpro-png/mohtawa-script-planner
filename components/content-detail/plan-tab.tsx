@@ -14,7 +14,8 @@ import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
 import { PillarHelp } from "@/components/field-help/pillar-help";
 import { CommentButton } from "@/components/comments";
-import type { Content } from "@/lib/types";
+import { PublicationsEditor } from "./publications-editor";
+import type { Content, ContentPublication } from "@/lib/types";
 
 function safeT(fn: (k: string) => string, key: string, fallback: string) {
   try {
@@ -28,14 +29,15 @@ export function PlanTab({
   content,
   brandPillars,
   brandObjectives,
+  publications,
 }: {
   content: Content;
   brandPillars: { id: string; name: string }[];
   brandObjectives: { id: string; name: string }[];
+  publications: ContentPublication[];
 }) {
   const t = useTranslations("plan");
   const tType = useTranslations("contentTypes");
-  const tPlatform = useTranslations("platforms");
   const tStatus = useTranslations("statuses");
 
   // L'`initial` est stabilisé pour éviter de re-trigger l'effet de resync à
@@ -50,21 +52,21 @@ export function PlanTab({
     () => ({
       title: content.title ?? "",
       type: content.type,
-      platform: content.platform ?? "",
+      // Idée 10 : platform et date ne vivent plus dans le form du Plan.
+      // Ils sont gérés par le PublicationsEditor (actions atomiques sur
+      // content_publications). Le trigger côté DB resynchronise les
+      // colonnes singulières contents.platform / date / video_url.
       // Multi-piliers / multi-objectifs (Idée 8, migration 0018)
       pillars: content.pillars ?? [],
       objectives: content.objectives ?? [],
-      date: content.date ?? "",
       status: content.status,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       content.title,
       content.type,
-      content.platform,
       pillarsKey,
       objectivesKey,
-      content.date,
       content.status,
     ],
   );
@@ -73,12 +75,10 @@ export function PlanTab({
     useExplicitSave(initial, async (v) =>
       updateContent(content.id, {
         title: v.title || undefined,
-        platform: v.platform || null,
         // Les colonnes singulières pillar/objective seront auto-synchronisées
         // côté DB via trigger sur le 1er élément de l'array (migration 0018).
         pillars: v.pillars,
         objectives: v.objectives,
-        date: v.date || null,
         status: v.status,
       }),
     );
@@ -116,15 +116,24 @@ export function PlanTab({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="platform">{t("platform")}</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="status">{t("status")}</Label>
+              {content.auto_status && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent"
+                  title="Le statut avance automatiquement selon ton avancement (script, tournage, montage…). Change-le manuellement pour désactiver."
+                >
+                  ✨ Auto
+                </span>
+              )}
+            </div>
             <Select
-              id="platform"
-              value={state.platform}
-              onValueChange={(v) => setState((s) => ({ ...s, platform: v }))}
-              placeholder="—"
-              options={platformsForType(state.type).map((p) => ({
-                value: p.value,
-                label: safeT(tPlatform, p.value, p.label),
+              id="status"
+              value={state.status}
+              onValueChange={(v) => setState((s) => ({ ...s, status: v }))}
+              options={STATUSES.map((s) => ({
+                value: s.value,
+                label: safeT(tStatus, s.value, s.label),
               }))}
             />
           </div>
@@ -179,39 +188,17 @@ export function PlanTab({
               }
             />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="date">{t("date")}</Label>
-            <Input
-              id="date"
-              type="date"
-              value={state.date}
-              onChange={(e) => setState((s) => ({ ...s, date: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="status">{t("status")}</Label>
-              {content.auto_status && (
-                <span
-                  className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent"
-                  title="Le statut avance automatiquement selon ton avancement (script, tournage, montage…). Change-le manuellement pour désactiver."
-                >
-                  ✨ Auto
-                </span>
-              )}
-            </div>
-            <Select
-              id="status"
-              value={state.status}
-              onValueChange={(v) => setState((s) => ({ ...s, status: v }))}
-              options={STATUSES.map((s) => ({
-                value: s.value,
-                label: safeT(tStatus, s.value, s.label),
-              }))}
-            />
-          </div>
         </div>
+
+        {/* Multi-plateformes (Idée 10) : remplace l'ancien couple Platform +
+            Date par un éditeur de N publications avec chacune sa propre
+            date et son URL. Les actions sont atomiques (immédiate côté
+            serveur), pas dans le Save du form parent. */}
+        <PublicationsEditor
+          contentId={content.id}
+          contentType={content.type}
+          publications={publications}
+        />
 
         {/* Idée 11 (revue UX) : Accroche, CTA, Tags ont été retirés du Plan.
             L'Accroche vit maintenant dans l'onglet Script (renommé "Intro"

@@ -564,3 +564,89 @@ export async function swapSlides(
   revalidatePath(`/content/${contentId}`);
   return { ok: true as const };
 }
+
+/* =========================================================================
+   Publications multi-plateformes (Idée 10, migration 0020)
+   ========================================================================= */
+
+/**
+ * Ajoute une publication pour un contenu sur une plateforme donnée.
+ * Erreur si la plateforme est déjà liée à ce contenu (unique constraint).
+ */
+export async function addPublication(input: {
+  contentId: string;
+  platform: string;
+  scheduledDate?: string | null;
+  url?: string | null;
+}) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("content_publications").insert({
+    content_id: input.contentId,
+    platform: input.platform,
+    scheduled_date: input.scheduledDate ?? null,
+    url: input.url ?? null,
+  });
+  if (error) {
+    // 23505 = unique_violation côté Postgres
+    if (error.code === "23505") {
+      return {
+        error: `Cette vidéo est déjà associée à ${input.platform}.`,
+      };
+    }
+    return { error: error.message };
+  }
+  revalidatePath(`/content/${input.contentId}`);
+  revalidatePath("/calendar");
+  return { ok: true as const };
+}
+
+/**
+ * Met à jour une publication (changement de plateforme, date, URL).
+ */
+export async function updatePublication(
+  publicationId: string,
+  patch: Partial<{
+    platform: string;
+    scheduled_date: string | null;
+    url: string | null;
+  }>,
+  contentId: string,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("content_publications")
+    .update(patch)
+    .eq("id", publicationId);
+  if (error) {
+    if (error.code === "23505") {
+      return {
+        error:
+          "Une publication existe déjà pour cette plateforme sur cette vidéo.",
+      };
+    }
+    return { error: error.message };
+  }
+  revalidatePath(`/content/${contentId}`);
+  revalidatePath("/calendar");
+  return { ok: true as const };
+}
+
+/**
+ * Supprime une publication. Le trigger côté DB resync automatiquement
+ * les colonnes legacy contents.platform / date / video_url sur la
+ * publication primaire restante (ou les clear si plus aucune).
+ */
+export async function removePublication(
+  publicationId: string,
+  contentId: string,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("content_publications")
+    .delete()
+    .eq("id", publicationId);
+  if (error) return { error: error.message };
+  revalidatePath(`/content/${contentId}`);
+  revalidatePath("/calendar");
+  return { ok: true as const };
+}

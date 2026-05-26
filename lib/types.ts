@@ -109,6 +109,19 @@ export type StoryboardScene = {
   editing_notes: string | null;
 };
 
+/**
+ * Une publication sur une plateforme spécifique (Instagram, TikTok, YT…).
+ * Plusieurs publications par vidéo possible. Migration 0020.
+ */
+export type ContentPublication = {
+  id: string;
+  content_id: string;
+  platform: string;
+  scheduled_date: string | null;
+  url: string | null;
+  created_at: string;
+};
+
 export type ChecklistItemCategory = "equipment" | "preparation";
 
 export type ChecklistItem = {
