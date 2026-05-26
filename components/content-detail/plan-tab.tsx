@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { SelectWithCreate } from "@/components/ui/select-with-create";
+import { MultiSelectWithCreate } from "@/components/ui/multi-select-with-create";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { platformsForType, STATUSES, CONTENT_TYPES } from "@/lib/constants";
@@ -42,25 +42,33 @@ export function PlanTab({
 
   // L'`initial` est stabilisé pour éviter de re-trigger l'effet de resync à
   // chaque render (le useExplicitSave compare via JSON.stringify).
+  // On hash les arrays pour que useMemo détecte les changements quand on
+  // ajoute/retire un pilier (sinon JSON.stringify dans useExplicitSave ne
+  // re-sync pas le baseline après save).
+  const pillarsKey = (content.pillars ?? []).join("|");
+  const objectivesKey = (content.objectives ?? []).join("|");
+
   const initial = useMemo(
     () => ({
       title: content.title ?? "",
       type: content.type,
       platform: content.platform ?? "",
-      pillar: content.pillar ?? "",
-      objective: content.objective ?? "",
+      // Multi-piliers / multi-objectifs (Idée 8, migration 0018)
+      pillars: content.pillars ?? [],
+      objectives: content.objectives ?? [],
       date: content.date ?? "",
       status: content.status,
       hook: content.hook ?? "",
       cta: content.cta ?? "",
       tags: (content.tags ?? []).join(", "),
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       content.title,
       content.type,
       content.platform,
-      content.pillar,
-      content.objective,
+      pillarsKey,
+      objectivesKey,
       content.date,
       content.status,
       content.hook,
@@ -74,8 +82,10 @@ export function PlanTab({
       updateContent(content.id, {
         title: v.title || undefined,
         platform: v.platform || null,
-        pillar: v.pillar || null,
-        objective: v.objective || null,
+        // Les colonnes singulières pillar/objective seront auto-synchronisées
+        // côté DB via trigger sur le 1er élément de l'array (migration 0018).
+        pillars: v.pillars,
+        objectives: v.objectives,
         date: v.date || null,
         status: v.status,
         hook: v.hook || null,
@@ -135,20 +145,25 @@ export function PlanTab({
 
           <div className="space-y-2">
             <div className="flex items-center gap-1.5">
-              <Label htmlFor="pillar">{t("pillar")}</Label>
+              <Label htmlFor="pillars">Piliers de contenu</Label>
               <PillarHelp />
             </div>
-            <SelectWithCreate
-              id="pillar"
-              value={state.pillar}
-              onValueChange={(v) => setState((s) => ({ ...s, pillar: v }))}
-              options={brandPillars.map((p) => ({ value: p.name, label: p.name }))}
-              placeholder={t("pillarPlaceholder")}
-              inputLabel={t("pillar")}
+            <MultiSelectWithCreate
+              id="pillars"
+              values={state.pillars}
+              onValuesChange={(next) =>
+                setState((s) => ({ ...s, pillars: next }))
+              }
+              options={brandPillars.map((p) => ({
+                value: p.name,
+                label: p.name,
+              }))}
+              placeholder="Aucun pilier sélectionné"
+              inputLabel="Nom du pilier"
               inputPlaceholder={t("pillarPlaceholder")}
-              createDialogTitle={t("pillar")}
-              createDialogDescription=""
-              createLabel={t("pillar")}
+              createDialogTitle="Nouveau pilier"
+              createDialogDescription="Cette étiquette pourra être réutilisée sur d'autres vidéos de la marque."
+              createLabel="Créer un pilier"
               onCreate={async (name) =>
                 createTaxonomy("pillar", content.brand_id, name)
               }
@@ -156,18 +171,23 @@ export function PlanTab({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="objective">{t("objective")}</Label>
-            <SelectWithCreate
-              id="objective"
-              value={state.objective}
-              onValueChange={(v) => setState((s) => ({ ...s, objective: v }))}
-              options={brandObjectives.map((o) => ({ value: o.name, label: o.name }))}
-              placeholder={t("objective")}
-              inputLabel={t("objective")}
+            <Label htmlFor="objectives">Objectifs</Label>
+            <MultiSelectWithCreate
+              id="objectives"
+              values={state.objectives}
+              onValuesChange={(next) =>
+                setState((s) => ({ ...s, objectives: next }))
+              }
+              options={brandObjectives.map((o) => ({
+                value: o.name,
+                label: o.name,
+              }))}
+              placeholder="Aucun objectif sélectionné"
+              inputLabel="Nom de l'objectif"
               inputPlaceholder="Ex : Lead generation"
-              createDialogTitle={t("objective")}
-              createDialogDescription=""
-              createLabel={t("objective")}
+              createDialogTitle="Nouvel objectif"
+              createDialogDescription="Cette étiquette pourra être réutilisée sur d'autres vidéos de la marque."
+              createLabel="Créer un objectif"
               onCreate={async (name) =>
                 createTaxonomy("objective", content.brand_id, name)
               }

@@ -57,6 +57,8 @@ export async function updateContent(
     platform: string | null;
     pillar: string | null;
     objective: string | null;
+    pillars: string[];
+    objectives: string[];
     hook: string | null;
     cta: string | null;
     status: string;
@@ -134,6 +136,11 @@ export async function duplicateContent(id: string) {
       status: "idea",
       pillar: src.pillar,
       objective: src.objective,
+      // Multi-piliers / multi-objectifs (Idée 8). Si l'arrière-plan
+      // (migration 0018) n'est pas encore appliquée, src.pillars sera
+      // undefined → on retombe sur tableau vide pour ne pas casser.
+      pillars: src.pillars ?? [],
+      objectives: src.objectives ?? [],
       hook: src.hook,
       cta: src.cta,
       tags: src.tags,

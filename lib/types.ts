@@ -20,8 +20,14 @@ export type Content = {
   date: string | null;
   platform: string | null;
   status: string;
+  /** Pilier "primaire" : auto-synchronisé sur pillars[0] via trigger (migration 0018). */
   pillar: string | null;
+  /** Objectif "primaire" : auto-synchronisé sur objectives[0] via trigger (migration 0018). */
   objective: string | null;
+  /** Tous les piliers liés à cette vidéo (multi-sélection, migration 0018). */
+  pillars: string[];
+  /** Tous les objectifs liés à cette vidéo (multi-sélection, migration 0018). */
+  objectives: string[];
   hook: string | null;
   cta: string | null;
   tags: string[] | null;
