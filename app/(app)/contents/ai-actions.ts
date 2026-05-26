@@ -51,47 +51,43 @@ export async function aiGenerateReel(input: {
 }
 
 /**
- * Génère une image IA pour une scène storyboard à partir de ses 3 champs
- * (description, camera_angle, on_screen_text), DL le résultat de chez
- * OpenAI (URL temporaire 60min), l'upload sur Supabase Storage, puis met
- * à jour scene.image_url. Idempotent — chaque génération crée un nouveau
- * fichier avec timestamp (les anciennes images restent en storage).
+ * Génère une image IA pour une scène storyboard à partir d'un prompt
+ * fourni directement par l'utilisateur (depuis le dialog "Générer image
+ * IA"). On ne lit PAS la scène en DB pour éviter le piège des champs
+ * dirty pas encore sauvés — l'utilisateur tape sa description dans le
+ * dialog et c'est cette valeur qui part à DALL-E.
+ *
+ * DL le résultat de chez OpenAI (URL temporaire 60min), l'upload sur
+ * Supabase Storage, puis met à jour scene.image_url. Chaque génération
+ * crée un nouveau fichier avec timestamp.
  *
  * Coût ~0.08 $ par image (DALL-E 3 1792x1024 standard).
  */
 export async function aiGenerateSceneImage(input: {
   sceneId: string;
   contentId: string;
+  /** Description libre tapée par l'user dans le dialog. C'est CE texte qui part à DALL-E. */
+  description: string;
+  /** Optionnel : angle/placement caméra additionnel pour préciser le shooting. */
+  cameraNote?: string;
 }) {
   try {
     const supabase = await createClient();
 
-    // 1. Charge la scène pour récupérer ses champs textuels
-    const { data: scene, error: e1 } = await supabase
-      .from("storyboard_scenes")
-      .select("description, camera_angle, on_screen_text")
-      .eq("id", input.sceneId)
-      .maybeSingle();
-    if (e1 || !scene) {
-      return { ok: false as const, error: "Scène introuvable." };
-    }
-
-    if (!scene.description || !scene.description.trim()) {
+    if (!input.description || !input.description.trim()) {
       return {
         ok: false as const,
-        error:
-          "Décris la scène d'abord (champ Action / Dialogue) — l'IA en a besoin pour générer l'image.",
+        error: "Tape une description avant de générer.",
       };
     }
 
-    // 2. Appel DALL-E 3
+    // 1. Appel DALL-E 3 avec le prompt fourni par l'user
     const gen = await generateSceneImage({
-      description: scene.description,
-      cameraAngle: scene.camera_angle ?? undefined,
-      onScreenText: scene.on_screen_text ?? undefined,
+      description: input.description,
+      cameraAngle: input.cameraNote,
     });
 
-    // 3. Télécharge l'image depuis l'URL OpenAI (valide ~60min seulement)
+    // 2. Télécharge l'image depuis l'URL OpenAI (valide ~60min seulement)
     const imgRes = await fetch(gen.url);
     if (!imgRes.ok) {
       return {
@@ -101,7 +97,7 @@ export async function aiGenerateSceneImage(input: {
     }
     const imgBuf = new Uint8Array(await imgRes.arrayBuffer());
 
-    // 4. Upload dans Supabase Storage avec un nom de fichier unique
+    // 3. Upload dans Supabase Storage avec un nom de fichier unique
     // (timestamp pour éviter collision avec uploads manuels et régénérations)
     const fileName = `${input.contentId}/${input.sceneId}-ai-${Date.now()}.png`;
     const { error: e2 } = await supabase.storage
@@ -117,13 +113,13 @@ export async function aiGenerateSceneImage(input: {
       };
     }
 
-    // 5. URL publique
+    // 4. URL publique
     const { data: pub } = supabase.storage
       .from("content-media")
       .getPublicUrl(fileName);
     const publicUrl = pub.publicUrl;
 
-    // 6. Met à jour la scène
+    // 5. Met à jour la scène
     const { error: e3 } = await supabase
       .from("storyboard_scenes")
       .update({ image_url: publicUrl })
