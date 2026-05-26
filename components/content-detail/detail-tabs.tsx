@@ -56,7 +56,9 @@ export function DetailTabs({
         <TabsTrigger value="script">{isStory ? t("stories") : t("script")}</TabsTrigger>
         {!isStory && <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>}
         <TabsTrigger value="checklist">{t("checklist")}</TabsTrigger>
-        <TabsTrigger value="caption">Caption</TabsTrigger>
+        {/* Caption Reels only — les Stories ont du texte par slide,
+            pas une caption globale au moment de la publication. */}
+        {!isStory && <TabsTrigger value="caption">Caption</TabsTrigger>}
         {isPublished && <TabsTrigger value="performance">{t("performance")}</TabsTrigger>}
       </TabsList>
       <TabsContent value="plan">
@@ -85,9 +87,11 @@ export function DetailTabs({
           preparationSuggestions={preparationSuggestions}
         />
       </TabsContent>
-      <TabsContent value="caption">
-        <CaptionTab contentId={content.id} caption={content.caption} />
-      </TabsContent>
+      {!isStory && (
+        <TabsContent value="caption">
+          <CaptionTab contentId={content.id} caption={content.caption} />
+        </TabsContent>
+      )}
       {isPublished && (
         <TabsContent value="performance">
           <PerformanceTab
