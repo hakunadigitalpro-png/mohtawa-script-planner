@@ -64,8 +64,24 @@ export async function updateContent(
   }>,
 ) {
   const supabase = await createClient();
-  const { error } = await supabase.from("contents").update(patch).eq("id", id);
+
+  // Auto-status (0015) : si l'user change le statut manuellement on désactive
+  // l'auto-progression pour cette vidéo (override perso). À l'inverse, si la
+  // mutation ne touche pas le statut, on laisse auto_status tel qu'il est.
+  const patchWithFlag =
+    patch.status !== undefined ? { ...patch, auto_status: false } : patch;
+
+  const { error } = await supabase
+    .from("contents")
+    .update(patchWithFlag)
+    .eq("id", id);
   if (error) return { error: error.message };
+
+  // Si la date a changé sans changement de statut, on recompute (la règle
+  // editing → scheduled dépend de date > today).
+  if (patch.date !== undefined && patch.status === undefined) {
+    await supabase.rpc("recompute_content_status", { p_content_id: id });
+  }
 
   revalidatePath(`/content/${id}`);
   revalidatePath("/dashboard");
@@ -230,6 +246,14 @@ export async function upsertReelDetails(
     .from("reel_details")
     .upsert({ content_id: contentId, ...patch });
   if (error) return { error: error.message };
+
+  // Auto-status (0015) : si la checklist a bougé (script_ready, edited…),
+  // on recompute. Les autres champs (intro, points…) n'impactent pas le
+  // statut, donc on ne paie la RPC que quand c'est utile.
+  if (patch.checklist !== undefined) {
+    await supabase.rpc("recompute_content_status", { p_content_id: contentId });
+  }
+
   revalidatePath(`/content/${contentId}`);
   return { ok: true };
 }
@@ -268,6 +292,13 @@ export async function upsertStorySlide(
       { onConflict: "content_id,slot_number" },
     );
   if (error) return { error: error.message };
+
+  // Auto-status (0015) : si filmed a bougé, le statut peut passer
+  // script → filming, ou filming → editing.
+  if (patch.filmed !== undefined) {
+    await supabase.rpc("recompute_content_status", { p_content_id: contentId });
+  }
+
   revalidatePath(`/content/${contentId}`);
   return { ok: true };
 }
@@ -330,6 +361,13 @@ export async function updateScene(
     .update(patch)
     .eq("id", sceneId);
   if (error) return { error: error.message };
+
+  // Auto-status (0015) : si filmed a bougé, le statut peut passer
+  // script → filming, ou filming → editing.
+  if (patch.filmed !== undefined) {
+    await supabase.rpc("recompute_content_status", { p_content_id: contentId });
+  }
+
   revalidatePath(`/content/${contentId}`);
   return { ok: true };
 }

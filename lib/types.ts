@@ -28,6 +28,13 @@ export type Content = {
   share_token: string | null;
   /** 'read' = lien public en lecture seule, 'comment' = invités peuvent commenter. */
   share_mode: "read" | "comment";
+  /**
+   * Auto-progression du statut activée (0015). Tant que true, le statut
+   * avance automatiquement quand l'utilisateur coche script_ready, marque
+   * des scènes filmed, etc. Bascule à false dès que l'user change le statut
+   * manuellement dans le Plan.
+   */
+  auto_status: boolean;
   created_at: string;
   updated_at: string;
 };
