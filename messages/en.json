@@ -227,11 +227,11 @@
     "planNumber": "Shot {n}",
     "fields": {
       "action": "Action / Dialogue",
-      "actionPlaceholder": "What's happening / what's being said",
+      "actionPlaceholder": "Ex: Aya walks toward the camera smiling, she says \"3 mistakes I'll never make again\".",
       "camera": "Camera / Shot",
-      "cameraPlaceholder": "Wide shot, Close-up, Tracking...",
+      "cameraPlaceholder": "Ex: Wide shot, slightly low angle, fixed camera",
       "onScreenText": "On-screen text",
-      "onScreenTextPlaceholder": "Text that appears on screen"
+      "onScreenTextPlaceholder": "Ex: \"Don't do this in 2026\""
     },
     "deleteScene": "Delete scene",
     "filmed": "Filmed",

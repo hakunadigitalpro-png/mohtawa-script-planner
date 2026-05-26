@@ -227,11 +227,11 @@
     "planNumber": "لقطة {n}",
     "fields": {
       "action": "الفعل / الحوار",
-      "actionPlaceholder": "ما يحدث / ما يُقال",
+      "actionPlaceholder": "مثال: آية تمشي نحو الكاميرا مبتسمة، تقول «٣ أخطاء لن أرتكبها مجددًا».",
       "camera": "الكاميرا / اللقطة",
-      "cameraPlaceholder": "لقطة عامة، لقطة قريبة، تتبع...",
+      "cameraPlaceholder": "مثال: لقطة عامة ثابتة من زاوية منخفضة قليلًا",
       "onScreenText": "النص الظاهر",
-      "onScreenTextPlaceholder": "النص الذي يظهر على الشاشة"
+      "onScreenTextPlaceholder": "مثال: «لا تفعل ذلك في 2026»"
     },
     "deleteScene": "حذف المشهد",
     "filmed": "تم التصوير",

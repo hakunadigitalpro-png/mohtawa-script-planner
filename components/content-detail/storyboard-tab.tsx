@@ -189,7 +189,7 @@ export function StoryboardTab({
             <p className="mt-1 text-xs text-muted">{t("emptySubtitle")}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {state.scenes.map((sceneForm, idx) => {
               // Pour l'image, on lit toujours le state serveur (image_url
               // n'est pas dans le formulaire — c'est une action atomique).
@@ -387,7 +387,7 @@ function SceneCard({
         </div>
       </div>
 
-      <div className="space-y-3 p-3">
+      <div className="space-y-2 p-2.5">
         <ImageUpload
           contentId={contentId}
           value={serverImageUrl}
@@ -404,12 +404,12 @@ function SceneCard({
           disabled={pending}
           className={cn(
             "flex w-full items-center justify-center gap-1.5 rounded-xl",
-            "border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent transition",
+            "border border-accent/40 bg-accent/10 px-2.5 py-1 text-[11px] font-semibold text-accent transition",
             "hover:bg-accent/15",
             "disabled:cursor-not-allowed disabled:opacity-50",
           )}
         >
-          <Sparkles className="size-3.5" />
+          <Sparkles className="size-3" />
           {serverImageUrl ? "Régénérer avec l'IA" : "Générer une image IA"}
         </button>
 
@@ -493,36 +493,36 @@ function SceneCard({
           </DialogContent>
         </Dialog>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
             {t("fields.action")}
           </Label>
           <Textarea
-            className="min-h-16 text-sm"
+            className="min-h-12 text-sm [field-sizing:content]"
             value={sceneForm.description}
             onChange={(e) => onFieldChange("description", e.target.value)}
             placeholder={t("fields.actionPlaceholder")}
           />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
             {t("fields.camera")}
           </Label>
           <Input
-            className="h-9 text-sm"
+            className="h-8 text-xs"
             value={sceneForm.camera_angle}
             onChange={(e) => onFieldChange("camera_angle", e.target.value)}
             placeholder={t("fields.cameraPlaceholder")}
           />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
             {t("fields.onScreenText")}
           </Label>
           <Input
-            className="h-9 text-sm"
+            className="h-8 text-xs"
             value={sceneForm.on_screen_text}
             onChange={(e) => onFieldChange("on_screen_text", e.target.value)}
             placeholder={t("fields.onScreenTextPlaceholder")}
@@ -531,23 +531,23 @@ function SceneCard({
 
         {/* Remarques de montage (Idée 3) — filtres, effets, transitions,
             musique, sound design. Champ libre par scène. */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
             <Scissors className="size-3" />
             Montage / Post-prod
           </Label>
           <Textarea
-            className="min-h-12 text-sm [field-sizing:content]"
+            className="min-h-10 text-sm [field-sizing:content]"
             value={sceneForm.editing_notes}
             onChange={(e) => onFieldChange("editing_notes", e.target.value)}
-            placeholder="Ex : Filtre vintage, transition cut net vers le Plan 04, ajouter une whoosh-sound."
+            placeholder="Ex : Filtre vintage, cut net vers Plan 04, whoosh-sound."
           />
         </div>
 
         {/* Toggle "Filmé" — atomic action (clic = save immédiat). */}
         <label
           className={cn(
-            "mt-2 flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 transition",
+            "mt-1 flex cursor-pointer items-center gap-2 rounded-xl border px-2.5 py-1.5 transition",
             optimisticFilmed
               ? "border-emerald-300/60 bg-emerald-50/60"
               : "border-border/60 bg-secondary/30 hover:bg-secondary/60",

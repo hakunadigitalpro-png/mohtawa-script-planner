@@ -227,11 +227,11 @@
     "planNumber": "Plan {n}",
     "fields": {
       "action": "Action / Dialogue",
-      "actionPlaceholder": "Ce qui se passe / ce qui est dit",
+      "actionPlaceholder": "Ex : Aya marche vers la caméra en souriant, elle dit \"3 erreurs que je ne ferai plus\".",
       "camera": "Caméra / Plan",
-      "cameraPlaceholder": "Plan large, Gros plan, Travelling...",
+      "cameraPlaceholder": "Ex : Plan large fixe, légèrement plongé",
       "onScreenText": "Texte affiché",
-      "onScreenTextPlaceholder": "Texte qui apparaît à l'écran"
+      "onScreenTextPlaceholder": "Ex : « Ne fais plus ça en 2026 »"
     },
     "deleteScene": "Supprimer la scène",
     "filmed": "Filmée",
