@@ -61,6 +61,7 @@ export async function updateContent(
     cta: string | null;
     status: string;
     tags: string[];
+    video_url: string | null;
   }>,
 ) {
   const supabase = await createClient();

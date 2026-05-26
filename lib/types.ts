@@ -35,6 +35,12 @@ export type Content = {
    * manuellement dans le Plan.
    */
   auto_status: boolean;
+  /**
+   * URL de la vidéo publiée sur la plateforme (Instagram, TikTok, etc.).
+   * Saisi par l'utilisateur dans l'onglet Performance après publication.
+   * Migration 0017.
+   */
+  video_url: string | null;
   created_at: string;
   updated_at: string;
 };

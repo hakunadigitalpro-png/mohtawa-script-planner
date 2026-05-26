@@ -85,7 +85,11 @@ export function DetailTabs({
       </TabsContent>
       {isPublished && (
         <TabsContent value="performance">
-          <PerformanceTab contentId={content.id} perf={perf} />
+          <PerformanceTab
+            contentId={content.id}
+            perf={perf}
+            videoUrl={content.video_url}
+          />
         </TabsContent>
       )}
     </Tabs>
