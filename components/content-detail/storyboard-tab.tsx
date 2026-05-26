@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2, GripVertical, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ import {
   updateScene,
   reorderScenes,
 } from "@/app/(app)/contents/actions";
+import { aiGenerateSceneImage } from "@/app/(app)/contents/ai-actions";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
 import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
@@ -267,6 +268,35 @@ function SceneCard({
     });
   };
 
+  // -------- AI image generation (Idée 2) --------
+  // Génère un sketch de scène via DALL-E 3 à partir des 3 champs textuels.
+  // Coût ~0.08$ par image, prend ~10s. État local pour le loading + error.
+  const [aiPending, setAiPending] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const generateAiImage = () => {
+    setAiError(null);
+    if (!sceneForm.description.trim()) {
+      setAiError(
+        "Remplis d'abord la description (champ Action) — l'IA en a besoin.",
+      );
+      return;
+    }
+    setAiPending(true);
+    startTransition(async () => {
+      const res = await aiGenerateSceneImage({
+        sceneId: sceneForm.id,
+        contentId,
+      });
+      setAiPending(false);
+      if (!res.ok) {
+        setAiError(res.error);
+        return;
+      }
+      router.refresh();
+    });
+  };
+
   const onToggleFilmed = () => {
     const next = !optimisticFilmed;
     setOptimisticFilmed(next);
@@ -335,6 +365,36 @@ function SceneCard({
           onChange={onImageChange}
           label={t("fields.action")}
         />
+
+        {/* Bouton de génération d'image IA (DALL-E 3, ~10s, ~$0.08/img) */}
+        <button
+          type="button"
+          onClick={generateAiImage}
+          disabled={aiPending || pending}
+          className={cn(
+            "flex w-full items-center justify-center gap-1.5 rounded-xl",
+            "border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent transition",
+            "hover:bg-accent/15",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+          )}
+          title={
+            serverImageUrl
+              ? "Régénère une nouvelle image IA basée sur les champs ci-dessous (~10s)"
+              : "Génère une image IA basée sur les champs ci-dessous (~10s)"
+          }
+        >
+          <Sparkles className={cn("size-3.5", aiPending && "animate-pulse")} />
+          {aiPending
+            ? "Génération… (~10s)"
+            : serverImageUrl
+              ? "Régénérer avec l'IA"
+              : "Générer une image IA"}
+        </button>
+        {aiError && (
+          <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {aiError}
+          </p>
+        )}
 
         <div className="space-y-1.5">
           <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
