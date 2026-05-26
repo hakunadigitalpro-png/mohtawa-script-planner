@@ -101,7 +101,7 @@ export function DetailTabs({
           <PerformanceTab
             contentId={content.id}
             perf={perf}
-            videoUrl={content.video_url}
+            publications={publications}
           />
         </TabsContent>
       )}

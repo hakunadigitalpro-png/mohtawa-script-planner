@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Globe, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -26,23 +26,16 @@ import {
 import type { ContentPublication } from "@/lib/types";
 
 /**
- * Éditeur multi-plateformes (Idée 10, migration 0020).
+ * Éditeur multi-plateformes côté PLANIFICATION (Idée 10, migration 0020).
  *
- * Rendu sous forme de liste de "lignes de publication" — une par plateforme.
- * Chaque ligne :
- *   - Plateforme (read-only après création, parce que UNIQUE (content, platform))
- *   - Date de publication (auto-save atomique au blur)
- *   - URL de la vidéo en ligne (auto-save atomique au blur)
- *   - Bouton "↗" qui ouvre le lien dans un nouvel onglet si URL remplie
- *   - Bouton 🗑 pour supprimer la publication
+ * Plan tab uniquement — sert à programmer où la vidéo va sortir. Une ligne
+ * par plateforme : plateforme (read-only) + date prévue + delete.
  *
- * Le bouton "+ Ajouter une plateforme" ouvre un dialog avec un Select des
- * plateformes encore disponibles (qui n'ont pas déjà une publication pour
- * ce contenu).
+ * L'URL de la vidéo en ligne ne vit PAS ici (la vidéo n'existe pas encore
+ * au stade planning). Elle est gérée séparément dans l'onglet Performance
+ * via <PerformancePublications />, une fois la vidéo publiée.
  *
- * Les actions sont ATOMIQUES (server action sur chaque modif) — pas
- * intégrées au form parent. C'est cohérent avec le pattern utilisé pour
- * les scènes du storyboard.
+ * Actions atomiques : auto-save sur blur, pas intégrées au form parent.
  */
 export function PublicationsEditor({
   contentId,
@@ -130,7 +123,7 @@ export function PublicationsEditor({
   );
 }
 
-/** Une ligne dans la liste — atomic auto-save sur blur date/url. */
+/** Une ligne dans la liste — plateforme + date prévue + delete. */
 function PublicationRow({
   publication,
   contentId,
@@ -147,15 +140,11 @@ function PublicationRow({
 
   // État local pour permettre d'éditer sans flicker avant le save.
   const [date, setDate] = React.useState(publication.scheduled_date ?? "");
-  const [url, setUrl] = React.useState(publication.url ?? "");
 
   // Resync si les props changent (server refresh après autre modif)
   React.useEffect(() => {
     setDate(publication.scheduled_date ?? "");
   }, [publication.scheduled_date]);
-  React.useEffect(() => {
-    setUrl(publication.url ?? "");
-  }, [publication.url]);
 
   const saveDate = (next: string) => {
     if ((publication.scheduled_date ?? "") === next) return;
@@ -169,25 +158,6 @@ function PublicationRow({
     });
   };
 
-  const saveUrl = (next: string) => {
-    if ((publication.url ?? "") === next) return;
-    startTransition(async () => {
-      await updatePublication(
-        publication.id,
-        { url: next.trim() || null },
-        contentId,
-      );
-      router.refresh();
-    });
-  };
-
-  const rawUrl = url.trim();
-  const browsableUrl = rawUrl
-    ? rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
-      ? rawUrl
-      : `https://${rawUrl}`
-    : null;
-
   return (
     <li className="rounded-2xl border border-border/60 bg-card p-3">
       <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
@@ -200,31 +170,14 @@ function PublicationRow({
           value={date}
           onChange={(e) => setDate(e.target.value)}
           onBlur={() => saveDate(date)}
-          className="h-9 flex-1 text-sm sm:max-w-44"
+          className="h-9 flex-1 text-sm sm:max-w-56"
           aria-label={`Date de publication sur ${publication.platform}`}
         />
 
-        <Input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          onBlur={() => saveUrl(url)}
-          placeholder="URL de la vidéo en ligne…"
-          className="h-9 flex-1 text-sm"
-          aria-label={`URL de la vidéo sur ${publication.platform}`}
-        />
-
-        {browsableUrl && (
-          <a
-            href={browsableUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-accent/40 bg-accent/10 text-accent transition hover:bg-accent/15"
-            title="Ouvrir la vidéo dans un nouvel onglet"
-          >
-            <ExternalLink className="size-3.5" />
-          </a>
-        )}
+        <span className="flex-1 text-[10px] text-muted sm:text-right">
+          L&apos;URL de la vidéo se renseigne après publication, dans l&apos;onglet
+          Performance.
+        </span>
 
         <button
           type="button"

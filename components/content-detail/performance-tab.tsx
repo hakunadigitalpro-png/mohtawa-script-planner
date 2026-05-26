@@ -2,34 +2,31 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { ExternalLink, Link as LinkIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  upsertPerformance,
-  updateContent,
-} from "@/app/(app)/contents/actions";
+import { upsertPerformance } from "@/app/(app)/contents/actions";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
-import type { Performance } from "@/lib/types";
+import { PerformancePublications } from "./performance-publications";
+import type { Performance, ContentPublication } from "@/lib/types";
 
 export function PerformanceTab({
   contentId,
   perf,
-  videoUrl,
+  publications,
 }: {
   contentId: string;
   perf: Performance | null;
-  /** URL de la vidéo publiée (Idée 12, migration 0017). */
-  videoUrl: string | null;
+  /** Publications multi-plateformes (Idée 10, migration 0020). Chaque
+   *  publication a son propre champ URL éditable dans cet onglet. */
+  publications: ContentPublication[];
 }) {
   const t = useTranslations("performance");
 
   const initial = useMemo(
     () => ({
-      videoUrl: videoUrl ?? "",
       views: perf?.views?.toString() ?? "",
       likes: perf?.likes?.toString() ?? "",
       comments: perf?.comments?.toString() ?? "",
@@ -39,7 +36,6 @@ export function PerformanceTab({
       notes: perf?.notes ?? "",
     }),
     [
-      videoUrl,
       perf?.views,
       perf?.likes,
       perf?.comments,
@@ -51,28 +47,17 @@ export function PerformanceTab({
   );
 
   const { state, setState, isDirty, isSaving, handleSave, handleReset } =
-    useExplicitSave(initial, async (v) => {
-      // 2 mutations en parallèle : performances (stats) + contents (video_url)
-      const [perfRes, contentRes] = await Promise.all([
-        upsertPerformance(contentId, {
-          views: v.views ? Number(v.views) : undefined,
-          likes: v.likes ? Number(v.likes) : undefined,
-          comments: v.comments ? Number(v.comments) : undefined,
-          shares: v.shares ? Number(v.shares) : undefined,
-          saves: v.saves ? Number(v.saves) : undefined,
-          retention: v.retention ? Number(v.retention) : undefined,
-          notes: v.notes || undefined,
-        }),
-        updateContent(contentId, {
-          // null si l'user a vidé le champ → on clear côté DB
-          video_url: v.videoUrl.trim() || null,
-        }),
-      ]);
-      const firstError = [perfRes, contentRes].find(
-        (r) => r && typeof r === "object" && "error" in r && r.error,
-      );
-      return firstError ?? { ok: true };
-    });
+    useExplicitSave(initial, async (v) =>
+      upsertPerformance(contentId, {
+        views: v.views ? Number(v.views) : undefined,
+        likes: v.likes ? Number(v.likes) : undefined,
+        comments: v.comments ? Number(v.comments) : undefined,
+        shares: v.shares ? Number(v.shares) : undefined,
+        saves: v.saves ? Number(v.saves) : undefined,
+        retention: v.retention ? Number(v.retention) : undefined,
+        notes: v.notes || undefined,
+      }),
+    );
 
   const num = (k: keyof typeof state, label: string) => (
     <div className="space-y-2">
@@ -87,16 +72,6 @@ export function PerformanceTab({
     </div>
   );
 
-  // Validation/normalisation légère de l'URL pour le bouton "Voir en ligne".
-  // On ne casse pas la saisie en cours — on ouvre seulement le lien si l'URL
-  // ressemble à quelque chose de browsable (http/https/// raccourci).
-  const rawUrl = state.videoUrl.trim();
-  const browsableUrl = rawUrl
-    ? rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
-      ? rawUrl
-      : `https://${rawUrl}`
-    : null;
-
   return (
     <div className="space-y-4">
       <Card className="space-y-5 p-6">
@@ -105,45 +80,12 @@ export function PerformanceTab({
           <p className="text-xs text-muted">{t("subtitle")}</p>
         </div>
 
-        {/* URL de la vidéo publiée (Idée 12) */}
-        <div className="space-y-2">
-          <Label
-            htmlFor="video_url"
-            className="flex items-center gap-1.5"
-          >
-            <LinkIcon className="size-3.5" />
-            Lien de la vidéo publiée
-          </Label>
-          <div className="flex items-center gap-2">
-            <Input
-              id="video_url"
-              type="url"
-              inputMode="url"
-              value={state.videoUrl}
-              onChange={(e) =>
-                setState((s) => ({ ...s, videoUrl: e.target.value }))
-              }
-              placeholder="https://www.instagram.com/reel/..."
-              className="flex-1"
-            />
-            {browsableUrl && (
-              <a
-                href={browsableUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-2xl border border-accent/40 bg-accent/10 px-3 py-2 text-xs font-semibold text-accent transition hover:bg-accent/15"
-                title="Ouvre la vidéo dans un nouvel onglet"
-              >
-                <ExternalLink className="size-3.5" />
-                Voir en ligne
-              </a>
-            )}
-          </div>
-          <p className="text-[10px] text-muted">
-            Colle l&apos;URL publique de ta vidéo (Reel Instagram, TikTok, etc.)
-            pour la retrouver d&apos;un clic et matcher tes stats plus tard.
-          </p>
-        </div>
+        {/* Liens des publications par plateforme (Idée 10 V2, ex-Idée 12).
+            Chaque publication a son propre champ URL en auto-save. */}
+        <PerformancePublications
+          contentId={contentId}
+          publications={publications}
+        />
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
           {num("views", t("views"))}
