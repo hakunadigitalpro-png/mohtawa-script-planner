@@ -51,8 +51,12 @@
   --color-status-scheduled: #06b6d4;
   --color-status-published: #10b981;
 
-  /* ===== Typography ===== */
-  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+  /* ===== Typography =====
+     Manrope est appliqué via la className next/font directement sur
+     body (cf. layout.tsx). Cette variable sert juste si quelque chose
+     applique la classe Tailwind `font-sans` explicitement. */
+  --font-sans: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-arabic: var(--font-cairo), "Cairo", system-ui, sans-serif;
 
   /* ===== Radius (generous) ===== */
@@ -84,21 +88,15 @@ html[data-theme="dark"] {
   border-color: var(--color-border);
 }
 
-/* Fallback chain explicite : si Manrope ne charge pas (réseau, cache,
-   etc), on tombe sur des fonts système 100% SANS-serif. Aucun "serif"
-   ne doit jamais apparaître. */
+/* La className Manrope est appliquée sur <body> via next/font, donc
+   tous les enfants héritent de Manrope par défaut. On garde quand même
+   une fallback chain explicite côté html pour éviter toute exception. */
 html, body {
   color: var(--color-foreground);
-  font-family: var(--font-sans), "Manrope", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "tnum";
-}
-
-/* Force tous les descendants à hériter — empêche un default browser
-   serif éventuel de remonter sur un élément non stylé. */
-body, body * {
-  font-family: inherit;
 }
 
 /* Cairo prend le relais pour les locales RTL (arabe). */

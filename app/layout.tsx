@@ -6,13 +6,13 @@ import { getThemeFromCookies, htmlDataTheme } from "@/lib/theme";
 import { dirOf, isRtl, type Locale } from "@/i18n/config";
 import "./globals.css";
 
-// Police latine : Manrope — sans-serif géométrique semi-arrondi, look
-// "SaaS premium" (AdCreative.ai, Beehiiv, etc). Plus friendly qu'Inter,
-// plus moderne que Plus Jakarta Sans. On garde la variable
-// --font-jakarta comme alias pour ne pas toucher tout le code.
+// Police latine : Manrope — sans-serif géométrique. On applique sa
+// className directement sur le body (au lieu de passer par une variable
+// CSS) pour éliminer tout risque de cascade cassée. Display:swap pour
+// éviter le FOIT (texte invisible pendant le chargement de la police).
 const manrope = Manrope({
-  variable: "--font-jakarta",
   subsets: ["latin"],
+  display: "swap",
   weight: ["400", "500", "600", "700", "800"],
 });
 
@@ -60,7 +60,7 @@ export default async function RootLayout({
       style={styleOverrides}
     >
       <body
-        className={`${manrope.variable} ${cairo.variable} antialiased ${
+        className={`${manrope.className} ${cairo.variable} antialiased ${
           rtl ? "font-arabic" : ""
         }`}
       >
