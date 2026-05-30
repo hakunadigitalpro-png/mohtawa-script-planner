@@ -9,6 +9,13 @@ const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
 const MODEL = "gpt-4o-mini";
 const IMAGE_MODEL = "dall-e-3";
 
+// ===== Anthropic (Claude) — utilisé pour l'autopsie vidéo (feature premium) =====
+const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+// Modèle configurable via env. Défaut : Claude Sonnet (bon rapport
+// qualité/prix pour de l'analyse). Surchargeable si besoin.
+const ANTHROPIC_MODEL =
+  process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
+
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 export class AiError extends Error {
@@ -305,4 +312,156 @@ Retourne UNIQUEMENT un JSON valide avec cette structure exacte :
 }`;
 
   return generateJSON<StoryGeneration>({ system, user, maxTokens: 800 });
+}
+
+/* =========================================================================
+   Autopsie vidéo — API Claude (Anthropic)
+   ========================================================================= */
+
+export type AutopsyInput = {
+  title: string;
+  platform: string | null;
+  /** Stats brutes saisies par l'user (toutes optionnelles). */
+  stats: {
+    views?: number | null;
+    likes?: number | null;
+    comments?: number | null;
+    shares?: number | null;
+    saves?: number | null;
+    retention?: number | null;
+  };
+  transcript: string;
+  retentionNotes?: string | null;
+};
+
+/**
+ * Appelle l'API Claude pour produire l'autopsie d'une vidéo : croise le
+ * wording (transcript) avec les stats pour expliquer pourquoi ça marche
+ * ou rate. Renvoie un texte formaté (avec emojis de section), pensé pour
+ * un rendu en whitespace-pre-wrap (pas de markdown lourd).
+ */
+export async function generateAutopsy(input: AutopsyInput): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new AiError(
+      "no_api_key",
+      "L'IA d'analyse n'est pas configurée. Ajoute ANTHROPIC_API_KEY dans Vercel et redéploie.",
+    );
+  }
+
+  if (!input.transcript || input.transcript.trim().length < 10) {
+    throw new AiError(
+      "empty_transcript",
+      "Colle le transcript de la vidéo (ce qui est dit) avant de lancer l'analyse.",
+    );
+  }
+
+  const system = `Tu es un analyste expert en contenu vidéo short-form (Reels, TikTok, Shorts) spécialisé dans le marché francophone. Ton job : faire l'AUTOPSIE d'une vidéo pour comprendre POURQUOI elle performe ou échoue, au niveau du WORDING (ce qui est dit), pas de la technique de montage.
+
+RÈGLES ABSOLUES :
+- Cite TOUJOURS les phrases EXACTES de la vidéo entre guillemets. Jamais de généralité du type "ton hook est bon". Dis QUELLE phrase et POURQUOI.
+- Bannis les conseils évidents que tout créateur connaît déjà. Donne des insights NON-ÉVIDENTS.
+- Croise le WORDING avec les STATS. Une phrase n'est "bonne" que si une stat le suggère.
+- Sois honnête : si une donnée manque pour conclure, dis-le. Ne devine pas.
+- Écris en français, ton direct et concret.
+
+FORMAT DE SORTIE (texte simple, PAS de markdown ## ni ** — utilise les emojis de section ci-dessous tels quels) :
+
+✅ CE QUI A MARCHÉ
+- [phrase exacte citée] → pourquoi, avec la stat qui le suggère
+
+❌ CE QUI A COÛTÉ DES VUES
+- [phrase exacte] → où/pourquoi tu penses que les gens décrochent
+
+🎯 LA RÈGLE À RETENIR
+- 1 seule règle actionnable pour TOUTES tes prochaines vidéos
+
+✨ TA PROCHAINE VIDÉO
+- Hook (phrase exacte) + angle + structure en 3 points qui réutilise le pattern gagnant, sur un sujet proche`;
+
+  const s = input.stats;
+  const statsLines = [
+    s.views != null ? `Vues : ${s.views}` : null,
+    s.likes != null ? `Likes : ${s.likes}` : null,
+    s.comments != null ? `Commentaires : ${s.comments}` : null,
+    s.shares != null ? `Partages : ${s.shares}` : null,
+    s.saves != null ? `Enregistrements : ${s.saves}` : null,
+    s.retention != null ? `Rétention moyenne : ${s.retention}%` : null,
+  ]
+    .filter(Boolean)
+    .join(" | ");
+
+  const user = `VIDÉO À ANALYSER
+
+Titre : ${input.title || "(sans titre)"}
+Plateforme : ${input.platform || "(non précisée)"}
+Stats : ${statsLines || "(aucune stat fournie)"}
+${
+  input.retentionNotes?.trim()
+    ? `Courbe de rétention : ${input.retentionNotes.trim()}`
+    : ""
+}
+
+Transcript (ce qui est dit dans la vidéo) :
+"""
+${input.transcript.trim()}
+"""
+
+Fais l'autopsie de cette vidéo en suivant exactement le format demandé.`;
+
+  let res: Response;
+  try {
+    res = await fetch(ANTHROPIC_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: ANTHROPIC_MODEL,
+        max_tokens: 1500,
+        system,
+        messages: [{ role: "user", content: user }],
+      }),
+    });
+  } catch {
+    throw new AiError("network", "Impossible de joindre l'IA. Réessaie.");
+  }
+
+  if (!res.ok) {
+    const status = res.status;
+    if (status === 401) {
+      throw new AiError(
+        "auth",
+        "Clé Anthropic invalide. Vérifie ANTHROPIC_API_KEY.",
+      );
+    }
+    if (status === 429) {
+      throw new AiError(
+        "rate_limit",
+        "Quota Anthropic atteint ou trop de requêtes. Réessaie dans une minute.",
+      );
+    }
+    let detail = "";
+    try {
+      const body = (await res.json()) as { error?: { message?: string } };
+      detail = body?.error?.message ? ` : ${body.error.message}` : "";
+    } catch {
+      // ignore
+    }
+    throw new AiError("api", `Erreur Anthropic (${status})${detail}.`);
+  }
+
+  const data = (await res.json()) as {
+    content?: { type: string; text?: string }[];
+  };
+  const text = data.content
+    ?.filter((b) => b.type === "text")
+    .map((b) => b.text ?? "")
+    .join("\n")
+    .trim();
+
+  if (!text) throw new AiError("empty", "Réponse vide de l'IA d'analyse.");
+  return text;
 }

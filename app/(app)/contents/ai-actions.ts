@@ -6,6 +6,7 @@ import {
   generateReel,
   generateStory,
   generateSceneImage,
+  generateAutopsy,
   AiError,
 } from "@/lib/ai";
 
@@ -172,6 +173,73 @@ export async function aiGenerateStory(input: {
     }
 
     return { ok: true as const, data: result };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false as const, error: e.message };
+    return { ok: false as const, error: "Erreur inattendue. Réessaie." };
+  }
+}
+
+/**
+ * Génère l'autopsie IA d'une vidéo (API Claude). Sauve d'abord le
+ * transcript + les notes de rétention fournis par le client (pas de
+ * dépendance à un Save préalable → évite le piège du state dirty), puis
+ * appelle Claude et stocke le résultat dans performances.autopsy_md.
+ */
+export async function generateVideoAutopsy(input: {
+  contentId: string;
+  transcript: string;
+  retentionNotes?: string | null;
+}) {
+  try {
+    const supabase = await createClient();
+
+    // 1. Charge le content (titre, plateforme) + les stats existantes
+    const { data: content } = await supabase
+      .from("contents")
+      .select("title, platform")
+      .eq("id", input.contentId)
+      .maybeSingle();
+    if (!content) return { ok: false as const, error: "Vidéo introuvable." };
+
+    const { data: perf } = await supabase
+      .from("performances")
+      .select("views, likes, comments, shares, saves, retention")
+      .eq("content_id", input.contentId)
+      .maybeSingle();
+
+    // 2. Persiste transcript + retention_notes (upsert sur performances)
+    const { error: saveErr } = await supabase.from("performances").upsert({
+      content_id: input.contentId,
+      transcript: input.transcript.trim() || null,
+      retention_notes: input.retentionNotes?.trim() || null,
+    });
+    if (saveErr) return { ok: false as const, error: saveErr.message };
+
+    // 3. Appel Claude
+    const autopsy = await generateAutopsy({
+      title: content.title ?? "",
+      platform: content.platform ?? null,
+      stats: {
+        views: perf?.views ?? null,
+        likes: perf?.likes ?? null,
+        comments: perf?.comments ?? null,
+        shares: perf?.shares ?? null,
+        saves: perf?.saves ?? null,
+        retention: perf?.retention ?? null,
+      },
+      transcript: input.transcript,
+      retentionNotes: input.retentionNotes,
+    });
+
+    // 4. Stocke le résultat + l'horodatage
+    const { error: updErr } = await supabase
+      .from("performances")
+      .update({ autopsy_md: autopsy, autopsy_at: new Date().toISOString() })
+      .eq("content_id", input.contentId);
+    if (updErr) return { ok: false as const, error: updErr.message };
+
+    revalidatePath(`/content/${input.contentId}`);
+    return { ok: true as const, autopsy };
   } catch (e) {
     if (e instanceof AiError) return { ok: false as const, error: e.message };
     return { ok: false as const, error: "Erreur inattendue. Réessaie." };

@@ -10,6 +10,7 @@ import { upsertPerformance } from "@/app/(app)/contents/actions";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
 import { PerformancePublications } from "./performance-publications";
+import { VideoAutopsy } from "./video-autopsy";
 import type { Performance, ContentPublication } from "@/lib/types";
 
 export function PerformanceTab({
@@ -106,6 +107,16 @@ export function PerformanceTab({
             placeholder={t("notesPlaceholder")}
           />
         </div>
+
+        {/* Autopsie IA (action atomique, son propre bouton — hors du Save
+            du form des stats). Croise le transcript avec les stats. */}
+        <VideoAutopsy
+          contentId={contentId}
+          initialTranscript={perf?.transcript ?? null}
+          initialRetentionNotes={perf?.retention_notes ?? null}
+          initialAutopsy={perf?.autopsy_md ?? null}
+          autopsyAt={perf?.autopsy_at ?? null}
+        />
       </Card>
 
       <SaveFooter

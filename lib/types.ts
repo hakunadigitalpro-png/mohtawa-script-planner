@@ -160,5 +160,13 @@ export type Performance = {
   saves: number | null;
   retention: number | null;
   notes: string | null;
+  /** Transcript de la vidéo (collé par l'user). Autopsie IA — migration 0022. */
+  transcript: string | null;
+  /** Notes de rétention ("drop vers 15s"). Autopsie IA — migration 0022. */
+  retention_notes: string | null;
+  /** Résultat de l'autopsie IA (texte formaté). Migration 0022. */
+  autopsy_md: string | null;
+  /** Date de génération de l'autopsie. Migration 0022. */
+  autopsy_at: string | null;
   updated_at: string;
 };
