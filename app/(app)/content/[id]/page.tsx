@@ -28,6 +28,7 @@ import type {
   Performance,
   ChecklistItem,
   ContentPublication,
+  ScenePreset,
 } from "@/lib/types";
 
 export default async function ContentDetailPage({
@@ -65,6 +66,7 @@ export default async function ContentDetailPage({
     suggEquipmentRes,
     suggPreparationRes,
     publicationsRes,
+    scenePresetsRes,
   ] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
@@ -120,6 +122,12 @@ export default async function ContentDetailPage({
       .eq("content_id", id)
       .order("scheduled_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: true }),
+    // Setups de scène réutilisables de la marque (Storyboard Lot 2)
+    supabase
+      .from("brand_scene_presets")
+      .select("*")
+      .eq("brand_id", content.brand_id)
+      .order("position", { ascending: true }),
   ]);
 
   const reel = (reelRes.data ?? null) as ReelDetails | null;
@@ -141,6 +149,7 @@ export default async function ContentDetailPage({
     usage_count: number;
   }[];
   const publications = (publicationsRes.data ?? []) as ContentPublication[];
+  const scenePresets = (scenePresetsRes.data ?? []) as ScenePreset[];
 
   const c = content as Content;
 
@@ -246,6 +255,8 @@ export default async function ContentDetailPage({
           equipmentSuggestions={equipmentSuggestions}
           preparationSuggestions={preparationSuggestions}
           publications={publications}
+          scenePresets={scenePresets}
+          brandId={content.brand_id}
         />
       </div>
 

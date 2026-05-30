@@ -650,3 +650,104 @@ export async function removePublication(
   revalidatePath("/calendar");
   return { ok: true as const };
 }
+
+/* =========================================================================
+   Bibliothèque de setups de scène (Storyboard Lot 2, migration 0021)
+   ========================================================================= */
+
+/**
+ * Crée un setup réutilisable pour une marque. Utilisé soit "en avance"
+ * (dialog création depuis le storyboard), soit "au vol" (enregistrer une
+ * scène existante comme setup).
+ */
+export async function createScenePreset(input: {
+  brandId: string;
+  label: string;
+  referenceImageUrl?: string | null;
+  defaultCamera?: string | null;
+  defaultEditingNotes?: string | null;
+}) {
+  const label = input.label.trim();
+  if (!label) return { error: "Le nom du setup est requis." };
+  if (label.length > 60) return { error: "Nom trop long (60 caractères max)." };
+
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("brand_scene_presets")
+    .select("position")
+    .eq("brand_id", input.brandId)
+    .order("position", { ascending: false })
+    .limit(1);
+  const nextPos = (existing?.[0]?.position ?? 0) + 1;
+
+  const { error } = await supabase.from("brand_scene_presets").insert({
+    brand_id: input.brandId,
+    label,
+    reference_image_url: input.referenceImageUrl ?? null,
+    default_camera: input.defaultCamera ?? null,
+    default_editing_notes: input.defaultEditingNotes ?? null,
+    position: nextPos,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  return { ok: true as const };
+}
+
+/**
+ * Supprime un setup de la bibliothèque de la marque. Ne touche pas aux
+ * scènes déjà créées à partir de ce setup (elles ont leur propre copie).
+ */
+export async function deleteScenePreset(presetId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("brand_scene_presets")
+    .delete()
+    .eq("id", presetId);
+  if (error) return { error: error.message };
+  revalidatePath("/", "layout");
+  return { ok: true as const };
+}
+
+/**
+ * Insère une nouvelle scène dans un storyboard à partir d'un setup :
+ * copie l'image de réf + le cadrage + les notes de montage du preset.
+ * L'utilisateur n'a plus qu'à taper le dialogue.
+ */
+export async function addSceneFromPreset(input: {
+  contentId: string;
+  presetId: string;
+}) {
+  const supabase = await createClient();
+
+  // 1. Charge le preset (RLS valide l'accès marque)
+  const { data: preset, error: e1 } = await supabase
+    .from("brand_scene_presets")
+    .select("reference_image_url, default_camera, default_editing_notes")
+    .eq("id", input.presetId)
+    .maybeSingle();
+  if (e1 || !preset) return { error: "Setup introuvable." };
+
+  // 2. Calcule le prochain numéro de scène
+  const { data: existing } = await supabase
+    .from("storyboard_scenes")
+    .select("scene_number")
+    .eq("content_id", input.contentId)
+    .order("scene_number", { ascending: false })
+    .limit(1);
+  const nextNumber = (existing?.[0]?.scene_number ?? 0) + 1;
+
+  // 3. Insère la scène pré-remplie depuis le preset
+  const { error: e2 } = await supabase.from("storyboard_scenes").insert({
+    content_id: input.contentId,
+    scene_number: nextNumber,
+    image_url: preset.reference_image_url,
+    camera_angle: preset.default_camera,
+    editing_notes: preset.default_editing_notes,
+  });
+  if (e2) return { error: e2.message };
+
+  revalidatePath(`/content/${input.contentId}`);
+  return { ok: true as const };
+}

@@ -122,6 +122,23 @@ export type ContentPublication = {
   created_at: string;
 };
 
+/**
+ * Setup de tournage réutilisable, scoped par marque (Storyboard Lot 2,
+ * migration 0021). Inséré en 1 clic dans le storyboard pour pré-remplir
+ * une scène (image de réf + cadrage + notes montage). Seul `label` est
+ * obligatoire.
+ */
+export type ScenePreset = {
+  id: string;
+  brand_id: string;
+  label: string;
+  reference_image_url: string | null;
+  default_camera: string | null;
+  default_editing_notes: string | null;
+  position: number;
+  created_at: string;
+};
+
 export type ChecklistItemCategory = "equipment" | "preparation";
 
 export type ChecklistItem = {

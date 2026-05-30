@@ -17,6 +17,7 @@ import type {
   Performance,
   ChecklistItem,
   ContentPublication,
+  ScenePreset,
 } from "@/lib/types";
 
 export function DetailTabs({
@@ -32,6 +33,8 @@ export function DetailTabs({
   equipmentSuggestions,
   preparationSuggestions,
   publications,
+  scenePresets,
+  brandId,
 }: {
   content: Content;
   reel: ReelDetails | null;
@@ -45,6 +48,8 @@ export function DetailTabs({
   equipmentSuggestions: { label: string; usage_count: number }[];
   preparationSuggestions: { label: string; usage_count: number }[];
   publications: ContentPublication[];
+  scenePresets: ScenePreset[];
+  brandId: string;
 }) {
   const t = useTranslations("tabs");
   const isStory = content.type === "story";
@@ -77,7 +82,12 @@ export function DetailTabs({
       </TabsContent>
       {!isStory && (
         <TabsContent value="storyboard">
-          <StoryboardTab contentId={content.id} scenes={scenes} />
+          <StoryboardTab
+            contentId={content.id}
+            scenes={scenes}
+            scenePresets={scenePresets}
+            brandId={brandId}
+          />
         </TabsContent>
       )}
       <TabsContent value="checklist">
