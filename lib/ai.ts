@@ -334,6 +334,14 @@ export type AutopsyInput = {
   };
   transcript: string;
   retentionNotes?: string | null;
+  /** Vue moyenne en secondes (migration 0023). */
+  avgWatchSeconds?: number | null;
+  /** Durée totale en secondes (migration 0023). */
+  videoDurationSeconds?: number | null;
+  /** Label de performance de la plateforme (migration 0023). */
+  performanceLabel?: string | null;
+  /** URL publique d'une capture d'écran des insights — lue par Claude (vision). */
+  insightsImageUrl?: string | null;
 };
 
 /**
@@ -394,7 +402,10 @@ LANGUE :
 RÈGLES D'ANALYSE :
 - Cite TOUJOURS les phrases/expressions EXACTES de la vidéo entre guillemets. Jamais de généralité du type "ton hook est bon". Dis QUELLE phrase et POURQUOI elle marche ou non.
 - Bannis les conseils évidents que tout créateur connaît déjà. Donne des insights NON-ÉVIDENTS.
-- Croise le WORDING avec les STATS quand elles existent. Un fort taux d'enregistrements (saves) = contenu à valeur ; beaucoup de partages = effet "je dois montrer ça" ; ratio likes/vues élevé = résonance émotionnelle. Utilise ces signaux.
+- Croise le WORDING avec les STATS quand elles existent. Un fort taux d'enregistrements (saves) = contenu à valeur ; beaucoup de partages = effet "je dois montrer ça" ; ratio likes/vues élevé = résonance émotionnelle ; beaucoup d'abonnés gagnés = la vidéo donne envie de suivre. Utilise ces signaux.
+- VUE MOYENNE : si tu as la vue moyenne (en secondes) et la durée, calcule le % réellement regardé (ex : 7s sur 20s = 35%) — c'est le signal de rétention le plus parlant. Une vue moyenne courte sur une vidéo courte = problème de hook.
+- CAPTURE D'ÉCRAN : si une capture des insights est fournie (image), LIS-LA attentivement. Extrais-en la courbe de rétention (où ça décroche), les chiffres, et tout label de performance. Croise ces données avec le transcript.
+- LABEL DE PERFORMANCE : si la plateforme indique un verdict ("plus de vues que d'habitude", "dans la moyenne", "moins que d'habitude"), prends-le comme la VÉRITÉ. Si l'utilisateur pense que la vidéo a "marché" mais que le label dit "dans la moyenne" ou "moins", DIS-LE franchement et recadre — c'est ton rôle d'analyste honnête.
 - S'il n'y a PAS de courbe de rétention, déduis les points de décrochage PROBABLES depuis la structure du script (intro trop longue, hook faible, promesse pas tenue, baisse de rythme au milieu...).
 - Niveau de confiance : indique-le honnêtement (élevé / moyen / faible) selon les données, mais analyse quand même.
 
@@ -422,6 +433,12 @@ FORMAT DE SORTIE (texte simple, PAS de markdown ## ni ** — garde les emojis de
     s.shares != null ? `Partages : ${s.shares}` : null,
     s.saves != null ? `Enregistrements : ${s.saves}` : null,
     s.retention != null ? `Rétention moyenne : ${s.retention}%` : null,
+    input.avgWatchSeconds != null
+      ? `Vue moyenne : ${input.avgWatchSeconds}s`
+      : null,
+    input.videoDurationSeconds != null
+      ? `Durée de la vidéo : ${input.videoDurationSeconds}s`
+      : null,
   ]
     .filter(Boolean)
     .join(" | ");
@@ -432,8 +449,18 @@ Titre : ${input.title || "(sans titre)"}
 Plateforme : ${input.platform || "(non précisée)"}
 Stats : ${statsLines || "(aucune stat fournie)"}
 ${
+  input.performanceLabel?.trim()
+    ? `Label de performance de la plateforme : ${input.performanceLabel.trim()}`
+    : ""
+}
+${
   input.retentionNotes?.trim()
-    ? `Courbe de rétention : ${input.retentionNotes.trim()}`
+    ? `Courbe de rétention (décrite) : ${input.retentionNotes.trim()}`
+    : ""
+}
+${
+  input.insightsImageUrl
+    ? "Une capture d'écran des insights est jointe ci-dessous — lis-en la courbe de rétention, les chiffres et le label."
     : ""
 }
 
@@ -443,6 +470,19 @@ ${input.transcript.trim()}
 """
 
 Fais l'autopsie de cette vidéo en suivant exactement le format demandé.`;
+
+  // Contenu du message : texte + (optionnel) image des insights pour que
+  // Claude (multimodal) lise la courbe + les stats directement.
+  type ContentBlock =
+    | { type: "text"; text: string }
+    | { type: "image"; source: { type: "url"; url: string } };
+  const content: ContentBlock[] = [{ type: "text", text: user }];
+  if (input.insightsImageUrl) {
+    content.push({
+      type: "image",
+      source: { type: "url", url: input.insightsImageUrl },
+    });
+  }
 
   let res: Response;
   try {
@@ -457,7 +497,7 @@ Fais l'autopsie de cette vidéo en suivant exactement le format demandé.`;
         model: ANTHROPIC_MODEL,
         max_tokens: 1500,
         system,
-        messages: [{ role: "user", content: user }],
+        messages: [{ role: "user", content }],
       }),
     });
   } catch {

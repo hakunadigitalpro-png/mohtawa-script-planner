@@ -189,6 +189,10 @@ export async function generateVideoAutopsy(input: {
   contentId: string;
   transcript: string;
   retentionNotes?: string | null;
+  avgWatchSeconds?: number | null;
+  videoDurationSeconds?: number | null;
+  performanceLabel?: string | null;
+  insightsImageUrl?: string | null;
 }) {
   try {
     const supabase = await createClient();
@@ -207,11 +211,15 @@ export async function generateVideoAutopsy(input: {
       .eq("content_id", input.contentId)
       .maybeSingle();
 
-    // 2. Persiste transcript + retention_notes (upsert sur performances)
+    // 2. Persiste tous les inputs d'autopsie (upsert sur performances)
     const { error: saveErr } = await supabase.from("performances").upsert({
       content_id: input.contentId,
       transcript: input.transcript.trim() || null,
       retention_notes: input.retentionNotes?.trim() || null,
+      avg_watch_seconds: input.avgWatchSeconds ?? null,
+      video_duration_seconds: input.videoDurationSeconds ?? null,
+      performance_label: input.performanceLabel?.trim() || null,
+      insights_image_url: input.insightsImageUrl ?? null,
     });
     if (saveErr) return { ok: false as const, error: saveErr.message };
 
@@ -229,6 +237,10 @@ export async function generateVideoAutopsy(input: {
       },
       transcript: input.transcript,
       retentionNotes: input.retentionNotes,
+      avgWatchSeconds: input.avgWatchSeconds,
+      videoDurationSeconds: input.videoDurationSeconds,
+      performanceLabel: input.performanceLabel,
+      insightsImageUrl: input.insightsImageUrl,
     });
 
     // 4. Stocke le résultat + l'horodatage

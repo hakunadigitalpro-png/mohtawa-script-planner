@@ -168,5 +168,13 @@ export type Performance = {
   autopsy_md: string | null;
   /** Date de génération de l'autopsie. Migration 0022. */
   autopsy_at: string | null;
+  /** Capture d'écran des insights (Claude la lit). Migration 0023. */
+  insights_image_url: string | null;
+  /** Vue moyenne en secondes. Migration 0023. */
+  avg_watch_seconds: number | null;
+  /** Durée totale de la vidéo en secondes. Migration 0023. */
+  video_duration_seconds: number | null;
+  /** Label de performance de la plateforme. Migration 0023. */
+  performance_label: string | null;
   updated_at: string;
 };

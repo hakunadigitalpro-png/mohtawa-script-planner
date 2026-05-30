@@ -116,6 +116,10 @@ export function PerformanceTab({
           initialRetentionNotes={perf?.retention_notes ?? null}
           initialAutopsy={perf?.autopsy_md ?? null}
           autopsyAt={perf?.autopsy_at ?? null}
+          initialInsightsImageUrl={perf?.insights_image_url ?? null}
+          initialAvgWatchSeconds={perf?.avg_watch_seconds ?? null}
+          initialVideoDurationSeconds={perf?.video_duration_seconds ?? null}
+          initialPerformanceLabel={perf?.performance_label ?? null}
         />
       </Card>
 
