@@ -137,20 +137,23 @@ export function VideoAutopsy({
           />
         </div>
 
-        {/* Capture des insights (lue par l'IA) */}
+        {/* Capture des insights (lue par l'IA). Largeur contrainte pour
+            éviter que la zone portrait 9:16 ne prenne tout l'écran. */}
         <div className="space-y-1.5">
           <Label>Capture d&apos;écran des insights (recommandé)</Label>
           <p className="text-[10px] text-muted">
             Uploade ta capture Instagram/TikTok (courbe de rétention + stats).
             L&apos;IA la lit directement — pas besoin de tout retaper.
           </p>
-          <ImageUpload
-            contentId={contentId}
-            value={insightsImageUrl}
-            aspectRatio="portrait"
-            onChange={setInsightsImageUrl}
-            label="Ajouter la capture des insights"
-          />
+          <div className="w-40">
+            <ImageUpload
+              contentId={contentId}
+              value={insightsImageUrl}
+              aspectRatio="portrait"
+              onChange={setInsightsImageUrl}
+              label="Ajouter la capture"
+            />
+          </div>
         </div>
 
         {/* Stats clés rapides */}
