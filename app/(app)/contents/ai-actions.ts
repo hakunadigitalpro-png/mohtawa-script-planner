@@ -188,11 +188,7 @@ export async function aiGenerateStory(input: {
 export async function generateVideoAutopsy(input: {
   contentId: string;
   transcript: string;
-  retentionNotes?: string | null;
-  avgWatchSeconds?: number | null;
-  videoDurationSeconds?: number | null;
-  performanceLabel?: string | null;
-  insightsImageUrl?: string | null;
+  insightsImageUrls?: string[];
 }) {
   try {
     const supabase = await createClient();
@@ -211,15 +207,13 @@ export async function generateVideoAutopsy(input: {
       .eq("content_id", input.contentId)
       .maybeSingle();
 
-    // 2. Persiste tous les inputs d'autopsie (upsert sur performances)
+    const images = (input.insightsImageUrls ?? []).filter(Boolean);
+
+    // 2. Persiste les inputs d'autopsie (transcript + captures)
     const { error: saveErr } = await supabase.from("performances").upsert({
       content_id: input.contentId,
       transcript: input.transcript.trim() || null,
-      retention_notes: input.retentionNotes?.trim() || null,
-      avg_watch_seconds: input.avgWatchSeconds ?? null,
-      video_duration_seconds: input.videoDurationSeconds ?? null,
-      performance_label: input.performanceLabel?.trim() || null,
-      insights_image_url: input.insightsImageUrl ?? null,
+      insights_image_urls: images,
     });
     if (saveErr) return { ok: false as const, error: saveErr.message };
 
@@ -236,11 +230,7 @@ export async function generateVideoAutopsy(input: {
         retention: perf?.retention ?? null,
       },
       transcript: input.transcript,
-      retentionNotes: input.retentionNotes,
-      avgWatchSeconds: input.avgWatchSeconds,
-      videoDurationSeconds: input.videoDurationSeconds,
-      performanceLabel: input.performanceLabel,
-      insightsImageUrl: input.insightsImageUrl,
+      insightsImageUrls: images,
     });
 
     // 4. Stocke le résultat + l'horodatage

@@ -333,15 +333,8 @@ export type AutopsyInput = {
     retention?: number | null;
   };
   transcript: string;
-  retentionNotes?: string | null;
-  /** Vue moyenne en secondes (migration 0023). */
-  avgWatchSeconds?: number | null;
-  /** Durée totale en secondes (migration 0023). */
-  videoDurationSeconds?: number | null;
-  /** Label de performance de la plateforme (migration 0023). */
-  performanceLabel?: string | null;
-  /** URL publique d'une capture d'écran des insights — lue par Claude (vision). */
-  insightsImageUrl?: string | null;
+  /** URLs publiques des captures d'insights — lues par Claude (vision). */
+  insightsImageUrls?: string[];
 };
 
 /**
@@ -433,35 +426,21 @@ FORMAT DE SORTIE (texte simple, PAS de markdown ## ni ** — garde les emojis de
     s.shares != null ? `Partages : ${s.shares}` : null,
     s.saves != null ? `Enregistrements : ${s.saves}` : null,
     s.retention != null ? `Rétention moyenne : ${s.retention}%` : null,
-    input.avgWatchSeconds != null
-      ? `Vue moyenne : ${input.avgWatchSeconds}s`
-      : null,
-    input.videoDurationSeconds != null
-      ? `Durée de la vidéo : ${input.videoDurationSeconds}s`
-      : null,
   ]
     .filter(Boolean)
     .join(" | ");
+
+  const images = (input.insightsImageUrls ?? []).filter(Boolean);
 
   const user = `VIDÉO À ANALYSER
 
 Titre : ${input.title || "(sans titre)"}
 Plateforme : ${input.platform || "(non précisée)"}
-Stats : ${statsLines || "(aucune stat fournie)"}
+Stats saisies : ${statsLines || "(aucune — utilise les captures)"}
 ${
-  input.performanceLabel?.trim()
-    ? `Label de performance de la plateforme : ${input.performanceLabel.trim()}`
-    : ""
-}
-${
-  input.retentionNotes?.trim()
-    ? `Courbe de rétention (décrite) : ${input.retentionNotes.trim()}`
-    : ""
-}
-${
-  input.insightsImageUrl
-    ? "Une capture d'écran des insights est jointe ci-dessous — lis-en la courbe de rétention, les chiffres et le label."
-    : ""
+  images.length > 0
+    ? `${images.length} capture(s) d'écran des insights jointe(s) ci-dessous. LIS-LES attentivement : extrais-en la courbe de rétention, la vue moyenne, la durée, le label de performance et tous les chiffres. Croise tout ça avec le transcript.`
+    : "Aucune capture fournie — analyse le wording sur ses mérites et signale une confiance plus faible."
 }
 
 Transcript (ce qui est dit dans la vidéo) :
@@ -471,17 +450,14 @@ ${input.transcript.trim()}
 
 Fais l'autopsie de cette vidéo en suivant exactement le format demandé.`;
 
-  // Contenu du message : texte + (optionnel) image des insights pour que
-  // Claude (multimodal) lise la courbe + les stats directement.
+  // Contenu du message : texte + toutes les captures d'insights pour que
+  // Claude (multimodal) lise la courbe + les stats + le label directement.
   type ContentBlock =
     | { type: "text"; text: string }
     | { type: "image"; source: { type: "url"; url: string } };
   const content: ContentBlock[] = [{ type: "text", text: user }];
-  if (input.insightsImageUrl) {
-    content.push({
-      type: "image",
-      source: { type: "url", url: input.insightsImageUrl },
-    });
+  for (const url of images) {
+    content.push({ type: "image", source: { type: "url", url } });
   }
 
   let res: Response;

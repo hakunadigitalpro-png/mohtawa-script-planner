@@ -168,13 +168,15 @@ export type Performance = {
   autopsy_md: string | null;
   /** Date de génération de l'autopsie. Migration 0022. */
   autopsy_at: string | null;
-  /** Capture d'écran des insights (Claude la lit). Migration 0023. */
+  /** Capture unique (legacy 0023, remplacé par insights_image_urls). */
   insights_image_url: string | null;
-  /** Vue moyenne en secondes. Migration 0023. */
+  /** Captures d'écran des insights (Claude les lit). Migration 0024. */
+  insights_image_urls: string[];
+  /** Legacy 0023 — non utilisé par l'UI. */
   avg_watch_seconds: number | null;
-  /** Durée totale de la vidéo en secondes. Migration 0023. */
+  /** Legacy 0023 — non utilisé par l'UI. */
   video_duration_seconds: number | null;
-  /** Label de performance de la plateforme. Migration 0023. */
+  /** Legacy 0023 — non utilisé par l'UI. */
   performance_label: string | null;
   updated_at: string;
 };
