@@ -11,10 +11,13 @@ const IMAGE_MODEL = "dall-e-3";
 
 // ===== Anthropic (Claude) — utilisé pour l'autopsie vidéo (feature premium) =====
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-// Modèle configurable via env. Défaut : Claude Sonnet (bon rapport
-// qualité/prix pour de l'analyse). Surchargeable si besoin.
+// Modèle configurable via env ANTHROPIC_MODEL. Défaut : l'alias "-latest"
+// de Sonnet 3.5, qui se résout automatiquement vers la version courante
+// disponible sur le compte (plus robuste qu'un ID daté qui peut 404 si le
+// compte n'a pas cette version précise). Pour épingler un modèle précis
+// (ex : claude-sonnet-4-...), définir ANTHROPIC_MODEL dans Vercel.
 const ANTHROPIC_MODEL =
-  process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514";
+  process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-latest";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
