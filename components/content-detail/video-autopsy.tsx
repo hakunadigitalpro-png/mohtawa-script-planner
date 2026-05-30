@@ -50,18 +50,29 @@ export function VideoAutopsy({
     setError(null);
     setPending(true);
     (async () => {
-      const res = await generateVideoAutopsy({
-        contentId,
-        transcript,
-        retentionNotes: retentionNotes || null,
-      });
-      setPending(false);
-      if (!res.ok) {
-        setError(res.error);
-        return;
+      try {
+        const res = await generateVideoAutopsy({
+          contentId,
+          transcript,
+          retentionNotes: retentionNotes || null,
+        });
+        if (!res.ok) {
+          setError(res.error);
+          return;
+        }
+        setAutopsy(res.autopsy);
+        router.refresh();
+      } catch {
+        // Couvre le cas où la fonction serveur est coupée (timeout) ou le
+        // réseau échoue : sans ce catch, le spinner restait bloqué à vie.
+        setError(
+          "L'analyse a échoué (délai dépassé ou réseau). Réessaie dans un instant.",
+        );
+      } finally {
+        // S'exécute TOUJOURS (succès, erreur, timeout) → le bouton se
+        // débloque systématiquement.
+        setPending(false);
       }
-      setAutopsy(res.autopsy);
-      router.refresh();
     })();
   };
 

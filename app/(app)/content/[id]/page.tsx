@@ -3,6 +3,12 @@ import Link from "next/link";
 import { ArrowLeft, FileDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
+
+// L'autopsie IA (appel Claude) peut prendre 15-30s. Le défaut Vercel est
+// de 10s sur le plan Hobby → la fonction était tuée avant de répondre.
+// On monte à 60s (max autorisé sur Hobby). Les Server Actions appelées
+// depuis cette page héritent de cette durée.
+export const maxDuration = 60;
 import { Badge, ColorDot } from "@/components/ui/badge";
 import {
   typeColor,
