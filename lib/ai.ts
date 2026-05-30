@@ -338,6 +338,30 @@ export type AutopsyInput = {
 };
 
 /**
+ * Liste les modèles accessibles par la clé API courante (GET /v1/models).
+ * Utilisé pour auto-diagnostiquer un 404 "modèle inconnu" : on affiche à
+ * l'utilisateur exactement quels identifiants son compte peut utiliser.
+ */
+async function listAnthropicModels(apiKey: string): Promise<string[]> {
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/models?limit=100", {
+      method: "GET",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+    });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { data?: { id?: string }[] };
+    return (body.data ?? [])
+      .map((m) => m.id)
+      .filter((id): id is string => Boolean(id));
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Appelle l'API Claude pour produire l'autopsie d'une vidéo : croise le
  * wording (transcript) avec les stats pour expliquer pourquoi ça marche
  * ou rate. Renvoie un texte formaté (avec emojis de section), pensé pour
@@ -444,6 +468,20 @@ Fais l'autopsie de cette vidéo en suivant exactement le format demandé.`;
       throw new AiError(
         "rate_limit",
         "Quota Anthropic atteint ou trop de requêtes. Réessaie dans une minute.",
+      );
+    }
+    // 404 = modèle inconnu pour ce compte. On liste les modèles
+    // réellement disponibles pour que l'user sache quoi mettre dans
+    // ANTHROPIC_MODEL (au lieu de deviner).
+    if (status === 404) {
+      const models = await listAnthropicModels(apiKey);
+      const hint =
+        models.length > 0
+          ? ` Modèles disponibles sur ton compte : ${models.join(", ")}. Mets-en un dans ANTHROPIC_MODEL (Vercel) puis redéploie.`
+          : " Impossible de lister tes modèles (vérifie que ta clé a accès à l'API Messages).";
+      throw new AiError(
+        "model_not_found",
+        `Le modèle "${ANTHROPIC_MODEL}" n'est pas accessible.${hint}`,
       );
     }
     let detail = "";
