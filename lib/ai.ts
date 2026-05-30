@@ -483,10 +483,10 @@ Fais l'autopsie de cette vidéo en suivant exactement le format demandé.`;
       },
       body: JSON.stringify({
         model: ANTHROPIC_MODEL,
-        // 3000 pour laisser à l'analyse la place d'être aussi détaillée que
-        // dans le chat (la lecture des chiffres + thèse + brief prend de la
-        // place). 1500 bridait la profondeur.
-        max_tokens: 3000,
+        // 2000 : compromis profondeur / latence. 3000 + plusieurs images
+        // dépassait les 60s max de Vercel Hobby (timeout). 2000 garde une
+        // bonne profondeur tout en restant sous la limite.
+        max_tokens: 2000,
         system,
         messages: [{ role: "user", content }],
       }),
