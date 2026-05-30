@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Trash2, GripVertical, Sparkles, Scissors } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  GripVertical,
+  Sparkles,
+  Scissors,
+  ChevronDown,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -273,6 +280,17 @@ function SceneCard({
     setOptimisticFilmed(serverFilmed);
   }, [serverFilmed]);
 
+  // Lot 1 — réduction des champs : on ne montre par défaut que Image +
+  // Action/Dialogue. Caméra, Texte affiché et Montage sont repliés derrière
+  // "+ détails". On ouvre automatiquement si un de ces champs a déjà du
+  // contenu (re-édition d'une scène existante → on ne cache jamais du texte).
+  const hasDetailsContent = Boolean(
+    sceneForm.camera_angle.trim() ||
+      sceneForm.on_screen_text.trim() ||
+      sceneForm.editing_notes.trim(),
+  );
+  const [detailsOpen, setDetailsOpen] = useState(hasDetailsContent);
+
   const onImageChange = (url: string | null) => {
     startTransition(async () => {
       await updateScene(sceneForm.id, { image_url: url }, contentId);
@@ -505,44 +523,76 @@ function SceneCard({
           />
         </div>
 
-        <div className="space-y-1">
-          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
-            {t("fields.camera")}
-          </Label>
-          <Input
-            className="h-8 text-xs"
-            value={sceneForm.camera_angle}
-            onChange={(e) => onFieldChange("camera_angle", e.target.value)}
-            placeholder={t("fields.cameraPlaceholder")}
-          />
-        </div>
+        {/* Champs avancés repliables (Lot 1). Cachés par défaut pour
+            désencombrer ; bouton "+ détails" pour les révéler. */}
+        {!detailsOpen ? (
+          <button
+            type="button"
+            onClick={() => setDetailsOpen(true)}
+            className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-border/60 py-1 text-[11px] font-medium text-muted transition hover:border-foreground/30 hover:text-foreground"
+          >
+            <Plus className="size-3" />
+            Caméra, texte affiché, montage
+          </button>
+        ) : (
+          <div className="space-y-2 rounded-xl border border-border/40 bg-secondary/20 p-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                Détails
+              </span>
+              <button
+                type="button"
+                onClick={() => setDetailsOpen(false)}
+                className="inline-flex items-center gap-0.5 text-[10px] text-muted hover:text-foreground"
+                aria-label="Réduire les détails"
+              >
+                Réduire
+                <ChevronDown className="size-3 rotate-180" />
+              </button>
+            </div>
 
-        <div className="space-y-1">
-          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
-            {t("fields.onScreenText")}
-          </Label>
-          <Input
-            className="h-8 text-xs"
-            value={sceneForm.on_screen_text}
-            onChange={(e) => onFieldChange("on_screen_text", e.target.value)}
-            placeholder={t("fields.onScreenTextPlaceholder")}
-          />
-        </div>
+            <div className="space-y-1">
+              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                {t("fields.camera")}
+              </Label>
+              <Input
+                className="h-8 text-xs"
+                value={sceneForm.camera_angle}
+                onChange={(e) => onFieldChange("camera_angle", e.target.value)}
+                placeholder={t("fields.cameraPlaceholder")}
+              />
+            </div>
 
-        {/* Remarques de montage (Idée 3) — filtres, effets, transitions,
-            musique, sound design. Champ libre par scène. */}
-        <div className="space-y-1">
-          <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
-            <Scissors className="size-3" />
-            Montage / Post-prod
-          </Label>
-          <Textarea
-            className="min-h-10 text-sm [field-sizing:content]"
-            value={sceneForm.editing_notes}
-            onChange={(e) => onFieldChange("editing_notes", e.target.value)}
-            placeholder="Ex : Filtre vintage, cut net vers Plan 04, whoosh-sound."
-          />
-        </div>
+            <div className="space-y-1">
+              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                {t("fields.onScreenText")}
+              </Label>
+              <Input
+                className="h-8 text-xs"
+                value={sceneForm.on_screen_text}
+                onChange={(e) =>
+                  onFieldChange("on_screen_text", e.target.value)
+                }
+                placeholder={t("fields.onScreenTextPlaceholder")}
+              />
+            </div>
+
+            {/* Remarques de montage (Idée 3) — filtres, effets, transitions,
+                musique, sound design. Champ libre par scène. */}
+            <div className="space-y-1">
+              <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+                <Scissors className="size-3" />
+                Montage / Post-prod
+              </Label>
+              <Textarea
+                className="min-h-10 text-sm [field-sizing:content]"
+                value={sceneForm.editing_notes}
+                onChange={(e) => onFieldChange("editing_notes", e.target.value)}
+                placeholder="Ex : Filtre vintage, cut net vers Plan 04, whoosh-sound."
+              />
+            </div>
+          </div>
+        )}
 
         {/* Toggle "Filmé" — atomic action (clic = save immédiat). */}
         <label
