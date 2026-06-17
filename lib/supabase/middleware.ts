@@ -40,6 +40,10 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/reset-password");
   const isPublic =
     path === "/" ||
+    // Fichiers PWA : doivent être lisibles SANS être connecté (sinon
+    // l'install / PWABuilder tombe sur la page de login au lieu du JSON).
+    path === "/manifest.webmanifest" ||
+    path === "/sw.js" ||
     isAuthRoute ||
     path.startsWith("/auth/") ||
     path.startsWith("/share/") ||
