@@ -42,7 +42,11 @@ export default async function AppLayout({
         initialNotifications={initialNotifications}
       />
       <main className="flex-1 overflow-x-hidden">
-        <div className="mx-auto max-w-6xl px-6 py-8 sm:py-10">{children}</div>
+        {/* px-4 sur mobile (gagne ~16px de largeur utile face au rail de 80px),
+            px-6 dès sm. */}
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+          {children}
+        </div>
       </main>
     </div>
   );

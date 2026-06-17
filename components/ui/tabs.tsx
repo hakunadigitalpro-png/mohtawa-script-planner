@@ -51,6 +51,12 @@ export function TabsList({
       role="tablist"
       className={cn(
         "inline-flex h-11 items-center gap-1 rounded-full bg-card/70 p-1 border border-border/60 backdrop-blur",
+        // Mobile : la barre d'onglets dépasse souvent la largeur de l'écran
+        // (5-6 onglets). On la rend scrollable horizontalement au lieu de la
+        // laisser clipper par le `overflow-x-hidden` du <main>. Scrollbar
+        // masquée pour garder l'allure "pilule". Sur desktop ça ne change
+        // rien (inline-flex hug le contenu, pas de débordement → pas de scroll).
+        "max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         className,
       )}
     >
@@ -78,7 +84,9 @@ export function TabsTrigger({
       aria-selected={active}
       onClick={() => ctx.setValue(value)}
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-all",
+        // shrink-0 : empêche les onglets de se comprimer quand la barre
+        // scrolle horizontalement sur mobile (sinon le texte se tasse).
+        "inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-all",
         active
           ? "bg-accent text-accent-foreground shadow-sm"
           : "text-muted-foreground hover:text-foreground",
