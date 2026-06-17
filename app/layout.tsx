@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Cairo } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { getThemeFromCookies, htmlDataTheme } from "@/lib/theme";
 import { dirOf, isRtl, type Locale } from "@/i18n/config";
+import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 // Police latine : DM Sans — sans-serif neutre et lisible (utilisée par
@@ -26,9 +27,21 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
+  applicationName: "Mohtawa",
   title: "Mohtawa Script Planner",
   description:
     "Organise tes scripts vidéo, planifie ton contenu et analyse tes résultats.",
+  // Rend l'app "app-like" sur iOS quand ajoutée à l'écran d'accueil.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Mohtawa",
+  },
+};
+
+// La couleur de la barre de statut (Android/Chrome + TWA) suit la charte.
+export const viewport: Viewport = {
+  themeColor: "#FF6B35",
 };
 
 export default async function RootLayout({
@@ -70,6 +83,7 @@ export default async function RootLayout({
         >
           {children}
         </NextIntlClientProvider>
+        <PwaRegister />
       </body>
     </html>
   );
