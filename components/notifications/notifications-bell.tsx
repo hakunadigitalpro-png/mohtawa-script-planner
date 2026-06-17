@@ -19,9 +19,13 @@ import type { Notification } from "./types";
 export function NotificationsBell({
   userId,
   initialNotifications,
+  channelSuffix,
 }: {
   userId: string;
   initialNotifications: Notification[];
+  /** Suffixe de nom de channel Realtime. Permet de monter 2 cloches
+   *  (sidebar desktop + top bar mobile) sans collision de channel. */
+  channelSuffix?: string;
 }) {
   const t = useTranslations("notifications");
   const router = useRouter();
@@ -53,7 +57,9 @@ export function NotificationsBell({
     };
 
     const channel = supabase
-      .channel(`notifications:user:${userId}`)
+      .channel(
+        `notifications:user:${userId}${channelSuffix ? `:${channelSuffix}` : ""}`,
+      )
       .on(
         "postgres_changes",
         {
@@ -83,7 +89,7 @@ export function NotificationsBell({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, userId]);
+  }, [supabase, userId, channelSuffix]);
 
   // -------- Click outside : ferme le popover --------
   React.useEffect(() => {
@@ -147,7 +153,7 @@ export function NotificationsBell({
       {open && (
         <div
           ref={popoverRef}
-          className="absolute left-full top-0 z-50 ml-3 w-80 origin-top-left rounded-2xl border border-border/60 bg-card p-2 shadow-xl"
+          className="fixed right-2 top-16 z-50 w-[calc(100vw-1rem)] max-w-sm origin-top rounded-2xl border border-border/60 bg-card p-2 shadow-xl md:absolute md:left-full md:right-auto md:top-0 md:ml-3 md:w-80 md:origin-top-left"
           style={{ maxHeight: "70vh" }}
         >
           {/* Header */}

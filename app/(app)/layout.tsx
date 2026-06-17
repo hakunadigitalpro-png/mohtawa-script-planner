@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { Sidebar } from "@/components/sidebar";
+import { MobileTopBar, MobileBottomNav } from "@/components/mobile-nav";
 import { NoBrandWelcome } from "@/components/no-brand";
 import type { Notification } from "@/components/notifications/types";
 
@@ -34,6 +35,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-screen">
+      {/* Rail latéral : desktop uniquement (caché en <md via la classe interne). */}
       <Sidebar
         brands={brands}
         active={active}
@@ -41,13 +43,24 @@ export default async function AppLayout({
         userId={user.id}
         initialNotifications={initialNotifications}
       />
-      <main className="flex-1 overflow-x-hidden">
-        {/* px-4 sur mobile (gagne ~16px de largeur utile face au rail de 80px),
-            px-6 dès sm. */}
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-          {children}
-        </div>
-      </main>
+      <div className="flex min-h-screen flex-1 flex-col">
+        {/* Barre du haut : mobile uniquement (md:hidden). */}
+        <MobileTopBar
+          brands={brands}
+          active={active}
+          userId={user.id}
+          initialNotifications={initialNotifications}
+        />
+        <main className="flex-1 overflow-x-hidden">
+          {/* pb-24 sur mobile = espace pour la barre du bas fixe ; px-4 gagne
+              de la largeur. Dès md (rail + pas de barre du bas) → pb-10. */}
+          <div className="mx-auto max-w-6xl px-4 pt-6 pb-24 sm:px-6 sm:pt-10 md:pb-10">
+            {children}
+          </div>
+        </main>
+      </div>
+      {/* Barre d'onglets du bas : mobile uniquement (md:hidden). */}
+      <MobileBottomNav userEmail={user.email ?? null} />
     </div>
   );
 }
