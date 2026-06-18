@@ -49,7 +49,7 @@ export function ContentCard({ content }: { content: Content }) {
   };
 
   return (
-    <Card className="group relative h-full overflow-hidden p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(26,15,37,0.18)]">
+    <Card className="group relative h-full p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(26,15,37,0.18)]">
       <Link href={`/content/${content.id}`} className="absolute inset-0 z-0" aria-label={t("open")} />
 
       {/* Top row : type chip + actions.

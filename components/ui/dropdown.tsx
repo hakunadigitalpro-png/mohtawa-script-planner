@@ -85,7 +85,9 @@ export function DropdownContent({
     <div
       role="menu"
       className={cn(
-        "absolute z-30 mt-2 min-w-48 overflow-hidden rounded-2xl border border-border/60 bg-card py-1.5 shadow-[0_12px_40px_-10px_rgba(26,15,37,0.18)]",
+        // z-50 : au-dessus des barres mobiles (z-40). max-h + scroll : un
+        // menu long (ex: liste des statuts) ne déborde pas hors de l'écran.
+        "absolute z-50 mt-2 max-h-[70vh] min-w-48 overflow-y-auto rounded-2xl border border-border/60 bg-card py-1.5 shadow-[0_12px_40px_-10px_rgba(26,15,37,0.18)]",
         align === "end" ? "end-0" : "start-0",
         className,
       )}
