@@ -52,8 +52,10 @@ export function ContentCard({ content }: { content: Content }) {
     <Card className="group relative h-full overflow-hidden p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(26,15,37,0.18)]">
       <Link href={`/content/${content.id}`} className="absolute inset-0 z-0" aria-label={t("open")} />
 
-      {/* Top row : type chip + actions */}
-      <div className="relative z-10 mb-3 flex items-center justify-between gap-2">
+      {/* Top row : type chip + actions.
+          pointer-events-none → les clics traversent vers le lien plein-carte ;
+          on réactive pointer-events-auto sur le menu ⋮ uniquement. */}
+      <div className="pointer-events-none relative z-10 mb-3 flex items-center justify-between gap-2">
         <span
           className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide"
           style={{
@@ -65,8 +67,9 @@ export function ContentCard({ content }: { content: Content }) {
           {safeT(tType, content.type, typeLabel(content.type))}
         </span>
 
+        <div className="pointer-events-auto">
         <Dropdown>
-          <DropdownTrigger className="rounded-full p-1 text-muted opacity-0 transition hover:bg-secondary hover:text-foreground group-hover:opacity-100">
+          <DropdownTrigger className="rounded-full p-1 text-muted opacity-100 transition hover:bg-secondary hover:text-foreground sm:opacity-0 sm:group-hover:opacity-100">
             <MoreVertical className="size-4" />
           </DropdownTrigger>
           <DropdownContent>
@@ -123,15 +126,16 @@ export function ContentCard({ content }: { content: Content }) {
             </DropdownItem>
           </DropdownContent>
         </Dropdown>
+        </div>
       </div>
 
       {/* Title */}
-      <h3 className="relative z-10 line-clamp-2 text-base font-bold leading-snug tracking-tight">
+      <h3 className="pointer-events-none relative z-10 line-clamp-2 text-base font-bold leading-snug tracking-tight">
         {content.title || tContent("untitled")}
       </h3>
 
       {/* Footer */}
-      <div className="relative z-10 mt-4 flex items-center justify-between gap-2">
+      <div className="pointer-events-none relative z-10 mt-4 flex items-center justify-between gap-2">
         <Badge
           className="text-white"
           style={{ background: statusColor(content.status) }}
