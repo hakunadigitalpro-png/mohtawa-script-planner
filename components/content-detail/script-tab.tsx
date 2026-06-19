@@ -47,73 +47,34 @@ export function ScriptTab({
 /* ============================== REEL ============================== */
 
 /**
- * Structure pédagogique d'un Reel : 3 phases × 7 blocs. La fiche est
- * toujours rendue intégralement (garde la valeur de coaching) mais
- * compactée visuellement :
- *  - Phase dividers fins (1 ligne) qui regroupent les blocs en
- *    Ouverture / Développement / Clôture.
- *  - Chaque bloc rendu avec un label + timing + textarea auto-resize
- *    (min ~48px quand vide, grandit avec le contenu).
- *  - Le placeholder du textarea est un EXEMPLE concret pour expliquer
- *    en pratique à quoi sert le bloc (au lieu d'un sous-titre abstrait).
- *  - Rappel du Hook (depuis Plan) en lecture seule au début pour que
- *    la créatrice rédige l'Intro en cohérence avec son hook.
- *  - Estimation de durée globale en header (4 mots/sec en FR parlé).
+ * Script volontairement SIMPLE : 3 blocs seulement — Accroche / Corps /
+ * Outro. (Choix produit : le plus simple possible pour l'utilisateur.)
+ *
+ *  - Accroche → reel_details.intro
+ *  - Corps    → reel_details.script_full
+ *  - Outro    → reel_details.outro
+ *
+ * Les colonnes détaillées (point1-3, transition, recap) restent en base
+ * mais ne sont plus affichées ; leur contenu existant a été replié dans
+ * "Corps" par la migration 0026. Le placeholder de chaque bloc est un
+ * exemple concret. Estimation de durée globale en header (~4 mots/sec FR).
  */
 const REEL_BLOCKS = [
-  // Ouverture
   {
-    // key reste "intro" (mapping DB inchangé : reel_details.intro)
-    // mais le label affiché devient "Accroche" — c'est sémantiquement la
-    // même chose qu'on avait dans le Plan, maintenant centralisé ici.
     key: "intro",
     label: "Accroche",
     timing: "~5-10s",
     placeholder:
       "Ex : Voici les 3 erreurs qui tuent ton compte Instagram. La 2e va te surprendre.",
-    phase: "ouverture",
-  },
-  // Développement
-  {
-    key: "point1",
-    label: "Point 1",
-    timing: "~10s",
-    placeholder:
-      "Ex : Erreur #1 — Tu publies sans calendrier. Résultat : tu posts quand l'inspiration vient = jamais.",
-    phase: "developpement",
+    big: false,
   },
   {
-    key: "point2",
-    label: "Point 2",
-    timing: "~10s",
+    key: "script_full",
+    label: "Corps",
+    timing: "~30-45s",
     placeholder:
-      "Ex : Erreur #2 — Tu copies les autres au lieu de trouver ta voix unique.",
-    phase: "developpement",
-  },
-  {
-    key: "point3",
-    label: "Point 3",
-    timing: "~10s",
-    placeholder:
-      "Ex : Erreur #3 — Tu mesures les likes au lieu des sauvegardes.",
-    phase: "developpement",
-  },
-  {
-    key: "transition",
-    label: "Transition / B-roll",
-    timing: "~2-3s × N",
-    placeholder:
-      "Ex : Plan d'ouverture sur le téléphone, B-roll bureau, capture d'écran Insights.",
-    phase: "developpement",
-  },
-  // Clôture
-  {
-    key: "recap",
-    label: "Récap",
-    timing: "~5s",
-    placeholder:
-      "Ex : Calendrier + voix unique + bonne métrique = compte qui grandit.",
-    phase: "cloture",
+      "Le cœur de ta vidéo : développe ton idée dans l'ordre où tu veux la dire.",
+    big: true,
   },
   {
     key: "outro",
@@ -121,17 +82,11 @@ const REEL_BLOCKS = [
     timing: "~5-10s",
     placeholder:
       "Ex : Sauvegarde ce Reel pour t'en souvenir. Dis-moi en commentaire ton #1.",
-    phase: "cloture",
+    big: false,
   },
 ] as const;
 
 type ReelBlockKey = (typeof REEL_BLOCKS)[number]["key"];
-
-const PHASES = [
-  { id: "ouverture", icon: "🎬", label: "Ouverture", timing: "10-15s" },
-  { id: "developpement", icon: "💡", label: "Développement", timing: "30-45s" },
-  { id: "cloture", icon: "🎯", label: "Clôture", timing: "10-15s" },
-] as const;
 
 function ReelScript({
   contentId,
@@ -189,15 +144,6 @@ function ReelScript({
         ? "text-emerald-700"
         : "text-amber-600";
 
-  // Groupe les blocs par phase pour le rendu
-  const blocksByPhase = useMemo(() => {
-    const map: Record<string, typeof REEL_BLOCKS[number][]> = {};
-    for (const b of REEL_BLOCKS) {
-      (map[b.phase] ??= []).push(b);
-    }
-    return map;
-  }, []);
-
   return (
     <div className="space-y-4">
       <Card className="space-y-4 p-6">
@@ -209,7 +155,7 @@ function ReelScript({
               <ScriptHelp />
             </div>
             <p className="text-xs text-muted">
-              {t("subtitle")} ·{" "}
+              Accroche · Corps · Outro ·{" "}
               <span className={cn("font-semibold", durationColor)}>
                 Estimé : {estimatedSeconds}s / 60s
               </span>
@@ -230,59 +176,29 @@ function ReelScript({
           </div>
         )}
 
-        {/* Les 3 phases */}
-        {PHASES.map((phase) => (
-          <div key={phase.id} className="space-y-2.5">
-            <PhaseDivider
-              icon={phase.icon}
-              label={phase.label}
-              timing={phase.timing}
-            />
-            {blocksByPhase[phase.id]?.map((block) => (
-              <CompactField
-                key={block.key}
-                blockKey={block.key}
-                label={block.label}
-                timing={block.timing}
-                placeholder={block.placeholder}
-                value={state[block.key as keyof typeof state] as string}
-                onChange={(v) =>
-                  setState((s) => ({ ...s, [block.key]: v }))
-                }
-                // Pour l'Accroche (ex-Intro), on injecte le bouton
-                // "Choisir une accroche" qui ouvre la bibliothèque de 70
-                // hooks (anciennement sur le Plan, déplacé ici suite à
-                // la revue de principe Idée 11).
-                headerExtra={
-                  block.key === "intro" ? (
-                    <HooksPickerButton
-                      onPick={(text) =>
-                        setState((s) => ({ ...s, intro: text }))
-                      }
-                    />
-                  ) : undefined
-                }
-              />
-            ))}
-          </div>
-        ))}
-
-        {/* Script complet (optionnel, séparé visuellement) */}
-        <div className="space-y-2 border-t border-border/60 pt-4">
-          <div className="flex items-center gap-2">
-            <Label htmlFor="script_full">{t("fullScript")}</Label>
-            <CommentButton targetType="script" targetId="script_full" />
-          </div>
-          <Textarea
-            id="script_full"
-            className="min-h-32"
-            value={state.script_full}
-            onChange={(e) =>
-              setState((s) => ({ ...s, script_full: e.target.value }))
+        {/* 3 blocs simples : Accroche / Corps / Outro */}
+        {REEL_BLOCKS.map((block) => (
+          <CompactField
+            key={block.key}
+            blockKey={block.key}
+            label={block.label}
+            timing={block.timing}
+            placeholder={block.placeholder}
+            big={block.big}
+            value={state[block.key as keyof typeof state] as string}
+            onChange={(v) => setState((s) => ({ ...s, [block.key]: v }))}
+            // Sur l'Accroche : bouton "Choisir une accroche" (biblio de hooks).
+            headerExtra={
+              block.key === "intro" ? (
+                <HooksPickerButton
+                  onPick={(text) =>
+                    setState((s) => ({ ...s, intro: text }))
+                  }
+                />
+              ) : undefined
             }
-            placeholder={t("fullScriptPlaceholder")}
           />
-        </div>
+        ))}
       </Card>
 
       <SaveFooter
@@ -291,28 +207,6 @@ function ReelScript({
         onSave={handleSave}
         onReset={handleReset}
       />
-    </div>
-  );
-}
-
-/** Divider fin (1 ligne) pour annoncer une phase (Ouverture / etc.). */
-function PhaseDivider({
-  icon,
-  label,
-  timing,
-}: {
-  icon: string;
-  label: string;
-  timing: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 pt-1">
-      <span className="text-sm">{icon}</span>
-      <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/80">
-        {label}
-      </span>
-      <span className="text-[10px] font-medium text-muted">· {timing}</span>
-      <div className="h-px flex-1 bg-border/60" />
     </div>
   );
 }
@@ -331,6 +225,7 @@ function CompactField({
   value,
   onChange,
   headerExtra,
+  big = false,
 }: {
   blockKey: ReelBlockKey;
   label: string;
@@ -340,6 +235,8 @@ function CompactField({
   onChange: (v: string) => void;
   /** Élément optionnel rendu à droite de l'en-tête du bloc (ex: bouton "Choisir une accroche" pour l'Accroche). */
   headerExtra?: React.ReactNode;
+  /** Champ principal (Corps) → hauteur de départ plus grande. */
+  big?: boolean;
 }) {
   // Compte de mots local pour feedback de durée sur le bloc (~4 mots/sec)
   const wordCount = value.trim().split(/\s+/).filter(Boolean).length;
@@ -369,14 +266,14 @@ function CompactField({
       </div>
       <Textarea
         id={blockKey}
+        dir="auto"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={cn(
-          // min-h plus petit que le default (96px) pour éviter le scroll
-          "min-h-12 text-sm",
-          // auto-resize sur navigateurs modernes (Chrome 123+, Safari 17.5+)
-          "[field-sizing:content]",
+          // "Corps" démarre plus grand ; les autres petits puis auto-resize.
+          big ? "min-h-32" : "min-h-12",
+          "text-sm leading-relaxed [field-sizing:content]",
         )}
       />
     </div>
