@@ -616,7 +616,11 @@ function SceneCard({
             {t("fields.action")}
           </Label>
           <Textarea
-            className="min-h-12 text-sm [field-sizing:content]"
+            // max-h + scroll : le champ grandit avec le texte jusqu'à un
+            // plafond puis défile → cartes régulières (plus de murs de texte).
+            // dir="auto" : aligne le texte selon la langue (arabe RTL / FR LTR).
+            className="max-h-56 min-h-12 overflow-y-auto text-sm leading-relaxed [field-sizing:content]"
+            dir="auto"
             value={sceneForm.description}
             onChange={(e) => onFieldChange("description", e.target.value)}
             placeholder={t("fields.actionPlaceholder")}
@@ -657,6 +661,7 @@ function SceneCard({
               </Label>
               <Input
                 className="h-8 text-xs"
+                dir="auto"
                 value={sceneForm.camera_angle}
                 onChange={(e) => onFieldChange("camera_angle", e.target.value)}
                 placeholder={t("fields.cameraPlaceholder")}
@@ -669,6 +674,7 @@ function SceneCard({
               </Label>
               <Input
                 className="h-8 text-xs"
+                dir="auto"
                 value={sceneForm.on_screen_text}
                 onChange={(e) =>
                   onFieldChange("on_screen_text", e.target.value)
@@ -685,7 +691,8 @@ function SceneCard({
                 Montage / Post-prod
               </Label>
               <Textarea
-                className="min-h-10 text-sm [field-sizing:content]"
+                className="max-h-32 min-h-10 overflow-y-auto text-sm leading-relaxed [field-sizing:content]"
+                dir="auto"
                 value={sceneForm.editing_notes}
                 onChange={(e) => onFieldChange("editing_notes", e.target.value)}
                 placeholder="Ex : Filtre vintage, cut net vers Plan 04, whoosh-sound."
