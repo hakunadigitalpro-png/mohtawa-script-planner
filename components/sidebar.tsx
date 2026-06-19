@@ -57,7 +57,7 @@ export function Sidebar({
   const t = useTranslations("nav");
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-20 shrink-0 flex-col items-center gap-3 py-5 md:flex">
+    <aside className="sticky top-0 z-30 hidden h-screen w-20 shrink-0 flex-col items-center gap-3 py-5 md:flex">
       {/* Logo */}
       <div className="tooltip-trigger flex size-12 shrink-0 items-center justify-center rounded-2xl bg-ink text-white shadow-sm">
         <Sparkles className="size-5" />
