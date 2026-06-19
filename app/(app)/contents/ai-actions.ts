@@ -26,6 +26,19 @@ export async function aiGenerateReel(input: {
 
     if (input.apply) {
       const supabase = await createClient();
+      // Script simplifié (Accroche / Corps / Outro) : on plie le corps généré
+      // (points + transition + récap) dans script_full = le champ "Corps"
+      // réellement affiché. On garde aussi les colonnes détaillées en base.
+      const corps = [
+        result.point1,
+        result.point2,
+        result.point3,
+        result.transition,
+        result.recap,
+      ]
+        .map((s) => (s ?? "").trim())
+        .filter(Boolean)
+        .join("\n\n");
       await supabase.from("reel_details").upsert({
         content_id: input.contentId,
         intro: result.intro,
@@ -35,6 +48,7 @@ export async function aiGenerateReel(input: {
         transition: result.transition,
         recap: result.recap,
         outro: result.outro,
+        script_full: corps,
       });
       // Hook + CTA vivent dans contents (champs partagés)
       await supabase
