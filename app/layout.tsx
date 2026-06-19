@@ -70,7 +70,7 @@ export default async function RootLayout({
       lang={locale}
       dir={dir}
       data-theme={dataTheme}
-      data-app-version="mnav5"
+      data-app-version="mnav6"
       style={styleOverrides}
     >
       <body
