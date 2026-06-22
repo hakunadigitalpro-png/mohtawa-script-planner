@@ -11,12 +11,20 @@ const IMAGE_MODEL = "dall-e-3";
 
 // ===== Anthropic (Claude) — utilisé pour l'autopsie vidéo (feature premium) =====
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
-// Modèle configurable via env ANTHROPIC_MODEL. Défaut : Sonnet 4.5,
-// confirmé disponible sur le compte de prod (bon équilibre qualité/prix
-// pour l'autopsie, la feature premium). Pour passer à Haiku (moins cher)
-// ou Opus (plus puissant), définir ANTHROPIC_MODEL dans Vercel.
-const ANTHROPIC_MODEL =
-  process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929";
+// Modèle configurable via env ANTHROPIC_MODEL. Défaut : Sonnet 4.6
+// (même prix que 4.5 — 3$/15$ par 1M — mais meilleure qualité ; bon
+// équilibre pour l'autopsie ET l'analyse de transcript). Pour Haiku
+// (moins cher) ou Opus (plus puissant), définir ANTHROPIC_MODEL dans Vercel.
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
+
+// ===== Groq — transcription audio (Whisper), gratuit sans carte =====
+// Claude ne transcrit PAS l'audio. On délègue la transcription à Groq
+// (API compatible OpenAI), qui fait tourner Whisper large v3 turbo très
+// vite et gratuitement (tier sans carte). La clé GROQ_API_KEY se crée sur
+// console.groq.com sans moyen de paiement.
+const GROQ_TRANSCRIBE_URL =
+  "https://api.groq.com/openai/v1/audio/transcriptions";
+const GROQ_WHISPER_MODEL = "whisper-large-v3-turbo";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
@@ -544,4 +552,251 @@ Fais l'autopsie de cette vidéo en suivant exactement le format demandé.`;
 
   if (!text) throw new AiError("empty", "Réponse vide de l'IA d'analyse.");
   return text;
+}
+
+/* =========================================================================
+   Transcription Groq (Whisper) — audio → texte
+   ========================================================================= */
+
+/**
+ * Transcrit une vidéo/audio en texte via Groq (Whisper large v3 turbo).
+ * `fileUrl` = URL publique du fichier (uploadé sur Supabase Storage côté
+ * client). On le télécharge côté serveur puis on le pousse en multipart à
+ * Groq — la clé Groq ne touche jamais le navigateur.
+ *
+ * Gratuit (tier Groq sans carte). Limite ~25 Mo par fichier sur le gratuit.
+ */
+export async function transcribeWithGroq(
+  fileUrl: string,
+  filename = "audio.mp4",
+): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new AiError(
+      "no_api_key",
+      "La transcription n'est pas configurée. Ajoute GROQ_API_KEY dans Vercel et redéploie.",
+    );
+  }
+
+  // 1. Récupère le fichier (uploadé sur Supabase Storage)
+  let fileRes: Response;
+  try {
+    fileRes = await fetch(fileUrl);
+  } catch {
+    throw new AiError("network", "Impossible de récupérer la vidéo. Réessaie.");
+  }
+  if (!fileRes.ok) {
+    throw new AiError("api", "Téléchargement de la vidéo échoué.");
+  }
+  const blob = await fileRes.blob();
+
+  // 2. Envoie à Groq Whisper (multipart). Pas de `language` forcée :
+  // Whisper auto-détecte (FR, arabe, dialectes).
+  const form = new FormData();
+  form.append("file", blob, filename);
+  form.append("model", GROQ_WHISPER_MODEL);
+  form.append("response_format", "json");
+
+  let res: Response;
+  try {
+    res = await fetch(GROQ_TRANSCRIBE_URL, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+    });
+  } catch {
+    throw new AiError(
+      "network",
+      "Impossible de joindre le service de transcription. Réessaie.",
+    );
+  }
+
+  if (!res.ok) {
+    const status = res.status;
+    if (status === 401) {
+      throw new AiError("auth", "Clé Groq invalide. Vérifie GROQ_API_KEY.");
+    }
+    if (status === 413) {
+      throw new AiError(
+        "too_large",
+        "Vidéo trop lourde pour la transcription gratuite (max ~25 Mo). Prends un extrait plus court.",
+      );
+    }
+    if (status === 429) {
+      throw new AiError(
+        "rate_limit",
+        "Limite de transcription atteinte. Réessaie dans un moment.",
+      );
+    }
+    let detail = "";
+    try {
+      const b = (await res.json()) as { error?: { message?: string } };
+      detail = b?.error?.message ? ` : ${b.error.message}` : "";
+    } catch {
+      // ignore
+    }
+    throw new AiError("api", `Erreur de transcription (${status})${detail}.`);
+  }
+
+  const data = (await res.json()) as { text?: string };
+  const text = (data.text ?? "").trim();
+  if (!text) {
+    throw new AiError(
+      "empty",
+      "Transcription vide — la vidéo a-t-elle du son parlé ?",
+    );
+  }
+  return text;
+}
+
+/* =========================================================================
+   Analyse de vidéo de référence — API Claude
+   ========================================================================= */
+
+/**
+ * Appel Claude texte→texte (sans images). Helper interne pour les analyses
+ * basées uniquement sur du texte (ne touche pas à generateAutopsy qui, lui,
+ * envoie aussi des captures).
+ */
+async function callClaudeText(
+  system: string,
+  userText: string,
+  maxTokens: number,
+): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new AiError(
+      "no_api_key",
+      "L'IA d'analyse n'est pas configurée. Ajoute ANTHROPIC_API_KEY dans Vercel et redéploie.",
+    );
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(ANTHROPIC_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: ANTHROPIC_MODEL,
+        max_tokens: maxTokens,
+        system,
+        messages: [{ role: "user", content: userText }],
+      }),
+    });
+  } catch {
+    throw new AiError("network", "Impossible de joindre l'IA. Réessaie.");
+  }
+
+  if (!res.ok) {
+    const status = res.status;
+    if (status === 401) {
+      throw new AiError(
+        "auth",
+        "Clé Anthropic invalide. Vérifie ANTHROPIC_API_KEY.",
+      );
+    }
+    if (status === 429) {
+      throw new AiError(
+        "rate_limit",
+        "Quota Anthropic atteint ou trop de requêtes. Réessaie dans une minute.",
+      );
+    }
+    let detail = "";
+    try {
+      const b = (await res.json()) as { error?: { message?: string } };
+      detail = b?.error?.message ? ` : ${b.error.message}` : "";
+    } catch {
+      // ignore
+    }
+    throw new AiError("api", `Erreur Anthropic (${status})${detail}.`);
+  }
+
+  const data = (await res.json()) as {
+    content?: { type: string; text?: string }[];
+  };
+  const text = data.content
+    ?.filter((b) => b.type === "text")
+    .map((b) => b.text ?? "")
+    .join("\n")
+    .trim();
+  if (!text) throw new AiError("empty", "Réponse vide de l'IA.");
+  return text;
+}
+
+export type ReferenceAnalysisInput = {
+  /** Transcript de la vidéo de référence (issu de la transcription Groq). */
+  transcript: string;
+  platform?: string | null;
+  /** Contexte de la marque pour adapter le script proposé (optionnel). */
+  brandContext?: string | null;
+};
+
+/**
+ * Décortique le WORDING d'une vidéo de référence (ce qui marche / ce qui
+ * l'affaiblit), en extrait la formule, et propose un NOUVEAU script
+ * (Accroche / Corps / Outro) adapté à la marque de l'utilisatrice.
+ *
+ * Multilingue (FR + arabe/dialectes), ne refuse jamais, répond dans la
+ * langue du transcript. N'a pas besoin de stats (contrairement à l'autopsie)
+ * — analyse le wording sur ses mérites et signale sa confiance.
+ */
+export async function analyzeReferenceVideo(
+  input: ReferenceAnalysisInput,
+): Promise<string> {
+  if (!input.transcript || input.transcript.trim().length < 10) {
+    throw new AiError(
+      "empty_transcript",
+      "Transcript trop court pour analyser.",
+    );
+  }
+
+  const system = `Tu es un analyste expert en contenu vidéo short-form (Reels, TikTok, Shorts), MULTILINGUE : français ET arabe, dialectes maghrébins inclus (tunisien, algérien, marocain) + arabe standard. Tu décortiques le WORDING d'une vidéo de référence pour en extraire la FORMULE qui marche, puis tu écris un NOUVEAU script inspiré, adapté à la marque de l'utilisatrice.
+
+RÈGLES :
+- Tu ne refuses JAMAIS d'analyser, quelle que soit la langue ou la qualité du transcript.
+- RÉPONDS dans la langue du transcript (arabe → arabe ; français → français ; mélange/arabizi → langue dominante).
+- Transcript imparfait (sous-titres auto, troués) : si l'intention est ambiguë, commence par 1 phrase "Voici ce que je comprends : ..." puis analyse sur cette base. N'analyse jamais du charabia au pied de la lettre.
+- Cite TOUJOURS les phrases/expressions EXACTES entre guillemets. Jamais de généralité ("le hook est bon") — dis QUELLE phrase et POURQUOI.
+- Tu n'as PAS les stats de cette vidéo : analyse le wording sur ses mérites intrinsèques (force du hook, tension, structure, rythme, clarté de la promesse). Signale-le dans la confiance.
+- Promesse de TENSION (erreur, secret, chiffre, contre-pied) = forte ; promesse de PROCESSUS ("je vais vous montrer comment je fais X") = faible. Bannis les conseils évidents, vise l'insight non-évident.
+
+FORMAT DE SORTIE (texte simple, PAS de markdown ## ni ** — garde les emojis ; TRADUIS les titres dans la langue de ta réponse) :
+
+🔍 POURQUOI CETTE VIDÉO ACCROCHE
+- [phrase/expression exacte] → le mécanisme qui capte
+
+⚠️ CE QUI L'AFFAIBLIT
+- [phrase exacte ou moment] → la faiblesse (si rien de notable, dis-le franchement)
+
+🎯 LA FORMULE
+- Le squelette réutilisable en 1 à 3 lignes (la structure qui fait que ça marche)
+
+✨ TON SCRIPT (adapté à ta marque)
+- Accroche : [phrase exacte, prête à dire]
+- Corps : [le développement, dans l'ordre où le dire]
+- Outro : [la fermeture + l'appel à l'action]
+
+📊 CONFIANCE : [élevée / moyenne / faible] — 1 phrase (ex : "analyse du wording sans les stats de la vidéo")`;
+
+  const user = `VIDÉO DE RÉFÉRENCE À ANALYSER
+
+Plateforme : ${input.platform || "(non précisée)"}
+${
+  input.brandContext?.trim()
+    ? `Marque de l'utilisatrice (pour adapter le script proposé) : ${input.brandContext.trim()}`
+    : "Marque : (non précisée — propose un script générique mais directement actionnable)"
+}
+
+Transcript (ce qui est dit dans la vidéo) :
+"""
+${input.transcript.trim()}
+"""
+
+Décortique le wording et propose un nouveau script en suivant EXACTEMENT le format demandé.`;
+
+  return callClaudeText(system, user, 2200);
 }
