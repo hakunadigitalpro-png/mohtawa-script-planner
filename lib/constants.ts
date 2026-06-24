@@ -1,6 +1,7 @@
 export const CONTENT_TYPES = [
   { value: "reel", label: "Reel", color: "var(--color-reel)" },
   { value: "story", label: "Story", color: "var(--color-story)" },
+  { value: "vlog", label: "Vlog", color: "var(--color-vlog)" },
 ] as const;
 
 export type ContentType = (typeof CONTENT_TYPES)[number]["value"];
@@ -18,6 +19,7 @@ export type Platform = (typeof PLATFORMS)[number]["value"];
 const PLATFORMS_BY_TYPE: Record<string, Platform[]> = {
   reel: ["instagram", "tiktok", "youtube", "facebook", "linkedin"],
   story: ["instagram", "tiktok"],
+  vlog: ["instagram", "tiktok", "youtube", "facebook"],
 };
 
 export function platformsForType(type: string | null | undefined) {

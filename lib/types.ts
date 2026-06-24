@@ -84,6 +84,22 @@ export type StoryDetails = {
   format: string | null;
 };
 
+/**
+ * Détails d'un Vlog (migration 0027). Un vlog ne se planifie pas scène par
+ * scène : angle narratif + hook d'ouverture + arc en 3 temps + voix-off.
+ * Les moments à filmer vivent dans content_checklist_items (catégorie
+ * 'capture'), pas ici.
+ */
+export type VlogDetails = {
+  content_id: string;
+  angle: string | null;
+  hook: string | null;
+  arc_situation: string | null;
+  arc_development: string | null;
+  arc_payoff: string | null;
+  voiceover: string | null;
+};
+
 export type StorySlide = {
   id: string;
   content_id: string;
@@ -139,7 +155,7 @@ export type ScenePreset = {
   created_at: string;
 };
 
-export type ChecklistItemCategory = "equipment" | "preparation";
+export type ChecklistItemCategory = "equipment" | "preparation" | "capture";
 
 export type ChecklistItem = {
   id: string;

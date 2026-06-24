@@ -727,6 +727,101 @@ async function callClaudeText(
   return text;
 }
 
+/**
+ * Comme callClaudeText mais force une sortie JSON. Claude n'a pas de mode
+ * "json_object" natif (contrairement à OpenAI) → on demande du JSON pur dans
+ * le prompt, puis on extrait défensivement : on retire un éventuel bloc
+ * ```json … ```, sinon on prend du premier "{" au dernier "}".
+ */
+async function callClaudeJSON<T>(
+  system: string,
+  userText: string,
+  maxTokens: number,
+): Promise<T> {
+  const text = await callClaudeText(system, userText, maxTokens);
+  let raw = text.trim();
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced) {
+    raw = fenced[1].trim();
+  } else {
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start !== -1 && end !== -1 && end > start) {
+      raw = raw.slice(start, end + 1);
+    }
+  }
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    throw new AiError("parse", "L'IA a renvoyé un format invalide. Réessaie.");
+  }
+}
+
+/* =========================================================================
+   Génération — Vlog (API Claude)
+   ========================================================================= */
+
+export type VlogGeneration = {
+  /** Le fil narratif en 1 phrase. */
+  angle: string;
+  /** 2-3 hooks d'ouverture distincts (l'user en choisit un). */
+  hooks: string[];
+  /** Arc en 3 temps : situation → développement → chute. */
+  arc: { situation: string; development: string; payoff: string };
+  /** 6-8 moments concrets à filmer, dans l'ordre de la journée. */
+  captureShots: string[];
+  /** Le script voix-off à lire par-dessus les clips. */
+  voiceover: string;
+  /** Légende du post + hashtags. */
+  caption: string;
+};
+
+/**
+ * Transforme un sujet en plan de vlog actionnable (angle, hooks, arc,
+ * checklist de capture, voix-off, légende). Via Claude (pas OpenAI — la
+ * carte de l'utilisatrice n'est acceptée que chez Anthropic), multilingue
+ * FR + arabe.
+ */
+export function generateVlog(opts: {
+  topic: string;
+  audience?: string;
+  platform?: string;
+}): Promise<VlogGeneration> {
+  const audience = opts.audience?.trim() || "audience curieuse sur les réseaux";
+  const platform = opts.platform?.trim() || "Instagram / TikTok";
+
+  const system = `Tu es un expert en VLOGS short-form (1 à 2 min) pour Instagram/TikTok, MULTILINGUE : français ET arabe (dialectes maghrébins inclus). Un vlog ne se planifie PAS scène par scène : on part d'un ANGLE, on capture des MOMENTS pendant la journée, puis on POSE UNE VOIX-OFF par-dessus le montage. Ton job : transformer un sujet en plan de vlog directement actionnable.
+
+RÈGLES :
+- Écris dans la langue du sujet (français par défaut ; sujet en arabe → réponds en arabe).
+- Ton direct, incarné, authentique — jamais corporate. Phrases courtes.
+- Le HOOK (2 premières secondes) décide de tout : propose 3 hooks DISTINCTS et forts (tension, curiosité, ou promesse concrète). Pas de "Bonjour à tous".
+- La CHECKLIST DE CAPTURE = les moments concrets à filmer pendant la journée, formulés comme des rappels courts et filmables ("Le café du matin en gros plan", "Ma réaction en ouvrant le colis"). 6 à 8 moments, dans l'ordre chronologique, qui racontent un début → milieu → fin.
+- La VOIX-OFF = le texte à lire par-dessus les clips, dans l'ordre, qui lie les moments en une vraie histoire avec une chute. Tenable en 1-2 min.
+- Réponds UNIQUEMENT avec un objet JSON valide : pas de backticks, pas de texte autour.`;
+
+  const user = `Sujet du vlog : "${opts.topic}".
+Plateforme : ${platform}
+Audience : ${audience}
+Durée cible : 1 à 2 minutes.
+
+Renvoie UNIQUEMENT ce JSON (sans markdown autour) :
+{
+  "angle": "Le fil narratif en 1 phrase (ce qui rend ce vlog unique)",
+  "hooks": ["Hook 1 (≤ 2s, percutant)", "Hook 2", "Hook 3"],
+  "arc": {
+    "situation": "Le point de départ / le contexte (1 phrase)",
+    "development": "Ce qui se passe / la progression (1-2 phrases)",
+    "payoff": "La chute / le message final qui donne du sens (1 phrase)"
+  },
+  "captureShots": ["Moment à filmer 1", "Moment à filmer 2", "… 6 à 8 au total, dans l'ordre de la journée"],
+  "voiceover": "Le script voix-off complet, en paragraphes courts, dans l'ordre. 1 à 2 min.",
+  "caption": "La légende du post + 3 à 5 hashtags pertinents"
+}`;
+
+  return callClaudeJSON<VlogGeneration>(system, user, 2000);
+}
+
 export type ReferenceAnalysisInput = {
   /** Transcript de la vidéo de référence (issu de la transcription Groq). */
   transcript: string;

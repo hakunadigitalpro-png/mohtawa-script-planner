@@ -7,6 +7,7 @@ import {
   generateStory,
   generateSceneImage,
   generateAutopsy,
+  generateVlog,
   transcribeWithGroq,
   analyzeReferenceVideo,
   AiError,
@@ -258,6 +259,107 @@ export async function generateVideoAutopsy(input: {
 
     revalidatePath(`/content/${input.contentId}`);
     return { ok: true as const, autopsy };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false as const, error: e.message };
+    return { ok: false as const, error: "Erreur inattendue. Réessaie." };
+  }
+}
+
+/**
+ * Génère un plan de vlog (angle, hooks, arc, moments à filmer, voix-off,
+ * légende) via Claude. NE PERSISTE PAS — renvoie le preview. L'application
+ * passe par applyVlogGeneration (pas de second appel IA → on ne paie qu'une
+ * fois, et l'user applique exactement ce qu'il a vu).
+ */
+export async function aiGenerateVlog(input: {
+  contentId: string;
+  topic: string;
+  audience?: string;
+  platform?: string;
+}) {
+  try {
+    const data = await generateVlog({
+      topic: input.topic,
+      audience: input.audience,
+      platform: input.platform,
+    });
+    return { ok: true as const, data };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false as const, error: e.message };
+    return { ok: false as const, error: "Erreur inattendue. Réessaie." };
+  }
+}
+
+/**
+ * Persiste un plan de vlog généré (déjà prévisualisé côté client) :
+ *   - vlog_details : angle + hook choisi + arc + voix-off
+ *   - contents.caption + contents.hook (legacy/partagés)
+ *   - les moments à filmer → content_checklist_items catégorie 'capture'
+ *     (n'ajoute que les libellés pas encore présents → pas de doublon si
+ *     l'user régénère).
+ */
+export async function applyVlogGeneration(input: {
+  contentId: string;
+  angle: string;
+  hook: string;
+  arc: { situation: string; development: string; payoff: string };
+  voiceover: string;
+  caption: string;
+  captureShots: string[];
+}) {
+  try {
+    const supabase = await createClient();
+
+    const { error: e1 } = await supabase.from("vlog_details").upsert({
+      content_id: input.contentId,
+      angle: input.angle,
+      hook: input.hook,
+      arc_situation: input.arc.situation,
+      arc_development: input.arc.development,
+      arc_payoff: input.arc.payoff,
+      voiceover: input.voiceover,
+    });
+    if (e1) return { ok: false as const, error: e1.message };
+
+    // Hook + caption vivent aussi sur contents (lus par share/print/analytics).
+    await supabase
+      .from("contents")
+      .update({
+        caption: input.caption?.trim() ? input.caption : null,
+        hook: input.hook?.trim() ? input.hook : null,
+      })
+      .eq("id", input.contentId);
+
+    // Moments à filmer → checklist de capture (append des nouveaux uniquement).
+    const shots = input.captureShots.map((s) => s.trim()).filter(Boolean);
+    if (shots.length) {
+      const { data: existing } = await supabase
+        .from("content_checklist_items")
+        .select("label, position")
+        .eq("content_id", input.contentId)
+        .eq("category", "capture");
+      const existingLabels = new Set(
+        (existing ?? []).map((it) => it.label.trim().toLowerCase()),
+      );
+      let pos = (existing ?? []).reduce(
+        (m, it) => Math.max(m, it.position),
+        -1,
+      );
+      const toInsert = shots
+        .filter((s) => !existingLabels.has(s.toLowerCase()))
+        .map((label) => ({
+          content_id: input.contentId,
+          category: "capture",
+          label,
+          position: ++pos,
+        }));
+      if (toInsert.length) {
+        await supabase.from("content_checklist_items").insert(toInsert);
+      }
+    }
+
+    revalidatePath(`/content/${input.contentId}`);
+    return { ok: true as const };
   } catch (e) {
     if (e instanceof AiError) return { ok: false as const, error: e.message };
     return { ok: false as const, error: "Erreur inattendue. Réessaie." };

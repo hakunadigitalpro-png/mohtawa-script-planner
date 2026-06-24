@@ -29,6 +29,7 @@ import type {
   Content,
   ReelDetails,
   StoryDetails,
+  VlogDetails,
   StorySlide,
   StoryboardScene,
   Performance,
@@ -61,6 +62,7 @@ export default async function ContentDetailPage({
   const [
     reelRes,
     storyRes,
+    vlogRes,
     slidesRes,
     scenesRes,
     perfRes,
@@ -76,6 +78,7 @@ export default async function ContentDetailPage({
   ] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
+    supabase.from("vlog_details").select("*").eq("content_id", id).maybeSingle(),
     supabase
       .from("story_slides")
       .select("*")
@@ -138,6 +141,7 @@ export default async function ContentDetailPage({
 
   const reel = (reelRes.data ?? null) as ReelDetails | null;
   const story = (storyRes.data ?? null) as StoryDetails | null;
+  const vlog = (vlogRes.data ?? null) as VlogDetails | null;
   const slides = (slidesRes.data ?? []) as StorySlide[];
   const scenes = (scenesRes.data ?? []) as StoryboardScene[];
   const perf = (perfRes.data ?? null) as Performance | null;
@@ -252,6 +256,7 @@ export default async function ContentDetailPage({
           content={c}
           reel={reel}
           story={story}
+          vlog={vlog}
           slides={slides}
           scenes={scenes}
           perf={perf}

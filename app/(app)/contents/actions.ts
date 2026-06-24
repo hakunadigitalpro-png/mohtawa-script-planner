@@ -42,6 +42,8 @@ export async function createContent(input: CreateContentInput) {
     await supabase.from("reel_details").insert({ content_id: data.id });
   } else if (data.type === "story") {
     await supabase.from("story_details").insert({ content_id: data.id });
+  } else if (data.type === "vlog") {
+    await supabase.from("vlog_details").insert({ content_id: data.id });
   }
 
   revalidatePath("/dashboard");
@@ -230,6 +232,29 @@ export async function duplicateContent(id: string) {
     }
   }
 
+  // Duplicate vlog_details (les moments à filmer sont déjà copiés par le bloc
+  // checklist générique ci-dessus, catégorie 'capture' incluse).
+  if (src.type === "vlog") {
+    const { data: vd } = await supabase
+      .from("vlog_details")
+      .select("*")
+      .eq("content_id", id)
+      .maybeSingle();
+    if (vd) {
+      await supabase.from("vlog_details").insert({
+        content_id: newId,
+        angle: vd.angle,
+        hook: vd.hook,
+        arc_situation: vd.arc_situation,
+        arc_development: vd.arc_development,
+        arc_payoff: vd.arc_payoff,
+        voiceover: vd.voiceover,
+      });
+    } else {
+      await supabase.from("vlog_details").insert({ content_id: newId });
+    }
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/calendar");
   return { ok: true, id: newId };
@@ -278,6 +303,35 @@ export async function upsertReelDetails(
   // statut, donc on ne paie la RPC que quand c'est utile.
   if (patch.checklist !== undefined) {
     await supabase.rpc("recompute_content_status", { p_content_id: contentId });
+  }
+
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true };
+}
+
+export async function upsertVlogDetails(
+  contentId: string,
+  patch: Partial<{
+    angle: string;
+    hook: string;
+    arc_situation: string;
+    arc_development: string;
+    arc_payoff: string;
+    voiceover: string;
+  }>,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("vlog_details")
+    .upsert({ content_id: contentId, ...patch });
+  if (error) return { error: error.message };
+
+  // Le hook vit aussi sur contents (lu par share/print/analytics) — sync.
+  if (patch.hook !== undefined) {
+    await supabase
+      .from("contents")
+      .update({ hook: patch.hook?.trim() ? patch.hook : null })
+      .eq("id", contentId);
   }
 
   revalidatePath(`/content/${contentId}`);
@@ -414,7 +468,7 @@ export async function deleteScene(sceneId: string, contentId: string) {
 // Items "matériel à prévoir" et "préparation tournage" gérés par video.
 // Atomic actions : add / toggle / delete sont chacune une sauvegarde immédiate.
 
-type ChecklistCategory = "equipment" | "preparation";
+type ChecklistCategory = "equipment" | "preparation" | "capture";
 
 export async function createChecklistItem(
   contentId: string,

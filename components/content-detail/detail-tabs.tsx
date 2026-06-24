@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PlanTab } from "./plan-tab";
 import { ScriptTab } from "./script-tab";
+import { VlogTab } from "./vlog-tab";
 import { StoryboardTab } from "./storyboard-tab";
 import { ChecklistTab } from "./checklist-tab";
 import { CaptionTab } from "./caption-tab";
@@ -12,6 +13,7 @@ import type {
   Content,
   ReelDetails,
   StoryDetails,
+  VlogDetails,
   StorySlide,
   StoryboardScene,
   Performance,
@@ -24,6 +26,7 @@ export function DetailTabs({
   content,
   reel,
   story,
+  vlog,
   slides,
   scenes,
   perf,
@@ -39,6 +42,7 @@ export function DetailTabs({
   content: Content;
   reel: ReelDetails | null;
   story: StoryDetails | null;
+  vlog: VlogDetails | null;
   slides: StorySlide[];
   scenes: StoryboardScene[];
   perf: Performance | null;
@@ -53,6 +57,10 @@ export function DetailTabs({
 }) {
   const t = useTranslations("tabs");
   const isStory = content.type === "story";
+  const isVlog = content.type === "vlog";
+  // Moments à filmer (catégorie 'capture') — affichés dans l'onglet Vlog,
+  // pas dans la Checklist matériel/préparation.
+  const captureItems = checklistItems.filter((it) => it.category === "capture");
   // L'onglet Performance ne sert à rien tant que la vidéo n'est pas publiée
   // (pas encore de données à saisir). On le masque pour réduire le bruit visuel.
   const isPublished = content.status === "published";
@@ -61,10 +69,15 @@ export function DetailTabs({
     <Tabs defaultValue="plan">
       <TabsList>
         <TabsTrigger value="plan">{t("plan")}</TabsTrigger>
-        <TabsTrigger value="script">{isStory ? t("stories") : t("script")}</TabsTrigger>
-        {!isStory && <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>}
+        <TabsTrigger value="script">
+          {isStory ? t("stories") : isVlog ? "Vlog" : t("script")}
+        </TabsTrigger>
+        {/* Storyboard = Reel uniquement (le vlog se capture, pas se story-borde). */}
+        {!isStory && !isVlog && (
+          <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>
+        )}
         <TabsTrigger value="checklist">{t("checklist")}</TabsTrigger>
-        {/* Caption Reels only — les Stories ont du texte par slide,
+        {/* Caption pour Reel + Vlog — les Stories ont du texte par slide,
             pas une caption globale au moment de la publication. */}
         {!isStory && <TabsTrigger value="caption">Caption</TabsTrigger>}
         {isPublished && <TabsTrigger value="performance">{t("performance")}</TabsTrigger>}
@@ -78,9 +91,18 @@ export function DetailTabs({
         />
       </TabsContent>
       <TabsContent value="script">
-        <ScriptTab content={content} reel={reel} story={story} slides={slides} />
+        {isVlog ? (
+          <VlogTab content={content} vlog={vlog} captureItems={captureItems} />
+        ) : (
+          <ScriptTab
+            content={content}
+            reel={reel}
+            story={story}
+            slides={slides}
+          />
+        )}
       </TabsContent>
-      {!isStory && (
+      {!isStory && !isVlog && (
         <TabsContent value="storyboard">
           <StoryboardTab
             contentId={content.id}
@@ -94,7 +116,7 @@ export function DetailTabs({
         <ChecklistTab
           contentId={content.id}
           reel={reel}
-          scenes={isStory ? undefined : scenes}
+          scenes={isStory || isVlog ? undefined : scenes}
           slides={isStory ? slides : undefined}
           checklistItems={checklistItems}
           equipmentSuggestions={equipmentSuggestions}
