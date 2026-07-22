@@ -2,16 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-  Pencil,
-  Trash2,
-  Plus,
-  X,
-  Check,
-  Target,
-  Lightbulb,
-  ListChecks,
-} from "lucide-react";
+import { Pencil, Trash2, Plus, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -71,7 +62,7 @@ export function PillarManager({
       )}
 
       {pillars.length > 0 && (
-        <ul className="space-y-2.5">
+        <ul className="space-y-4">
           {pillars.map((p) => (
             <li key={p.id}>
               <PillarCard brandId={brandId} pillar={p} />
@@ -171,14 +162,14 @@ function PillarCard({
     pillar.examples.length > 0;
 
   return (
-    <div className="rounded-2xl border border-border/70 bg-card p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h4 className="text-sm font-bold" dir="auto">
+    <div className="rounded-2xl border border-border/70 bg-card p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <h4 className="text-lg font-bold leading-tight" dir="auto">
             {pillar.name}
           </h4>
           {pillar.share_pct != null && (
-            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-bold text-accent">
+            <span className="rounded-full bg-accent/15 px-2.5 py-1 text-sm font-bold text-accent">
               {pillar.share_pct}%
             </span>
           )}
@@ -187,19 +178,19 @@ function PillarCard({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="flex size-7 items-center justify-center rounded-full text-muted transition hover:bg-secondary hover:text-foreground"
+            className="flex size-8 items-center justify-center rounded-full text-muted transition hover:bg-secondary hover:text-foreground"
             aria-label="Éditer le pilier"
           >
-            <Pencil className="size-3.5" />
+            <Pencil className="size-4" />
           </button>
           <button
             type="button"
             onClick={onDelete}
             disabled={pending}
-            className="flex size-7 items-center justify-center rounded-full text-muted transition hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+            className="flex size-8 items-center justify-center rounded-full text-muted transition hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
             aria-label="Supprimer le pilier"
           >
-            <Trash2 className="size-3.5" />
+            <Trash2 className="size-4" />
           </button>
         </div>
       </div>
@@ -208,37 +199,34 @@ function PillarCard({
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="mt-2 text-xs font-semibold text-accent hover:underline"
+          className="mt-3 text-sm font-semibold text-accent hover:underline"
         >
           + Ajouter les détails (objectif, rubriques, exemples…)
         </button>
       ) : (
-        <div className="mt-2.5 space-y-2.5 text-sm" dir="auto">
+        <div className="mt-4 space-y-4" dir="auto">
           {pillar.objective && (
-            <div className="flex gap-2">
-              <Target className="mt-0.5 size-3.5 shrink-0 text-accent" />
-              <p className="text-foreground/80">{pillar.objective}</p>
-            </div>
+            <Detail label="Objectif">
+              <p className="text-[15px] leading-relaxed text-foreground/90">
+                {pillar.objective}
+              </p>
+            </Detail>
           )}
 
           {pillar.rubriques.length > 0 && (
-            <SummaryList
-              icon={<ListChecks className="size-3.5 text-accent" />}
-              title="Rubriques"
-              items={pillar.rubriques}
-            />
+            <Detail label={`Rubriques · ${pillar.rubriques.length}`}>
+              <ChipRow items={pillar.rubriques} />
+            </Detail>
           )}
 
           {pillar.examples.length > 0 && (
-            <SummaryList
-              icon={<Lightbulb className="size-3.5 text-accent" />}
-              title="Exemples"
-              items={pillar.examples}
-            />
+            <Detail label={`Exemples · ${pillar.examples.length}`}>
+              <ChipRow items={pillar.examples} />
+            </Detail>
           )}
 
           {pillar.note && (
-            <p className="rounded-xl bg-secondary/40 px-3 py-2 text-xs text-muted">
+            <p className="rounded-xl border-s-2 border-accent/50 bg-secondary/40 px-4 py-2.5 text-sm leading-relaxed text-foreground/80">
               👉 {pillar.note}
             </p>
           )}
@@ -248,33 +236,36 @@ function PillarCard({
   );
 }
 
-function SummaryList({
-  icon,
-  title,
-  items,
+/** En-tête de section lisible (casse normale, 14px) — remplace les micro-
+ *  labels 11px MAJUSCULES qui fatiguaient l'œil. */
+function Detail({
+  label,
+  children,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  items: string[];
+  label: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="flex gap-2">
-      <span className="mt-0.5 shrink-0">{icon}</span>
-      <div className="min-w-0">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
-          {title} · {items.length}
+    <div className="space-y-2">
+      <h5 className="text-sm font-semibold text-foreground/70">{label}</h5>
+      {children}
+    </div>
+  );
+}
+
+/** Chips lisibles : 14px, fond plein + bordure pour le contraste. */
+function ChipRow({ items }: { items: string[] }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.map((it, i) => (
+        <span
+          key={i}
+          dir="auto"
+          className="rounded-lg border border-border/60 bg-secondary/70 px-3 py-1 text-sm text-foreground/90"
+        >
+          {it}
         </span>
-        <div className="mt-1 flex flex-wrap gap-1.5">
-          {items.map((it, i) => (
-            <span
-              key={i}
-              className="rounded-lg bg-secondary/60 px-2 py-0.5 text-xs"
-            >
-              {it}
-            </span>
-          ))}
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
@@ -326,7 +317,7 @@ function PillarEditor({
     <div className="space-y-3 rounded-2xl border border-accent/30 bg-accent/[0.03] p-4">
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
         <div className="space-y-1">
-          <Label className="text-xs font-semibold">Nom du pilier</Label>
+          <Label className="text-sm font-semibold">Nom du pilier</Label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -335,7 +326,7 @@ function PillarEditor({
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs font-semibold">Part (%)</Label>
+          <Label className="text-sm font-semibold">Part (%)</Label>
           <Input
             type="number"
             min={0}
@@ -349,7 +340,7 @@ function PillarEditor({
       </div>
 
       <div className="space-y-1">
-        <Label className="text-xs font-semibold">🎯 Objectif</Label>
+        <Label className="text-sm font-semibold">🎯 Objectif</Label>
         <Textarea
           value={objective}
           onChange={(e) => setObjective(e.target.value)}
@@ -374,7 +365,7 @@ function PillarEditor({
       />
 
       <div className="space-y-1">
-        <Label className="text-xs font-semibold">👉 Note</Label>
+        <Label className="text-sm font-semibold">👉 Note</Label>
         <Textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
@@ -433,7 +424,7 @@ function StringListEditor({
 
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-semibold">{label}</Label>
+      <Label className="text-sm font-semibold">{label}</Label>
       {items.length > 0 && (
         <ul className="flex flex-wrap gap-1.5">
           {items.map((it, i) => (
