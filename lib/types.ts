@@ -11,6 +11,21 @@ export type BrandMember = {
   role: "owner" | "admin" | "editor" | "viewer";
 };
 
+/**
+ * Pilier de contenu enrichi (migration 0028). Au-delà du nom, il porte la
+ * structure d'une stratégie : objectif, rubriques récurrentes, exemples de
+ * vidéos, une note (le pourquoi) et la part visée dans le mix (%).
+ */
+export type BrandPillar = {
+  id: string;
+  name: string;
+  objective: string | null;
+  rubriques: string[];
+  examples: string[];
+  note: string | null;
+  share_pct: number | null;
+};
+
 export type Content = {
   id: string;
   brand_id: string;

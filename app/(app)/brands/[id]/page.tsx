@@ -5,8 +5,10 @@ import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { TaxonomyManager } from "./taxonomy-manager";
+import { PillarManager } from "./pillar-manager";
 import { TeamSection } from "./team-section";
 import type { BrandRole } from "../team-actions";
+import type { BrandPillar } from "@/lib/types";
 
 type Taxonomy = { id: string; name: string };
 
@@ -55,7 +57,7 @@ export default async function BrandDetailPage({
   ] = await Promise.all([
     supabase
       .from("brand_pillars")
-      .select("id, name")
+      .select("id, name, objective, rubriques, examples, note, share_pct")
       .eq("brand_id", id)
       .order("position", { ascending: true }),
     supabase
@@ -78,7 +80,7 @@ export default async function BrandDetailPage({
       .maybeSingle(),
   ]);
 
-  const pillars = (pillarsRes.data ?? []) as Taxonomy[];
+  const pillars = (pillarsRes.data ?? []) as BrandPillar[];
   const objectives = (objectivesRes.data ?? []) as Taxonomy[];
   const members = (membersRes.data ?? []) as MemberRow[];
   const invitations = (invitationsRes.data ?? []) as InvitationRow[];
@@ -129,14 +131,7 @@ export default async function BrandDetailPage({
           <CardDescription>{t("pillars.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <TaxonomyManager
-            kind="pillar"
-            brandId={brand.id}
-            items={pillars}
-            emptyLabel={t("pillars.empty")}
-            inputPlaceholder={t("pillars.placeholder")}
-            addLabel={t("pillars.add")}
-          />
+          <PillarManager brandId={brand.id} pillars={pillars} />
         </CardContent>
       </Card>
 

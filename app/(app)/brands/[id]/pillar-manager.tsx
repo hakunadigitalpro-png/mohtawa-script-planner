@@ -1,0 +1,485 @@
+"use client";
+
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import {
+  Pencil,
+  Trash2,
+  Plus,
+  X,
+  Check,
+  Target,
+  Lightbulb,
+  ListChecks,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import {
+  createTaxonomy,
+  updatePillar,
+  deleteTaxonomy,
+} from "@/app/(app)/brands/taxonomy-actions";
+import type { BrandPillar } from "@/lib/types";
+
+/**
+ * Gestion des piliers de contenu ENRICHIS (migration 0028).
+ * Chaque pilier = une carte pliable qui porte : objectif, rubriques,
+ * exemples, note et part visée (%). Pensé comme une référence anti-page-
+ * blanche : on y consulte quoi filmer pour ce pilier.
+ *
+ * Ajout d'un pilier = nom seul (rapide), puis on ouvre l'édition pour
+ * remplir les détails (ou coller sa stratégie).
+ */
+export function PillarManager({
+  brandId,
+  pillars,
+}: {
+  brandId: string;
+  pillars: BrandPillar[];
+}) {
+  const router = useRouter();
+  const [adding, setAdding] = React.useState(false);
+  const [newName, setNewName] = React.useState("");
+  const [error, setError] = React.useState<string | null>(null);
+  const [pending, startTransition] = React.useTransition();
+
+  const onAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    startTransition(async () => {
+      const res = await createTaxonomy("pillar", brandId, newName);
+      if ("error" in res && res.error) {
+        setError(res.error);
+      } else {
+        setNewName("");
+        setAdding(false);
+        router.refresh();
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-3">
+      {pillars.length === 0 && !adding && (
+        <p className="rounded-2xl border border-dashed border-border bg-secondary/40 px-4 py-3 text-sm text-muted">
+          Aucun pilier pour l&apos;instant. Ajoute tes 3-4 piliers de contenu
+          (ex : « Prévention & Conseils », « Coulisses »…).
+        </p>
+      )}
+
+      {pillars.length > 0 && (
+        <ul className="space-y-2.5">
+          {pillars.map((p) => (
+            <li key={p.id}>
+              <PillarCard brandId={brandId} pillar={p} />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {adding ? (
+        <form onSubmit={onAdd} className="flex items-center gap-2">
+          <Input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="Nom du pilier (ex : 🦶 Prévention & Conseils)"
+            autoFocus
+            required
+            dir="auto"
+            className="max-w-sm"
+          />
+          <Button type="submit" size="sm" disabled={pending}>
+            {pending ? "..." : "Créer"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setAdding(false);
+              setNewName("");
+              setError(null);
+            }}
+          >
+            Annuler
+          </Button>
+        </form>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setAdding(true)}
+        >
+          <Plus className="size-3.5" />
+          Ajouter un pilier
+        </Button>
+      )}
+
+      {error && (
+        <p className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ============================== Carte pilier ============================== */
+
+function PillarCard({
+  brandId,
+  pillar,
+}: {
+  brandId: string;
+  pillar: BrandPillar;
+}) {
+  const router = useRouter();
+  const [editing, setEditing] = React.useState(false);
+  const [pending, startTransition] = React.useTransition();
+
+  const onDelete = () => {
+    if (
+      !confirm(
+        `Supprimer le pilier « ${pillar.name} » ? Les vidéos déjà classées gardent leur libellé.`,
+      )
+    )
+      return;
+    startTransition(async () => {
+      const res = await deleteTaxonomy("pillar", pillar.id, brandId);
+      if (!("error" in res && res.error)) router.refresh();
+    });
+  };
+
+  if (editing) {
+    return (
+      <PillarEditor
+        brandId={brandId}
+        pillar={pillar}
+        onDone={() => setEditing(false)}
+      />
+    );
+  }
+
+  const hasDetails =
+    pillar.objective ||
+    pillar.note ||
+    pillar.rubriques.length > 0 ||
+    pillar.examples.length > 0;
+
+  return (
+    <div className="rounded-2xl border border-border/70 bg-card p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h4 className="text-sm font-bold" dir="auto">
+            {pillar.name}
+          </h4>
+          {pillar.share_pct != null && (
+            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-bold text-accent">
+              {pillar.share_pct}%
+            </span>
+          )}
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="flex size-7 items-center justify-center rounded-full text-muted transition hover:bg-secondary hover:text-foreground"
+            aria-label="Éditer le pilier"
+          >
+            <Pencil className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={pending}
+            className="flex size-7 items-center justify-center rounded-full text-muted transition hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+            aria-label="Supprimer le pilier"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {!hasDetails ? (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="mt-2 text-xs font-semibold text-accent hover:underline"
+        >
+          + Ajouter les détails (objectif, rubriques, exemples…)
+        </button>
+      ) : (
+        <div className="mt-2.5 space-y-2.5 text-sm" dir="auto">
+          {pillar.objective && (
+            <div className="flex gap-2">
+              <Target className="mt-0.5 size-3.5 shrink-0 text-accent" />
+              <p className="text-foreground/80">{pillar.objective}</p>
+            </div>
+          )}
+
+          {pillar.rubriques.length > 0 && (
+            <SummaryList
+              icon={<ListChecks className="size-3.5 text-accent" />}
+              title="Rubriques"
+              items={pillar.rubriques}
+            />
+          )}
+
+          {pillar.examples.length > 0 && (
+            <SummaryList
+              icon={<Lightbulb className="size-3.5 text-accent" />}
+              title="Exemples"
+              items={pillar.examples}
+            />
+          )}
+
+          {pillar.note && (
+            <p className="rounded-xl bg-secondary/40 px-3 py-2 text-xs text-muted">
+              👉 {pillar.note}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SummaryList({
+  icon,
+  title,
+  items,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  items: string[];
+}) {
+  return (
+    <div className="flex gap-2">
+      <span className="mt-0.5 shrink-0">{icon}</span>
+      <div className="min-w-0">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
+          {title} · {items.length}
+        </span>
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {items.map((it, i) => (
+            <span
+              key={i}
+              className="rounded-lg bg-secondary/60 px-2 py-0.5 text-xs"
+            >
+              {it}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================== Éditeur ============================== */
+
+function PillarEditor({
+  brandId,
+  pillar,
+  onDone,
+}: {
+  brandId: string;
+  pillar: BrandPillar;
+  onDone: () => void;
+}) {
+  const router = useRouter();
+  const [name, setName] = React.useState(pillar.name);
+  const [objective, setObjective] = React.useState(pillar.objective ?? "");
+  const [note, setNote] = React.useState(pillar.note ?? "");
+  const [pct, setPct] = React.useState(
+    pillar.share_pct != null ? String(pillar.share_pct) : "",
+  );
+  const [rubriques, setRubriques] = React.useState<string[]>(pillar.rubriques);
+  const [examples, setExamples] = React.useState<string[]>(pillar.examples);
+  const [error, setError] = React.useState<string | null>(null);
+  const [pending, startTransition] = React.useTransition();
+
+  const onSave = () => {
+    setError(null);
+    startTransition(async () => {
+      const res = await updatePillar(pillar.id, brandId, {
+        name,
+        objective,
+        note,
+        rubriques,
+        examples,
+        share_pct: pct.trim() === "" ? null : Number(pct),
+      });
+      if ("error" in res && res.error) {
+        setError(res.error);
+      } else {
+        onDone();
+        router.refresh();
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-3 rounded-2xl border border-accent/30 bg-accent/[0.03] p-4">
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+        <div className="space-y-1">
+          <Label className="text-xs font-semibold">Nom du pilier</Label>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            dir="auto"
+            placeholder="🦶 Prévention & Conseils"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs font-semibold">Part (%)</Label>
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            value={pct}
+            onChange={(e) => setPct(e.target.value)}
+            placeholder="40"
+            className="w-24"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs font-semibold">🎯 Objectif</Label>
+        <Textarea
+          value={objective}
+          onChange={(e) => setObjective(e.target.value)}
+          dir="auto"
+          placeholder="Ex : attirer une large audience grâce à des conseils simples et utiles."
+          className="min-h-12 text-sm [field-sizing:content]"
+        />
+      </div>
+
+      <StringListEditor
+        label="✅ Rubriques"
+        placeholder="Ex : La minute podologie"
+        items={rubriques}
+        onChange={setRubriques}
+      />
+
+      <StringListEditor
+        label="💡 Exemples de vidéos"
+        placeholder="Ex : Pourquoi il ne faut pas couper ses ongles trop courts."
+        items={examples}
+        onChange={setExamples}
+      />
+
+      <div className="space-y-1">
+        <Label className="text-xs font-semibold">👉 Note</Label>
+        <Textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          dir="auto"
+          placeholder="Ex : c'est le contenu qui génère le plus de portée."
+          className="min-h-12 text-sm [field-sizing:content]"
+        />
+      </div>
+
+      {error && (
+        <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {error}
+        </p>
+      )}
+
+      <div className="flex items-center justify-end gap-2">
+        <Button type="button" variant="ghost" size="sm" onClick={onDone}>
+          Annuler
+        </Button>
+        <Button type="button" size="sm" onClick={onSave} disabled={pending}>
+          <Check className="size-3.5" />
+          {pending ? "Enregistrement…" : "Enregistrer"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Éditeur de liste de chaînes réutilisable (rubriques / exemples) :
+ * saisie + Entrée pour ajouter, chip avec croix pour retirer.
+ */
+function StringListEditor({
+  label,
+  placeholder,
+  items,
+  onChange,
+}: {
+  label: string;
+  placeholder: string;
+  items: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [value, setValue] = React.useState("");
+
+  const add = () => {
+    const t = value.trim();
+    if (!t) return;
+    if (!items.some((it) => it.toLowerCase() === t.toLowerCase())) {
+      onChange([...items, t]);
+    }
+    setValue("");
+  };
+
+  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-semibold">{label}</Label>
+      {items.length > 0 && (
+        <ul className="flex flex-wrap gap-1.5">
+          {items.map((it, i) => (
+            <li
+              key={i}
+              className="flex items-center gap-1 rounded-lg border border-border bg-card ps-2.5 pe-1 py-1 text-sm"
+              dir="auto"
+            >
+              <span>{it}</span>
+              <button
+                type="button"
+                onClick={() => remove(i)}
+                className="flex size-5 items-center justify-center rounded-full text-muted transition hover:bg-destructive/10 hover:text-destructive"
+                aria-label="Retirer"
+              >
+                <X className="size-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex gap-2">
+        <Input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+          }}
+          placeholder={placeholder}
+          dir="auto"
+          className="h-9 text-sm"
+        />
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          onClick={add}
+          disabled={!value.trim()}
+          aria-label="Ajouter"
+        >
+          <Plus className="size-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
