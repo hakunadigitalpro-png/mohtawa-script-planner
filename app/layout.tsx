@@ -70,7 +70,7 @@ export default async function RootLayout({
       lang={locale}
       dir={dir}
       data-theme={dataTheme}
-      data-app-version="cal3"
+      data-app-version="cal4"
       style={styleOverrides}
     >
       <body

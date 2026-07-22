@@ -38,17 +38,15 @@ export default async function CalendarPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="text-sm text-muted">{t("subtitle")}</p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
+        </div>
+        <CalendarQuickCreate />
       </div>
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-start">
-        <CalendarQuickCreate />
-        <div className="min-w-0 flex-1">
-          <CalendarMonth initialMonth={monthStart} contents={contents} />
-        </div>
-      </div>
+      <CalendarMonth initialMonth={monthStart} contents={contents} />
     </div>
   );
 }

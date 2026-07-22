@@ -121,7 +121,7 @@ export function CalendarMonth({
               <div
                 key={i}
                 className={cn(
-                  "group relative min-h-32 border-b border-e border-border/60 p-2 transition-all",
+                  "group relative min-h-28 border-b border-e border-border/60 p-2 transition-all",
                   otherMonth && "bg-secondary/30",
                   (i + 1) % 7 === 0 && "border-e-0",
                   isDragOver && "bg-accent/10 ring-2 ring-accent ring-inset",
