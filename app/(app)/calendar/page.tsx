@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { CalendarMonth } from "@/components/calendar-month";
-import { NewContentButton } from "@/components/new-content-modal";
+import { CalendarQuickCreate } from "@/components/calendar-quick-create";
 import type { Content } from "@/lib/types";
 
 export default async function CalendarPage({
@@ -38,13 +38,12 @@ export default async function CalendarPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted">{t("subtitle")}</p>
-        </div>
-        <NewContentButton />
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-sm text-muted">{t("subtitle")}</p>
       </div>
+
+      <CalendarQuickCreate />
 
       <CalendarMonth initialMonth={monthStart} contents={contents} />
     </div>

@@ -21,7 +21,7 @@ import { fr, ar } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/badge";
-import { typeColor } from "@/lib/constants";
+import { typeColor, statusColor, statusLabel } from "@/lib/constants";
 import { NewContentModal } from "@/components/new-content-modal";
 import { updateContent } from "@/app/(app)/contents/actions";
 import type { Content } from "@/lib/types";
@@ -121,7 +121,7 @@ export function CalendarMonth({
               <div
                 key={i}
                 className={cn(
-                  "group relative min-h-28 border-b border-e border-border/60 p-2 transition-all",
+                  "group relative min-h-32 border-b border-e border-border/60 p-2 transition-all",
                   otherMonth && "bg-secondary/30",
                   (i + 1) % 7 === 0 && "border-e-0",
                   isDragOver && "bg-accent/10 ring-2 ring-accent ring-inset",
@@ -161,7 +161,7 @@ export function CalendarMonth({
                     <Plus className="size-3.5" />
                   </button>
                 </div>
-                <ul className="mt-1.5 space-y-1">
+                <ul className="mt-1.5 space-y-1.5">
                   {items.slice(0, 3).map((c) => (
                     <li key={c.id}>
                       <Link
@@ -172,15 +172,34 @@ export function CalendarMonth({
                           e.dataTransfer.setData(DRAG_MIME, c.id);
                           e.dataTransfer.setData("text/plain", c.title ?? "");
                         }}
-                        className="flex cursor-grab items-center gap-1.5 truncate rounded-full bg-secondary/50 px-2 py-1 text-[11px] font-medium hover:bg-secondary active:cursor-grabbing"
+                        dir="auto"
+                        style={{ borderInlineStartColor: typeColor(c.type) }}
+                        className="block cursor-grab rounded-lg border-s-[3px] bg-secondary/40 p-2 transition-colors hover:bg-secondary active:cursor-grabbing"
                       >
-                        <ColorDot color={typeColor(c.type)} />
-                        <span className="truncate">{c.title || tContent("untitled")}</span>
+                        {/* Nom */}
+                        <div className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                          {c.title || tContent("untitled")}
+                        </div>
+                        {/* Pilier */}
+                        {c.pillar && (
+                          <div className="mt-1">
+                            <span className="inline-block max-w-full truncate rounded-md bg-secondary px-1.5 py-0.5 align-middle text-xs font-medium text-foreground/70">
+                              {c.pillar}
+                            </span>
+                          </div>
+                        )}
+                        {/* Statut */}
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <ColorDot color={statusColor(c.status)} />
+                          <span className="text-xs font-medium text-muted">
+                            {statusLabel(c.status)}
+                          </span>
+                        </div>
                       </Link>
                     </li>
                   ))}
                   {items.length > 3 && (
-                    <li className="px-2 text-[11px] font-medium text-muted">
+                    <li className="px-1 text-xs font-medium text-muted">
                       {t("moreItems", { count: items.length - 3 })}
                     </li>
                   )}
