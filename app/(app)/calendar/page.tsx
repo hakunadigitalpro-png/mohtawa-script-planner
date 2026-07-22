@@ -43,9 +43,12 @@ export default async function CalendarPage({
         <p className="text-sm text-muted">{t("subtitle")}</p>
       </div>
 
-      <CalendarQuickCreate />
-
-      <CalendarMonth initialMonth={monthStart} contents={contents} />
+      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+        <CalendarQuickCreate />
+        <div className="min-w-0 flex-1">
+          <CalendarMonth initialMonth={monthStart} contents={contents} />
+        </div>
+      </div>
     </div>
   );
 }
