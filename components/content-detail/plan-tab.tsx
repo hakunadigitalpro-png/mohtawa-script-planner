@@ -28,12 +28,13 @@ function safeT(fn: (k: string) => string, key: string, fallback: string) {
 export function PlanTab({
   content,
   brandPillars,
-  brandObjectives,
   publications,
 }: {
   content: Content;
   brandPillars: { id: string; name: string; objective?: string | null }[];
-  brandObjectives: { id: string; name: string }[];
+  // Conservé dans le type (passé par DetailTabs) mais l'ancien champ à
+  // étiquettes "Objectifs" a été remplacé par l'objectif hérité du pilier.
+  brandObjectives?: { id: string; name: string }[];
   publications: ContentPublication[];
 }) {
   const t = useTranslations("plan");
@@ -173,59 +174,40 @@ export function PlanTab({
             />
           </div>
 
+          {/* Objectif : hérité automatiquement du/des pilier(s) sélectionné(s),
+              en lecture seule. Source unique = le pilier (Marques → Piliers),
+              donc jamais de recopie figée à maintenir. */}
           <div className="space-y-2">
-            <Label htmlFor="objectives">Objectifs</Label>
-            <MultiSelectWithCreate
-              id="objectives"
-              values={state.objectives}
-              onValuesChange={(next) =>
-                setState((s) => ({ ...s, objectives: next }))
-              }
-              options={brandObjectives.map((o) => ({
-                value: o.name,
-                label: o.name,
-              }))}
-              placeholder="Aucun objectif sélectionné"
-              inputLabel="Nom de l'objectif"
-              inputPlaceholder="Ex : Lead generation"
-              createDialogTitle="Nouvel objectif"
-              createDialogDescription="Cette étiquette pourra être réutilisée sur d'autres vidéos de la marque."
-              createLabel="Créer un objectif"
-              onCreate={async (name) =>
-                createTaxonomy("objective", content.brand_id, name)
-              }
-            />
+            <Label>
+              Objectif{" "}
+              <span className="text-xs font-normal text-muted">(du pilier)</span>
+            </Label>
+            {inheritedObjectives.length > 0 ? (
+              <div
+                dir="auto"
+                className="rounded-2xl border border-border bg-secondary/30 px-3.5 py-2.5"
+              >
+                <ul className="space-y-1.5">
+                  {inheritedObjectives.map((o) => (
+                    <li
+                      key={o.name}
+                      className="text-sm leading-relaxed text-foreground/90"
+                    >
+                      {inheritedObjectives.length > 1 && (
+                        <span className="font-semibold">{o.name} — </span>
+                      )}
+                      {o.objective}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-border bg-secondary/20 px-3.5 py-2.5 text-sm text-muted">
+                Choisis un pilier avec un objectif pour le voir apparaître ici.
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Objectif hérité du pilier : rempli automatiquement, en lecture
-            seule (l'objectif se modifie dans Marques → Piliers). Apparaît dès
-            qu'un pilier sélectionné a un objectif. */}
-        {inheritedObjectives.length > 0 && (
-          <div className="space-y-2 rounded-2xl border border-accent/20 bg-accent/[0.04] p-4">
-            <div className="flex items-center gap-1.5 text-sm font-semibold">
-              🎯 Objectif{inheritedObjectives.length > 1 ? " (par pilier)" : ""}
-            </div>
-            <ul className="space-y-1.5">
-              {inheritedObjectives.map((o) => (
-                <li
-                  key={o.name}
-                  dir="auto"
-                  className="text-sm leading-relaxed text-foreground/90"
-                >
-                  {inheritedObjectives.length > 1 && (
-                    <span className="font-semibold">{o.name} — </span>
-                  )}
-                  {o.objective}
-                </li>
-              ))}
-            </ul>
-            <p className="text-xs text-muted">
-              Rempli automatiquement depuis le pilier. Pour le modifier : Marques
-              → Piliers.
-            </p>
-          </div>
-        )}
 
         {/* Multi-plateformes (Idée 10) : remplace l'ancien couple Platform +
             Date par un éditeur de N publications avec chacune sa propre
