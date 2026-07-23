@@ -46,7 +46,7 @@ export function DetailTabs({
   slides: StorySlide[];
   scenes: StoryboardScene[];
   perf: Performance | null;
-  brandPillars: { id: string; name: string }[];
+  brandPillars: { id: string; name: string; objective?: string | null }[];
   brandObjectives: { id: string; name: string }[];
   checklistItems: ChecklistItem[];
   equipmentSuggestions: { label: string; usage_count: number }[];

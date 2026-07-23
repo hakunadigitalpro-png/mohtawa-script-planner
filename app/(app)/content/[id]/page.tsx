@@ -92,7 +92,7 @@ export default async function ContentDetailPage({
     supabase.from("performances").select("*").eq("content_id", id).maybeSingle(),
     supabase
       .from("brand_pillars")
-      .select("id, name")
+      .select("id, name, objective")
       .eq("brand_id", content.brand_id)
       .order("position", { ascending: true }),
     supabase
@@ -145,7 +145,11 @@ export default async function ContentDetailPage({
   const slides = (slidesRes.data ?? []) as StorySlide[];
   const scenes = (scenesRes.data ?? []) as StoryboardScene[];
   const perf = (perfRes.data ?? null) as Performance | null;
-  const pillars = (pillarsRes.data ?? []) as { id: string; name: string }[];
+  const pillars = (pillarsRes.data ?? []) as {
+    id: string;
+    name: string;
+    objective: string | null;
+  }[];
   const objectives = (objectivesRes.data ?? []) as { id: string; name: string }[];
   const comments = (commentsRes.data ?? []) as Comment[];
   const lastReadAt = readRes.data?.last_comment_read_at ?? "1970-01-01T00:00:00Z";

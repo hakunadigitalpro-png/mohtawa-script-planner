@@ -32,7 +32,7 @@ export function PlanTab({
   publications,
 }: {
   content: Content;
-  brandPillars: { id: string; name: string }[];
+  brandPillars: { id: string; name: string; objective?: string | null }[];
   brandObjectives: { id: string; name: string }[];
   publications: ContentPublication[];
 }) {
@@ -82,6 +82,14 @@ export function PlanTab({
         status: v.status,
       }),
     );
+
+  // Objectif hérité du/des pilier(s) sélectionné(s) : dès qu'un pilier a un
+  // objectif rempli (Marques → Piliers), il remonte ici automatiquement.
+  // Source unique = le pilier → toujours à jour (pas de recopie figée à
+  // maintenir). Se met à jour en direct quand on change la sélection.
+  const inheritedObjectives = brandPillars
+    .filter((p) => state.pillars.includes(p.name) && p.objective?.trim())
+    .map((p) => ({ name: p.name, objective: (p.objective as string).trim() }));
 
   return (
     <div className="space-y-4">
@@ -189,6 +197,35 @@ export function PlanTab({
             />
           </div>
         </div>
+
+        {/* Objectif hérité du pilier : rempli automatiquement, en lecture
+            seule (l'objectif se modifie dans Marques → Piliers). Apparaît dès
+            qu'un pilier sélectionné a un objectif. */}
+        {inheritedObjectives.length > 0 && (
+          <div className="space-y-2 rounded-2xl border border-accent/20 bg-accent/[0.04] p-4">
+            <div className="flex items-center gap-1.5 text-sm font-semibold">
+              🎯 Objectif{inheritedObjectives.length > 1 ? " (par pilier)" : ""}
+            </div>
+            <ul className="space-y-1.5">
+              {inheritedObjectives.map((o) => (
+                <li
+                  key={o.name}
+                  dir="auto"
+                  className="text-sm leading-relaxed text-foreground/90"
+                >
+                  {inheritedObjectives.length > 1 && (
+                    <span className="font-semibold">{o.name} — </span>
+                  )}
+                  {o.objective}
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted">
+              Rempli automatiquement depuis le pilier. Pour le modifier : Marques
+              → Piliers.
+            </p>
+          </div>
+        )}
 
         {/* Multi-plateformes (Idée 10) : remplace l'ancien couple Platform +
             Date par un éditeur de N publications avec chacune sa propre
