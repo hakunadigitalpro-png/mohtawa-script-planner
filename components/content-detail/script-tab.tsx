@@ -21,7 +21,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
-import { ReferenceAnalyzer } from "./reference-analyzer";
+// ReferenceAnalyzer (transcription d'une vidéo de référence) parké — voir
+// WISHLIST.md. Import + rendu retirés ; le composant reste dans le repo.
 import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Content, ReelDetails, StoryDetails, StorySlide } from "@/lib/types";
@@ -147,9 +148,6 @@ function ReelScript({
 
   return (
     <div className="space-y-4">
-      {/* T'inspirer d'une vidéo qui marche : transcription Groq → analyse
-          Claude → script proposé. Placé en haut = point de départ. */}
-      <ReferenceAnalyzer contentId={contentId} />
       <Card className="space-y-4 p-6">
         {/* Header : titre + estimation durée + bouton IA */}
         <div className="flex items-start justify-between gap-3">
