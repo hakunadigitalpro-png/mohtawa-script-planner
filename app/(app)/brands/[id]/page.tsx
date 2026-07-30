@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { TaxonomyManager } from "./taxonomy-manager";
 import { PillarManager } from "./pillar-manager";
 import { ThemeAssistant } from "./theme-assistant";
+import { GuidedTour } from "./guided-tour";
 import { TeamSection } from "./team-section";
 import type { BrandRole } from "../team-actions";
 import type { BrandPillar } from "@/lib/types";
@@ -99,9 +100,12 @@ export default async function BrandDetailPage({
         {t("backToAll")}
       </Link>
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{brand.name}</h1>
-        <p className="text-sm text-muted">{t("subtitle")}</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{brand.name}</h1>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
+        </div>
+        <GuidedTour />
       </div>
 
       <Card>
