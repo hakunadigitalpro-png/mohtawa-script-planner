@@ -67,6 +67,32 @@ Instagram nécessite une clé type RapidAPI). Fragile pour un produit vendu.
 
 ---
 
+## 4. Passer l'IA de Claude à Gemini (coût + carte)
+
+**Idée :** basculer les appels IA de Mohtawa (assistant de thèmes, génération
+reel/story/vlog) de Claude vers **Google Gemini**.
+
+**Pourquoi :**
+- **Beaucoup moins cher** (par million de tokens, entrée/sortie) :
+  - Gemini Flash-Lite ≈ 0,10 $ / 0,40 $ · Gemini Flash ≈ 1,50 $ / 7,50 $
+  - vs Claude Haiku 1 $ / 5 $ · Sonnet 3 $ / 15 $ · Opus 5 $ / 25 $
+  → Flash-Lite ≈ **10× moins cher que Haiku, 30× moins que Sonnet**.
+- **Tier GRATUIT sans carte** (Google AI Studio, compte
+  hakuna.digitalpro) : ~1 500 requêtes/jour sur Flash/Flash-Lite → règle le
+  problème de carte (comme Groq) et peut coûter 0 € en bêta.
+
+**Réserves / à valider :**
+- **Qualité FR + dialecte tunisien** : Gemini Flash est correct mais Claude
+  est meilleur — à tester sur nos vrais prompts (assistant de thèmes, hooks
+  tunisiens) avant de basculer.
+- **Travail de bascule modéré** : réécrire les appels dans `lib/ai.ts`. Gemini
+  a un **endpoint compatible OpenAI**, donc on réutilise la forme de code déjà
+  écrite pour Groq/OpenAI. Nouvelle clé gratuite à créer sur Google AI Studio.
+
+**Piste d'archi :** garder Claude pour le premium (analyses fines) et passer
+la génération à gros volume sur Gemini Flash gratuit. Commencer par
+l'assistant de thèmes pour comparer la qualité en conditions réelles.
+
 ## Autres idées en attente (déjà notées dans CLAUDE.md / mémoire)
 
 - Vrai `.apk` Android (TWA) via build cloud — PWABuilder avait échoué.
