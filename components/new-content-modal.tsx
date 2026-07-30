@@ -45,11 +45,20 @@ export function NewContentModal({
   onOpenChange,
   defaultType = "reel",
   defaultDate,
+  defaultTitle,
+  pillar,
+  brandId,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   defaultType?: string;
   defaultDate?: string;
+  /** Pré-remplit le titre (ex : depuis un exemple d'un thème). */
+  defaultTitle?: string;
+  /** Thème de contenu à rattacher à la vidéo créée. */
+  pillar?: string;
+  /** Marque explicite (ex : création depuis la page d'une marque). */
+  brandId?: string;
 }) {
   const t = useTranslations("newContent");
   const tCommon = useTranslations("common");
@@ -89,6 +98,8 @@ export function NewContentModal({
                 title: String(fd.get("title") ?? "").trim(),
                 date: (fd.get("date") as string) || null,
                 platform: platform || null,
+                pillar: pillar || undefined,
+                brandId: brandId || undefined,
               });
               if (res?.error) setError(res.error);
             })
@@ -128,7 +139,13 @@ export function NewContentModal({
 
             <div className="space-y-2">
               <Label htmlFor="title">{t("videoTitle")}</Label>
-              <Input id="title" name="title" placeholder={t("titlePlaceholder")} />
+              <Input
+                id="title"
+                name="title"
+                defaultValue={defaultTitle}
+                placeholder={t("titlePlaceholder")}
+                dir="auto"
+              />
             </div>
 
             <div className="space-y-2">

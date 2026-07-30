@@ -10,10 +10,15 @@ type CreateContentInput = {
   title?: string;
   date?: string | null;
   platform?: string | null;
+  /** Marque explicite (ex : créer depuis la page d'une marque non-active). */
+  brandId?: string;
+  /** Thème de contenu à pré-remplir (ex : depuis un exemple d'un thème). */
+  pillar?: string;
 };
 
 export async function createContent(input: CreateContentInput) {
-  const brandId = await getActiveBrandId();
+  // Marque explicite prioritaire (RLS vérifie l'appartenance) ; sinon marque active.
+  const brandId = input.brandId ?? (await getActiveBrandId());
   if (!brandId) return { error: "Aucune marque active." };
 
   const supabase = await createClient();
@@ -23,16 +28,22 @@ export async function createContent(input: CreateContentInput) {
   if (!user) return { error: "Non authentifié." };
 
   // user_id est rempli par le trigger BEFORE INSERT (migration 0002).
+  const insertRow: Record<string, unknown> = {
+    brand_id: brandId,
+    type: input.type,
+    title: input.title || null,
+    date: input.date || null,
+    platform: input.platform || null,
+    status: "idea",
+  };
+  if (input.pillar?.trim()) {
+    // Le trigger 0018 synchronise la colonne singulière `pillar` depuis pillars[0].
+    insertRow.pillars = [input.pillar.trim()];
+    insertRow.pillar = input.pillar.trim();
+  }
   const { data, error } = await supabase
     .from("contents")
-    .insert({
-      brand_id: brandId,
-      type: input.type,
-      title: input.title || null,
-      date: input.date || null,
-      platform: input.platform || null,
-      status: "idea",
-    })
+    .insert(insertRow)
     .select("id, type")
     .single();
 

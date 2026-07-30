@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, Plus, X, Check } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Check, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { NewContentModal } from "@/components/new-content-modal";
 import { cn } from "@/lib/utils";
 import {
   createTaxonomy,
@@ -221,7 +222,11 @@ function PillarCard({
 
           {pillar.examples.length > 0 && (
             <Detail label={`Exemples · ${pillar.examples.length}`}>
-              <ChipRow items={pillar.examples} />
+              <ExampleLauncher
+                brandId={brandId}
+                themeName={pillar.name}
+                items={pillar.examples}
+              />
             </Detail>
           )}
 
@@ -267,6 +272,61 @@ function ChipRow({ items }: { items: string[] }) {
         </span>
       ))}
     </div>
+  );
+}
+
+/**
+ * Exemples = idées de vidéos concrètes → chaque ligne a un bouton « Vidéo »
+ * qui ouvre la fenêtre Nouvelle vidéo PRÉ-REMPLIE (titre = l'idée, thème =
+ * ce thème, marque = celle de la page). Anti-page-blanche : un clic pour
+ * transformer une idée en vidéo à développer.
+ */
+function ExampleLauncher({
+  brandId,
+  themeName,
+  items,
+}: {
+  brandId: string;
+  themeName: string;
+  items: string[];
+}) {
+  const [idea, setIdea] = React.useState<string | null>(null);
+  return (
+    <>
+      <ul className="space-y-1.5">
+        {items.map((it, i) => (
+          <li
+            key={i}
+            className="flex items-center justify-between gap-2 rounded-xl border border-border/50 bg-secondary/40 px-3 py-2"
+          >
+            <span
+              dir="auto"
+              className="min-w-0 flex-1 text-sm text-foreground/90"
+            >
+              {it}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIdea(it)}
+              title="En faire une vidéo"
+              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent transition hover:bg-accent/20"
+            >
+              <Video className="size-3.5" />
+              Vidéo
+            </button>
+          </li>
+        ))}
+      </ul>
+      {idea !== null && (
+        <NewContentModal
+          open={idea !== null}
+          onOpenChange={(v) => !v && setIdea(null)}
+          defaultTitle={idea}
+          pillar={themeName}
+          brandId={brandId}
+        />
+      )}
+    </>
   );
 }
 
