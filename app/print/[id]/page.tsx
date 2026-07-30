@@ -90,7 +90,7 @@ export default async function PrintPage({
       <section className="print-section">
         <h2>Plan</h2>
         <dl className="print-grid">
-          {c.pillar && <Field label="Pilier" value={c.pillar} />}
+          {c.pillar && <Field label="Thème" value={c.pillar} />}
           {c.objective && <Field label="Objectif" value={c.objective} />}
           {c.hook && <Field label="Accroche" value={c.hook} long />}
           {c.cta && <Field label="Call to Action" value={c.cta} long />}

@@ -218,7 +218,7 @@ export function ShareView({
             }
           >
             <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {c.pillar && <Field label="Pilier" value={c.pillar} />}
+              {c.pillar && <Field label="Thème" value={c.pillar} />}
               {c.objective && <Field label="Objectif" value={c.objective} />}
               {c.hook && (
                 <Field

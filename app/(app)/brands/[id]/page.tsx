@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { TaxonomyManager } from "./taxonomy-manager";
 import { PillarManager } from "./pillar-manager";
+import { ThemeAssistant } from "./theme-assistant";
 import { TeamSection } from "./team-section";
 import type { BrandRole } from "../team-actions";
 import type { BrandPillar } from "@/lib/types";
@@ -126,11 +127,15 @@ export default async function BrandDetailPage({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Layers className="size-4 text-accent" />
-            {t("pillars.title")}
+            Thèmes de contenu
           </CardTitle>
-          <CardDescription>{t("pillars.subtitle")}</CardDescription>
+          <CardDescription>
+            Les sujets récurrents de ta marque — ce dont tu parles dans tes
+            vidéos. Laisse l&apos;IA te les proposer, ou ajoute-les à la main.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <ThemeAssistant brandId={brand.id} />
           <PillarManager brandId={brand.id} pillars={pillars} />
         </CardContent>
       </Card>

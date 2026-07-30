@@ -56,8 +56,8 @@ export function PillarManager({
     <div className="space-y-3">
       {pillars.length === 0 && !adding && (
         <p className="rounded-2xl border border-dashed border-border bg-secondary/40 px-4 py-3 text-sm text-muted">
-          Aucun pilier pour l&apos;instant. Ajoute tes 3-4 piliers de contenu
-          (ex : « Prévention & Conseils », « Coulisses »…).
+          Aucun thème pour l&apos;instant. Génère-les avec l&apos;IA ci-dessus,
+          ou ajoute-les à la main (ex : « Prévention & Conseils »…).
         </p>
       )}
 
@@ -76,7 +76,7 @@ export function PillarManager({
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            placeholder="Nom du pilier (ex : 🦶 Prévention & Conseils)"
+            placeholder="Nom du thème (ex : 🦶 Prévention & Conseils)"
             autoFocus
             required
             dir="auto"
@@ -106,7 +106,7 @@ export function PillarManager({
           onClick={() => setAdding(true)}
         >
           <Plus className="size-3.5" />
-          Ajouter un pilier
+          Ajouter un thème
         </Button>
       )}
 
@@ -135,7 +135,7 @@ function PillarCard({
   const onDelete = () => {
     if (
       !confirm(
-        `Supprimer le pilier « ${pillar.name} » ? Les vidéos déjà classées gardent leur libellé.`,
+        `Supprimer le thème « ${pillar.name} » ? Les vidéos déjà classées gardent leur libellé.`,
       )
     )
       return;
@@ -179,7 +179,7 @@ function PillarCard({
             type="button"
             onClick={() => setEditing(true)}
             className="flex size-8 items-center justify-center rounded-full text-muted transition hover:bg-secondary hover:text-foreground"
-            aria-label="Éditer le pilier"
+            aria-label="Éditer le thème"
           >
             <Pencil className="size-4" />
           </button>
@@ -188,7 +188,7 @@ function PillarCard({
             onClick={onDelete}
             disabled={pending}
             className="flex size-8 items-center justify-center rounded-full text-muted transition hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-            aria-label="Supprimer le pilier"
+            aria-label="Supprimer le thème"
           >
             <Trash2 className="size-4" />
           </button>
@@ -317,7 +317,7 @@ function PillarEditor({
     <div className="space-y-3 rounded-2xl border border-accent/30 bg-accent/[0.03] p-4">
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
         <div className="space-y-1">
-          <Label className="text-sm font-semibold">Nom du pilier</Label>
+          <Label className="text-sm font-semibold">Nom du thème</Label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}

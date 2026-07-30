@@ -149,7 +149,7 @@ export function PlanTab({
 
           <div className="space-y-2">
             <div className="flex items-center gap-1.5">
-              <Label htmlFor="pillars">Piliers de contenu</Label>
+              <Label htmlFor="pillars">Thèmes de contenu</Label>
               <PillarHelp />
             </div>
             <MultiSelectWithCreate
@@ -162,12 +162,12 @@ export function PlanTab({
                 value: p.name,
                 label: p.name,
               }))}
-              placeholder="Aucun pilier sélectionné"
-              inputLabel="Nom du pilier"
-              inputPlaceholder={t("pillarPlaceholder")}
-              createDialogTitle="Nouveau pilier"
+              placeholder="Aucun thème sélectionné"
+              inputLabel="Nom du thème"
+              inputPlaceholder="Ex : Prévention & Conseils"
+              createDialogTitle="Nouveau thème"
               createDialogDescription="Cette étiquette pourra être réutilisée sur d'autres vidéos de la marque."
-              createLabel="Créer un pilier"
+              createLabel="Créer un thème"
               onCreate={async (name) =>
                 createTaxonomy("pillar", content.brand_id, name)
               }
@@ -180,7 +180,7 @@ export function PlanTab({
           <div className="space-y-2">
             <Label>
               Objectif{" "}
-              <span className="text-xs font-normal text-muted">(du pilier)</span>
+              <span className="text-xs font-normal text-muted">(du thème)</span>
             </Label>
             {inheritedObjectives.length > 0 ? (
               <div
@@ -203,7 +203,7 @@ export function PlanTab({
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-border bg-secondary/20 px-3.5 py-2.5 text-sm text-muted">
-                Choisis un pilier avec un objectif pour le voir apparaître ici.
+                Choisis un thème avec un objectif pour le voir apparaître ici.
               </div>
             )}
           </div>

@@ -822,6 +822,141 @@ Renvoie UNIQUEMENT ce JSON (sans markdown autour) :
   return callClaudeJSON<VlogGeneration>(system, user, 2000);
 }
 
+/* =========================================================================
+   Assistant de thèmes de contenu — conversationnel (API Claude)
+   ========================================================================= */
+
+export type ThemeProposal = {
+  name: string;
+  share_pct: number;
+  objective: string;
+  rubriques: string[];
+  examples: string[];
+  note: string;
+};
+
+export type ThemeAssistantReply = {
+  /** Ce que l'assistant dit (question OU présentation des thèmes). */
+  message: string;
+  /** Thèmes proposés — null tant qu'il pose encore des questions. */
+  themes: ThemeProposal[] | null;
+};
+
+/**
+ * Un tour de l'assistant conversationnel qui aide un PATRON DE PETITE
+ * ENTREPRISE (pas un expert) à définir ses THÈMES de contenu. Claude pose
+ * 1-2 questions si besoin, puis propose 3-4 thèmes remplis (objectif +
+ * rubriques + exemples) et les ajuste selon les retours. Répond toujours en
+ * JSON {message, themes}. Tolérant : si la sortie n'est pas du JSON, on
+ * renvoie le texte comme message (sans thèmes).
+ */
+export async function themeAssistantTurn(input: {
+  brandName: string;
+  history: { role: "user" | "assistant"; content: string }[];
+}): Promise<ThemeAssistantReply> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new AiError(
+      "no_api_key",
+      "L'IA n'est pas configurée. Ajoute ANTHROPIC_API_KEY dans Vercel et redéploie.",
+    );
+  }
+
+  const system = `Tu es un stratège de contenu qui aide un PATRON DE PETITE ENTREPRISE (pas un expert marketing) à définir ses THÈMES de contenu vidéo pour les réseaux (Reels, TikTok, Stories). Multilingue : français ET arabe (dialectes maghrébins inclus). Marque : "${input.brandName || "(sans nom)"}".
+
+TON RÔLE, façon assistant interactif :
+- Parle simplement, avec chaleur, zéro jargon. La personne ne sait PAS ce qu'est un "pilier" ni un "thème de contenu" — ne le lui demande jamais frontalement.
+- Si tu n'as pas assez d'infos pour proposer de bons thèmes, pose 1 à 2 questions COURTES et concrètes (ex : "Tu fais quoi exactement ?", "C'est pour attirer de nouveaux clients ou rassurer les tiens ?"). Une étape à la fois, jamais un long questionnaire.
+- Dès que tu as de quoi travailler, PROPOSE 3 à 4 thèmes remplis. Puis ajuste selon la personne (ajouter/retirer un thème, changer le ton, les %…).
+- Chaque thème = un nom court avec un emoji au début + une part % (l'ensemble ≈ 100%) + un objectif en 1 phrase + 5 à 7 rubriques (formats récurrents courts) + 5 à 7 exemples de vidéos concrètes + une note (le pourquoi).
+
+FORMAT — réponds TOUJOURS avec un SEUL objet JSON valide, rien autour :
+{
+  "message": "ce que tu dis à la personne, en langage simple (une question OU la présentation des thèmes)",
+  "themes": null
+}
+Quand tu proposes/ajustes des thèmes, remplace null par un tableau :
+"themes": [
+  { "name": "🦶 Prévention & Conseils", "share_pct": 40, "objective": "…", "rubriques": ["…","…"], "examples": ["…","…"], "note": "…" }
+]
+Réponds dans la langue de la personne (français par défaut).`;
+
+  const messages = input.history
+    .filter((m) => m.content && m.content.trim())
+    .map((m) => ({ role: m.role, content: m.content }));
+  if (!messages.some((m) => m.role === "user")) {
+    messages.push({
+      role: "user",
+      content: "Aide-moi à définir mes thèmes de contenu.",
+    });
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(ANTHROPIC_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: ANTHROPIC_MODEL,
+        max_tokens: 2200,
+        system,
+        messages,
+      }),
+    });
+  } catch {
+    throw new AiError("network", "Impossible de joindre l'IA. Réessaie.");
+  }
+
+  if (!res.ok) {
+    const status = res.status;
+    if (status === 401) {
+      throw new AiError("auth", "Clé Anthropic invalide. Vérifie ANTHROPIC_API_KEY.");
+    }
+    if (status === 429) {
+      throw new AiError(
+        "rate_limit",
+        "Quota atteint ou trop de requêtes. Réessaie dans une minute.",
+      );
+    }
+    throw new AiError("api", `Erreur Anthropic (${status}). Réessaie.`);
+  }
+
+  const data = (await res.json()) as {
+    content?: { type: string; text?: string }[];
+  };
+  const text = (data.content ?? [])
+    .filter((b) => b.type === "text")
+    .map((b) => b.text ?? "")
+    .join("\n")
+    .trim();
+  if (!text) throw new AiError("empty", "Réponse vide de l'IA.");
+
+  // Extraction JSON tolérante (fence ```json``` ou du premier { au dernier }).
+  let raw = text;
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced) {
+    raw = fenced[1].trim();
+  } else {
+    const s = raw.indexOf("{");
+    const e = raw.lastIndexOf("}");
+    if (s !== -1 && e !== -1 && e > s) raw = raw.slice(s, e + 1);
+  }
+  try {
+    const parsed = JSON.parse(raw) as ThemeAssistantReply;
+    return {
+      message: typeof parsed.message === "string" ? parsed.message : text,
+      themes: Array.isArray(parsed.themes) ? parsed.themes : null,
+    };
+  } catch {
+    // Pas de JSON exploitable → on montre le texte tel quel, sans thèmes.
+    return { message: text, themes: null };
+  }
+}
+
 export type ReferenceAnalysisInput = {
   /** Transcript de la vidéo de référence (issu de la transcription Groq). */
   transcript: string;

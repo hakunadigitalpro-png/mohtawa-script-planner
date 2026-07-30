@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { themeAssistantTurn, AiError, type ThemeProposal } from "@/lib/ai";
 
 type Kind = "pillar" | "objective";
 
@@ -159,6 +160,101 @@ export async function updatePillar(
   revalidatePath(`/brands/${brandId}`);
   revalidatePath("/", "layout");
   return { ok: true as const };
+}
+
+/* =========================================================================
+   Assistant IA de thèmes de contenu (conversationnel)
+   ========================================================================= */
+
+/**
+ * Un tour de dialogue avec l'assistant de thèmes. Le client envoie tout
+ * l'historique ; on renvoie la réponse de Claude (message + éventuels thèmes).
+ * Ne persiste rien — l'application passe par applyBrandThemes.
+ */
+export async function themeAssistant(input: {
+  brandId: string;
+  history: { role: "user" | "assistant"; content: string }[];
+}) {
+  try {
+    const supabase = await createClient();
+    const { data: brand } = await supabase
+      .from("brands")
+      .select("name")
+      .eq("id", input.brandId)
+      .maybeSingle();
+
+    const reply = await themeAssistantTurn({
+      brandName: brand?.name ?? "",
+      history: input.history,
+    });
+    return { ok: true as const, reply };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false as const, error: e.message };
+    return { ok: false as const, error: "Erreur inattendue. Réessaie." };
+  }
+}
+
+/**
+ * Insère les thèmes validés comme lignes brand_pillars (avec objectif,
+ * rubriques, exemples, note, %). N'ajoute que les noms pas déjà présents
+ * (dé-doublonnage vs existant ET au sein du lot).
+ */
+export async function applyBrandThemes(input: {
+  brandId: string;
+  themes: ThemeProposal[];
+}) {
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("brand_pillars")
+    .select("name, position")
+    .eq("brand_id", input.brandId);
+
+  const seen = new Set(
+    (existing ?? []).map((p) => p.name.trim().toLowerCase()),
+  );
+  let pos = (existing ?? []).reduce((m, p) => Math.max(m, p.position), 0);
+
+  const rows: {
+    brand_id: string;
+    name: string;
+    position: number;
+    objective: string | null;
+    rubriques: string[];
+    examples: string[];
+    note: string | null;
+    share_pct: number | null;
+  }[] = [];
+
+  for (const t of input.themes ?? []) {
+    const name = (t.name ?? "").trim().slice(0, 60);
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    rows.push({
+      brand_id: input.brandId,
+      name,
+      position: ++pos,
+      objective: t.objective?.trim() || null,
+      rubriques: (t.rubriques ?? []).map((s) => s.trim()).filter(Boolean),
+      examples: (t.examples ?? []).map((s) => s.trim()).filter(Boolean),
+      note: t.note?.trim() || null,
+      share_pct:
+        typeof t.share_pct === "number" && !Number.isNaN(t.share_pct)
+          ? Math.max(0, Math.min(100, Math.round(t.share_pct)))
+          : null,
+    });
+  }
+
+  if (rows.length) {
+    const { error } = await supabase.from("brand_pillars").insert(rows);
+    if (error) return { ok: false as const, error: error.message };
+  }
+
+  revalidatePath(`/brands/${input.brandId}`);
+  revalidatePath("/", "layout");
+  return { ok: true as const, added: rows.length };
 }
 
 export async function deleteTaxonomy(

@@ -16,12 +16,11 @@ import {
  * avant de produire ses Reels / Stories.
  */
 export function PillarHelp() {
-  const tPlan = useTranslations("plan");
   const t = useTranslations("fieldHelp.pillar");
 
   return (
     <FieldHelp
-      title={tPlan("pillar")}
+      title="Thèmes de contenu"
       description={t("description")}
       videoUrl="https://youtu.be/fgy-JgY0Q3I"
     >
