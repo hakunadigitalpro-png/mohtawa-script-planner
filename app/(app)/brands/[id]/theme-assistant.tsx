@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Send, Check, Wand2 } from "lucide-react";
+import { Sparkles, Send, Check, RefreshCcw, ArrowLeft } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,19 +21,30 @@ import {
 } from "@/app/(app)/brands/taxonomy-actions";
 import type { ThemeProposal } from "@/lib/ai";
 
-type Turn = {
-  role: "user" | "assistant";
-  message: string;
-  themes?: ThemeProposal[] | null;
-};
+/**
+ * Assistant de thèmes — format QUESTIONNAIRE GUIDÉ (inspiration Claude design),
+ * pas un chat : des questions claires avec champs libres + options cliquables
+ * (dont « Décidez pour moi »), un bouton « Générer », puis les thèmes proposés
+ * avec Appliquer / Régénérer / ajuster. Pensé pour un patron non-marketeur.
+ */
 
-/** Objectifs cliquables (langage patron, pas jargon marketing). */
 const OBJECTIVES = [
   "Attirer des clients",
   "Rassurer & fidéliser",
   "Me faire connaître",
   "Vendre",
+  "Décidez pour moi",
 ];
+
+const TONES = [
+  "Chaleureux & proche",
+  "Expert & sérieux",
+  "Fun & décalé",
+  "Inspirant",
+  "Décidez pour moi",
+];
+
+const COUNTS = ["3 thèmes", "4 thèmes", "5 thèmes", "Décidez pour moi"];
 
 export function ThemeAssistant({ brandId }: { brandId: string }) {
   const [open, setOpen] = React.useState(false);
@@ -58,52 +69,49 @@ function AssistantModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [turns, setTurns] = React.useState<Turn[]>([]);
-  const [input, setInput] = React.useState("");
+
+  // Réponses du questionnaire
   const [activity, setActivity] = React.useState("");
+  const [audience, setAudience] = React.useState("");
   const [objective, setObjective] = React.useState("");
+  const [tone, setTone] = React.useState("");
+  const [count, setCount] = React.useState("");
+
+  // Phase + état IA
+  const [phase, setPhase] = React.useState<"form" | "results">("form");
+  const [history, setHistory] = React.useState<
+    { role: "user" | "assistant"; content: string }[]
+  >([]);
+  const [themes, setThemes] = React.useState<ThemeProposal[] | null>(null);
+  const [message, setMessage] = React.useState("");
+  const [adjust, setAdjust] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [applying, setApplying] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const scrollRef = React.useRef<HTMLDivElement>(null);
 
-  // Tant qu'aucun message n'a été envoyé, on montre le mini-formulaire guidé ;
-  // ensuite ça devient une discussion.
-  const started = turns.length > 0;
-
-  // Auto-scroll en bas à chaque nouveau message / état de chargement.
-  React.useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [turns, pending]);
-
-  const sendMessage = async (text: string) => {
-    const t = text.trim();
-    if (!t || pending) return;
+  // Envoie un tour à l'IA (brief initial, régénération ou ajustement) et met
+  // à jour l'historique + les thèmes proposés.
+  const runTurn = async (userContent: string) => {
     setError(null);
-    const nextTurns: Turn[] = [...turns, { role: "user", message: t }];
-    setTurns(nextTurns);
     setPending(true);
+    const nextHistory = [
+      ...history,
+      { role: "user" as const, content: userContent },
+    ];
+    setHistory(nextHistory);
     try {
-      const history = nextTurns.map((tn) => ({
-        role: tn.role,
-        content:
-          tn.role === "assistant"
-            ? JSON.stringify({ message: tn.message, themes: tn.themes ?? null })
-            : tn.message,
-      }));
-      const res = await themeAssistant({ brandId, history });
+      const res = await themeAssistant({ brandId, history: nextHistory });
       if (!res.ok) {
         setError(res.error);
-      } else {
-        setTurns((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            message: res.reply.message,
-            themes: res.reply.themes,
-          },
-        ]);
+        return;
       }
+      setHistory([
+        ...nextHistory,
+        { role: "assistant", content: JSON.stringify(res.reply) },
+      ]);
+      setThemes(res.reply.themes);
+      setMessage(res.reply.message);
+      setPhase("results");
     } catch {
       setError("L'IA n'a pas répondu. Réessaie.");
     } finally {
@@ -111,44 +119,37 @@ function AssistantModal({
     }
   };
 
-  // Envoi depuis le formulaire de départ (activité + objectif cliqué).
-  const start = () => {
-    const act = activity.trim();
-    if (!act) {
-      setError("Décris ton activité en une phrase.");
+  const generate = () => {
+    if (!activity.trim()) {
+      setError("Dis-moi au moins ce que tu fais (question 1).");
       return;
     }
-    const parts = [`Mon activité : ${act}.`];
-    if (objective) parts.push(`Mon objectif principal : ${objective}.`);
-    sendMessage(parts.join(" "));
+    const brief = [
+      `Activité : ${activity.trim()}.`,
+      `Clientèle : ${audience.trim() || "non précisée — à toi de deviner"}.`,
+      `Objectif principal : ${objective || "à toi de décider"}.`,
+      `Ton souhaité : ${tone || "à toi de décider"}.`,
+      `Nombre de thèmes : ${count || "à toi de décider (3 à 4)"}.`,
+      "Propose directement les thèmes remplis, sans reposer de question.",
+    ].join("\n");
+    runTurn(brief);
   };
 
-  // Envoi d'un message tapé dans la discussion.
-  const sendTyped = () => {
-    const t = input.trim();
-    if (!t) return;
-    setInput("");
-    sendMessage(t);
+  const sendAdjust = () => {
+    const note = adjust.trim();
+    if (!note) return;
+    setAdjust("");
+    runTurn(note);
   };
-
-  // Derniers thèmes proposés = ceux du dernier message de l'assistant.
-  const lastAssistant = [...turns]
-    .reverse()
-    .find((t) => t.role === "assistant");
-  const currentThemes =
-    lastAssistant?.themes && lastAssistant.themes.length > 0
-      ? lastAssistant.themes
-      : null;
 
   const apply = async () => {
-    if (!currentThemes) return;
+    if (!themes || themes.length === 0) return;
     setError(null);
     setApplying(true);
     try {
-      const res = await applyBrandThemes({ brandId, themes: currentThemes });
-      if (!res.ok) {
-        setError(res.error);
-      } else {
+      const res = await applyBrandThemes({ brandId, themes });
+      if (!res.ok) setError(res.error);
+      else {
         onClose();
         router.refresh();
       }
@@ -165,112 +166,106 @@ function AssistantModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="size-4 text-amber-500" />
-            Créer mes thèmes avec l&apos;IA
+            {phase === "form"
+              ? "Quelques questions sur ta marque"
+              : "Tes thèmes proposés"}
           </DialogTitle>
           <DialogDescription>
-            {started
-              ? "L'IA propose des thèmes et les ajuste jusqu'à ce que ça te plaise."
-              : "Deux réponses simples, et l'IA te propose tes thèmes de contenu."}
+            {phase === "form"
+              ? "Réponds simplement — l'IA s'occupe de construire tes thèmes de contenu."
+              : "Applique-les, régénère, ou demande un ajustement."}
           </DialogDescription>
         </DialogHeader>
 
         <DialogBody className="space-y-4">
-          {!started ? (
-            /* ---------- Écran de départ : formulaire guidé ---------- */
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">
-                  1. Ton activité, pour qui ?
-                </Label>
-                <Textarea
-                  value={activity}
-                  onChange={(e) => setActivity(e.target.value)}
-                  dir="auto"
-                  autoFocus
-                  placeholder="Ex : cabinet de podologie à Tunis, pour des gens qui ont mal aux pieds"
-                  className="min-h-16 text-sm leading-relaxed [field-sizing:content]"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                      e.preventDefault();
-                      start();
-                    }
-                  }}
-                />
+          {phase === "form" ? (
+            <>
+              <div className="max-h-[58vh] space-y-6 overflow-y-auto pr-1">
+                <Question
+                  n={1}
+                  label="Qu'est-ce que tu fais ?"
+                  hint="Ton activité, en quelques mots."
+                >
+                  <Textarea
+                    value={activity}
+                    onChange={(e) => setActivity(e.target.value)}
+                    dir="auto"
+                    autoFocus
+                    placeholder="Ex : cabinet de podologie à Tunis"
+                    className="min-h-14 text-sm leading-relaxed [field-sizing:content]"
+                  />
+                </Question>
+
+                <Question
+                  n={2}
+                  label="Pour qui ?"
+                  hint="Ta clientèle idéale (optionnel)."
+                >
+                  <Textarea
+                    value={audience}
+                    onChange={(e) => setAudience(e.target.value)}
+                    dir="auto"
+                    placeholder="Ex : personnes qui ont mal aux pieds, diabétiques, sportifs"
+                    className="min-h-14 text-sm leading-relaxed [field-sizing:content]"
+                  />
+                </Question>
+
+                <Question
+                  n={3}
+                  label="Ton objectif principal ?"
+                  hint="Ce que tu veux que tes vidéos t'apportent."
+                >
+                  <Chips options={OBJECTIVES} value={objective} onChange={setObjective} />
+                </Question>
+
+                <Question
+                  n={4}
+                  label="Le ton de tes vidéos ?"
+                  hint="Comment tu veux parler à ton audience."
+                >
+                  <Chips options={TONES} value={tone} onChange={setTone} />
+                </Question>
+
+                <Question n={5} label="Combien de thèmes ?" hint="">
+                  <Chips options={COUNTS} value={count} onChange={setCount} />
+                </Question>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">
-                  2. Ton objectif principal
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {OBJECTIVES.map((o) => {
-                    const active = objective === o;
-                    return (
-                      <button
-                        key={o}
-                        type="button"
-                        onClick={() => setObjective(active ? "" : o)}
-                        className={cn(
-                          "rounded-full border px-3.5 py-2 text-sm font-medium transition",
-                          active
-                            ? "border-accent bg-accent/10 text-accent"
-                            : "border-border bg-card hover:bg-secondary",
-                        )}
-                      >
-                        {o}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {error && (
-                <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {error}
-                </p>
-              )}
+              {error && <ErrorNote>{error}</ErrorNote>}
 
               <Button
                 type="button"
-                onClick={start}
+                onClick={generate}
                 disabled={pending || !activity.trim()}
                 className="w-full"
               >
                 <Sparkles className="size-4" />
-                {pending ? "Un instant…" : "Générer mes thèmes"}
+                {pending ? "Je réfléchis à tes thèmes…" : "Générer mes thèmes"}
               </Button>
-            </div>
+            </>
           ) : (
-            /* ---------- Discussion ---------- */
             <>
-              <div
-                ref={scrollRef}
-                className="max-h-[46vh] space-y-3 overflow-y-auto pr-1"
-              >
-                {turns.map((t, i) => (
-                  <div key={i}>
-                    <Bubble role={t.role} text={t.message} />
-                    {t.role === "assistant" &&
-                      t.themes &&
-                      t.themes.length > 0 && (
-                        <div className="mt-2 space-y-2">
-                          {t.themes.map((th, j) => (
-                            <ThemePreview key={j} theme={th} />
-                          ))}
-                        </div>
-                      )}
-                  </div>
-                ))}
-                {pending && <Bubble role="assistant" text="…" muted />}
+              <div className="max-h-[56vh] space-y-3 overflow-y-auto pr-1">
+                {message && (
+                  <p
+                    dir="auto"
+                    className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/80"
+                  >
+                    {message}
+                  </p>
+                )}
+                {themes && themes.length > 0 ? (
+                  themes.map((th, j) => <ThemePreview key={j} theme={th} />)
+                ) : (
+                  <p className="rounded-xl bg-secondary/40 px-3 py-2 text-sm text-muted">
+                    L&apos;IA a besoin d&apos;une précision — réponds ci-dessous.
+                  </p>
+                )}
               </div>
 
-              {error && (
-                <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {error}
-                </p>
-              )}
+              {error && <ErrorNote>{error}</ErrorNote>}
 
-              {currentThemes && (
+              {themes && themes.length > 0 && (
                 <Button
                   type="button"
                   onClick={apply}
@@ -280,44 +275,65 @@ function AssistantModal({
                   <Check className="size-4" />
                   {applying
                     ? "Enregistrement…"
-                    : `Ajouter ces ${currentThemes.length} thèmes à ma marque`}
+                    : `Ajouter ces ${themes.length} thèmes à ma marque`}
                 </Button>
               )}
 
+              {/* Ajuster (façon "dis-moi ce qu'on change") */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  sendTyped();
+                  sendAdjust();
                 }}
                 className="flex items-end gap-2"
               >
                 <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  value={adjust}
+                  onChange={(e) => setAdjust(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      sendTyped();
+                      sendAdjust();
                     }
                   }}
-                  placeholder="Ajuste ou réponds… (ex : ajoute un thème sur les coulisses)"
                   dir="auto"
                   disabled={pending}
+                  placeholder="Un ajustement ? (ex : ajoute un thème sur les coulisses)"
                   className="min-h-11 flex-1 text-sm [field-sizing:content]"
                 />
                 <Button
                   type="submit"
                   size="icon"
-                  disabled={pending || !input.trim()}
-                  aria-label="Envoyer"
+                  variant="outline"
+                  disabled={pending || !adjust.trim()}
+                  aria-label="Envoyer l'ajustement"
                 >
-                  {pending ? (
-                    <Wand2 className="size-4 animate-pulse" />
-                  ) : (
-                    <Send className="size-4" />
-                  )}
+                  <Send className={cn("size-4", pending && "animate-pulse")} />
                 </Button>
               </form>
+
+              <div className="flex items-center justify-between gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPhase("form")}
+                  disabled={pending}
+                >
+                  <ArrowLeft className="size-3.5" />
+                  Modifier mes réponses
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => runTurn("Propose une autre version, avec d'autres angles.")}
+                  disabled={pending}
+                >
+                  <RefreshCcw className={cn("size-3.5", pending && "animate-spin")} />
+                  Régénérer
+                </Button>
+              </div>
             </>
           )}
         </DialogBody>
@@ -326,52 +342,77 @@ function AssistantModal({
   );
 }
 
-function Bubble({
-  role,
-  text,
-  muted,
+/* ============================== Sous-composants ============================== */
+
+function Question({
+  n,
+  label,
+  hint,
+  children,
 }: {
-  role: "user" | "assistant";
-  text: string;
-  muted?: boolean;
+  n: number;
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
 }) {
-  const isUser = role === "user";
   return (
-    <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
-      <div
-        dir="auto"
-        className={cn(
-          "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm leading-relaxed",
-          isUser
-            ? "bg-accent text-accent-foreground"
-            : "bg-secondary text-foreground",
-          muted && "text-muted",
-        )}
-      >
-        {renderBold(text)}
+    <div className="space-y-2">
+      <div>
+        <Label className="text-sm font-semibold">
+          {n}. {label}
+        </Label>
+        {hint && <p className="text-xs text-muted">{hint}</p>}
       </div>
+      {children}
     </div>
   );
 }
 
-/** Rendu minimal du **gras** markdown dans les bulles. */
-function renderBold(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((p, i) =>
-    p.startsWith("**") && p.endsWith("**") ? (
-      <strong key={i}>{p.slice(2, -2)}</strong>
-    ) : (
-      <React.Fragment key={i}>{p}</React.Fragment>
-    ),
+/** Options cliquables en pastilles (choix unique ; re-cliquer désélectionne). */
+function Chips({
+  options,
+  value,
+  onChange,
+}: {
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => {
+        const active = value === o;
+        return (
+          <button
+            key={o}
+            type="button"
+            onClick={() => onChange(active ? "" : o)}
+            className={cn(
+              "rounded-full border px-3.5 py-2 text-sm font-medium transition",
+              active
+                ? "border-accent bg-accent/10 text-accent"
+                : "border-border bg-card hover:bg-secondary",
+            )}
+          >
+            {o}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ErrorNote({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      {children}
+    </p>
   );
 }
 
 function ThemePreview({ theme }: { theme: ThemeProposal }) {
   return (
-    <div
-      className="rounded-2xl border border-border bg-card p-3"
-      dir="auto"
-    >
+    <div className="rounded-2xl border border-border bg-card p-3" dir="auto">
       <div className="flex items-center gap-2">
         <h5 className="text-sm font-bold">{theme.name}</h5>
         {typeof theme.share_pct === "number" && (
