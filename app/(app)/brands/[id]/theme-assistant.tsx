@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
   themeAssistant,
@@ -26,8 +27,13 @@ type Turn = {
   themes?: ThemeProposal[] | null;
 };
 
-const GREETING =
-  "Salut 👋 Je vais t'aider à définir tes thèmes de contenu — tu n'as rien à savoir à l'avance. Dis-moi juste, en une phrase : **qu'est-ce que tu fais**, **pour qui**, et **ton objectif** principal (attirer des clients, rassurer, vendre…) ?";
+/** Objectifs cliquables (langage patron, pas jargon marketing). */
+const OBJECTIVES = [
+  "Attirer des clients",
+  "Rassurer & fidéliser",
+  "Me faire connaître",
+  "Vendre",
+];
 
 export function ThemeAssistant({ brandId }: { brandId: string }) {
   const [open, setOpen] = React.useState(false);
@@ -52,35 +58,38 @@ function AssistantModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const [turns, setTurns] = React.useState<Turn[]>([
-    { role: "assistant", message: GREETING, themes: null },
-  ]);
+  const [turns, setTurns] = React.useState<Turn[]>([]);
   const [input, setInput] = React.useState("");
+  const [activity, setActivity] = React.useState("");
+  const [objective, setObjective] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [applying, setApplying] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  // Tant qu'aucun message n'a été envoyé, on montre le mini-formulaire guidé ;
+  // ensuite ça devient une discussion.
+  const started = turns.length > 0;
 
   // Auto-scroll en bas à chaque nouveau message / état de chargement.
   React.useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [turns, pending]);
 
-  const send = async () => {
-    const text = input.trim();
-    if (!text || pending) return;
+  const sendMessage = async (text: string) => {
+    const t = text.trim();
+    if (!t || pending) return;
     setError(null);
-    setInput("");
-    const nextTurns: Turn[] = [...turns, { role: "user", message: text }];
+    const nextTurns: Turn[] = [...turns, { role: "user", message: t }];
     setTurns(nextTurns);
     setPending(true);
     try {
-      const history = nextTurns.map((t) => ({
-        role: t.role,
+      const history = nextTurns.map((tn) => ({
+        role: tn.role,
         content:
-          t.role === "assistant"
-            ? JSON.stringify({ message: t.message, themes: t.themes ?? null })
-            : t.message,
+          tn.role === "assistant"
+            ? JSON.stringify({ message: tn.message, themes: tn.themes ?? null })
+            : tn.message,
       }));
       const res = await themeAssistant({ brandId, history });
       if (!res.ok) {
@@ -100,6 +109,26 @@ function AssistantModal({
     } finally {
       setPending(false);
     }
+  };
+
+  // Envoi depuis le formulaire de départ (activité + objectif cliqué).
+  const start = () => {
+    const act = activity.trim();
+    if (!act) {
+      setError("Décris ton activité en une phrase.");
+      return;
+    }
+    const parts = [`Mon activité : ${act}.`];
+    if (objective) parts.push(`Mon objectif principal : ${objective}.`);
+    sendMessage(parts.join(" "));
+  };
+
+  // Envoi d'un message tapé dans la discussion.
+  const sendTyped = () => {
+    const t = input.trim();
+    if (!t) return;
+    setInput("");
+    sendMessage(t);
   };
 
   // Derniers thèmes proposés = ceux du dernier message de l'assistant.
@@ -139,92 +168,158 @@ function AssistantModal({
             Créer mes thèmes avec l&apos;IA
           </DialogTitle>
           <DialogDescription>
-            Réponds aux questions comme dans une discussion. L&apos;IA te
-            propose des thèmes et les ajuste jusqu&apos;à ce que ça te plaise.
+            {started
+              ? "L'IA propose des thèmes et les ajuste jusqu'à ce que ça te plaise."
+              : "Deux réponses simples, et l'IA te propose tes thèmes de contenu."}
           </DialogDescription>
         </DialogHeader>
 
-        <DialogBody className="space-y-3">
-          {/* Fil de discussion */}
-          <div
-            ref={scrollRef}
-            className="max-h-[46vh] space-y-3 overflow-y-auto pr-1"
-          >
-            {turns.map((t, i) => (
-              <div key={i}>
-                <Bubble role={t.role} text={t.message} />
-                {t.role === "assistant" &&
-                  t.themes &&
-                  t.themes.length > 0 && (
-                    <div className="mt-2 space-y-2">
-                      {t.themes.map((th, j) => (
-                        <ThemePreview key={j} theme={th} />
-                      ))}
-                    </div>
-                  )}
+        <DialogBody className="space-y-4">
+          {!started ? (
+            /* ---------- Écran de départ : formulaire guidé ---------- */
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">
+                  1. Ton activité, pour qui ?
+                </Label>
+                <Textarea
+                  value={activity}
+                  onChange={(e) => setActivity(e.target.value)}
+                  dir="auto"
+                  autoFocus
+                  placeholder="Ex : cabinet de podologie à Tunis, pour des gens qui ont mal aux pieds"
+                  className="min-h-16 text-sm leading-relaxed [field-sizing:content]"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                      e.preventDefault();
+                      start();
+                    }
+                  }}
+                />
               </div>
-            ))}
-            {pending && (
-              <Bubble role="assistant" text="…" muted />
-            )}
-          </div>
 
-          {error && (
-            <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
-            </p>
-          )}
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">
+                  2. Ton objectif principal
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {OBJECTIVES.map((o) => {
+                    const active = objective === o;
+                    return (
+                      <button
+                        key={o}
+                        type="button"
+                        onClick={() => setObjective(active ? "" : o)}
+                        className={cn(
+                          "rounded-full border px-3.5 py-2 text-sm font-medium transition",
+                          active
+                            ? "border-accent bg-accent/10 text-accent"
+                            : "border-border bg-card hover:bg-secondary",
+                        )}
+                      >
+                        {o}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {/* Barre d'action : appliquer les thèmes proposés */}
-          {currentThemes && (
-            <Button
-              type="button"
-              onClick={apply}
-              disabled={applying}
-              className="w-full"
-            >
-              <Check className="size-4" />
-              {applying
-                ? "Enregistrement…"
-                : `Ajouter ces ${currentThemes.length} thèmes à ma marque`}
-            </Button>
-          )}
-
-          {/* Saisie */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              send();
-            }}
-            className="flex items-end gap-2"
-          >
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  send();
-                }
-              }}
-              placeholder="Écris ta réponse…"
-              dir="auto"
-              disabled={pending}
-              className="min-h-11 flex-1 text-sm [field-sizing:content]"
-            />
-            <Button
-              type="submit"
-              size="icon"
-              disabled={pending || !input.trim()}
-              aria-label="Envoyer"
-            >
-              {pending ? (
-                <Wand2 className="size-4 animate-pulse" />
-              ) : (
-                <Send className="size-4" />
+              {error && (
+                <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </p>
               )}
-            </Button>
-          </form>
+
+              <Button
+                type="button"
+                onClick={start}
+                disabled={pending || !activity.trim()}
+                className="w-full"
+              >
+                <Sparkles className="size-4" />
+                {pending ? "Un instant…" : "Générer mes thèmes"}
+              </Button>
+            </div>
+          ) : (
+            /* ---------- Discussion ---------- */
+            <>
+              <div
+                ref={scrollRef}
+                className="max-h-[46vh] space-y-3 overflow-y-auto pr-1"
+              >
+                {turns.map((t, i) => (
+                  <div key={i}>
+                    <Bubble role={t.role} text={t.message} />
+                    {t.role === "assistant" &&
+                      t.themes &&
+                      t.themes.length > 0 && (
+                        <div className="mt-2 space-y-2">
+                          {t.themes.map((th, j) => (
+                            <ThemePreview key={j} theme={th} />
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                ))}
+                {pending && <Bubble role="assistant" text="…" muted />}
+              </div>
+
+              {error && (
+                <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </p>
+              )}
+
+              {currentThemes && (
+                <Button
+                  type="button"
+                  onClick={apply}
+                  disabled={applying}
+                  className="w-full"
+                >
+                  <Check className="size-4" />
+                  {applying
+                    ? "Enregistrement…"
+                    : `Ajouter ces ${currentThemes.length} thèmes à ma marque`}
+                </Button>
+              )}
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  sendTyped();
+                }}
+                className="flex items-end gap-2"
+              >
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendTyped();
+                    }
+                  }}
+                  placeholder="Ajuste ou réponds… (ex : ajoute un thème sur les coulisses)"
+                  dir="auto"
+                  disabled={pending}
+                  className="min-h-11 flex-1 text-sm [field-sizing:content]"
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={pending || !input.trim()}
+                  aria-label="Envoyer"
+                >
+                  {pending ? (
+                    <Wand2 className="size-4 animate-pulse" />
+                  ) : (
+                    <Send className="size-4" />
+                  )}
+                </Button>
+              </form>
+            </>
+          )}
         </DialogBody>
       </DialogContent>
     </Dialog>
