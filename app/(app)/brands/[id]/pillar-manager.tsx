@@ -209,7 +209,12 @@ function PillarCard({
           + Ajouter les détails (objectif, rubriques, exemples…)
         </button>
       ) : (
-        <div className="mt-4 space-y-4" dir="auto">
+        // Hauteur capée + défilement interne : évite que la page devienne
+        // très longue quand un thème a beaucoup de rubriques/exemples.
+        <div
+          className="mt-4 max-h-72 space-y-4 overflow-y-auto pr-1"
+          dir="auto"
+        >
           {pillar.objective && (
             <Detail label="Objectif">
               <p className="text-[15px] leading-relaxed text-foreground/90">
