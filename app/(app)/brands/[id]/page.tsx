@@ -1,18 +1,15 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Layers, Target, Users } from "lucide-react";
+import { ArrowLeft, Layers, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { TaxonomyManager } from "./taxonomy-manager";
 import { PillarManager } from "./pillar-manager";
 import { ThemeAssistant } from "./theme-assistant";
 import { GuidedTour } from "./guided-tour";
 import { TeamSection } from "./team-section";
 import type { BrandRole } from "../team-actions";
 import type { BrandPillar } from "@/lib/types";
-
-type Taxonomy = { id: string; name: string };
 
 type MemberRow = {
   user_id: string;
@@ -52,7 +49,6 @@ export default async function BrandDetailPage({
 
   const [
     pillarsRes,
-    objectivesRes,
     membersRes,
     invitationsRes,
     selfMembershipRes,
@@ -60,11 +56,6 @@ export default async function BrandDetailPage({
     supabase
       .from("brand_pillars")
       .select("id, name, objective, rubriques, examples, note, share_pct")
-      .eq("brand_id", id)
-      .order("position", { ascending: true }),
-    supabase
-      .from("brand_objectives")
-      .select("id, name")
       .eq("brand_id", id)
       .order("position", { ascending: true }),
     supabase.rpc("list_brand_members_with_emails", { p_brand_id: id }),
@@ -83,7 +74,6 @@ export default async function BrandDetailPage({
   ]);
 
   const pillars = (pillarsRes.data ?? []) as BrandPillar[];
-  const objectives = (objectivesRes.data ?? []) as Taxonomy[];
   const members = (membersRes.data ?? []) as MemberRow[];
   const invitations = (invitationsRes.data ?? []) as InvitationRow[];
   const myRole = (selfMembershipRes.data?.role ?? "viewer") as BrandRole;
@@ -145,26 +135,6 @@ export default async function BrandDetailPage({
           <div data-tour="themes-list">
             <PillarManager brandId={brand.id} pillars={pillars} />
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="size-4 text-accent" />
-            {t("objectives.title")}
-          </CardTitle>
-          <CardDescription>{t("objectives.subtitle")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <TaxonomyManager
-            kind="objective"
-            brandId={brand.id}
-            items={objectives}
-            emptyLabel={t("objectives.empty")}
-            inputPlaceholder={t("objectives.placeholder")}
-            addLabel={t("objectives.add")}
-          />
         </CardContent>
       </Card>
     </div>
