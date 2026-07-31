@@ -18,12 +18,16 @@ function extractStoragePath(url: string): string | null {
 
 export function ImageUpload({
   contentId,
+  folder,
   value,
   onChange,
   aspectRatio = "square",
   label = "Ajouter une image",
 }: {
-  contentId: string;
+  /** Dossier de stockage = un content id (chemin {contentId}/…). */
+  contentId?: string;
+  /** Dossier de stockage explicite (ex : `presets/{brandId}`). Prioritaire. */
+  folder?: string;
   value: string | null;
   onChange: (url: string | null) => void;
   aspectRatio?: "square" | "portrait" | "video";
@@ -52,10 +56,16 @@ export function ImageUpload({
       return;
     }
 
+    const prefix = folder ?? contentId;
+    if (!prefix) {
+      setError("Emplacement de stockage manquant.");
+      return;
+    }
+
     setUploading(true);
     const supabase = createClient();
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `${contentId}/${crypto.randomUUID()}.${ext}`;
+    const path = `${prefix}/${crypto.randomUUID()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)
