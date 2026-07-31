@@ -21,6 +21,7 @@ import {
   aiGenerateReel,
   applyReelGeneration,
   aiGenerateStory,
+  applyStoryGeneration,
 } from "@/app/(app)/contents/ai-actions";
 import type { ReelGeneration, StoryGeneration } from "@/lib/ai";
 
@@ -109,12 +110,7 @@ function AiGeneratorModal({
         if (!res.ok) setError(res.error);
         else setReelPreview(res.data);
       } else {
-        const res = await aiGenerateStory({
-          contentId,
-          topic,
-          audience,
-          apply: false,
-        });
+        const res = await aiGenerateStory({ contentId, topic, audience });
         if (!res.ok) setError(res.error);
         else setStoryPreview(res.data);
       }
@@ -137,11 +133,12 @@ function AiGeneratorModal({
           router.refresh();
         }
       } else {
-        const res = await aiGenerateStory({
+        if (!storyPreview) return;
+        const res = await applyStoryGeneration({
           contentId,
-          topic,
-          audience,
-          apply: true,
+          objective: storyPreview.objective,
+          cta_soft: storyPreview.cta_soft,
+          slides: storyPreview.slides,
         });
         if (!res.ok) setError(res.error);
         else {

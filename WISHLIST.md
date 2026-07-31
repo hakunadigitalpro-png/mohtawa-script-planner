@@ -93,6 +93,23 @@ reel/story/vlog) de Claude vers **Google Gemini**.
 la génération à gros volume sur Gemini Flash gratuit. Commencer par
 l'assistant de thèmes pour comparer la qualité en conditions réelles.
 
+## 5. Génération d'IMAGE de scène (DALL-E) — retirée de l'UI
+
+**Ce que ça faisait :** dans le Storyboard, un bouton « Générer une image IA »
+créait un sketch de scène via DALL-E (OpenAI).
+
+**Pourquoi retiré :** Claude ne génère pas d'images, et OpenAI est inaccessible
+(carte refusée). Bouton mort → retiré du Storyboard.
+
+**Code conservé (intact) :** `generateSceneImage` (lib/ai.ts),
+`aiGenerateSceneImage` (ai-actions.ts).
+
+**Pour réactiver un jour :** brancher un fournisseur d'images qui accepte sa
+carte (ex : image via un modèle Gemini/Imagen, ou un service tiers), puis
+remettre le bouton + le dialog dans `storyboard-tab.tsx`. Toute la génération
+de TEXTE (script Reel, Story, thèmes, vlog, autopsie) tourne désormais sur
+**Claude** — plus aucune dépendance OpenAI pour le texte.
+
 ## Autres idées en attente (déjà notées dans CLAUDE.md / mémoire)
 
 - Vrai `.apk` Android (TWA) via build cloud — PWABuilder avait échoué.

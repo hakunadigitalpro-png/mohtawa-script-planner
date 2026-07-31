@@ -290,26 +290,24 @@ export function generateStory(opts: {
   topic: string;
   audience?: string;
 }): Promise<StoryGeneration> {
-  const system =
-    "Tu es un expert en stories Instagram/TikTok. Tu écris en français, dans un ton authentique, engageant et conversationnel. Tu crées des séquences de 5 stories qui retiennent l'attention jusqu'au CTA.";
+  const audience = opts.audience?.trim() || "ton audience sur les réseaux";
 
-  const audience = opts.audience?.trim() || "audience curieuse et engagée";
+  const system = `Tu es un expert en Stories Instagram/TikTok, MULTILINGUE : français ET arabe (dialectes maghrébins inclus). Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert) : ton simple, authentique, conversationnel, ZÉRO jargon. Tu crées une séquence de 5 stories qui tiennent en haleine jusqu'au CTA. Écris dans la langue du sujet (français par défaut). Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
 
-  const user = `Génère une séquence de 5 stories sur le sujet : "${opts.topic}".
+  const user = `Sujet : "${opts.topic}".
+Audience : ${audience}
 
-Audience cible : ${audience}
+Les 5 stories :
+1. Hook visuel + promesse ou question
+2. Mise en contexte / révélation
+3. Le contenu de valeur / exemple
+4. Conseil clé ou ressource
+5. Call to action (sticker, DM, swipe…)
 
-Structure obligatoire :
-- Story 1 : Hook visuel + promesse ou question
-- Story 2 : Mise en contexte / révélation
-- Story 3 : Le contenu de valeur / exemple
-- Story 4 : Conseil clé ou ressource
-- Story 5 : Call to action (sticker, swipe up, DM...)
-
-Retourne UNIQUEMENT un JSON valide avec cette structure exacte :
+Renvoie UNIQUEMENT ce JSON (sans markdown) :
 {
-  "objective": "Objectif global de la séquence en 1 phrase",
-  "cta_soft": "Action douce souhaitée (sticker question, DM, etc.)",
+  "objective": "L'objectif de la séquence en 1 phrase",
+  "cta_soft": "L'action douce souhaitée (sticker question, DM, etc.)",
   "slides": [
     { "slot": 1, "body": "Texte de la story 1 (court, percutant)" },
     { "slot": 2, "body": "Texte de la story 2" },
@@ -319,7 +317,7 @@ Retourne UNIQUEMENT un JSON valide avec cette structure exacte :
   ]
 }`;
 
-  return generateJSON<StoryGeneration>({ system, user, maxTokens: 800 });
+  return callClaudeJSON<StoryGeneration>(system, user, 1500);
 }
 
 /* =========================================================================

@@ -163,39 +163,56 @@ export async function aiGenerateSceneImage(input: {
   }
 }
 
+/**
+ * Génère une séquence de Story (5 slides) via Claude. NE PERSISTE PAS —
+ * renvoie le preview ; l'application passe par applyStoryGeneration.
+ */
 export async function aiGenerateStory(input: {
   contentId: string;
   topic: string;
   audience?: string;
-  apply: boolean;
 }) {
   try {
-    const result = await generateStory({
+    const data = await generateStory({
       topic: input.topic,
       audience: input.audience,
     });
+    return { ok: true as const, data };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false as const, error: e.message };
+    return { ok: false as const, error: "Erreur inattendue. Réessaie." };
+  }
+}
 
-    if (input.apply) {
-      const supabase = await createClient();
+/**
+ * Persiste une séquence de Story générée (déjà prévisualisée) : objectif +
+ * cta_soft dans story_details, et le body de chaque slide dans story_slides.
+ */
+export async function applyStoryGeneration(input: {
+  contentId: string;
+  objective: string;
+  cta_soft: string;
+  slides: { slot: number; body: string }[];
+}) {
+  try {
+    const supabase = await createClient();
 
-      await supabase.from("story_details").upsert({
-        content_id: input.contentId,
-        objective: result.objective,
-        cta_soft: result.cta_soft,
-      });
+    const { error } = await supabase.from("story_details").upsert({
+      content_id: input.contentId,
+      objective: input.objective,
+      cta_soft: input.cta_soft,
+    });
+    if (error) return { ok: false as const, error: error.message };
 
-      // Upsert chaque slide
-      for (const s of result.slides) {
-        await supabase.from("story_slides").upsert(
-          { content_id: input.contentId, slot_number: s.slot, body: s.body },
-          { onConflict: "content_id,slot_number" },
-        );
-      }
-
-      revalidatePath(`/content/${input.contentId}`);
+    for (const s of input.slides) {
+      await supabase.from("story_slides").upsert(
+        { content_id: input.contentId, slot_number: s.slot, body: s.body },
+        { onConflict: "content_id,slot_number" },
+      );
     }
 
-    return { ok: true as const, data: result };
+    revalidatePath(`/content/${input.contentId}`);
+    return { ok: true as const };
   } catch (e) {
     if (e instanceof AiError) return { ok: false as const, error: e.message };
     return { ok: false as const, error: "Erreur inattendue. Réessaie." };

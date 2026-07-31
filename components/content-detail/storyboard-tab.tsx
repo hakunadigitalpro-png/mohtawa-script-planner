@@ -6,7 +6,6 @@ import {
   Plus,
   Trash2,
   GripVertical,
-  Sparkles,
   Scissors,
   ChevronDown,
   Bookmark,
@@ -40,7 +39,6 @@ import {
   createScenePreset,
   deleteScenePreset,
 } from "@/app/(app)/contents/actions";
-import { aiGenerateSceneImage } from "@/app/(app)/contents/ai-actions";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
 import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
@@ -376,53 +374,6 @@ function SceneCard({
     });
   };
 
-  // -------- AI image generation (Idée 2) --------
-  // Click sur "Générer image IA" → ouvre un dialog où l'user tape sa
-  // description de sketch (placement caméra, blocking, intention de
-  // shooting). On envoie CE texte à DALL-E, pas les champs Action/etc.
-  // Avantages :
-  //  - L'user a un contrôle total sur le prompt (pas de surprise)
-  //  - Évite le piège du "texte tapé mais pas sauvé en DB"
-  //  - Permet de réfléchir au sketch sans toucher au descriptif viewer
-  const [aiDialogOpen, setAiDialogOpen] = useState(false);
-  const [aiPending, setAiPending] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [aiPromptText, setAiPromptText] = useState("");
-  const [aiCameraNote, setAiCameraNote] = useState("");
-
-  const openAiDialog = () => {
-    // Pré-remplit avec la description actuelle comme point de départ
-    // (l'user peut éditer / enrichir pour préciser le shooting).
-    setAiPromptText(sceneForm.description.trim() || "");
-    setAiCameraNote(sceneForm.camera_angle.trim() || "");
-    setAiError(null);
-    setAiDialogOpen(true);
-  };
-
-  const generateAiImage = () => {
-    if (!aiPromptText.trim()) {
-      setAiError("Tape une description avant de générer.");
-      return;
-    }
-    setAiError(null);
-    setAiPending(true);
-    startTransition(async () => {
-      const res = await aiGenerateSceneImage({
-        sceneId: sceneForm.id,
-        contentId,
-        description: aiPromptText.trim(),
-        cameraNote: aiCameraNote.trim() || undefined,
-      });
-      setAiPending(false);
-      if (!res.ok) {
-        setAiError(res.error);
-        return;
-      }
-      setAiDialogOpen(false);
-      router.refresh();
-    });
-  };
-
   const onToggleFilmed = () => {
     const next = !optimisticFilmed;
     setOptimisticFilmed(next);
@@ -513,103 +464,6 @@ function SceneCard({
           onChange={onImageChange}
           label={t("fields.action")}
         />
-
-        {/* Bouton de génération d'image IA → ouvre un dialog où l'user
-            tape sa description de sketch dédiée (placement caméra, etc.) */}
-        <button
-          type="button"
-          onClick={openAiDialog}
-          disabled={pending}
-          className={cn(
-            "flex w-full items-center justify-center gap-1.5 rounded-xl",
-            "border border-accent/40 bg-accent/10 px-2.5 py-1 text-[11px] font-semibold text-accent transition",
-            "hover:bg-accent/15",
-            "disabled:cursor-not-allowed disabled:opacity-50",
-          )}
-        >
-          <Sparkles className="size-3" />
-          {serverImageUrl ? "Régénérer avec l'IA" : "Générer une image IA"}
-        </button>
-
-        {/* Dialog de génération IA */}
-        <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>
-                <span className="inline-flex items-center gap-2">
-                  <Sparkles className="size-5 text-accent" />
-                  Générer un sketch IA
-                </span>
-              </DialogTitle>
-              <DialogDescription>
-                Décris en détail comment tu veux que cette scène apparaisse
-                pour le shooting. Cadrage, placement caméra, action, ambiance —
-                plus tu es précise, plus l&apos;image colle à ton intention.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogBody className="space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                  Description du sketch
-                </Label>
-                <Textarea
-                  className="min-h-28 text-sm [field-sizing:content]"
-                  value={aiPromptText}
-                  onChange={(e) => setAiPromptText(e.target.value)}
-                  placeholder="Ex : Une femme en chemise blanche marche dans un open space lumineux, regarde son téléphone en souriant. Lumière naturelle, plan large vu de face."
-                  autoFocus
-                  disabled={aiPending}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                  Placement caméra (optionnel)
-                </Label>
-                <Input
-                  className="h-9 text-sm"
-                  value={aiCameraNote}
-                  onChange={(e) => setAiCameraNote(e.target.value)}
-                  placeholder="Ex : Plan large, caméra à hauteur des yeux, légèrement de gauche"
-                  disabled={aiPending}
-                />
-                <p className="text-[10px] text-muted">
-                  Précise l&apos;angle ou la distance si tu prépares ton
-                  tournage. Vide = DALL-E choisit le cadrage.
-                </p>
-              </div>
-              {aiError && (
-                <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                  {aiError}
-                </p>
-              )}
-              {aiPending && (
-                <p className="rounded-xl bg-accent/10 px-3 py-2 text-xs text-accent">
-                  Génération en cours… (~10s)
-                </p>
-              )}
-            </DialogBody>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setAiDialogOpen(false)}
-                disabled={aiPending}
-              >
-                Annuler
-              </Button>
-              <Button
-                type="button"
-                onClick={generateAiImage}
-                disabled={aiPending || !aiPromptText.trim()}
-              >
-                <Sparkles
-                  className={cn("size-4", aiPending && "animate-pulse")}
-                />
-                {aiPending ? "Génération…" : "Générer"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
         <div className="space-y-1">
           <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
