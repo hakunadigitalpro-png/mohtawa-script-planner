@@ -131,18 +131,16 @@ function PillarCard({
 }) {
   const router = useRouter();
   const [editing, setEditing] = React.useState(false);
+  const [delError, setDelError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
 
   const onDelete = () => {
-    if (
-      !confirm(
-        `Supprimer le thème « ${pillar.name} » ? Les vidéos déjà classées gardent leur libellé.`,
-      )
-    )
-      return;
+    setDelError(null);
+    if (!confirm(`Supprimer le thème « ${pillar.name} » ?`)) return;
     startTransition(async () => {
       const res = await deleteTaxonomy("pillar", pillar.id, brandId);
-      if (!("error" in res && res.error)) router.refresh();
+      if ("error" in res && res.error) setDelError(res.error);
+      else router.refresh();
     });
   };
 
@@ -195,6 +193,12 @@ function PillarCard({
           </button>
         </div>
       </div>
+
+      {delError && (
+        <p className="mt-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {delError}
+        </p>
+      )}
 
       {!hasDetails ? (
         <button

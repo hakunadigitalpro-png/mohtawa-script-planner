@@ -263,6 +263,33 @@ export async function deleteTaxonomy(
   brandId: string,
 ) {
   const supabase = await createClient();
+
+  // Garde-fou : on ne supprime pas un thème si des vidéos l'utilisent encore
+  // (sinon on perd la référence). Les vidéos rattachent le thème par son nom
+  // dans contents.pillars (le trigger 0018 y met aussi la colonne singulière).
+  if (kind === "pillar") {
+    const { data: row } = await supabase
+      .from("brand_pillars")
+      .select("name")
+      .eq("id", id)
+      .maybeSingle();
+    const name = row?.name;
+    if (name) {
+      const { count } = await supabase
+        .from("contents")
+        .select("id", { count: "exact", head: true })
+        .eq("brand_id", brandId)
+        .contains("pillars", [name]);
+      if ((count ?? 0) > 0) {
+        return {
+          error: `Impossible de supprimer « ${name} » : ${count} vidéo${
+            count! > 1 ? "s l'utilisent" : " l'utilise"
+          } encore. Change d'abord leur thème.`,
+        };
+      }
+    }
+  }
+
   const { error } = await supabase
     .from(tableFor(kind))
     .delete()
