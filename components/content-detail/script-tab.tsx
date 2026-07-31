@@ -127,6 +127,17 @@ function ReelScript({
   const { state, setState, isDirty, isSaving, handleSave, handleReset } =
     useExplicitSave(initial, async (v) => upsertReelDetails(contentId, v));
 
+  // Mode d'écriture : guidé (Accroche/Corps/Outro) ou libre (un seul bloc).
+  // Persisté immédiatement (atomique), hors du Save du formulaire texte.
+  const [freeMode, setFreeMode] = useState(reel?.script_free_mode ?? false);
+  const [, startWrite] = useTransition();
+  const setMode = (next: boolean) => {
+    setFreeMode(next);
+    startWrite(async () => {
+      await upsertReelDetails(contentId, { script_free_mode: next });
+    });
+  };
+
   // Estimation de durée : ~4 mots/sec en FR parlé. On somme les mots des
   // 7 blocs. Donne un feedback visuel sur la longueur (cible 30-75s pour
   // un Reel qui performe).
@@ -166,6 +177,30 @@ function ReelScript({
           <AiGeneratorButton contentId={contentId} type="reel" />
         </div>
 
+        {/* Switch Guidé / Libre */}
+        <div className="inline-flex rounded-full border border-border bg-secondary/40 p-0.5 text-sm font-semibold">
+          <button
+            type="button"
+            onClick={() => setMode(false)}
+            className={cn(
+              "rounded-full px-4 py-1.5 transition",
+              !freeMode ? "bg-card text-foreground shadow-sm" : "text-muted",
+            )}
+          >
+            Guidé
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode(true)}
+            className={cn(
+              "rounded-full px-4 py-1.5 transition",
+              freeMode ? "bg-card text-foreground shadow-sm" : "text-muted",
+            )}
+          >
+            Libre
+          </button>
+        </div>
+
         {/* Rappel du Hook (read-only, depuis Plan) */}
         {content.hook && (
           <div className="rounded-2xl border border-accent/20 bg-accent/5 px-4 py-2.5">
@@ -178,29 +213,50 @@ function ReelScript({
           </div>
         )}
 
-        {/* 3 blocs simples : Accroche / Corps / Outro */}
-        {REEL_BLOCKS.map((block) => (
-          <CompactField
-            key={block.key}
-            blockKey={block.key}
-            label={block.label}
-            timing={block.timing}
-            placeholder={block.placeholder}
-            big={block.big}
-            value={state[block.key as keyof typeof state] as string}
-            onChange={(v) => setState((s) => ({ ...s, [block.key]: v }))}
-            // Sur l'Accroche : bouton "Choisir une accroche" (biblio de hooks).
-            headerExtra={
-              block.key === "intro" ? (
-                <HooksPickerButton
-                  onPick={(text) =>
-                    setState((s) => ({ ...s, intro: text }))
-                  }
-                />
-              ) : undefined
-            }
-          />
-        ))}
+        {freeMode ? (
+          /* Mode LIBRE : un seul bloc, écris comme tu veux (= script_full). */
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5">
+              <Label className="text-xs font-semibold text-foreground">
+                Ton script
+              </Label>
+              <CommentButton targetType="script" targetId="script_full" />
+            </div>
+            <Textarea
+              dir="auto"
+              value={state.script_full}
+              onChange={(e) =>
+                setState((s) => ({ ...s, script_full: e.target.value }))
+              }
+              placeholder="Écris ton script comme tu veux, d'un seul bloc."
+              className="min-h-64 text-sm leading-relaxed [field-sizing:content]"
+            />
+          </div>
+        ) : (
+          /* Mode GUIDÉ : 3 blocs Accroche / Corps / Outro */
+          REEL_BLOCKS.map((block) => (
+            <CompactField
+              key={block.key}
+              blockKey={block.key}
+              label={block.label}
+              timing={block.timing}
+              placeholder={block.placeholder}
+              big={block.big}
+              value={state[block.key as keyof typeof state] as string}
+              onChange={(v) => setState((s) => ({ ...s, [block.key]: v }))}
+              // Sur l'Accroche : bouton "Choisir une accroche" (biblio de hooks).
+              headerExtra={
+                block.key === "intro" ? (
+                  <HooksPickerButton
+                    onPick={(text) =>
+                      setState((s) => ({ ...s, intro: text }))
+                    }
+                  />
+                ) : undefined
+              }
+            />
+          ))
+        )}
       </Card>
 
       <SaveFooter

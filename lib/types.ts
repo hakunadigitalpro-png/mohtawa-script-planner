@@ -83,6 +83,9 @@ export type ReelDetails = {
   recap: string | null;
   outro: string | null;
   script_full: string | null;
+  /** Mode d'écriture (migration 0030) : false = guidé (Accroche/Corps/Outro),
+   *  true = libre (un seul bloc = script_full). */
+  script_free_mode: boolean;
   checklist: {
     script_ready?: boolean;
     scenes_ready?: boolean;

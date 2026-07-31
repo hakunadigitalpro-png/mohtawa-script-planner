@@ -283,6 +283,7 @@ export async function upsertReelDetails(
     recap: string;
     outro: string;
     script_full: string;
+    script_free_mode: boolean;
     checklist: Record<string, boolean>;
   }>,
 ) {
