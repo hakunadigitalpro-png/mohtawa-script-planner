@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, Plus, X, Check, Video } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Check, Video, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -131,6 +131,7 @@ function PillarCard({
 }) {
   const router = useRouter();
   const [editing, setEditing] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
   const [delError, setDelError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
 
@@ -163,16 +164,44 @@ function PillarCard({
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-5">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          <h4 className="text-lg font-bold leading-tight" dir="auto">
-            {pillar.name}
-          </h4>
-          {pillar.share_pct != null && (
-            <span className="rounded-full bg-accent/15 px-2.5 py-1 text-sm font-bold text-accent">
-              {pillar.share_pct}%
-            </span>
+        {/* En-tête cliquable = accordéon : replie/déplie les détails. */}
+        <button
+          type="button"
+          onClick={() => hasDetails && setOpen((o) => !o)}
+          aria-expanded={open}
+          className={cn(
+            "flex min-w-0 flex-1 items-start gap-2 text-start",
+            hasDetails ? "cursor-pointer" : "cursor-default",
           )}
-        </div>
+        >
+          {hasDetails && (
+            <ChevronDown
+              className={cn(
+                "mt-1 size-4 shrink-0 text-muted transition-transform",
+                open ? "" : "-rotate-90",
+              )}
+            />
+          )}
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+              <h4 className="text-lg font-bold leading-tight" dir="auto">
+                {pillar.name}
+              </h4>
+              {pillar.share_pct != null && (
+                <span className="rounded-full bg-accent/15 px-2.5 py-1 text-sm font-bold text-accent">
+                  {pillar.share_pct}%
+                </span>
+              )}
+            </div>
+            {/* Replié : aperçu (objectif tronqué, sinon compteurs). */}
+            {hasDetails && !open && (
+              <p dir="auto" className="mt-1 truncate text-sm text-muted">
+                {pillar.objective ||
+                  `${pillar.rubriques.length} rubriques · ${pillar.examples.length} exemples`}
+              </p>
+            )}
+          </div>
+        </button>
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
@@ -209,42 +238,39 @@ function PillarCard({
           + Ajouter les détails (objectif, rubriques, exemples…)
         </button>
       ) : (
-        // Hauteur capée + défilement interne : évite que la page devienne
-        // très longue quand un thème a beaucoup de rubriques/exemples.
-        <div
-          className="mt-4 max-h-72 space-y-4 overflow-y-auto pr-1"
-          dir="auto"
-        >
-          {pillar.objective && (
-            <Detail label="Objectif">
-              <p className="text-[15px] leading-relaxed text-foreground/90">
-                {pillar.objective}
+        open && (
+          <div className="mt-4 space-y-4" dir="auto">
+            {pillar.objective && (
+              <Detail label="Objectif">
+                <p className="text-[15px] leading-relaxed text-foreground/90">
+                  {pillar.objective}
+                </p>
+              </Detail>
+            )}
+
+            {pillar.rubriques.length > 0 && (
+              <Detail label={`Rubriques · ${pillar.rubriques.length}`}>
+                <ChipRow items={pillar.rubriques} />
+              </Detail>
+            )}
+
+            {pillar.examples.length > 0 && (
+              <Detail label={`Exemples · ${pillar.examples.length}`}>
+                <ExampleLauncher
+                  brandId={brandId}
+                  themeName={pillar.name}
+                  items={pillar.examples}
+                />
+              </Detail>
+            )}
+
+            {pillar.note && (
+              <p className="rounded-xl border-s-2 border-accent/50 bg-secondary/40 px-4 py-2.5 text-sm leading-relaxed text-foreground/80">
+                👉 {pillar.note}
               </p>
-            </Detail>
-          )}
-
-          {pillar.rubriques.length > 0 && (
-            <Detail label={`Rubriques · ${pillar.rubriques.length}`}>
-              <ChipRow items={pillar.rubriques} />
-            </Detail>
-          )}
-
-          {pillar.examples.length > 0 && (
-            <Detail label={`Exemples · ${pillar.examples.length}`}>
-              <ExampleLauncher
-                brandId={brandId}
-                themeName={pillar.name}
-                items={pillar.examples}
-              />
-            </Detail>
-          )}
-
-          {pillar.note && (
-            <p className="rounded-xl border-s-2 border-accent/50 bg-secondary/40 px-4 py-2.5 text-sm leading-relaxed text-foreground/80">
-              👉 {pillar.note}
-            </p>
-          )}
-        </div>
+            )}
+          </div>
+        )
       )}
     </div>
   );
