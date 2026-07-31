@@ -69,6 +69,13 @@ const REEL_BLOCKS = [
     placeholder:
       "Ex : Voici les 3 erreurs qui tuent ton compte Instagram. La 2e va te surprendre.",
     big: false,
+    // Trames cliquables : la personne complète les [trous].
+    suggestions: [
+      { label: "L'erreur classique", template: "L'erreur que presque tout le monde fait avec [ton sujet]…" },
+      { label: "3 choses", template: "3 choses que personne ne te dit sur [ton sujet]." },
+      { label: "Arrête de…", template: "Arrête de [ce qu'ils font] si tu veux [le résultat]." },
+      { label: "Comment… sans…", template: "Comment [résultat] en [temps], sans [la contrainte]." },
+    ],
   },
   {
     key: "script_full",
@@ -77,6 +84,12 @@ const REEL_BLOCKS = [
     placeholder:
       "Le cœur de ta vidéo : développe ton idée dans l'ordre où tu veux la dire.",
     big: true,
+    suggestions: [
+      { label: "3 points", template: "1. [Premier point]\n2. [Deuxième point]\n3. [Troisième point]" },
+      { label: "Problème → Solution", template: "Le problème : [décris-le]\nPourquoi ça arrive : [la cause]\nLa solution : [ce qu'il faut faire]" },
+      { label: "Avant / Après", template: "Avant : [la situation de départ]\nCe que j'ai changé : [l'action]\nAprès : [le résultat]" },
+      { label: "Mini-histoire", template: "Le contexte : [plante le décor]\nLe déclic : [ce qui a changé]\nLa leçon : [ce que ça t'apprend]" },
+    ],
   },
   {
     key: "outro",
@@ -85,6 +98,12 @@ const REEL_BLOCKS = [
     placeholder:
       "Ex : Sauvegarde ce Reel pour t'en souvenir. Dis-moi en commentaire ton #1.",
     big: false,
+    suggestions: [
+      { label: "Sauvegarde", template: "Sauvegarde ce Reel pour t'en souvenir." },
+      { label: "Commente", template: "Dis-moi en commentaire [ta question]." },
+      { label: "DM", template: "Envoie-moi « [MOT] » en DM pour [ta ressource]." },
+      { label: "Abonne-toi", template: "Abonne-toi pour [le bénéfice]." },
+    ],
   },
 ] as const;
 
@@ -244,6 +263,7 @@ function ReelScript({
               big={block.big}
               value={state[block.key as keyof typeof state] as string}
               onChange={(v) => setState((s) => ({ ...s, [block.key]: v }))}
+              suggestions={block.suggestions}
               // Sur l'Accroche : bouton "Choisir une accroche" (biblio de hooks).
               headerExtra={
                 block.key === "intro" ? (
@@ -284,6 +304,7 @@ function CompactField({
   onChange,
   headerExtra,
   big = false,
+  suggestions,
 }: {
   blockKey: ReelBlockKey;
   label: string;
@@ -295,10 +316,16 @@ function CompactField({
   headerExtra?: React.ReactNode;
   /** Champ principal (Corps) → hauteur de départ plus grande. */
   big?: boolean;
+  /** Trames cliquables : insèrent une structure à compléter dans le bloc. */
+  suggestions?: readonly { label: string; template: string }[];
 }) {
   // Compte de mots local pour feedback de durée sur le bloc (~4 mots/sec)
   const wordCount = value.trim().split(/\s+/).filter(Boolean).length;
   const blockSeconds = Math.round(wordCount / 4);
+
+  // Insère une trame : remplit si le champ est vide, sinon ajoute à la suite.
+  const insert = (tpl: string) =>
+    onChange(value.trim() ? `${value}\n${tpl}` : tpl);
 
   return (
     <div className="space-y-1">
@@ -334,6 +361,25 @@ function CompactField({
           "text-sm leading-relaxed [field-sizing:content]",
         )}
       />
+
+      {/* Trames cliquables : pour ne jamais rester devant une case vide. */}
+      {suggestions && suggestions.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <span className="text-[11px] font-semibold text-muted">
+            💡 Trames :
+          </span>
+          {suggestions.map((s) => (
+            <button
+              key={s.label}
+              type="button"
+              onClick={() => insert(s.template)}
+              className="rounded-full border border-border bg-secondary/50 px-2.5 py-1 text-xs font-medium text-foreground/80 transition hover:border-accent/50 hover:bg-accent/5 hover:text-accent"
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
