@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   aiGenerateReel,
+  applyReelGeneration,
   aiGenerateStory,
 } from "@/app/(app)/contents/ai-actions";
 import type { ReelGeneration, StoryGeneration } from "@/lib/ai";
@@ -104,7 +105,6 @@ function AiGeneratorModal({
           topic,
           audience,
           platform,
-          apply: false,
         });
         if (!res.ok) setError(res.error);
         else setReelPreview(res.data);
@@ -124,12 +124,12 @@ function AiGeneratorModal({
   const apply = () => {
     startTransition(async () => {
       if (type === "reel") {
-        const res = await aiGenerateReel({
+        if (!reelPreview) return;
+        const res = await applyReelGeneration({
           contentId,
-          topic,
-          audience,
-          platform,
-          apply: true,
+          accroche: reelPreview.accroche,
+          corps: reelPreview.corps,
+          outro: reelPreview.outro,
         });
         if (!res.ok) setError(res.error);
         else {
@@ -252,20 +252,18 @@ function PreviewField({ label, value }: { label: string; value: string }) {
 }
 
 function ReelPreview({ data }: { data: ReelGeneration }) {
-  const t = useTranslations("ai.preview");
-  const tAi = useTranslations("ai");
   return (
-    <div className="space-y-3 rounded-md border border-border bg-secondary/30 p-4">
-      <PreviewField label={t("hook")} value={data.hook} />
-      <PreviewField label={t("intro")} value={data.intro} />
-      <PreviewField label={t("point1")} value={data.point1} />
-      <PreviewField label={t("point2")} value={data.point2} />
-      <PreviewField label={t("point3")} value={data.point3} />
-      <PreviewField label={t("transition")} value={data.transition} />
-      <PreviewField label={t("recap")} value={data.recap} />
-      <PreviewField label={t("cta")} value={data.cta} />
-      <PreviewField label={t("outro")} value={data.outro} />
-      <p className="text-xs text-muted">{tAi("previewHint")}</p>
+    <div
+      className="space-y-3 rounded-md border border-border bg-secondary/30 p-4"
+      dir="auto"
+    >
+      <PreviewField label="Accroche" value={data.accroche} />
+      <PreviewField label="Corps" value={data.corps} />
+      <PreviewField label="Outro" value={data.outro} />
+      <p className="text-xs text-muted">
+        « Appliquer » remplit ton script (Accroche · Corps · Outro). Tu pourras
+        tout modifier ensuite.
+      </p>
     </div>
   );
 }

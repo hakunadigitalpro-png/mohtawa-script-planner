@@ -104,15 +104,15 @@ export async function generateJSON<T>(opts: {
    Prompts — Reel
    ========================================================================= */
 
+/**
+ * Script de Reel SIMPLIFIÉ : 3 blocs seulement (Accroche / Corps / Outro),
+ * pour coller à l'onglet Script. Généré via CLAUDE (la carte de
+ * l'utilisatrice n'est acceptée que chez Anthropic ; OpenAI est inaccessible).
+ * Multilingue FR + arabe, ton patron-de-PME (zéro jargon).
+ */
 export type ReelGeneration = {
-  hook: string;
-  intro: string;
-  point1: string;
-  point2: string;
-  point3: string;
-  transition: string;
-  recap: string;
-  cta: string;
+  accroche: string;
+  corps: string;
   outro: string;
 };
 
@@ -121,33 +121,31 @@ export function generateReel(opts: {
   audience?: string;
   platform?: string;
 }): Promise<ReelGeneration> {
-  const system =
-    "Tu es un expert en contenu vidéo viral pour les réseaux sociaux. Tu écris en français, dans un ton direct, percutant et orienté valeur. Tu génères des scripts courts qui arrêtent le scroll. Pas de jargon. Phrases courtes. Une idée par phrase.";
-
-  const audience = opts.audience?.trim() || "créateurs de contenu et entrepreneurs";
+  const audience =
+    opts.audience?.trim() || "des clients potentiels sur les réseaux";
   const platform = opts.platform?.trim() || "Instagram / TikTok";
 
-  const user = `Génère un script de Reel sur le sujet : "${opts.topic}".
+  const system = `Tu es un expert en scripts de Reels/TikTok qui arrêtent le scroll, MULTILINGUE : français ET arabe (dialectes maghrébins inclus). Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing) : simple, direct, humain, orienté valeur, ZÉRO jargon. Un script se dit à voix haute en 30-60 secondes, phrases courtes, une idée par phrase.
 
+Structure en 3 parties SEULEMENT :
+- Accroche : les 2 premières secondes qui stoppent le scroll (tension, curiosité ou promesse concrète).
+- Corps : le développement, dans l'ordre où le dire.
+- Outro : la fermeture + un appel à l'action clair.
+
+Écris dans la langue du sujet (français par défaut). Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
+
+  const user = `Sujet de la vidéo : "${opts.topic}".
 Plateforme : ${platform}
-Audience cible : ${audience}
+Audience : ${audience}
 
-Le script doit faire 30 à 60 secondes lus à voix haute. Phrases courtes, idées fortes, valeur immédiate.
-
-Retourne UNIQUEMENT un JSON valide (sans backticks, sans markdown) avec cette structure exacte :
+Renvoie UNIQUEMENT ce JSON (sans markdown) :
 {
-  "hook": "Phrase d'accroche qui arrête le scroll (5-12 mots)",
-  "intro": "Pose le contexte ou la promesse en 1 phrase",
-  "point1": "Premier point clé (1-2 phrases)",
-  "point2": "Deuxième point clé (1-2 phrases)",
-  "point3": "Troisième point clé (1-2 phrases)",
-  "transition": "Indication B-roll ou plan visuel court",
-  "recap": "Résumé percutant en 1 phrase",
-  "cta": "Call to action clair et simple",
-  "outro": "Phrase de fermeture mémorable"
+  "accroche": "La phrase d'accroche qui arrête le scroll (1 phrase forte, ≤ 2s)",
+  "corps": "Le cœur du script : développe l'idée en phrases courtes, dans l'ordre où la dire. 30-45s.",
+  "outro": "La fermeture + un appel à l'action clair (sauvegarde, commente, DM…)"
 }`;
 
-  return generateJSON<ReelGeneration>({ system, user, maxTokens: 800 });
+  return callClaudeJSON<ReelGeneration>(system, user, 1500);
 }
 
 /* =========================================================================

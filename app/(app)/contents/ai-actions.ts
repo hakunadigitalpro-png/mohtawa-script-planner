@@ -13,55 +13,61 @@ import {
   AiError,
 } from "@/lib/ai";
 
+/**
+ * Génère un script de Reel simplifié (Accroche / Corps / Outro) via Claude.
+ * NE PERSISTE PAS — renvoie le preview. L'application passe par
+ * applyReelGeneration (pas de 2e appel IA → on ne paie qu'une fois).
+ */
 export async function aiGenerateReel(input: {
   contentId: string;
   topic: string;
   audience?: string;
   platform?: string;
-  apply: boolean; // true = save to DB; false = preview only
 }) {
   try {
-    const result = await generateReel({
+    const data = await generateReel({
       topic: input.topic,
       audience: input.audience,
       platform: input.platform,
     });
+    return { ok: true as const, data };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false as const, error: e.message };
+    return { ok: false as const, error: "Erreur inattendue. Réessaie." };
+  }
+}
 
-    if (input.apply) {
-      const supabase = await createClient();
-      // Script simplifié (Accroche / Corps / Outro) : on plie le corps généré
-      // (points + transition + récap) dans script_full = le champ "Corps"
-      // réellement affiché. On garde aussi les colonnes détaillées en base.
-      const corps = [
-        result.point1,
-        result.point2,
-        result.point3,
-        result.transition,
-        result.recap,
-      ]
-        .map((s) => (s ?? "").trim())
-        .filter(Boolean)
-        .join("\n\n");
-      await supabase.from("reel_details").upsert({
-        content_id: input.contentId,
-        intro: result.intro,
-        point1: result.point1,
-        point2: result.point2,
-        point3: result.point3,
-        transition: result.transition,
-        recap: result.recap,
-        outro: result.outro,
-        script_full: corps,
-      });
-      // Hook + CTA vivent dans contents (champs partagés)
-      await supabase
-        .from("contents")
-        .update({ hook: result.hook, cta: result.cta })
-        .eq("id", input.contentId);
-      revalidatePath(`/content/${input.contentId}`);
-    }
+/**
+ * Persiste un script de Reel généré (déjà prévisualisé) : Accroche → intro,
+ * Corps → script_full, Outro → outro. Sync hook/cta sur contents (lus par
+ * share/print/analytics).
+ */
+export async function applyReelGeneration(input: {
+  contentId: string;
+  accroche: string;
+  corps: string;
+  outro: string;
+}) {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("reel_details").upsert({
+      content_id: input.contentId,
+      intro: input.accroche,
+      script_full: input.corps,
+      outro: input.outro,
+    });
+    if (error) return { ok: false as const, error: error.message };
 
-    return { ok: true as const, data: result };
+    await supabase
+      .from("contents")
+      .update({
+        hook: input.accroche?.trim() ? input.accroche : null,
+        cta: input.outro?.trim() ? input.outro : null,
+      })
+      .eq("id", input.contentId);
+
+    revalidatePath(`/content/${input.contentId}`);
+    return { ok: true as const };
   } catch (e) {
     if (e instanceof AiError) return { ok: false as const, error: e.message };
     return { ok: false as const, error: "Erreur inattendue. Réessaie." };
