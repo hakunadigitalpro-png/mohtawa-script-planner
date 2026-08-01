@@ -257,6 +257,33 @@ export async function applyBrandThemes(input: {
   return { ok: true as const, added: rows.length };
 }
 
+/**
+ * Crée / met à jour le Brand Kit d'une marque (upsert partiel). RLS vérifie
+ * l'appartenance à la marque.
+ */
+export async function upsertBrandKit(
+  brandId: string,
+  patch: Partial<{
+    logo_url: string | null;
+    color_primary: string | null;
+    color_secondary: string | null;
+    color_accent: string | null;
+    tagline: string | null;
+    audience: string | null;
+    voice: string | null;
+    hashtags: string[];
+  }>,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("brand_kits")
+    .upsert({ brand_id: brandId, ...patch, updated_at: new Date().toISOString() });
+  if (error) return { error: error.message };
+  revalidatePath(`/brands/${brandId}`);
+  revalidatePath("/", "layout");
+  return { ok: true as const };
+}
+
 export async function deleteTaxonomy(
   kind: Kind,
   id: string,

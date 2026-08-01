@@ -12,6 +12,22 @@ export type BrandMember = {
 };
 
 /**
+ * Brand Kit — identité de marque personnalisable (migration 0031). L'audience
+ * et la voix nourrissent aussi les générations IA (ton + cible).
+ */
+export type BrandKit = {
+  brand_id: string;
+  logo_url: string | null;
+  color_primary: string | null;
+  color_secondary: string | null;
+  color_accent: string | null;
+  tagline: string | null;
+  audience: string | null;
+  voice: string | null;
+  hashtags: string[];
+};
+
+/**
  * Pilier de contenu enrichi (migration 0028). Au-delà du nom, il porte la
  * structure d'une stratégie : objectif, rubriques récurrentes, exemples de
  * vidéos, une note (le pourquoi) et la part visée dans le mix (%).

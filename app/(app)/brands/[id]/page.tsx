@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Clapperboard, Layers, Users } from "lucide-react";
+import { ArrowLeft, Clapperboard, Layers, Palette, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -8,9 +8,10 @@ import { PillarManager } from "./pillar-manager";
 import { ThemeAssistant } from "./theme-assistant";
 import { GuidedTour } from "./guided-tour";
 import { ScenePresetManager } from "./scene-preset-manager";
+import { BrandKitManager } from "./brand-kit-manager";
 import { TeamSection } from "./team-section";
 import type { BrandRole } from "../team-actions";
-import type { BrandPillar, ScenePreset } from "@/lib/types";
+import type { BrandPillar, ScenePreset, BrandKit } from "@/lib/types";
 
 type MemberRow = {
   user_id: string;
@@ -51,6 +52,7 @@ export default async function BrandDetailPage({
   const [
     pillarsRes,
     scenePresetsRes,
+    kitRes,
     membersRes,
     invitationsRes,
     selfMembershipRes,
@@ -65,6 +67,7 @@ export default async function BrandDetailPage({
       .select("*")
       .eq("brand_id", id)
       .order("position", { ascending: true }),
+    supabase.from("brand_kits").select("*").eq("brand_id", id).maybeSingle(),
     supabase.rpc("list_brand_members_with_emails", { p_brand_id: id }),
     supabase
       .from("brand_invitations")
@@ -82,6 +85,7 @@ export default async function BrandDetailPage({
 
   const pillars = (pillarsRes.data ?? []) as BrandPillar[];
   const scenePresets = (scenePresetsRes.data ?? []) as ScenePreset[];
+  const kit = (kitRes.data ?? null) as BrandKit | null;
   const members = (membersRes.data ?? []) as MemberRow[];
   const invitations = (invitationsRes.data ?? []) as InvitationRow[];
   const myRole = (selfMembershipRes.data?.role ?? "viewer") as BrandRole;
@@ -105,6 +109,22 @@ export default async function BrandDetailPage({
         </div>
         <GuidedTour />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="size-4 text-accent" />
+            Identité de marque
+          </CardTitle>
+          <CardDescription>
+            Ton logo, tes couleurs, ton ton. L&apos;audience et la voix
+            personnalisent aussi ce que l&apos;IA génère pour cette marque.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BrandKitManager brandId={brand.id} kit={kit} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
