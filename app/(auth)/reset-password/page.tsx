@@ -15,6 +15,7 @@ export default function ResetPasswordPage() {
   const [pending, startTransition] = useTransition();
 
   return (
+    <div className="w-full max-w-md">
     <Card>
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
@@ -66,5 +67,6 @@ export default function ResetPasswordPage() {
         </form>
       </CardContent>
     </Card>
+    </div>
   );
 }

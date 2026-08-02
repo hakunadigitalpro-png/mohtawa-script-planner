@@ -72,7 +72,16 @@
       "backToLogin": "Back to sign in",
       "errorEmailRequired": "Email required.",
       "success": "If an account exists, an email has been sent."
-    }
+    },
+    "panel": {
+      "signinTitle": "Welcome back!",
+      "signinText": "Sign in to find your workspace, your brands and your videos.",
+      "signinCta": "Sign in",
+      "signupTitle": "New to Kreatly?",
+      "signupText": "Create your account and run your video production end to end.",
+      "signupCta": "Create account"
+    },
+    "orEmail": "or use your email"
   },
   "onboarding": {
     "welcomeTitle": "Welcome to Kreatly",

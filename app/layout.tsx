@@ -70,7 +70,7 @@ export default async function RootLayout({
       lang={locale}
       dir={dir}
       data-theme={dataTheme}
-      data-app-version="kreatly1"
+      data-app-version="auth1"
       style={styleOverrides}
     >
       <body
