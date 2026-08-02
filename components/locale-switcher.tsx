@@ -61,8 +61,8 @@ export function LocaleSwitcherCompact() {
         disabled={pending}
         aria-label="Langue"
         className={cn(
-          "tooltip-trigger flex size-10 items-center justify-center rounded-full text-muted transition hover:bg-secondary hover:text-foreground",
-          open && "bg-secondary text-foreground",
+          "tooltip-trigger flex size-11 items-center justify-center rounded-full bg-card/80 text-muted-foreground transition hover:bg-card hover:text-foreground",
+          open && "bg-card text-foreground",
         )}
       >
         <Globe className="size-4" />
