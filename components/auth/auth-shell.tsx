@@ -10,9 +10,10 @@ import { SignUpForm } from "./sign-up-form";
 type Mode = "signin" | "signup";
 
 /**
- * Carte d'authentification style « Diprella » : deux formulaires (connexion /
- * inscription) côte à côte, recouverts par un panneau orange qui glisse pour
- * basculer de l'un à l'autre. Sur mobile, un seul formulaire + lien de bascule.
+ * Carte d'authentification style « Diprella », palette Kreatly (noir + orange).
+ * Le panneau coloré occupe 1/3, le formulaire 2/3 ; le panneau noir glisse d'un
+ * côté à l'autre pour basculer connexion ⇄ inscription. Mobile : formulaire
+ * seul + lien de bascule.
  */
 export function AuthShell({ defaultMode }: { defaultMode: Mode }) {
   const t = useTranslations("auth.panel");
@@ -40,35 +41,35 @@ export function AuthShell({ defaultMode }: { defaultMode: Mode }) {
       </div>
 
       <div className="relative w-full max-w-4xl overflow-hidden rounded-3xl bg-white shadow-[0_30px_80px_-30px_rgba(10,6,18,0.35)]">
-        {/* ===== Desktop : split animé ===== */}
+        {/* ===== Desktop : 2/3 formulaire + 1/3 panneau, animé ===== */}
         <div className="relative hidden min-h-[560px] md:block">
-          {/* Formulaire connexion — moitié gauche */}
+          {/* Formulaire connexion — occupe 2/3 à gauche */}
           <div
             className={cn(
-              "absolute inset-y-0 left-0 flex w-1/2 items-center justify-center p-10 transition-opacity duration-500",
-              isSignup ? "pointer-events-none opacity-0" : "opacity-100",
+              "absolute inset-y-0 left-0 flex w-2/3 items-center justify-center p-10 transition-opacity duration-500",
+              isSignup ? "z-0 pointer-events-none opacity-0" : "z-10 opacity-100",
             )}
             aria-hidden={isSignup}
           >
             <SignInForm next={next} />
           </div>
 
-          {/* Formulaire inscription — moitié droite */}
+          {/* Formulaire inscription — occupe 2/3 à droite */}
           <div
             className={cn(
-              "absolute inset-y-0 right-0 flex w-1/2 items-center justify-center p-10 transition-opacity duration-500",
-              isSignup ? "opacity-100" : "pointer-events-none opacity-0",
+              "absolute inset-y-0 right-0 flex w-2/3 items-center justify-center p-10 transition-opacity duration-500",
+              isSignup ? "z-10 opacity-100" : "z-0 pointer-events-none opacity-0",
             )}
             aria-hidden={!isSignup}
           >
             <SignUpForm next={next} />
           </div>
 
-          {/* Overlay orange qui glisse par-dessus une moitié */}
+          {/* Panneau noir (1/3) qui glisse d'un côté à l'autre */}
           <div
             className={cn(
-              "absolute inset-y-0 left-0 z-20 w-1/2 transition-transform duration-500 ease-in-out",
-              isSignup ? "translate-x-0" : "translate-x-full",
+              "absolute inset-y-0 left-0 z-20 w-1/3 transition-transform duration-500 ease-in-out",
+              isSignup ? "translate-x-0" : "translate-x-[200%]",
             )}
           >
             <OverlayPanel mode={mode} onSwitch={go} />
@@ -77,7 +78,7 @@ export function AuthShell({ defaultMode }: { defaultMode: Mode }) {
 
         {/* ===== Mobile : un formulaire + bascule ===== */}
         <div className="md:hidden">
-          <div className="relative h-2 bg-gradient-to-r from-[#FF8A4C] to-[#F0560F]" />
+          <div className="h-1.5 bg-accent" />
           <div className="flex flex-col items-center gap-4 px-6 py-9">
             <BrandRow />
             {isSignup ? <SignUpForm next={next} /> : <SignInForm next={next} />}
@@ -109,15 +110,15 @@ function OverlayPanel({
   const isSignup = mode === "signup";
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-gradient-to-br from-[#FF8A4C] to-[#F0560F] text-white">
+    <div className="relative h-full w-full overflow-hidden bg-ink text-white">
+      {/* Lueur orange + formes décoratives (touche noir + orange) */}
+      <div className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-accent/25 blur-2xl" />
+      <div className="pointer-events-none absolute -left-10 bottom-8 size-28 rotate-12 rounded-3xl border border-white/10" />
+
       {/* Logo */}
-      <div className="absolute start-8 top-7">
+      <div className="absolute start-7 top-7">
         <BrandRow light />
       </div>
-
-      {/* Formes décoratives */}
-      <div className="pointer-events-none absolute -right-12 top-1/3 size-44 rounded-full bg-white/10" />
-      <div className="pointer-events-none absolute -left-8 bottom-10 size-24 rotate-12 rounded-3xl bg-white/10" />
 
       {/* Invite « Se connecter » (visible quand le form inscription est actif) */}
       <PanelContent
@@ -155,17 +156,19 @@ function PanelContent({
   return (
     <div
       className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center gap-5 px-12 text-center transition-opacity duration-300",
+        "absolute inset-0 flex flex-col items-center justify-center gap-5 px-8 text-center transition-opacity duration-300",
         show ? "opacity-100 delay-200" : "pointer-events-none opacity-0",
       )}
       aria-hidden={!show}
     >
-      <h2 className="text-3xl font-bold tracking-tight">{title}</h2>
-      <p className="max-w-xs text-sm leading-relaxed text-white/85">{text}</p>
+      <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+      <p className="max-w-[15rem] text-sm leading-relaxed text-white/70">
+        {text}
+      </p>
       <button
         type="button"
         onClick={onClick}
-        className="rounded-full border-2 border-white/80 px-9 py-2.5 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-white/10 active:scale-[0.98]"
+        className="rounded-full border-2 border-accent px-8 py-2.5 text-sm font-semibold uppercase tracking-wide text-accent transition hover:bg-accent hover:text-white active:scale-[0.98]"
       >
         {cta}
       </button>
@@ -173,16 +176,15 @@ function PanelContent({
   );
 }
 
-/** Logo Kreatly (carré play + wordmark). `light` = version blanche sur orange. */
+/**
+ * Logo Kreatly. Le carré play reste orange dans les 2 cas ; seul le wordmark
+ * s'adapte : « Kreatly » noir sur fond clair, blanc sur fond sombre (`light`).
+ * Le « .io » reste orange (mélange noir + orange).
+ */
 function BrandRow({ light = false }: { light?: boolean }) {
   return (
     <span className="inline-flex items-center gap-2">
-      <span
-        className={cn(
-          "inline-flex size-8 items-center justify-center rounded-lg",
-          light ? "bg-white/20" : "bg-accent",
-        )}
-      >
+      <span className="inline-flex size-8 items-center justify-center rounded-lg bg-accent">
         <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
           <path
             d="M9 6.5 L18.5 12 L9 17.5 Z"
@@ -200,8 +202,7 @@ function BrandRow({ light = false }: { light?: boolean }) {
           light ? "text-white" : "text-foreground",
         )}
       >
-        Kreatly
-        <span className={light ? "text-white/70" : "text-accent"}>.io</span>
+        Kreatly<span className="text-accent">.io</span>
       </span>
     </span>
   );
