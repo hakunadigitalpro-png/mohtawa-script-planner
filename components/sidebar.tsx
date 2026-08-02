@@ -57,25 +57,19 @@ export function Sidebar({
   const t = useTranslations("nav");
 
   return (
-    <aside
-      className="sticky top-0 z-30 hidden h-screen w-20 shrink-0 flex-col items-center gap-3 border-e border-white/5 py-5 text-white md:flex"
-      style={{
-        background:
-          "radial-gradient(130% 22% at 50% 0%, rgba(255,107,53,0.16), transparent 70%), #0A0612",
-      }}
-    >
+    <aside className="sticky top-0 z-30 hidden h-screen w-20 shrink-0 flex-col items-center gap-3 py-5 md:flex">
       {/* Logo */}
       <Link href="/dashboard" className="tooltip-trigger">
         <LogoMark className="size-12 rounded-2xl shadow-sm" iconClassName="size-6" />
         <span className="tooltip-content">{t("mohtawa")}</span>
       </Link>
 
-      <div className="h-px w-8 bg-white/10" />
+      <div className="h-px w-8 bg-border/80" />
 
       {/* Brand switcher */}
       <BrandSwitcher brands={brands} active={active} />
 
-      <div className="h-px w-8 bg-white/10" />
+      <div className="h-px w-8 bg-border/80" />
 
       {/* Notifications */}
       <NotificationsBell
