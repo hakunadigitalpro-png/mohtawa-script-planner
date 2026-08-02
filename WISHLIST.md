@@ -1,4 +1,4 @@
-# Wishlist Mohtawa — features parkées
+# Wishlist Kreatly — features parkées
 
 Fonctionnalités **construites mais volontairement masquées de l'interface** pour
 recentrer l'app sur l'essentiel (planification : Plan · Script · Storyboard ·
@@ -69,7 +69,7 @@ Instagram nécessite une clé type RapidAPI). Fragile pour un produit vendu.
 
 ## 4. Passer l'IA de Claude à Gemini (coût + carte)
 
-**Idée :** basculer les appels IA de Mohtawa (assistant de thèmes, génération
+**Idée :** basculer les appels IA de Kreatly (assistant de thèmes, génération
 reel/story/vlog) de Claude vers **Google Gemini**.
 
 **Pourquoi :**

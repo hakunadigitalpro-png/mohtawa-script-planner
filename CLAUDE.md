@@ -1,4 +1,4 @@
-# Mohtawa Script Planner
+# Kreatly Script Planner
 
 SaaS de gestion de production vidéo pour créateurs francophones/arabophones : planifier ses Reels et Stories, structurer ses scripts, suivre la performance, et boucler la boucle Idée → Mesure → Amélioration.
 
@@ -229,7 +229,7 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 #### Invitations par lien magique (Sprint 1)
 - Owner/admin clique « Créer un lien d'invitation » → choisit le rôle + note
 - Génère un token base64url (30 jours de validité)
-- Lien copiable : `mohtawa.tn/invite/{token}`
+- Lien copiable : `kreatly.io/invite/{token}`
 - L'invité ouvre le lien → preview de l'invitation (marque, rôle, inviter)
   - S'il est connecté : bouton « Accepter » → ajouté à `brand_members` + redirige
   - S'il n'est pas connecté : boutons login/register avec `?next=/invite/{token}` pour revenir après auth

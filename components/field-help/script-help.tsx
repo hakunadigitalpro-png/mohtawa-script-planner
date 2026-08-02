@@ -19,7 +19,7 @@ export function ScriptHelp() {
   return (
     <FieldHelp
       title="Structure d'un bon Reel"
-      description="Un Reel qui retient suit une narration en 3 phases. Mohtawa te guide à chaque étape."
+      description="Un Reel qui retient suit une narration en 3 phases. Kreatly te guide à chaque étape."
     >
       <HelpSection title="Le principe">
         <p>

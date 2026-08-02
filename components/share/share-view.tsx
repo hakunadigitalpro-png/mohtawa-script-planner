@@ -5,13 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Sparkles,
   ExternalLink,
   MessageSquare,
   X,
   Send,
   CornerDownRight,
 } from "lucide-react";
+import { Logo } from "@/components/brand/logo";
 import {
   platformLabel,
   typeLabel,
@@ -150,14 +150,8 @@ export function ShareView({
       {/* Header */}
       <header className="border-b border-border/60 bg-card/50 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-6 py-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-sm font-semibold"
-          >
-            <div className="flex size-8 items-center justify-center rounded-xl bg-ink text-white">
-              <Sparkles className="size-4" />
-            </div>
-            Mohtawa
+          <Link href="/" className="inline-flex">
+            <Logo wordmarkClassName="text-sm" />
           </Link>
           <span
             className={cn(
@@ -478,7 +472,7 @@ export function ShareView({
             href="/login"
             className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
           >
-            Créer ta propre fiche avec Mohtawa
+            Créer ta propre fiche avec Kreatly
             <ExternalLink className="size-3.5" />
           </Link>
         </div>

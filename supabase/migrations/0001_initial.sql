@@ -1,5 +1,5 @@
 -- =====================================================================
--- Mohtawa Script Planner — Initial schema (idempotent)
+-- Kreatly Script Planner — Initial schema (idempotent)
 -- Safe to run multiple times.
 -- =====================================================================
 

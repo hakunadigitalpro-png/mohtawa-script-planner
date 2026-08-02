@@ -7,7 +7,7 @@ import Link from "next/link";
 export function PrintActions({ title }: { title: string }) {
   useEffect(() => {
     if (typeof document !== "undefined") {
-      document.title = `${title} — Export Mohtawa`;
+      document.title = `${title} — Export Kreatly`;
     }
   }, [title]);
 

@@ -10,7 +10,7 @@ import { LandingCtaFinal } from "./landing-cta-final";
 import { LandingFooter } from "./landing-footer";
 
 /**
- * Page d'accueil publique de Mohtawa.
+ * Page d'accueil publique de Kreatly.
  *
  * Ordre des sections étudié pour le funnel d'acquisition :
  *  1. Navbar — orientation immédiate + CTA principal

@@ -9,7 +9,7 @@ Next.js 16 propose deux modèles de routing :
 - **Pages Router** : modèle historique (`pages/`)
 - **App Router** : modèle plus récent (`app/`) basé sur React Server Components
 
-Lequel choisir pour Mohtawa ?
+Lequel choisir pour Kreatly ?
 
 ## Options envisagées
 
@@ -34,7 +34,7 @@ Lequel choisir pour Mohtawa ?
 
 **App Router**.
 
-Le modèle Server Components colle parfaitement à Mohtawa :
+Le modèle Server Components colle parfaitement à Kreatly :
 - La plupart des pages sont des lectures DB (Dashboard, Calendrier, Analytics, fiche détail) → Server Components fetchent directement, pas d'API à coder
 - Server Actions remplacent les API routes pour les mutations
 - Route groups (`(auth)`, `(app)`) permettent de séparer layouts proprement

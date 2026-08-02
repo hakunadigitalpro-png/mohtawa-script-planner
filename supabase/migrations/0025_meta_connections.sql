@@ -1,7 +1,7 @@
 -- =====================================================================
 -- 0025 — Connexions Meta (Instagram / Facebook) par marque
 --
--- Stocke le lien OAuth entre une marque Mohtawa et un compte Instagram
+-- Stocke le lien OAuth entre une marque Kreatly et un compte Instagram
 -- professionnel (Business/Creator) relié à une Page Facebook. Sert de base
 -- à l'import des stats (Insights API) ET à la publication (Content
 -- Publishing API).

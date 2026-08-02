@@ -1,4 +1,4 @@
-// Service worker minimal pour Mohtawa.
+// Service worker minimal pour Kreatly.
 //
 // Rôle : rendre l'app "installable" (critère PWA) et permettre une
 // installation propre via PWABuilder pour générer le .apk Android.

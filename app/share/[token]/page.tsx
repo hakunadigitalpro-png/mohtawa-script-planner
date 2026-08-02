@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ShareView } from "@/components/share/share-view";
 
 export const metadata = {
-  title: "Vidéo partagée — Mohtawa",
+  title: "Vidéo partagée — Kreatly",
   robots: { index: false, follow: false },
 };
 

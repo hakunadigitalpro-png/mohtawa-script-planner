@@ -13,8 +13,8 @@ import type { MetadataRoute } from "next";
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Mohtawa — Script Planner",
-    short_name: "Mohtawa",
+    name: "Kreatly — Script Planner",
+    short_name: "Kreatly",
     description:
       "Planifie tes Reels et Stories, structure tes scripts et analyse tes résultats.",
     // "/" gère la redirection vers /dashboard (connecté) ou /login.

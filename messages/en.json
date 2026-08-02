@@ -33,7 +33,7 @@
     "brands": "My brands",
     "profile": "Profile",
     "logout": "Sign out",
-    "mohtawa": "Mohtawa"
+    "mohtawa": "Kreatly"
   },
   "auth": {
     "login": {
@@ -75,7 +75,7 @@
     }
   },
   "onboarding": {
-    "welcomeTitle": "Welcome to Mohtawa",
+    "welcomeTitle": "Welcome to Kreatly",
     "welcomeSubtitle": "Start by creating your first brand. You can add more later (e.g. your personal account, a client, a company).",
     "brandName": "Brand name",
     "brandNamePlaceholder": "e.g. My personal account",
@@ -352,7 +352,7 @@
     "title": "My profile",
     "subtitle": "Update your name and preferred language.",
     "infoTitle": "Information",
-    "infoSubtitle": "Your account on Mohtawa.",
+    "infoSubtitle": "Your account on Kreatly.",
     "fullName": "Full name",
     "email": "Email address",
     "emailHint": "Email cannot be changed.",
@@ -553,7 +553,7 @@
     "confirm": "Confirm deletion"
   },
   "invite": {
-    "headerTitle": "You've been invited to Mohtawa",
+    "headerTitle": "You've been invited to Kreatly",
     "headerSubtitle": "{inviter} invites you to join the brand {brand}.",
     "yourRole": "Your role",
     "validUntil": "Valid until {date}",
@@ -602,14 +602,14 @@
       "step4b": "Relational — you show behind-the-scenes, the team, your daily life",
       "step4c": "Inspirational — your values, your vision, what triggers a reaction",
       "step4d": "Promotional — your offers, your results, customer testimonials",
-      "step5": "Build your idea bank. In Mohtawa, each pillar becomes a filter: you'll attach Reels and Stories to it as ideas come.",
+      "step5": "Build your idea bank. In Kreatly, each pillar becomes a filter: you'll attach Reels and Stories to it as ideas come.",
       "testTitle": "The validation test",
       "test": "For each pillar, ask yourself: \"Can I come up with at least 30 video ideas without breaking a sweat?\" If yes → it's a real pillar. If not → merge it or drop it.",
       "examplesTitle": "3 concrete examples",
       "example1": "Business coach — Marketing tips (educational), Entrepreneur routine (behind-the-scenes), Mindset & discipline (inspirational), Client testimonials (promo)",
       "example2": "Natural cosmetics brand — Beauty tips (educational), Workshop production (behind-the-scenes), Zero waste & values (inspirational), Product showcases (promo)",
       "example3": "Local restaurant — Recipes & techniques (educational), A day in the kitchen (behind-the-scenes), Local producers (inspirational), Dish of the day & events (promo)",
-      "mohtawaTitle": "How Mohtawa uses your pillars",
+      "mohtawaTitle": "How Kreatly uses your pillars",
       "mohtawa1": "You'll find the list in the \"Content pillar\" dropdown of each video (just above).",
       "mohtawa2": "The orange + button to the right of the menu lets you add a new pillar on the fly, without leaving the video.",
       "mohtawa3": "In the Analytics tab, your pillars are ranked by performance: you can see which one brings in the most views.",
@@ -665,7 +665,7 @@
   "print": {
     "back": "Back to app",
     "print": "Print / Save as PDF",
-    "title": "PDF Export — Mohtawa",
+    "title": "PDF Export — Kreatly",
     "sections": {
       "plan": "Plan",
       "script": "Script",
@@ -771,7 +771,7 @@
     "personas": {
       "eyebrow": "Built for",
       "title": "Solo, agency or studio",
-      "subtitle": "Mohtawa fits your setup.",
+      "subtitle": "Kreatly fits your setup.",
       "p1": {
         "tag": "Most common",
         "title": "Solo creators",
@@ -814,7 +814,7 @@
     "beta": {
       "badge": "Beta program",
       "title": "Join the early creators",
-      "description": "Mohtawa is in free beta. In exchange for your feedback, keep lifetime free access when we launch paid plans.",
+      "description": "Kreatly is in free beta. In exchange for your feedback, keep lifetime free access when we launch paid plans.",
       "perks": {
         "p1": "Unlimited access to all features",
         "p2": "Direct support by message",
@@ -840,8 +840,8 @@
           "answer": "We use OpenAI's GPT-4o-mini to generate structured scripts. You give the title, goal and pillar — the AI proposes a full structure (hook, points, CTA, outro) you can edit freely."
         },
         "q4": {
-          "question": "Does Mohtawa publish for me?",
-          "answer": "No. Mohtawa is a planner, not an auto-poster. You publish yourself on Instagram, TikTok or YouTube. We help you prepare, structure, measure."
+          "question": "Does Kreatly publish for me?",
+          "answer": "No. Kreatly is a planner, not an auto-poster. You publish yourself on Instagram, TikTok or YouTube. We help you prepare, structure, measure."
         },
         "q5": {
           "question": "Is Arabic well supported?",
@@ -876,7 +876,7 @@
         "personas": "Who it's for",
         "faq": "FAQ"
       },
-      "company": "Mohtawa",
+      "company": "Kreatly",
       "companyLinks": {
         "beta": "Beta program",
         "contact": "Contact"

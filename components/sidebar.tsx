@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   CalendarDays,
-  Sparkles,
   LogOut,
   Building2,
   User,
@@ -15,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoMark } from "./brand/logo";
 import { BrandSwitcher } from "./brand-switcher";
 import { LocaleSwitcherCompact } from "./locale-switcher";
 import { NotificationsBell } from "./notifications/notifications-bell";
@@ -59,10 +59,10 @@ export function Sidebar({
   return (
     <aside className="sticky top-0 z-30 hidden h-screen w-20 shrink-0 flex-col items-center gap-3 py-5 md:flex">
       {/* Logo */}
-      <div className="tooltip-trigger flex size-12 shrink-0 items-center justify-center rounded-2xl bg-ink text-white shadow-sm">
-        <Sparkles className="size-5" />
+      <Link href="/dashboard" className="tooltip-trigger">
+        <LogoMark className="size-12 rounded-2xl shadow-sm" iconClassName="size-6" />
         <span className="tooltip-content">{t("mohtawa")}</span>
-      </div>
+      </Link>
 
       <div className="h-px w-8 bg-border/80" />
 

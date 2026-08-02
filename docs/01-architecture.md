@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Mohtawa est un SaaS Next.js + Supabase déployé sur Vercel. Architecture **server-first** : Server Components, Server Actions, RLS Postgres. Pas d'API REST dédiée — PostgREST (intégré à Supabase) sert les requêtes.
+Kreatly est un SaaS Next.js + Supabase déployé sur Vercel. Architecture **server-first** : Server Components, Server Actions, RLS Postgres. Pas d'API REST dédiée — PostgREST (intégré à Supabase) sert les requêtes.
 
 ```
 ┌─────────────┐      ┌─────────────────┐      ┌────────────────┐

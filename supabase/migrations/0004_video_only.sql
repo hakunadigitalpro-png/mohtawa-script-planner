@@ -1,5 +1,5 @@
 -- =====================================================================
--- 0004 — Mohtawa = Reel + Story uniquement.
+-- 0004 — Kreatly = Reel + Story uniquement.
 --        + image_url sur storyboard_scenes
 --        + nouvelle table story_slides (remplace story1..story5)
 --        + bucket Storage content-media + policies

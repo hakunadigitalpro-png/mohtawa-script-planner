@@ -60,7 +60,7 @@ export function MobileTopBar({
       <div className="flex min-w-0 items-center gap-2.5">
         <BrandSwitcher brands={brands} active={active} />
         <span className="truncate text-sm font-bold">
-          {active?.name ?? "Mohtawa"}
+          {active?.name ?? "Kreatly"}
         </span>
       </div>
       <NotificationsBell

@@ -52,7 +52,7 @@ Le RPC :
 
 ### Rendu
 
-- Header sobre : logo Mohtawa + badge "Lecture seule"
+- Header sobre : logo Kreatly + badge "Lecture seule"
 - Title block : brand name (eyebrow), titre, chips (type, statut, plateforme, date)
 - Sections affichées :
   - Plan : pilier, objectif, hook, CTA, tags
@@ -60,7 +60,7 @@ Le RPC :
   - Storyboard (si Reel) : grille de scènes avec images
   - Storyboard Planner (si Story) : 5 cartes phone-frame
   - Performances : si renseignées
-- Footer CTA discret : "Créer ta propre fiche avec Mohtawa" → `/login`
+- Footer CTA discret : "Créer ta propre fiche avec Kreatly" → `/login`
 
 ### SEO
 

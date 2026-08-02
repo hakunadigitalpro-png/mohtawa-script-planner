@@ -27,15 +27,15 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  applicationName: "Mohtawa",
-  title: "Mohtawa Script Planner",
+  applicationName: "Kreatly",
+  title: "Kreatly — Script Planner",
   description:
     "Organise tes scripts vidéo, planifie ton contenu et analyse tes résultats.",
   // Rend l'app "app-like" sur iOS quand ajoutée à l'écran d'accueil.
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Mohtawa",
+    title: "Kreatly",
   },
 };
 
@@ -70,7 +70,7 @@ export default async function RootLayout({
       lang={locale}
       dir={dir}
       data-theme={dataTheme}
-      data-app-version="kit1"
+      data-app-version="kreatly1"
       style={styleOverrides}
     >
       <body

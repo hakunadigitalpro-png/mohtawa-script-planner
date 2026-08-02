@@ -5,7 +5,7 @@
 
 ## Contexte
 
-Mohtawa est multi-tenant (chaque utilisateur a ses propres marques et contenus). Comment garantir qu'un utilisateur ne peut JAMAIS voir/modifier les données d'un autre, même via une erreur de code ?
+Kreatly est multi-tenant (chaque utilisateur a ses propres marques et contenus). Comment garantir qu'un utilisateur ne peut JAMAIS voir/modifier les données d'un autre, même via une erreur de code ?
 
 ## Options envisagées
 

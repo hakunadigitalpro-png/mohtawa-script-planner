@@ -90,7 +90,7 @@ Avantage : une zone qui attend des scènes ne réagira pas si on traîne une vid
 - Pas de version à maintenir
 
 ### Négatives
-- **Mobile** : le drag HTML5 ne marche pas sur tablette / téléphone tactile. Pour l'instant on accepte (Mohtawa est desktop-first). À l'avenir si besoin mobile, on pourra ajouter `react-dnd-html5-backend` + `react-dnd-touch-backend`.
+- **Mobile** : le drag HTML5 ne marche pas sur tablette / téléphone tactile. Pour l'instant on accepte (Kreatly est desktop-first). À l'avenir si besoin mobile, on pourra ajouter `react-dnd-html5-backend` + `react-dnd-touch-backend`.
 - **Accessibilité keyboard** : pas de support natif "alt+arrows pour déplacer". À ajouter manuellement si besoin.
 - **Feedback visuel** : pas de "ghost" image custom facile à styler. On utilise `opacity-40` sur l'élément source en CSS.
 

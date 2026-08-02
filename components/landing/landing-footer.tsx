@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Sparkles, Instagram, Linkedin, Youtube } from "lucide-react";
+import { Instagram, Linkedin, Youtube } from "lucide-react";
+import { Logo } from "@/components/brand/logo";
 
 /**
  * Footer minimaliste mais complet.
@@ -17,14 +18,8 @@ export function LandingFooter() {
         <div className="grid gap-10 lg:grid-cols-5">
           {/* Branding */}
           <div className="lg:col-span-2">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 font-bold text-lg text-foreground"
-            >
-              <span className="inline-flex size-8 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-                <Sparkles className="size-4" />
-              </span>
-              <span>Mohtawa</span>
+            <Link href="/" className="inline-flex">
+              <Logo wordmarkClassName="text-lg" />
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
               {t("tagline")}
@@ -32,13 +27,13 @@ export function LandingFooter() {
 
             {/* Socials */}
             <div className="mt-5 flex items-center gap-2">
-              <SocialLink href="https://instagram.com/mohtawa" label="Instagram">
+              <SocialLink href="https://instagram.com/kreatly" label="Instagram">
                 <Instagram className="size-4" />
               </SocialLink>
-              <SocialLink href="https://linkedin.com/company/mohtawa" label="LinkedIn">
+              <SocialLink href="https://linkedin.com/company/kreatly" label="LinkedIn">
                 <Linkedin className="size-4" />
               </SocialLink>
-              <SocialLink href="https://youtube.com/@mohtawa" label="YouTube">
+              <SocialLink href="https://youtube.com/@kreatly" label="YouTube">
                 <Youtube className="size-4" />
               </SocialLink>
             </div>
@@ -61,7 +56,7 @@ export function LandingFooter() {
             <FooterLink href="/register">
               {t("companyLinks.beta")}
             </FooterLink>
-            <FooterLink href="mailto:hello@mohtawa.tn">
+            <FooterLink href="mailto:hello@kreatly.io">
               {t("companyLinks.contact")}
             </FooterLink>
           </FooterColumn>
@@ -80,7 +75,7 @@ export function LandingFooter() {
         {/* Bottom bar */}
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border/40 pt-6 text-xs text-muted sm:flex-row">
           <p>
-            © {new Date().getFullYear()} Mohtawa. {t("rights")}
+            © {new Date().getFullYear()} Kreatly. {t("rights")}
           </p>
           <p>{t("made")}</p>
         </div>

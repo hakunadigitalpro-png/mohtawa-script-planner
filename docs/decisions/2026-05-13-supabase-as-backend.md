@@ -6,7 +6,7 @@
 
 ## Contexte
 
-Au démarrage de Mohtawa, on a besoin :
+Au démarrage de Kreatly, on a besoin :
 - D'une auth (email/mdp + reset)
 - D'une base de données relationnelle (multi-marques, contenus, performances)
 - D'un stockage de fichiers (images de storyboard)

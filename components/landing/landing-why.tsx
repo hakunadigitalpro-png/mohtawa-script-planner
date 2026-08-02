@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { Languages, Sparkles, Users, Share2, type LucideIcon } from "lucide-react";
 
 /**
- * Section "Pourquoi Mohtawa" — différenciateurs vs concurrence anglo-saxonne.
+ * Section "Pourquoi Kreatly" — différenciateurs vs concurrence anglo-saxonne.
  * Layout 2 colonnes : titre/eyebrow à gauche, 4 features à droite.
  */
 export function LandingWhy() {

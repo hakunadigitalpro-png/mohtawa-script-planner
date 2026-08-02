@@ -1,7 +1,8 @@
-import { Sparkles, Calendar, BarChart3, Film, Image as ImageIcon } from "lucide-react";
+import { Calendar, BarChart3, Film, Image as ImageIcon } from "lucide-react";
+import { LogoMark } from "@/components/brand/logo";
 
 /**
- * Mockup CSS "browser frame" qui simule l'écran principal de Mohtawa.
+ * Mockup CSS "browser frame" qui simule l'écran principal de Kreatly.
  *
  * Pure HTML/CSS (pas d'image bitmap) → ultra léger, scale parfaitement, et
  * s'adapte automatiquement au dark mode et au RTL via les tokens existants.
@@ -27,7 +28,7 @@ export function LandingMockup() {
           <span className="inline-block size-2.5 rounded-full bg-[#28c840]" />
           <div className="ms-3 hidden flex-1 sm:block">
             <div className="mx-auto h-5 max-w-xs rounded-full bg-card/80 text-[10px] flex items-center justify-center text-muted">
-              mohtawa.tn / dashboard
+              kreatly.io / dashboard
             </div>
           </div>
         </div>
@@ -36,8 +37,8 @@ export function LandingMockup() {
         <div className="flex">
           {/* Sidebar */}
           <div className="hidden w-14 flex-shrink-0 flex-col items-center gap-3 border-e border-border/40 bg-secondary/30 py-4 sm:flex">
-            <div className="inline-flex size-9 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-              <Sparkles className="size-4" />
+            <div className="inline-flex">
+              <LogoMark className="size-9 rounded-xl" iconClassName="size-4.5" />
             </div>
             <div className="mt-2 flex flex-col gap-2">
               {[BarChart3, Calendar, Film, ImageIcon].map((Icon, i) => (

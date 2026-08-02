@@ -88,7 +88,7 @@ export function ReferenceAnalyzer({ contentId }: { contentId: string }) {
         <div>
           <h3 className="text-sm font-bold">T&apos;inspirer d&apos;une vidéo qui marche</h3>
           <p className="text-[11px] text-muted">
-            Choisis une vidéo (la tienne ou une virale enregistrée) → Mohtawa
+            Choisis une vidéo (la tienne ou une virale enregistrée) → Kreatly
             la transcrit, analyse le wording et te propose un script.
           </p>
         </div>

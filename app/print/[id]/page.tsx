@@ -20,7 +20,7 @@ import type {
 } from "@/lib/types";
 
 export const metadata = {
-  title: "Export PDF — Mohtawa",
+  title: "Export PDF — Kreatly",
 };
 
 export default async function PrintPage({
@@ -233,7 +233,7 @@ export default async function PrintPage({
       )}
 
       <footer className="print-footer">
-        Mohtawa Script Planner · {formatDateFr(new Date())}
+        Kreatly Script Planner · {formatDateFr(new Date())}
       </footer>
     </div>
   );

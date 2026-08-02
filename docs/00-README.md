@@ -1,4 +1,4 @@
-# Documentation Mohtawa Script Planner
+# Documentation Kreatly Script Planner
 
 Specs fonctionnelles + décisions techniques (ADR) du produit.
 
