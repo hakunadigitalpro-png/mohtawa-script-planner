@@ -808,7 +808,7 @@
         },
         "ai": {
           "title": "IA intégrée",
-          "description": "Génération de scripts FR via GPT-4o-mini. Aucun coût caché, c'est inclus."
+          "description": "Génération de scripts par IA (Claude d'Anthropic). Aucun coût caché, c'est inclus."
         },
         "team": {
           "title": "Travail en équipe",
@@ -846,7 +846,7 @@
         },
         "q3": {
           "question": "Comment fonctionne l'IA ?",
-          "answer": "On utilise GPT-4o-mini d'OpenAI pour générer des scripts structurés. Tu donnes le titre, l'objectif et le pilier — l'IA propose une structure complète (hook, points, CTA, outro) que tu peux éditer librement."
+          "answer": "On utilise Claude (d'Anthropic) pour générer des scripts structurés. Tu donnes le titre, l'objectif et le pilier — l'IA propose une structure complète (hook, points, CTA, outro) que tu peux éditer librement."
         },
         "q4": {
           "question": "Kreatly publie-t-il à ma place ?",

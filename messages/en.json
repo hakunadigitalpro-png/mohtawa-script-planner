@@ -808,7 +808,7 @@
         },
         "ai": {
           "title": "AI built in",
-          "description": "Script generation via GPT-4o-mini. No hidden costs, it's included."
+          "description": "AI script generation (Claude by Anthropic). No hidden costs, it's included."
         },
         "team": {
           "title": "Team collaboration",
@@ -846,7 +846,7 @@
         },
         "q3": {
           "question": "How does the AI work?",
-          "answer": "We use OpenAI's GPT-4o-mini to generate structured scripts. You give the title, goal and pillar — the AI proposes a full structure (hook, points, CTA, outro) you can edit freely."
+          "answer": "We use Claude (by Anthropic) to generate structured scripts. You give the title, goal and pillar — the AI proposes a full structure (hook, points, CTA, outro) you can edit freely."
         },
         "q4": {
           "question": "Does Kreatly publish for me?",

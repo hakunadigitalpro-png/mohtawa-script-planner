@@ -101,8 +101,9 @@ créait un sketch de scène via DALL-E (OpenAI).
 **Pourquoi retiré :** Claude ne génère pas d'images, et OpenAI est inaccessible
 (carte refusée). Bouton mort → retiré du Storyboard.
 
-**Code conservé (intact) :** `generateSceneImage` (lib/ai.ts),
-`aiGenerateSceneImage` (ai-actions.ts).
+**Code supprimé (nettoyage 2026-08-04, audit Phase 1) :** `generateSceneImage`
++ `buildScenePrompt` (lib/ai.ts) et `aiGenerateSceneImage` (ai-actions.ts) ont
+été retirés — code mort inatteignable. Historique récupérable via git si besoin.
 
 **Pour réactiver un jour :** brancher un fournisseur d'images qui accepte sa
 carte (ex : image via un modèle Gemini/Imagen, ou un service tiers), puis
