@@ -124,6 +124,8 @@ export function VideoAutopsy({
               <div key={`${url}-${idx}`} className="w-20">
                 <ImageUpload
                   contentId={contentId}
+                  bucket="insights"
+                  pathMode
                   value={url}
                   aspectRatio="portrait"
                   onChange={(v) => {
@@ -138,6 +140,8 @@ export function VideoAutopsy({
               <ImageUpload
                 key={`add-${images.length}`}
                 contentId={contentId}
+                bucket="insights"
+                pathMode
                 value={null}
                 aspectRatio="portrait"
                 onChange={addImage}

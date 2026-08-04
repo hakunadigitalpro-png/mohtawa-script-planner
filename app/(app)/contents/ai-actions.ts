@@ -249,6 +249,21 @@ export async function generateVideoAutopsy(input: {
 
     const images = (input.insightsImageUrls ?? []).filter(Boolean);
 
+    // Signe les chemins du bucket privé `insights` → URLs temporaires (10 min)
+    // que Claude peut aller lire. Les valeurs legacy `http…` (anciennes
+    // captures publiques) passent telles quelles.
+    const signedForAi: string[] = [];
+    for (const p of images) {
+      if (p.startsWith("http")) {
+        signedForAi.push(p);
+        continue;
+      }
+      const { data: signed } = await supabase.storage
+        .from("insights")
+        .createSignedUrl(p, 600);
+      if (signed?.signedUrl) signedForAi.push(signed.signedUrl);
+    }
+
     // 2. Persiste les inputs d'autopsie (transcript + captures)
     const { error: saveErr } = await supabase.from("performances").upsert({
       content_id: input.contentId,
@@ -270,7 +285,7 @@ export async function generateVideoAutopsy(input: {
         retention: perf?.retention ?? null,
       },
       transcript: input.transcript,
-      insightsImageUrls: images,
+      insightsImageUrls: signedForAi,
     });
 
     // 4. Stocke le résultat + l'horodatage

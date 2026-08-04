@@ -23,6 +23,8 @@ export function ImageUpload({
   onChange,
   aspectRatio = "square",
   label = "Ajouter une image",
+  bucket = BUCKET,
+  pathMode = false,
 }: {
   /** Dossier de stockage = un content id (chemin {contentId}/…). */
   contentId?: string;
@@ -32,11 +34,42 @@ export function ImageUpload({
   onChange: (url: string | null) => void;
   aspectRatio?: "square" | "portrait" | "video";
   label?: string;
+  /** Bucket cible. Défaut : `content-media` (public). */
+  bucket?: string;
+  /**
+   * Bucket PRIVÉ : on stocke le *chemin* (pas d'URL publique) via onChange, et
+   * on affiche l'image en générant une URL signée temporaire. Défaut : false.
+   */
+  pathMode?: boolean;
 }) {
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [dragOver, setDragOver] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // En mode privé, `value` est un chemin de stockage → on résout une URL
+  // signée (1h) pour l'affichage. Les valeurs `http…` (legacy public) sont
+  // affichées telles quelles. En mode public (défaut), displaySrc === value.
+  const isPrivatePath = pathMode && !!value && !value.startsWith("http");
+  const [signedSrc, setSignedSrc] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!isPrivatePath) {
+      setSignedSrc(null);
+      return;
+    }
+    let active = true;
+    const supabase = createClient();
+    supabase.storage
+      .from(bucket)
+      .createSignedUrl(value as string, 3600)
+      .then(({ data }) => {
+        if (active) setSignedSrc(data?.signedUrl ?? null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isPrivatePath, value, bucket]);
+  const displaySrc = isPrivatePath ? signedSrc : value;
 
   const aspectClass =
     aspectRatio === "portrait"
@@ -68,7 +101,7 @@ export function ImageUpload({
     const path = `${prefix}/${crypto.randomUUID()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
-      .from(BUCKET)
+      .from(bucket)
       .upload(path, file, { cacheControl: "3600", upsert: false });
 
     if (uploadError) {
@@ -77,11 +110,15 @@ export function ImageUpload({
       return;
     }
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from(BUCKET).getPublicUrl(path);
-
-    onChange(publicUrl);
+    if (pathMode) {
+      // Bucket privé : on stocke le chemin (pas d'URL publique permanente).
+      onChange(path);
+    } else {
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(bucket).getPublicUrl(path);
+      onChange(publicUrl);
+    }
     setUploading(false);
   };
 
@@ -89,11 +126,15 @@ export function ImageUpload({
 
   const onRemove = async () => {
     if (!value) return;
-    const path = extractStoragePath(value);
+    // En mode privé, `value` EST déjà le chemin (sauf legacy `http…`).
+    const path =
+      pathMode && !value.startsWith("http")
+        ? value
+        : extractStoragePath(value);
     onChange(null);
     if (path) {
       const supabase = createClient();
-      await supabase.storage.from(BUCKET).remove([path]);
+      await supabase.storage.from(bucket).remove([path]);
     }
   };
 
@@ -119,14 +160,20 @@ export function ImageUpload({
       >
         {value ? (
           <>
-            <Image
-              src={value}
-              alt="Aperçu"
-              fill
-              sizes="(max-width: 768px) 100vw, 300px"
-              className="object-cover"
-              unoptimized
-            />
+            {displaySrc ? (
+              <Image
+                src={displaySrc}
+                alt="Aperçu"
+                fill
+                sizes="(max-width: 768px) 100vw, 300px"
+                className="object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-muted">
+                <Upload className="size-5 animate-pulse" />
+              </div>
+            )}
             <button
               type="button"
               onClick={onRemove}
