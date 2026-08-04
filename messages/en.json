@@ -658,13 +658,13 @@
       "stories": "Stories"
     },
     "errors": {
-      "noApiKey": "AI is not configured. Add OPENAI_API_KEY in Vercel and redeploy.",
-      "auth": "Invalid OpenAI key. Check OPENAI_API_KEY.",
+      "noApiKey": "AI is not configured. Add ANTHROPIC_API_KEY in Vercel and redeploy.",
+      "auth": "Invalid Anthropic key. Check ANTHROPIC_API_KEY.",
       "rateLimit": "Too many requests or quota reached. Try again in a minute.",
       "network": "Could not reach AI. Try again.",
       "parse": "AI returned an invalid format. Try again.",
       "empty": "Empty AI response.",
-      "api": "OpenAI error ({status}). Try again.",
+      "api": "AI error ({status}). Try again.",
       "unexpected": "Unexpected error. Try again.",
       "expiredSession": "Session expired. Please sign in again.",
       "nameRequired": "Name is required.",
