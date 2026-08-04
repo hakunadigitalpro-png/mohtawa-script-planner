@@ -10,6 +10,34 @@
 
 ---
 
+## 📌 État d'avancement — mis à jour le 2026-08-04 (prod `p2c`)
+
+**Phase 0 (sécurité critique) — ✅ TERMINÉE & déployée**
+- ✅ #1 Bucket privé `insights` (migr. 0032) · #2 Token Meta cloisonné (0033) · #3 Auth + rate-limit IA (`lib/ai-guard.ts`, 0034) · #4 Reset-password via `NEXT_PUBLIC_SITE_URL`
+
+**Phase 1 (quick wins) — ✅ TERMINÉE & déployée**
+- ✅ #5 OpenAI→Claude partout (FAQ, pricing, `ai.errors`) · #8 `server-only` sur `lib/ai.ts` · #9 code mort OpenAI/DALL-E supprimé · #6 anti mass-assignment (helper `pick()`) · #7 `revalidatePath` ciblé (taxonomie)
+
+**Phase 2 — partielle**
+- ✅ #10 Tests : vitest + `lib/utils.test.ts` (10 tests — `pick` / `safeNext` / `extractJsonBlock`). Lancer avec `npm test`.
+- ✅ #14 Édition d'un commentaire = auteur seul + RPC `set_comment_resolved` (migr. 0036)
+- ⬜ **#11** Alléger la fiche `content/[id]` : colonnes `performances` ciblées, `transcript`/`autopsy_md` chargés seulement si `status === 'published'`
+- ⬜ **#12** Borner le dashboard : `.select()` colonnes explicites + `.limit()` + pagination + KPIs via `count()`
+- ⬜ **#13** Localiser les erreurs IA (renvoyer `e.code` → `t('ai.errors.<code>')`) + purger les clés `ai.errors.*` mortes
+
+**Phase 3 — partielle**
+- ✅ #16 Index `brand_members(user_id)` (migr. 0035) + `safeNext` factorisé dans `lib/utils.ts` — **reste : factoriser `safeT`**
+- ✅ #18 Partage public : seuls les commentaires invités renvoyés + anti-spam `add_guest_comment` (migr. 0036)
+- 🟡 **#15** i18n : `Select` « Aucune option » fait (FR/EN/AR) — **reste ~40 chaînes FR en dur** (titres de `Dialog`, `aria-label`, placeholders « Ex : … », `components/field-help/script-help.tsx` entièrement FR)
+- ⬜ **#17** Retirer `unoptimized` sur `/share` et `/print` (ou compresser à l'upload dans `ImageUpload`)
+- ⬜ **#19** MAJ `CLAUDE.md` + `docs/` (disent encore « OpenAI gpt-4o-mini » / « i18n non câblé ») + ~10 classes physiques RTL résiduelles (`auth-shell.tsx`, `notifications-bell.tsx`…)
+
+> **⚠️ Migrations Supabase à lancer si pas encore fait : `0035_brand_members_index.sql`, `0036_comment_security.sql`.**
+>
+> **▶️ Reprise** — quand l'utilisatrice dit « **on continue les optimisations et performance** », reprendre les ⬜/🟡 ci-dessus. Ordre conseillé : **#12** dashboard → **#11** fiche vidéo → **#13** erreurs IA → **#15** i18n (reste) → **#17** images → **#19** docs.
+
+---
+
 ## Verdict global
 
 **Risque global : 🟠 MOYEN — acceptable pour la bêta fermée actuelle (cercle Mariam/Maryem), à durcir AVANT toute ouverture multi-clients publique.**
