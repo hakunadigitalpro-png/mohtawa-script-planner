@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveBrandId } from "@/lib/brand";
+import { pick } from "@/lib/utils";
 
 type CreateContentInput = {
   type: string;
@@ -85,8 +86,23 @@ export async function updateContent(
   // Auto-status (0015) : si l'user change le statut manuellement on désactive
   // l'auto-progression pour cette vidéo (override perso). À l'inverse, si la
   // mutation ne touche pas le statut, on laisse auto_status tel qu'il est.
+  const clean = pick(patch, [
+    "title",
+    "date",
+    "platform",
+    "pillar",
+    "objective",
+    "pillars",
+    "objectives",
+    "hook",
+    "cta",
+    "status",
+    "tags",
+    "video_url",
+    "caption",
+  ]);
   const patchWithFlag =
-    patch.status !== undefined ? { ...patch, auto_status: false } : patch;
+    patch.status !== undefined ? { ...clean, auto_status: false } : clean;
 
   const { error } = await supabase
     .from("contents")
@@ -290,7 +306,22 @@ export async function upsertReelDetails(
   const supabase = await createClient();
   const { error } = await supabase
     .from("reel_details")
-    .upsert({ content_id: contentId, ...patch });
+    .upsert({
+      content_id: contentId,
+      ...pick(patch, [
+        "message_key",
+        "intro",
+        "point1",
+        "point2",
+        "point3",
+        "transition",
+        "recap",
+        "outro",
+        "script_full",
+        "script_free_mode",
+        "checklist",
+      ]),
+    });
   if (error) return { error: error.message };
 
   // Idée 11 (revue UX) : Accroche et Outro sont maintenant édités UNIQUEMENT
@@ -335,7 +366,17 @@ export async function upsertVlogDetails(
   const supabase = await createClient();
   const { error } = await supabase
     .from("vlog_details")
-    .upsert({ content_id: contentId, ...patch });
+    .upsert({
+      content_id: contentId,
+      ...pick(patch, [
+        "angle",
+        "hook",
+        "arc_situation",
+        "arc_development",
+        "arc_payoff",
+        "voiceover",
+      ]),
+    });
   if (error) return { error: error.message };
 
   // Le hook vit aussi sur contents (lu par share/print/analytics) — sync.
@@ -361,7 +402,10 @@ export async function upsertStoryDetails(
   const supabase = await createClient();
   const { error } = await supabase
     .from("story_details")
-    .upsert({ content_id: contentId, ...patch });
+    .upsert({
+      content_id: contentId,
+      ...pick(patch, ["objective", "cta_soft", "format"]),
+    });
   if (error) return { error: error.message };
   revalidatePath(`/content/${contentId}`);
   return { ok: true };
@@ -380,7 +424,11 @@ export async function upsertStorySlide(
   const { error } = await supabase
     .from("story_slides")
     .upsert(
-      { content_id: contentId, slot_number: slotNumber, ...patch },
+      {
+        content_id: contentId,
+        slot_number: slotNumber,
+        ...pick(patch, ["body", "image_url", "filmed"]),
+      },
       { onConflict: "content_id,slot_number" },
     );
   if (error) return { error: error.message };
@@ -410,7 +458,18 @@ export async function upsertPerformance(
   const supabase = await createClient();
   const { error } = await supabase
     .from("performances")
-    .upsert({ content_id: contentId, ...patch });
+    .upsert({
+      content_id: contentId,
+      ...pick(patch, [
+        "views",
+        "likes",
+        "comments",
+        "shares",
+        "saves",
+        "retention",
+        "notes",
+      ]),
+    });
   if (error) return { error: error.message };
   revalidatePath(`/content/${contentId}`);
   return { ok: true };
@@ -451,7 +510,17 @@ export async function updateScene(
   const supabase = await createClient();
   const { error } = await supabase
     .from("storyboard_scenes")
-    .update(patch)
+    .update(
+      pick(patch, [
+        "description",
+        "camera_angle",
+        "on_screen_text",
+        "tag",
+        "image_url",
+        "filmed",
+        "editing_notes",
+      ]),
+    )
     .eq("id", sceneId);
   if (error) return { error: error.message };
 
@@ -681,7 +750,7 @@ export async function updatePublication(
   const supabase = await createClient();
   const { error } = await supabase
     .from("content_publications")
-    .update(patch)
+    .update(pick(patch, ["platform", "scheduled_date", "url"]))
     .eq("id", publicationId);
   if (error) {
     if (error.code === "23505") {

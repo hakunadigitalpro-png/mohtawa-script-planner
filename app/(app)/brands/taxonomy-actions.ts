@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { guardAiAction } from "@/lib/ai-guard";
+import { pick } from "@/lib/utils";
 import { themeAssistantTurn, AiError, type ThemeProposal } from "@/lib/ai";
 
 type Kind = "pillar" | "objective";
@@ -278,7 +279,20 @@ export async function upsertBrandKit(
   const supabase = await createClient();
   const { error } = await supabase
     .from("brand_kits")
-    .upsert({ brand_id: brandId, ...patch, updated_at: new Date().toISOString() });
+    .upsert({
+      brand_id: brandId,
+      ...pick(patch, [
+        "logo_url",
+        "color_primary",
+        "color_secondary",
+        "color_accent",
+        "tagline",
+        "audience",
+        "voice",
+        "hashtags",
+      ]),
+      updated_at: new Date().toISOString(),
+    });
   if (error) return { error: error.message };
   revalidatePath(`/brands/${brandId}`);
   revalidatePath("/", "layout");
