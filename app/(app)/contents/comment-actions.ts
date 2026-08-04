@@ -99,10 +99,14 @@ export async function toggleCommentResolved(params: {
   resolved: boolean;
 }) {
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("content_comments")
-    .update({ resolved: params.resolved })
-    .eq("id", params.commentId);
+  // Passe par la RPC dédiée (migration 0036) : la policy UPDATE de
+  // content_comments est désormais réservée à l'auteur ; le toggle "résolu"
+  // par n'importe quel membre se fait via cette fonction (qui ne touche que
+  // la colonne resolved après vérif d'appartenance).
+  const { error } = await supabase.rpc("set_comment_resolved", {
+    p_comment_id: params.commentId,
+    p_resolved: params.resolved,
+  });
   if (error) return { error: error.message };
 
   revalidatePath(`/content/${params.contentId}`);

@@ -47,6 +47,10 @@ export async function addGuestComment(params: {
     if (msg.includes("invalid_target_type"))
       return { error: "INVALID_TARGET" };
     if (msg.includes("invalid_parent")) return { error: "INVALID_PARENT" };
+    if (msg.includes("rate_limited"))
+      return {
+        error: "Trop de commentaires d'un coup. Réessaie dans quelques minutes.",
+      };
     return { error: msg };
   }
 

@@ -70,7 +70,7 @@ export default async function RootLayout({
       lang={locale}
       dir={dir}
       data-theme={dataTheme}
-      data-app-version="p2a"
+      data-app-version="p2b"
       style={styleOverrides}
     >
       <body
