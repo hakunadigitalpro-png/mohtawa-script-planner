@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { guardAiAction } from "@/lib/ai-guard";
 import { themeAssistantTurn, AiError, type ThemeProposal } from "@/lib/ai";
 
 type Kind = "pillar" | "objective";
@@ -176,7 +177,7 @@ export async function themeAssistant(input: {
   history: { role: "user" | "assistant"; content: string }[];
 }) {
   try {
-    const supabase = await createClient();
+    const { supabase } = await guardAiAction("theme");
     const { data: brand } = await supabase
       .from("brands")
       .select("name")

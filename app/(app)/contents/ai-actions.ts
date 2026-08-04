@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { guardAiAction } from "@/lib/ai-guard";
 import {
   generateReel,
   generateStory,
@@ -25,6 +26,7 @@ export async function aiGenerateReel(input: {
   platform?: string;
 }) {
   try {
+    await guardAiAction("reel");
     const data = await generateReel({
       topic: input.topic,
       audience: input.audience,
@@ -96,7 +98,7 @@ export async function aiGenerateSceneImage(input: {
   cameraNote?: string;
 }) {
   try {
-    const supabase = await createClient();
+    const { supabase } = await guardAiAction("scene-image");
 
     if (!input.description || !input.description.trim()) {
       return {
@@ -173,6 +175,7 @@ export async function aiGenerateStory(input: {
   audience?: string;
 }) {
   try {
+    await guardAiAction("story");
     const data = await generateStory({
       topic: input.topic,
       audience: input.audience,
@@ -231,7 +234,7 @@ export async function generateVideoAutopsy(input: {
   insightsImageUrls?: string[];
 }) {
   try {
-    const supabase = await createClient();
+    const { supabase } = await guardAiAction("autopsy");
 
     // 1. Charge le content (titre, plateforme) + les stats existantes
     const { data: content } = await supabase
@@ -316,6 +319,7 @@ export async function aiGenerateVlog(input: {
   platform?: string;
 }) {
   try {
+    await guardAiAction("vlog");
     const data = await generateVlog({
       topic: input.topic,
       audience: input.audience,
@@ -416,7 +420,7 @@ export async function analyzeReferenceVideoAction(input: {
   filename?: string;
 }) {
   try {
-    const supabase = await createClient();
+    const { supabase } = await guardAiAction("reference");
 
     // Contexte (plateforme + marque) pour adapter le script proposé.
     const { data: content } = await supabase
