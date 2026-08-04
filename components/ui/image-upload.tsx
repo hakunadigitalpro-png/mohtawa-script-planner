@@ -16,6 +16,63 @@ function extractStoragePath(url: string): string | null {
   return url.slice(idx + marker.length);
 }
 
+type CompressMode = "photo" | "keep-format";
+
+/**
+ * Redimensionne (max 1600 px) + compresse une image côté navigateur AVANT
+ * l'upload, pour économiser le stockage.
+ *  - "photo" → JPEG 85 % : universel et "prêt à poster" sur les réseaux
+ *    (Insta/LinkedIn recompressent de toute façon à ~1080 px → aucune perte
+ *    visible). Idéal pour les posts/carrousels/storyboards.
+ *  - "keep-format" → conserve le format d'origine (préserve la transparence
+ *    des logos PNG).
+ * Retombe sur le fichier d'origine si la compression ne fait rien gagner.
+ */
+async function compressImage(
+  file: File,
+  mode: CompressMode,
+): Promise<{ blob: Blob; ext: string; type: string }> {
+  const MAX = 1600;
+  const fallback = {
+    blob: file,
+    ext: file.name.split(".").pop()?.toLowerCase() ?? "jpg",
+    type: file.type || "image/jpeg",
+  };
+  try {
+    const dataUrl: string = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result as string);
+      r.onerror = () => rej(new Error("read"));
+      r.readAsDataURL(file);
+    });
+    const img: HTMLImageElement = await new Promise((res, rej) => {
+      const im = new window.Image();
+      im.onload = () => res(im);
+      im.onerror = () => rej(new Error("img"));
+      im.src = dataUrl;
+    });
+    const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return fallback;
+    ctx.drawImage(img, 0, 0, w, h);
+
+    const keepPng = mode === "keep-format" && file.type === "image/png";
+    const outType = keepPng ? "image/png" : "image/jpeg";
+    const blob: Blob | null = await new Promise((res) =>
+      canvas.toBlob(res, outType, outType === "image/jpeg" ? 0.85 : undefined),
+    );
+    if (!blob || blob.size >= file.size) return fallback;
+    return { blob, ext: outType === "image/jpeg" ? "jpg" : "png", type: outType };
+  } catch {
+    return fallback;
+  }
+}
+
 export function ImageUpload({
   contentId,
   folder,
@@ -25,6 +82,7 @@ export function ImageUpload({
   label = "Ajouter une image",
   bucket = BUCKET,
   pathMode = false,
+  compress = "photo",
 }: {
   /** Dossier de stockage = un content id (chemin {contentId}/…). */
   contentId?: string;
@@ -41,6 +99,12 @@ export function ImageUpload({
    * on affiche l'image en générant une URL signée temporaire. Défaut : false.
    */
   pathMode?: boolean;
+  /**
+   * Compression à l'upload : "photo" (défaut) = redimensionne + JPEG 85 %
+   * (réseaux sociaux) ; "keep-format" = conserve le format d'origine
+   * (préserve la transparence des logos PNG).
+   */
+  compress?: CompressMode;
 }) {
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -84,8 +148,8 @@ export function ImageUpload({
       setError("Format non supporté.");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image trop lourde (5 Mo max).");
+    if (file.size > 20 * 1024 * 1024) {
+      setError("Image trop lourde (20 Mo max).");
       return;
     }
 
@@ -96,13 +160,19 @@ export function ImageUpload({
     }
 
     setUploading(true);
+    // Compression à l'upload (1600 px + JPEG 85 % pour les photos) → on économise
+    // le stockage tout en gardant une qualité "prête à poster" sur les réseaux.
+    const processed = await compressImage(file, compress);
     const supabase = createClient();
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `${prefix}/${crypto.randomUUID()}.${ext}`;
+    const path = `${prefix}/${crypto.randomUUID()}.${processed.ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from(bucket)
-      .upload(path, file, { cacheControl: "3600", upsert: false });
+      .upload(path, processed.blob, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: processed.type,
+      });
 
     if (uploadError) {
       setError(uploadError.message);
@@ -199,7 +269,7 @@ export function ImageUpload({
               {uploading ? "Envoi..." : label}
             </span>
             <span className="text-[10px] text-muted">
-              JPG, PNG, WebP · 5 Mo max
+              JPG, PNG, WebP · compressée auto
             </span>
           </button>
         )}

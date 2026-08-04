@@ -86,6 +86,7 @@ export function BrandKitManager({
               onChange={onLogo}
               aspectRatio="square"
               label="Ajouter le logo"
+              compress="keep-format"
             />
           </div>
         </div>
