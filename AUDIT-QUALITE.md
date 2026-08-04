@@ -32,7 +32,7 @@
 - ⬜ **#17** Retirer `unoptimized` sur `/share` et `/print` (ou compresser à l'upload dans `ImageUpload`)
 - ⬜ **#19** MAJ `CLAUDE.md` + `docs/` (disent encore « OpenAI gpt-4o-mini » / « i18n non câblé ») + ~10 classes physiques RTL résiduelles (`auth-shell.tsx`, `notifications-bell.tsx`…)
 
-> **⚠️ Migrations Supabase à lancer si pas encore fait : `0035_brand_members_index.sql`, `0036_comment_security.sql`.**
+> **✅ Migrations Supabase `0032`→`0036` toutes appliquées (confirmé le 2026-08-04) + `NEXT_PUBLIC_SITE_URL` défini côté Vercel.**
 >
 > **▶️ Reprise** — quand l'utilisatrice dit « **on continue les optimisations et performance** », reprendre les ⬜/🟡 ci-dessus. Ordre conseillé : **#12** dashboard → **#11** fiche vidéo → **#13** erreurs IA → **#15** i18n (reste) → **#17** images → **#19** docs.
 
