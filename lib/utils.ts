@@ -23,6 +23,40 @@ export function pick<T extends object, K extends keyof T>(
   return out;
 }
 
+/**
+ * Garde anti open-redirect pour le paramètre `next` (login/register). Ne
+ * renvoie que des chemins internes ; tout ce qui n'est pas un chemin
+ * commençant par un seul `/` (URL externe, `//host`, non-string) retombe sur
+ * `/dashboard`.
+ */
+export function safeNext(value: unknown): string {
+  if (typeof value !== "string") return "/dashboard";
+  if (!value.startsWith("/")) return "/dashboard";
+  if (value.startsWith("//")) return "/dashboard";
+  return value;
+}
+
+/**
+ * Extraction JSON tolérante des réponses de l'IA (Claude ne garantit pas du
+ * JSON pur) : retire un éventuel bloc ```json … ```, sinon prend du premier
+ * `{` au dernier `}`. Renvoie la chaîne à passer à JSON.parse (l'appelant
+ * gère l'échec de parsing).
+ */
+export function extractJsonBlock(text: string): string {
+  let raw = text.trim();
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced) {
+    raw = fenced[1].trim();
+  } else {
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start !== -1 && end !== -1 && end > start) {
+      raw = raw.slice(start, end + 1);
+    }
+  }
+  return raw;
+}
+
 export function formatDateFr(date: string | Date) {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleDateString("fr-FR", {

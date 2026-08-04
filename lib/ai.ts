@@ -1,5 +1,7 @@
 import "server-only";
 
+import { extractJsonBlock } from "@/lib/utils";
+
 /**
  * Wrappers minimalistes (fetch, pas de SDK) autour des API IA utilisées côté
  * serveur : Claude (Anthropic) pour la génération de texte, Groq (Whisper) pour
@@ -537,17 +539,7 @@ async function callClaudeJSON<T>(
   maxTokens: number,
 ): Promise<T> {
   const text = await callClaudeText(system, userText, maxTokens);
-  let raw = text.trim();
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fenced) {
-    raw = fenced[1].trim();
-  } else {
-    const start = raw.indexOf("{");
-    const end = raw.lastIndexOf("}");
-    if (start !== -1 && end !== -1 && end > start) {
-      raw = raw.slice(start, end + 1);
-    }
-  }
+  const raw = extractJsonBlock(text);
   try {
     return JSON.parse(raw) as T;
   } catch {
@@ -733,16 +725,7 @@ Réponds dans la langue de la personne (français par défaut).`;
     .trim();
   if (!text) throw new AiError("empty", "Réponse vide de l'IA.");
 
-  // Extraction JSON tolérante (fence ```json``` ou du premier { au dernier }).
-  let raw = text;
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fenced) {
-    raw = fenced[1].trim();
-  } else {
-    const s = raw.indexOf("{");
-    const e = raw.lastIndexOf("}");
-    if (s !== -1 && e !== -1 && e > s) raw = raw.slice(s, e + 1);
-  }
+  const raw = extractJsonBlock(text);
   try {
     const parsed = JSON.parse(raw) as ThemeAssistantReply;
     return {

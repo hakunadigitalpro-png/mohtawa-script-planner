@@ -3,13 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-
-function safeNext(value: unknown): string {
-  if (typeof value !== "string") return "/dashboard";
-  if (!value.startsWith("/")) return "/dashboard";
-  if (value.startsWith("//")) return "/dashboard";
-  return value;
-}
+import { safeNext } from "@/lib/utils";
 
 /**
  * Returns error codes. The page maps these to localized strings.
