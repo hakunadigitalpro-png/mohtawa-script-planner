@@ -34,8 +34,18 @@ export function ContentTab({
   const [items, setItems] = React.useState(visuals);
   const [pending, startTransition] = React.useTransition();
   const dragFrom = React.useRef<number | null>(null);
+  const [preview, setPreview] = React.useState<string | null>(null);
 
   React.useEffect(() => setItems(visuals), [visuals]);
+
+  React.useEffect(() => {
+    if (!preview) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPreview(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [preview]);
 
   const onAdd = (url: string | null) => {
     if (!url) return;
@@ -99,7 +109,11 @@ export function ContentTab({
               onDrop={() => onDrop(idx)}
               className={isCarousel ? "w-24 cursor-grab" : "w-24"}
             >
-              <div className="relative aspect-[4/5] overflow-hidden rounded-lg border border-border bg-secondary/40">
+              <div
+                className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-lg border border-border bg-secondary/40"
+                onClick={() => it.image_url && setPreview(it.image_url)}
+                title="Cliquer pour agrandir"
+              >
                 {it.image_url && (
                   <Image
                     src={it.image_url}
@@ -117,7 +131,10 @@ export function ContentTab({
                 )}
                 <button
                   type="button"
-                  onClick={() => onRemove(it.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemove(it.id);
+                  }}
                   className="absolute end-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80"
                   aria-label="Retirer le visuel"
                 >
@@ -145,6 +162,37 @@ export function ContentTab({
       </Card>
 
       <CaptionTab contentId={contentId} caption={caption} />
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setPreview(null)}
+          role="dialog"
+          aria-modal
+        >
+          <button
+            type="button"
+            onClick={() => setPreview(null)}
+            className="absolute end-4 top-4 flex size-9 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
+            aria-label="Fermer l'aperçu"
+          >
+            <X className="size-5" />
+          </button>
+          <div
+            className="relative h-[88vh] w-full max-w-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={preview}
+              alt="Aperçu du visuel"
+              fill
+              sizes="(max-width: 768px) 100vw, 640px"
+              className="object-contain"
+              unoptimized
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
