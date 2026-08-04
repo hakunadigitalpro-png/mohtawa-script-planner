@@ -2,7 +2,19 @@ export const CONTENT_TYPES = [
   { value: "reel", label: "Reel", color: "var(--color-reel)" },
   { value: "story", label: "Story", color: "var(--color-story)" },
   { value: "vlog", label: "Vlog", color: "var(--color-vlog)" },
+  { value: "post", label: "Post", color: "var(--color-post)" },
+  { value: "carousel", label: "Carrousel", color: "var(--color-carousel)" },
+  { value: "infographic", label: "Infographie", color: "var(--color-infographic)" },
 ] as const;
+
+/**
+ * Types "vidéo" (éditeur complet : script, storyboard…) vs types "simples"
+ * (post/carrousel/infographie : éditeur allégé légende + visuels).
+ */
+export const SIMPLE_TYPES = ["post", "carousel", "infographic"] as const;
+export function isSimpleType(type: string | null | undefined): boolean {
+  return (SIMPLE_TYPES as readonly string[]).includes(type ?? "");
+}
 
 export type ContentType = (typeof CONTENT_TYPES)[number]["value"];
 
@@ -20,6 +32,9 @@ const PLATFORMS_BY_TYPE: Record<string, Platform[]> = {
   reel: ["instagram", "tiktok", "youtube", "facebook", "linkedin"],
   story: ["instagram", "tiktok"],
   vlog: ["instagram", "tiktok", "youtube", "facebook"],
+  post: ["instagram", "facebook", "linkedin"],
+  carousel: ["instagram", "linkedin", "facebook", "tiktok"],
+  infographic: ["instagram", "linkedin", "facebook"],
 };
 
 export function platformsForType(type: string | null | undefined) {

@@ -9,6 +9,7 @@ import { StoryboardTab } from "./storyboard-tab";
 import { ChecklistTab } from "./checklist-tab";
 import { CaptionTab } from "./caption-tab";
 import { PerformanceTab } from "./performance-tab";
+import { isSimpleType } from "@/lib/constants";
 import type {
   Content,
   ReelDetails,
@@ -58,6 +59,9 @@ export function DetailTabs({
   const t = useTranslations("tabs");
   const isStory = content.type === "story";
   const isVlog = content.type === "vlog";
+  // Formats "simples" (post/carrousel/infographie) : éditeur allégé
+  // (Plan + Contenu), sans Script ni Storyboard.
+  const isSimple = isSimpleType(content.type);
   // Moments à filmer (catégorie 'capture') — affichés dans l'onglet Vlog,
   // pas dans la Checklist matériel/préparation.
   const captureItems = checklistItems.filter((it) => it.category === "capture");
@@ -69,19 +73,28 @@ export function DetailTabs({
     <Tabs defaultValue="plan">
       <TabsList>
         <TabsTrigger value="plan">{t("plan")}</TabsTrigger>
-        <TabsTrigger value="script">
-          {isStory ? t("stories") : isVlog ? "Vlog" : t("script")}
-        </TabsTrigger>
-        {/* Storyboard = Reel uniquement (le vlog se capture, pas se story-borde). */}
-        {!isStory && !isVlog && (
-          <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>
+        {isSimple ? (
+          /* Post / Carrousel / Infographie : un seul onglet "Contenu"
+             (légende + visuels), pas de Script/Storyboard. */
+          <TabsTrigger value="content">Contenu</TabsTrigger>
+        ) : (
+          <>
+            <TabsTrigger value="script">
+              {isStory ? t("stories") : isVlog ? "Vlog" : t("script")}
+            </TabsTrigger>
+            {/* Storyboard = Reel uniquement (le vlog se capture, pas se story-borde). */}
+            {!isStory && !isVlog && (
+              <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>
+            )}
+            <TabsTrigger value="checklist">{t("checklist")}</TabsTrigger>
+            {/* Caption pour Reel + Vlog — les Stories ont du texte par slide,
+                pas une caption globale au moment de la publication. */}
+            {!isStory && <TabsTrigger value="caption">Caption</TabsTrigger>}
+          </>
         )}
-        <TabsTrigger value="checklist">{t("checklist")}</TabsTrigger>
-        {/* Caption pour Reel + Vlog — les Stories ont du texte par slide,
-            pas une caption globale au moment de la publication. */}
-        {!isStory && <TabsTrigger value="caption">Caption</TabsTrigger>}
         {isPublished && <TabsTrigger value="performance">{t("performance")}</TabsTrigger>}
       </TabsList>
+
       <TabsContent value="plan">
         <PlanTab
           content={content}
@@ -90,44 +103,55 @@ export function DetailTabs({
           publications={publications}
         />
       </TabsContent>
-      <TabsContent value="script">
-        {isVlog ? (
-          <VlogTab content={content} vlog={vlog} captureItems={captureItems} />
-        ) : (
-          <ScriptTab
-            content={content}
-            reel={reel}
-            story={story}
-            slides={slides}
-          />
-        )}
-      </TabsContent>
-      {!isStory && !isVlog && (
-        <TabsContent value="storyboard">
-          <StoryboardTab
-            contentId={content.id}
-            scenes={scenes}
-            scenePresets={scenePresets}
-            brandId={brandId}
-          />
-        </TabsContent>
-      )}
-      <TabsContent value="checklist">
-        <ChecklistTab
-          contentId={content.id}
-          reel={reel}
-          scenes={isStory || isVlog ? undefined : scenes}
-          slides={isStory ? slides : undefined}
-          checklistItems={checklistItems}
-          equipmentSuggestions={equipmentSuggestions}
-          preparationSuggestions={preparationSuggestions}
-        />
-      </TabsContent>
-      {!isStory && (
-        <TabsContent value="caption">
+
+      {isSimple ? (
+        <TabsContent value="content">
+          {/* Morceau 1 : la légende. Les visuels (carrousel) arrivent au morceau 2. */}
           <CaptionTab contentId={content.id} caption={content.caption} />
         </TabsContent>
+      ) : (
+        <>
+          <TabsContent value="script">
+            {isVlog ? (
+              <VlogTab content={content} vlog={vlog} captureItems={captureItems} />
+            ) : (
+              <ScriptTab
+                content={content}
+                reel={reel}
+                story={story}
+                slides={slides}
+              />
+            )}
+          </TabsContent>
+          {!isStory && !isVlog && (
+            <TabsContent value="storyboard">
+              <StoryboardTab
+                contentId={content.id}
+                scenes={scenes}
+                scenePresets={scenePresets}
+                brandId={brandId}
+              />
+            </TabsContent>
+          )}
+          <TabsContent value="checklist">
+            <ChecklistTab
+              contentId={content.id}
+              reel={reel}
+              scenes={isStory || isVlog ? undefined : scenes}
+              slides={isStory ? slides : undefined}
+              checklistItems={checklistItems}
+              equipmentSuggestions={equipmentSuggestions}
+              preparationSuggestions={preparationSuggestions}
+            />
+          </TabsContent>
+          {!isStory && (
+            <TabsContent value="caption">
+              <CaptionTab contentId={content.id} caption={content.caption} />
+            </TabsContent>
+          )}
+        </>
       )}
+
       {isPublished && (
         <TabsContent value="performance">
           <PerformanceTab
