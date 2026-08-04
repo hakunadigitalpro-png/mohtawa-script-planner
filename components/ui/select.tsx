@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,7 @@ export function Select({
 }: SelectProps) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
+  const t = useTranslations("common");
 
   React.useEffect(() => {
     if (!open) return;
@@ -99,7 +101,7 @@ export function Select({
           )}
         >
           {options.length === 0 && (
-            <li className="px-4 py-2 text-sm text-muted">Aucune option</li>
+            <li className="px-4 py-2 text-sm text-muted">{t("noOptions")}</li>
           )}
           {options.map((opt) => {
             const active = opt.value === value;

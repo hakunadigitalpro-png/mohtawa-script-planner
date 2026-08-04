@@ -1,5 +1,6 @@
 {
   "common": {
+    "noOptions": "No options",
     "save": "Save",
     "saving": "Saving...",
     "saved": "Saved ✓",

@@ -1,5 +1,6 @@
 {
   "common": {
+    "noOptions": "Aucune option",
     "save": "Enregistrer",
     "saving": "Enregistrement...",
     "saved": "Enregistré ✓",
