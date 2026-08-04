@@ -27,6 +27,7 @@ import {
 import type { Comment } from "@/components/comments";
 import type {
   Content,
+  ContentMedia,
   ReelDetails,
   StoryDetails,
   VlogDetails,
@@ -75,6 +76,7 @@ export default async function ContentDetailPage({
     suggPreparationRes,
     publicationsRes,
     scenePresetsRes,
+    mediaRes,
   ] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
@@ -137,6 +139,11 @@ export default async function ContentDetailPage({
       .select("*")
       .eq("brand_id", content.brand_id)
       .order("position", { ascending: true }),
+    supabase
+      .from("content_media")
+      .select("*")
+      .eq("content_id", id)
+      .order("position", { ascending: true }),
   ]);
 
   const reel = (reelRes.data ?? null) as ReelDetails | null;
@@ -145,6 +152,7 @@ export default async function ContentDetailPage({
   const slides = (slidesRes.data ?? []) as StorySlide[];
   const scenes = (scenesRes.data ?? []) as StoryboardScene[];
   const perf = (perfRes.data ?? null) as Performance | null;
+  const visuals = (mediaRes.data ?? []) as ContentMedia[];
   const pillars = (pillarsRes.data ?? []) as {
     id: string;
     name: string;
@@ -264,6 +272,7 @@ export default async function ContentDetailPage({
           slides={slides}
           scenes={scenes}
           perf={perf}
+          visuals={visuals}
           brandPillars={pillars}
           brandObjectives={objectives}
           checklistItems={checklistItems}

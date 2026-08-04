@@ -134,6 +134,18 @@ export type VlogDetails = {
   voiceover: string | null;
 };
 
+/**
+ * Visuel ordonné d'un contenu non-vidéo (post/carrousel/infographie).
+ * Migration 0038. Un post/infographie = 1 ligne, un carrousel = N lignes.
+ */
+export type ContentMedia = {
+  id: string;
+  content_id: string;
+  position: number;
+  image_url: string | null;
+  created_at: string;
+};
+
 export type StorySlide = {
   id: string;
   content_id: string;

@@ -8,10 +8,12 @@ import { VlogTab } from "./vlog-tab";
 import { StoryboardTab } from "./storyboard-tab";
 import { ChecklistTab } from "./checklist-tab";
 import { CaptionTab } from "./caption-tab";
+import { ContentTab } from "./content-tab";
 import { PerformanceTab } from "./performance-tab";
 import { isSimpleType } from "@/lib/constants";
 import type {
   Content,
+  ContentMedia,
   ReelDetails,
   StoryDetails,
   VlogDetails,
@@ -31,6 +33,7 @@ export function DetailTabs({
   slides,
   scenes,
   perf,
+  visuals,
   brandPillars,
   brandObjectives,
   checklistItems,
@@ -47,6 +50,7 @@ export function DetailTabs({
   slides: StorySlide[];
   scenes: StoryboardScene[];
   perf: Performance | null;
+  visuals: ContentMedia[];
   brandPillars: { id: string; name: string; objective?: string | null }[];
   brandObjectives: { id: string; name: string }[];
   checklistItems: ChecklistItem[];
@@ -106,8 +110,12 @@ export function DetailTabs({
 
       {isSimple ? (
         <TabsContent value="content">
-          {/* Morceau 1 : la légende. Les visuels (carrousel) arrivent au morceau 2. */}
-          <CaptionTab contentId={content.id} caption={content.caption} />
+          <ContentTab
+            contentId={content.id}
+            caption={content.caption}
+            visuals={visuals}
+            isCarousel={content.type === "carousel"}
+          />
         </TabsContent>
       ) : (
         <>

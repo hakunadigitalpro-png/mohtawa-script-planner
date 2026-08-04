@@ -545,6 +545,58 @@ export async function deleteScene(sceneId: string, contentId: string) {
   return { ok: true };
 }
 
+/* ====================== Visuels des contenus non-vidéo (migration 0038) ====================== */
+
+/** Ajoute un visuel (déjà uploadé sur Storage) en fin de liste. */
+export async function addContentVisual(contentId: string, imageUrl: string) {
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("content_media")
+    .select("position")
+    .eq("content_id", contentId)
+    .order("position", { ascending: false })
+    .limit(1);
+  const nextPos = (existing?.[0]?.position ?? -1) + 1;
+
+  const { error } = await supabase
+    .from("content_media")
+    .insert({ content_id: contentId, position: nextPos, image_url: imageUrl });
+  if (error) return { error: error.message };
+
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true as const };
+}
+
+/** Retire un visuel. */
+export async function removeContentVisual(mediaId: string, contentId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("content_media")
+    .delete()
+    .eq("id", mediaId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true as const };
+}
+
+/** Réordonne les visuels (positions = index dans orderedIds). */
+export async function reorderContentVisuals(
+  contentId: string,
+  orderedIds: string[],
+) {
+  const supabase = await createClient();
+  for (let i = 0; i < orderedIds.length; i++) {
+    await supabase
+      .from("content_media")
+      .update({ position: i })
+      .eq("id", orderedIds[i])
+      .eq("content_id", contentId);
+  }
+  revalidatePath(`/content/${contentId}`);
+  return { ok: true as const };
+}
+
 /* ============================ Checklist items (V2 — migration 0011) ============================ */
 // Items "matériel à prévoir" et "préparation tournage" gérés par video.
 // Atomic actions : add / toggle / delete sont chacune une sauvegarde immédiate.
