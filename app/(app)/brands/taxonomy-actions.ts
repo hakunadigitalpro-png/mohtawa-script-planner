@@ -43,7 +43,9 @@ export async function createTaxonomy(
   }
 
   revalidatePath(`/brands/${brandId}`);
-  revalidatePath("/", "layout");
+  revalidatePath("/calendar");
+  revalidatePath("/analytics");
+  revalidatePath("/content/[id]", "page");
   return { ok: true as const, id: data.id, name: data.name };
 }
 
@@ -87,7 +89,9 @@ export async function renameTaxonomy(
   }
 
   revalidatePath(`/brands/${brandId}`);
-  revalidatePath("/", "layout");
+  revalidatePath("/calendar");
+  revalidatePath("/analytics");
+  revalidatePath("/content/[id]", "page");
   return { ok: true as const };
 }
 
@@ -160,7 +164,9 @@ export async function updatePillar(
   }
 
   revalidatePath(`/brands/${brandId}`);
-  revalidatePath("/", "layout");
+  revalidatePath("/calendar");
+  revalidatePath("/analytics");
+  revalidatePath("/content/[id]", "page");
   return { ok: true as const };
 }
 
@@ -255,7 +261,9 @@ export async function applyBrandThemes(input: {
   }
 
   revalidatePath(`/brands/${input.brandId}`);
-  revalidatePath("/", "layout");
+  revalidatePath("/calendar");
+  revalidatePath("/analytics");
+  revalidatePath("/content/[id]", "page");
   return { ok: true as const, added: rows.length };
 }
 
@@ -295,7 +303,9 @@ export async function upsertBrandKit(
     });
   if (error) return { error: error.message };
   revalidatePath(`/brands/${brandId}`);
-  revalidatePath("/", "layout");
+  revalidatePath("/calendar");
+  revalidatePath("/analytics");
+  revalidatePath("/content/[id]", "page");
   return { ok: true as const };
 }
 
@@ -339,6 +349,8 @@ export async function deleteTaxonomy(
   if (error) return { error: error.message };
 
   revalidatePath(`/brands/${brandId}`);
-  revalidatePath("/", "layout");
+  revalidatePath("/calendar");
+  revalidatePath("/analytics");
+  revalidatePath("/content/[id]", "page");
   return { ok: true as const };
 }
