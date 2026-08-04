@@ -137,8 +137,8 @@
     }
   },
   "newContent": {
-    "title": "Nouvelle vidéo",
-    "subtitle": "Chaque vidéo commence par une idée claire.",
+    "title": "Nouveau contenu — {format}",
+    "subtitle": "Choisis ton format et pars d'une idée claire.",
     "format": "Format",
     "platform": "Plateforme",
     "videoTitle": "Titre",
@@ -147,7 +147,7 @@
     "submit": "Créer et continuer",
     "submitLoading": "Création...",
     "noPlatform": "—",
-    "buttonLabel": "Nouvelle vidéo"
+    "buttonLabel": "Nouveau contenu"
   },
   "content": {
     "untitled": "Sans titre",
@@ -687,7 +687,11 @@
   },
   "contentTypes": {
     "reel": "Reel",
-    "story": "Story"
+    "story": "Story",
+    "vlog": "Vlog",
+    "post": "Post",
+    "carousel": "Carrousel",
+    "infographic": "Infographie"
   },
   "platforms": {
     "instagram": "Instagram",

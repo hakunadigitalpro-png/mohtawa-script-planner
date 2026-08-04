@@ -137,8 +137,8 @@
     }
   },
   "newContent": {
-    "title": "فيديو جديد",
-    "subtitle": "كل فيديو يبدأ بفكرة واضحة.",
+    "title": "محتوى جديد — {format}",
+    "subtitle": "اختر صيغتك وابدأ من فكرة واضحة.",
     "format": "الصيغة",
     "platform": "المنصة",
     "videoTitle": "العنوان",
@@ -147,7 +147,7 @@
     "submit": "إنشاء والمتابعة",
     "submitLoading": "جاري الإنشاء...",
     "noPlatform": "—",
-    "buttonLabel": "فيديو جديد"
+    "buttonLabel": "محتوى جديد"
   },
   "content": {
     "untitled": "بدون عنوان",
@@ -687,7 +687,11 @@
   },
   "contentTypes": {
     "reel": "Reel",
-    "story": "Story"
+    "story": "Story",
+    "vlog": "Vlog",
+    "post": "Post",
+    "carousel": "Carrousel",
+    "infographic": "Infographie"
   },
   "platforms": {
     "instagram": "إنستجرام",

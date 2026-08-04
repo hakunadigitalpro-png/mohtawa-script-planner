@@ -83,11 +83,17 @@ export function NewContentModal({
     }
   };
 
+  const formatLabel = safeT(
+    tType,
+    type,
+    CONTENT_TYPES.find((c) => c.value === type)?.label ?? type,
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogTitle>{t("title", { format: formatLabel })}</DialogTitle>
           <DialogDescription>{t("subtitle")}</DialogDescription>
         </DialogHeader>
         <form
