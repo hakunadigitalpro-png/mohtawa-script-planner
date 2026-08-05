@@ -706,7 +706,13 @@
     "filming": "Tournage",
     "editing": "Montage",
     "scheduled": "Programmée",
-    "published": "Publiée"
+    "published": "Publiée",
+    "design": "Design",
+    "pending_review": "En attente de validation",
+    "needs_revision": "À réviser",
+    "approved": "Validé",
+    "programmed": "Programmé",
+    "live": "Live"
   },
   "objectives": {
     "education": "Éducation",

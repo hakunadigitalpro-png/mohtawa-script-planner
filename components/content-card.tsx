@@ -21,7 +21,7 @@ import {
   statusColor,
   statusLabel,
   platformLabel,
-  STATUSES,
+  statusesForType,
 } from "@/lib/constants";
 import { formatDateFr } from "@/lib/utils";
 import {
@@ -91,7 +91,7 @@ export function ContentCard({ content }: { content: Content }) {
             </DropdownItem>
             <DropdownSeparator />
             <DropdownLabel>{t("changeStatus")}</DropdownLabel>
-            {STATUSES.map((s) => (
+            {statusesForType(content.type).map((s) => (
               <DropdownItem
                 key={s.value}
                 disabled={pending || s.value === content.status}

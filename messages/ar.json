@@ -706,7 +706,13 @@
     "filming": "تصوير",
     "editing": "مونتاج",
     "scheduled": "مجدول",
-    "published": "منشور"
+    "published": "منشور",
+    "design": "تصميم",
+    "pending_review": "بانتظار الموافقة",
+    "needs_revision": "يحتاج مراجعة",
+    "approved": "تمت الموافقة",
+    "programmed": "مبرمج",
+    "live": "مباشر"
   },
   "objectives": {
     "education": "تعليم",

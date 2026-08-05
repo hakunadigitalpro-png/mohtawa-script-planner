@@ -6,7 +6,7 @@ import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CONTENT_TYPES, PLATFORMS, STATUSES } from "@/lib/constants";
+import { CONTENT_TYPES, PLATFORMS, ALL_STATUSES } from "@/lib/constants";
 
 function buildMonthOptions(locale: string) {
   const opts: { value: string; label: string }[] = [];
@@ -81,7 +81,7 @@ export function DashboardFilters() {
             placeholder={t("allStatuses")}
             options={[
               { value: "", label: t("allStatuses") },
-              ...STATUSES.map((s) => ({
+              ...ALL_STATUSES.map((s) => ({
                 value: s.value,
                 label: safeT(tStatus, s.value, s.label),
               })),

@@ -28,6 +28,11 @@ export default async function DashboardPage({
 
   const supabase = await createClient();
 
+  // Bascule en masse "programmed" → "live" (post/carrousel/infographie) dès
+  // que leur date+heure de publication est dépassée — pas de tâche planifiée
+  // dans cette app, donc on recalcule à chaque chargement de page (0041).
+  await supabase.rpc("recompute_live_statuses", { p_brand_id: active.id });
+
   // KPIs : on calcule sur la totalité de la marque (pas filtré)
   const { data: allRows } = await supabase
     .from("contents")
@@ -36,8 +41,11 @@ export default async function DashboardPage({
 
   const allContents = allRows ?? [];
   const total = allContents.length;
-  const drafts = allContents.filter((c) => c.status !== "published").length;
-  const published = allContents.filter((c) => c.status === "published").length;
+  // "published" (vidéos) et "live" (post/carrousel/infographie, migration
+  // 0041) sont les deux équivalents "c'est sorti" selon le type de contenu.
+  const isOut = (status: string) => status === "published" || status === "live";
+  const drafts = allContents.filter((c) => !isOut(c.status)).length;
+  const published = allContents.filter((c) => isOut(c.status)).length;
   const now = new Date();
   const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);

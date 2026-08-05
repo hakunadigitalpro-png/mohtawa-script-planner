@@ -62,6 +62,12 @@ export default async function CalendarPage({
   });
 
   const supabase = await createClient();
+
+  // Bascule en masse "programmed" → "live" (post/carrousel/infographie) dès
+  // que leur date+heure de publication est dépassée — pas de tâche planifiée
+  // dans cette app, donc on recalcule à chaque chargement de page (0041).
+  await supabase.rpc("recompute_live_statuses", { p_brand_id: active.id });
+
   const { data } = await supabase
     .from("contents")
     .select("*")

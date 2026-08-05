@@ -42,6 +42,7 @@ export function platformsForType(type: string | null | undefined) {
   return PLATFORMS.filter((p) => allowed.includes(p.value));
 }
 
+/** Statuts des types "vidéo" (reel/story/vlog) — production pas à pas. */
 export const STATUSES = [
   { value: "idea", label: "Idée", color: "var(--color-status-idea)" },
   { value: "script", label: "Script", color: "var(--color-status-script)" },
@@ -50,6 +51,41 @@ export const STATUSES = [
   { value: "scheduled", label: "Programmée", color: "var(--color-status-scheduled)" },
   { value: "published", label: "Publiée", color: "var(--color-status-published)" },
 ] as const;
+
+/**
+ * Statuts des types "simples" (post/carrousel/infographie) — workflow de
+ * design + validation d'équipe, différent de la production vidéo. "live"
+ * remplace "published" : calculé automatiquement une fois la date+heure de
+ * publication dépassée (RPC `recompute_live_statuses`, migration 0041), pas
+ * besoin de le cocher à la main comme pour une vidéo.
+ */
+export const SIMPLE_STATUSES = [
+  { value: "idea", label: "Idée", color: "var(--color-status-idea)" },
+  { value: "design", label: "Design", color: "var(--color-status-design)" },
+  {
+    value: "pending_review",
+    label: "En attente de validation",
+    color: "var(--color-status-pending-review)",
+  },
+  {
+    value: "needs_revision",
+    label: "À réviser",
+    color: "var(--color-status-needs-revision)",
+  },
+  { value: "approved", label: "Validé", color: "var(--color-status-approved)" },
+  { value: "programmed", label: "Programmé", color: "var(--color-status-scheduled)" },
+  { value: "live", label: "Live", color: "var(--color-status-live)" },
+] as const;
+
+/** Liste de statuts adaptée au type de contenu (vidéo vs simple). */
+export function statusesForType(type: string | null | undefined) {
+  return isSimpleType(type) ? SIMPLE_STATUSES : STATUSES;
+}
+
+/** Union dédupliquée des deux listes — pour un filtre global (dashboard). */
+export const ALL_STATUSES = [...STATUSES, ...SIMPLE_STATUSES].filter(
+  (s, i, arr) => arr.findIndex((s2) => s2.value === s.value) === i,
+);
 
 export type Status = (typeof STATUSES)[number]["value"];
 
@@ -83,10 +119,10 @@ export function typeLabel(type: string | null | undefined) {
   return CONTENT_TYPES.find((t) => t.value === type)?.label ?? type ?? "—";
 }
 export function statusColor(status: string | null | undefined) {
-  return STATUSES.find((s) => s.value === status)?.color ?? "#6b7280";
+  return ALL_STATUSES.find((s) => s.value === status)?.color ?? "#6b7280";
 }
 export function statusLabel(status: string | null | undefined) {
-  return STATUSES.find((s) => s.value === status)?.label ?? status ?? "—";
+  return ALL_STATUSES.find((s) => s.value === status)?.label ?? status ?? "—";
 }
 export function platformLabel(platform: string | null | undefined) {
   return PLATFORMS.find((p) => p.value === platform)?.label ?? platform ?? "—";

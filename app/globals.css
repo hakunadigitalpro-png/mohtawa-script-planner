@@ -53,6 +53,14 @@
   --color-status-scheduled: #06b6d4;
   --color-status-published: #10b981;
 
+  /* ===== Status accents — types simples (post/carrousel/infographie) =====
+     Workflow différent des vidéos : design → validation d'équipe → live. */
+  --color-status-design: #f472b6;
+  --color-status-pending-review: #fbbf24;
+  --color-status-needs-revision: #f87171;
+  --color-status-approved: #14b8a6;
+  --color-status-live: #10b981;
+
   /* ===== Typography =====
      DM Sans est appliqué via la className next/font directement sur
      body (cf. layout.tsx). Cette variable sert juste si quelque chose

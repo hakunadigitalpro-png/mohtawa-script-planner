@@ -706,7 +706,13 @@
     "filming": "Filming",
     "editing": "Editing",
     "scheduled": "Scheduled",
-    "published": "Published"
+    "published": "Published",
+    "design": "Design",
+    "pending_review": "Pending review",
+    "needs_revision": "Needs revision",
+    "approved": "Approved",
+    "programmed": "Scheduled",
+    "live": "Live"
   },
   "objectives": {
     "education": "Education",

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MultiSelectWithCreate } from "@/components/ui/multi-select-with-create";
 import { Card } from "@/components/ui/card";
-import { platformsForType, STATUSES, CONTENT_TYPES } from "@/lib/constants";
+import { statusesForType, CONTENT_TYPES } from "@/lib/constants";
 import { updateContent } from "@/app/(app)/contents/actions";
 import { createTaxonomy } from "@/app/(app)/brands/taxonomy-actions";
 import { useExplicitSave } from "./use-explicit-save";
@@ -140,7 +140,7 @@ export function PlanTab({
               id="status"
               value={state.status}
               onValueChange={(v) => setState((s) => ({ ...s, status: v }))}
-              options={STATUSES.map((s) => ({
+              options={statusesForType(content.type).map((s) => ({
                 value: s.value,
                 label: safeT(tStatus, s.value, s.label),
               }))}
