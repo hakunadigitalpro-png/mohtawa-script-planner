@@ -13,6 +13,7 @@ import {
   Users,
   MessageCircle,
   Layers,
+  Pencil,
 } from "lucide-react";
 import {
   Dialog,
@@ -39,7 +40,7 @@ import {
 } from "../brand-strategy-actions";
 import type { BrandStrategy, GeneratedStrategy } from "@/lib/types";
 
-type Phase = "intro" | "question" | "generating" | "results";
+type Phase = "intro" | "question" | "review" | "generating" | "results";
 
 /**
  * Studio de marque : questionnaire guidé (1 question à la fois, aide +
@@ -139,16 +140,14 @@ export function BrandStudio({
       const res = await generateBrandStrategyAction(brandId, finalAnswers);
       if (!res.ok) {
         setError(res.error);
-        setPhase("question");
-        setQIndex(total - 1);
+        setPhase("review");
         return;
       }
       setGenerated(res.generated);
       setPhase("results");
     } catch {
       setError("L'IA n'a pas répondu. Réessaie.");
-      setPhase("question");
-      setQIndex(total - 1);
+      setPhase("review");
     }
   };
 
@@ -156,7 +155,10 @@ export function BrandStudio({
     if (qIndex + 1 < total) {
       setQIndex(qIndex + 1);
     } else {
-      generate(answers);
+      // Dernière question → un récap pour vérifier les réponses avant de
+      // lancer l'IA (évite de générer une stratégie générique sur des
+      // réponses trop courtes ou laissées telles quelles).
+      setPhase("review");
     }
   };
 
@@ -278,12 +280,28 @@ export function BrandStudio({
                     onClick={goNext}
                     disabled={!canContinue}
                   >
-                    {qIndex + 1 === total ? "Générer ma stratégie" : "Suivant"}
+                    {qIndex + 1 === total ? "Vérifier mes réponses" : "Suivant"}
                     <ArrowRight className="size-4 rtl-flip" />
                   </Button>
                 </div>
               </DialogFooter>
             </>
+          )}
+
+          {phase === "review" && (
+            <ReviewScreen
+              answers={answers}
+              error={error}
+              onEdit={(idx) => {
+                setQIndex(idx);
+                setPhase("question");
+              }}
+              onBack={() => {
+                setQIndex(total - 1);
+                setPhase("question");
+              }}
+              onConfirm={() => generate(answers)}
+            />
           )}
 
           {phase === "generating" && <GeneratingScreen />}
@@ -419,6 +437,127 @@ function IntroScreen({
         <Button type="button" onClick={onStart} className="w-full" size="lg">
           <Sparkles className="size-4" />
           {hasDraft ? "Reprendre le questionnaire" : "Commencer"}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+/**
+ * Affiche la réponse d'une question sous une forme lisible pour le récap,
+ * et signale si elle semble trop courte pour nourrir une bonne génération
+ * (uniquement pour les questions "textarea"/"guided2" — un champ "text"
+ * court comme le domaine est normal, pas à signaler).
+ */
+function getAnswerDisplay(
+  question: StrategyQuestion,
+  answers: Record<string, string>,
+): { text: string; thin: boolean } {
+  if (question.type === "guided2" && question.guidedParts) {
+    const parts = question.guidedParts.map((p) =>
+      (answers[`${question.id}__${p.key}`] ?? "").trim(),
+    );
+    if (parts.every((p) => !p)) return { text: "", thin: true };
+    const text = [
+      question.guidedPrefix,
+      parts[0] || "…",
+      question.guidedJoiner,
+      parts[1] || "…",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const thin = parts.some((p) => p.length > 0 && p.length < 3) || parts.some((p) => !p);
+    return { text, thin };
+  }
+  const v = (answers[question.id] ?? "").trim();
+  if (!v) return { text: "", thin: true };
+  const thin = question.type === "textarea" && v.length < 12;
+  return { text: v, thin };
+}
+
+function ReviewScreen({
+  answers,
+  error,
+  onEdit,
+  onBack,
+  onConfirm,
+}: {
+  answers: Record<string, string>;
+  error: string | null;
+  onEdit: (qIndex: number) => void;
+  onBack: () => void;
+  onConfirm: () => void;
+}) {
+  const rows = STRATEGY_QUESTIONS.map((q, i) => ({
+    index: i,
+    question: q,
+    ...getAnswerDisplay(q, answers),
+  }));
+  const thinCount = rows.filter(
+    (r) => r.thin && !r.question.optional,
+  ).length;
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Sparkles className="size-4 text-accent" />
+          Vérifie tes réponses
+        </DialogTitle>
+        <DialogDescription>
+          {thinCount > 0
+            ? `${thinCount} réponse${thinCount > 1 ? "s" : ""} semble${thinCount > 1 ? "nt" : ""} un peu courte${thinCount > 1 ? "s" : ""} — plus tu donnes de détails, plus ta stratégie sera précise. Tu peux quand même générer si tu préfères.`
+            : "Tout est prêt. Un dernier coup d'œil avant de lancer la génération ?"}
+        </DialogDescription>
+      </DialogHeader>
+      <DialogBody
+        className="max-h-[56vh] space-y-2 overflow-y-auto pr-1"
+        dir="auto"
+      >
+        {rows.map((r) => {
+          const flagged = r.thin && !r.question.optional;
+          return (
+            <button
+              key={r.question.id}
+              type="button"
+              onClick={() => onEdit(r.index)}
+              className={cn(
+                "flex w-full items-start justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-start text-sm transition hover:bg-secondary/40",
+                flagged
+                  ? "border-amber-300/60 bg-amber-50/50"
+                  : "border-border bg-card",
+              )}
+            >
+              <span className="flex-1">
+                <span className="block text-xs font-semibold text-muted">
+                  {r.question.label}
+                </span>
+                <span className="mt-0.5 block text-foreground/90">
+                  {r.text || (
+                    <span className="italic text-muted">Pas de réponse</span>
+                  )}
+                </span>
+                {flagged && (
+                  <span className="mt-1 block text-xs font-medium text-amber-700">
+                    Un peu court — clique pour compléter
+                  </span>
+                )}
+              </span>
+              <Pencil className="mt-0.5 size-3.5 shrink-0 text-muted" />
+            </button>
+          );
+        })}
+
+        {error && <ErrorNote>{error}</ErrorNote>}
+      </DialogBody>
+      <DialogFooter className="justify-between">
+        <Button type="button" variant="ghost" onClick={onBack}>
+          <ArrowLeft className="size-4 rtl-flip" />
+          Retour
+        </Button>
+        <Button type="button" onClick={onConfirm}>
+          <Sparkles className="size-4" />
+          Générer ma stratégie
         </Button>
       </DialogFooter>
     </>
