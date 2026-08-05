@@ -593,6 +593,20 @@ const GENERATION_STEPS = [
   { icon: Layers, label: "Je clarifie ta méthode" },
 ] as const;
 
+/**
+ * Position (x, y) autour du cœur + poussée de départ (tx, ty, un peu plus
+ * loin dans la même direction) pour chacune des 6 pastilles qui
+ * s'assemblent en boucle — voir @keyframes studio-build dans globals.css.
+ */
+const BUILD_DOTS = [
+  { x: 26, y: 0, tx: 16, ty: 0 },
+  { x: 13, y: 23, tx: 8, ty: 14 },
+  { x: -13, y: 23, tx: -8, ty: 14 },
+  { x: -26, y: 0, tx: -16, ty: 0 },
+  { x: -13, y: -23, tx: -8, ty: -14 },
+  { x: 13, y: -23, tx: 8, ty: -14 },
+] as const;
+
 function GeneratingScreen() {
   const [stepIndex, setStepIndex] = React.useState(0);
 
@@ -605,9 +619,32 @@ function GeneratingScreen() {
 
   return (
     <DialogBody className="flex flex-col items-center gap-6 py-12 text-center">
-      <span className="flex size-14 items-center justify-center rounded-full bg-accent/15 text-accent">
-        <Sparkles className="size-6 animate-pulse" />
-      </span>
+      <div
+        className="relative flex size-20 items-center justify-center"
+        aria-hidden="true"
+      >
+        {BUILD_DOTS.map((dot, i) => (
+          <span
+            key={i}
+            className={cn(
+              "absolute size-2.5 rounded-full animate-studio-build",
+              i % 2 === 0 ? "bg-accent" : "bg-accent/60",
+            )}
+            style={
+              {
+                top: `calc(50% + ${dot.y}px - 5px)`,
+                left: `calc(50% + ${dot.x}px - 5px)`,
+                "--tx": `${dot.tx}px`,
+                "--ty": `${dot.ty}px`,
+                animationDelay: `${i * 0.18}s`,
+              } as unknown as React.CSSProperties
+            }
+          />
+        ))}
+        <span className="relative flex size-14 items-center justify-center rounded-full bg-accent/15 text-accent">
+          <Sparkles className="size-6 animate-pulse" />
+        </span>
+      </div>
       <div>
         <p className="font-semibold">Je construis ta stratégie…</p>
         <p className="mt-1 text-sm text-muted">

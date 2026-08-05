@@ -66,6 +66,29 @@
   --radius: 0.875rem;
   --radius-lg: 1.25rem;
   --radius-xl: 1.75rem;
+
+  /* Écran "génération IA" du Studio de marque : des pastilles qui se
+     dispersent puis se rassemblent en boucle, façon "pièces qui
+     s'assemblent" (inspiration motion design). --tx/--ty (poussée de
+     départ, en px) sont fournis par élément via un style inline. */
+  --animate-studio-build: studio-build 1.8s ease-in-out infinite;
+}
+
+@keyframes studio-build {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(0.4);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.15);
+  }
+  55%,
+  75% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
 }
 
 /* ============ DARK THEME ============ */
