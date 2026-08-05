@@ -66,7 +66,14 @@ export function BrandStudio({
   initialStrategy: BrandStrategy | null;
 }) {
   const router = useRouter();
+  // Utilisé UNIQUEMENT pour amorcer l'écran de départ (voir useState
+  // ci-dessous) — pour l'affichage, on se base sur l'état `generated` (vit)
+  // et non ce prop figé au chargement de la page.
   const hasStrategy = !!initialStrategy?.generated;
+  // Le brouillon réellement sauvegardé AVANT cette session (pas le
+  // pré-remplissage nom/audience fait ci-dessous) — sert à choisir entre
+  // "Commencer" et "Reprendre le questionnaire" sur l'écran d'intro.
+  const hasSavedDraft = Object.keys(initialStrategy?.answers ?? {}).length > 0;
 
   const [open, setOpen] = React.useState(false);
   const [phase, setPhase] = React.useState<Phase>(
@@ -183,27 +190,43 @@ export function BrandStudio({
 
   return (
     <>
-      <div className="rounded-3xl border border-accent/25 bg-gradient-to-br from-accent/10 via-card to-card p-5 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent/15 text-accent">
-              <Sparkles className="size-5" />
-            </span>
-            <div>
-              <h2 className="text-lg font-bold">Stratégie de contenu</h2>
-              <p className="text-sm text-muted">
-                {hasStrategy
-                  ? "Ta stratégie personnalisée est prête. Consulte-la ou ajuste-la."
-                  : "Réponds à quelques questions simples pour obtenir ta stratégie de contenu sur mesure."}
-              </p>
+      {generated ? (
+        <StrategyHero
+          generated={generated}
+          onAdjust={() => {
+            setPhase("results");
+            setOpen(true);
+          }}
+        />
+      ) : (
+        <div className="rounded-3xl border border-accent/25 bg-gradient-to-br from-accent/10 via-card to-card p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent/15 text-accent">
+                <Sparkles className="size-5" />
+              </span>
+              <div>
+                <h2 className="text-lg font-bold">Stratégie de contenu</h2>
+                <p className="text-sm text-muted">
+                  Réponds à quelques questions simples pour obtenir ta
+                  stratégie de contenu sur mesure — elle guidera ton
+                  identité et tes thèmes ci-dessous.
+                </p>
+              </div>
             </div>
+            <Button
+              type="button"
+              onClick={() => {
+                setPhase("intro");
+                setOpen(true);
+              }}
+            >
+              <Sparkles className="size-4" />
+              Commencer
+            </Button>
           </div>
-          <Button type="button" onClick={() => setOpen(true)}>
-            <Sparkles className="size-4" />
-            {hasStrategy ? "Voir ma stratégie" : "Commencer"}
-          </Button>
         </div>
-      </div>
+      )}
 
       <Dialog
         open={open}
@@ -213,7 +236,7 @@ export function BrandStudio({
         <DialogContent className="max-w-2xl">
           {phase === "intro" && (
             <IntroScreen
-              hasDraft={Object.keys(answers).length > 0}
+              hasDraft={hasSavedDraft}
               onStart={() => setPhase("question")}
             />
           )}
@@ -282,6 +305,68 @@ export function BrandStudio({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+/**
+ * Résumé condensé affiché directement sur la page (pas dans une modal) une
+ * fois la stratégie appliquée : uniquement ce qui n'existe nulle part
+ * ailleurs (positionnement, tagline, messages clés). L'audience, la voix et
+ * les thèmes complets vivent dans les cartes Identité / Thèmes ci-dessous —
+ * on ne les réaffiche pas ici pour éviter le doublon.
+ */
+function StrategyHero({
+  generated,
+  onAdjust,
+}: {
+  generated: GeneratedStrategy;
+  onAdjust: () => void;
+}) {
+  return (
+    <div
+      className="rounded-3xl border border-accent/25 bg-gradient-to-br from-accent/10 via-card to-card p-5 sm:p-6"
+      dir="auto"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent/15 text-accent">
+            <Sparkles className="size-5" />
+          </span>
+          <div>
+            <h2 className="text-lg font-bold">Stratégie de contenu</h2>
+            <p className="mt-1 text-base font-medium leading-relaxed text-foreground">
+              {generated.positioning}
+            </p>
+            {generated.tagline && (
+              <p className="mt-2 inline-block rounded-full bg-card px-3 py-1 text-xs font-semibold">
+                « {generated.tagline} »
+              </p>
+            )}
+          </div>
+        </div>
+        <Button type="button" variant="outline" onClick={onAdjust}>
+          Ajuster ma stratégie
+        </Button>
+      </div>
+
+      {generated.key_messages?.length > 0 && (
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {generated.key_messages.map((m, i) => (
+            <li
+              key={i}
+              className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground/80"
+            >
+              {m}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <p className="mt-4 text-xs text-muted">
+        Ton identité et tes thèmes de contenu ci-dessous en découlent —
+        modifiables à tout moment.
+      </p>
+    </div>
   );
 }
 

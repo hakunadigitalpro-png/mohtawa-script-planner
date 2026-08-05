@@ -132,8 +132,9 @@ export default async function BrandDetailPage({
             Identité de marque
           </CardTitle>
           <CardDescription>
-            Ton logo, tes couleurs, ton ton. L&apos;audience et la voix
-            personnalisent aussi ce que l&apos;IA génère pour cette marque.
+            {strategy?.generated
+              ? "Ton logo et tes couleurs. L'audience et la voix viennent de ta stratégie — modifiables ici à tout moment."
+              : "Ton logo, tes couleurs, ton ton. L'audience et la voix personnalisent aussi ce que l'IA génère pour cette marque."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -167,8 +168,9 @@ export default async function BrandDetailPage({
             Thèmes de contenu
           </CardTitle>
           <CardDescription>
-            Les sujets récurrents de ta marque — ce dont tu parles dans tes
-            vidéos. Laisse l&apos;IA te les proposer, ou ajoute-les à la main.
+            {strategy?.generated
+              ? "Les sujets récurrents de ta marque, proposés par ta stratégie — ajuste-les ici, ou relance l'assistant IA."
+              : "Les sujets récurrents de ta marque — ce dont tu parles dans tes vidéos. Laisse l'IA te les proposer, ou ajoute-les à la main."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
