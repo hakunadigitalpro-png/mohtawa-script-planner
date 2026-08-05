@@ -43,11 +43,11 @@ export function PlanningTable({ contents }: { contents: Content[] }) {
     );
   }
 
-  const cols = "grid-cols-[110px_120px_110px_140px_1fr]";
+  const cols = "grid-cols-[110px_120px_110px_140px_130px_1fr]";
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
-      <div className="min-w-[640px]">
+      <div className="min-w-[760px]">
         <div
           className={`grid ${cols} gap-3 border-b border-border/60 bg-secondary/40 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted`}
         >
@@ -55,6 +55,7 @@ export function PlanningTable({ contents }: { contents: Content[] }) {
           <div>Type</div>
           <div>Plateforme</div>
           <div>Statut</div>
+          <div>Pilier</div>
           <div>Titre</div>
         </div>
 
@@ -88,6 +89,15 @@ export function PlanningTable({ contents }: { contents: Content[] }) {
                     style={{ background: statusColor(c.status) }}
                   />
                   {statusLabel(c.status)}
+                </span>
+                <span dir="auto">
+                  {c.pillar ? (
+                    <span className="inline-block max-w-full truncate rounded-md bg-secondary px-1.5 py-0.5 align-middle text-xs font-medium text-foreground/70">
+                      {c.pillar}
+                    </span>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
                 </span>
                 <span className="truncate font-medium text-foreground" dir="auto">
                   {c.title || "Sans titre"}
