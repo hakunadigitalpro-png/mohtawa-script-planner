@@ -11,6 +11,7 @@ import { resolveActiveBrand } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { CalendarMonth, type CalendarEntry } from "@/components/calendar-month";
 import { CalendarQuickCreate } from "@/components/calendar-quick-create";
+import { CalendarPlatformFilter } from "@/components/calendar-platform-filter";
 import { PlanningTable } from "@/components/planning-table";
 import type { Content } from "@/lib/types";
 
@@ -33,7 +34,7 @@ type PublicationJoinRow = {
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string; view?: string }>;
+  searchParams: Promise<{ m?: string; view?: string; platform?: string }>;
 }) {
   const { active } = await resolveActiveBrand();
   if (!active) return null;
@@ -46,6 +47,7 @@ export default async function CalendarPage({
       ? params.m
       : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const view = params.view === "planning" ? "planning" : "calendar";
+  const platformFilter = params.platform || "";
 
   const monthStart = `${ym}-01`;
   const [year, month] = ym.split("-").map(Number);
@@ -73,7 +75,7 @@ export default async function CalendarPage({
   // propre date — pas juste la date "primaire" legacy de contents.date.
   let entries: CalendarEntry[] = [];
   if (view !== "planning") {
-    const { data: pubsData } = await supabase
+    let pubsQuery = supabase
       .from("content_publications")
       .select(
         "id, content_id, platform, scheduled_date, scheduled_time, contents!inner(id, brand_id, title, type, pillar, status)",
@@ -81,6 +83,8 @@ export default async function CalendarPage({
       .eq("contents.brand_id", active.id)
       .gte("scheduled_date", monthStart)
       .lt("scheduled_date", monthEnd);
+    if (platformFilter) pubsQuery = pubsQuery.eq("platform", platformFilter);
+    const { data: pubsData } = await pubsQuery;
 
     const pubs = (pubsData ?? []) as unknown as PublicationJoinRow[];
     const publishedContentIds = new Set(pubs.map((p) => p.content_id));
@@ -99,21 +103,24 @@ export default async function CalendarPage({
         status: p.contents.status,
       })),
       // Contenus datés sans plateforme choisie (ou sans publication associée,
-      // cas legacy) — on continue de les afficher, juste sans icône plateforme.
-      ...contents
-        .filter((c) => c.date && !publishedContentIds.has(c.id))
-        .map((c) => ({
-          key: c.id,
-          contentId: c.id,
-          publicationId: null,
-          platform: null,
-          scheduledDate: c.date as string,
-          scheduledTime: null,
-          title: c.title,
-          type: c.type,
-          pillar: c.pillar,
-          status: c.status,
-        })),
+      // cas legacy) — affichés sans icône, SAUF si un filtre plateforme est
+      // actif (dans ce cas ils ne correspondent à aucune plateforme précise).
+      ...(platformFilter
+        ? []
+        : contents
+            .filter((c) => c.date && !publishedContentIds.has(c.id))
+            .map((c) => ({
+              key: c.id,
+              contentId: c.id,
+              publicationId: null,
+              platform: null,
+              scheduledDate: c.date as string,
+              scheduledTime: null,
+              title: c.title,
+              type: c.type,
+              pillar: c.pillar,
+              status: c.status,
+            }))),
     ];
   }
 
@@ -143,6 +150,7 @@ export default async function CalendarPage({
               Planning
             </Link>
           </div>
+          {view === "calendar" && <CalendarPlatformFilter />}
           <CalendarQuickCreate />
         </div>
       </div>
