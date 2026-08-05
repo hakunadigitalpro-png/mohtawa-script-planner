@@ -854,11 +854,12 @@ const STRATEGY_ANSWER_LABELS: Record<string, string> = {
 };
 
 /**
- * Transforme les réponses du questionnaire du Studio de marque en stratégie
- * complète : positionnement, audience et voix reformulées, messages clés, et
- * thèmes de contenu (même structure que l'assistant de thèmes existant).
- * Pensé pour un PATRON DE PETITE ENTREPRISE : zéro jargon, tout est
- * directement réutilisable.
+ * Transforme les réponses du questionnaire du Studio de marque en stratégie :
+ * positionnement, audience et voix reformulées, galères de l'audience,
+ * méthode, messages clés. Volontairement SANS thèmes de contenu — ça reste
+ * le rôle de l'assistant de thèmes existant, pour ne pas dupliquer la même
+ * capacité à deux endroits. Pensé pour un PATRON DE PETITE ENTREPRISE : zéro
+ * jargon, tout est directement réutilisable.
  */
 export function generateBrandStrategy(opts: {
   brandName: string;
@@ -890,8 +891,10 @@ RÈGLES :
 - "tagline" : une accroche courte et mémorable (5-8 mots).
 - "audience_summary" : un paragraphe clair décrivant son client idéal (qui, ce qu'il veut, où il traîne en ligne).
 - "voice_summary" : le ton à adopter dans son contenu, en 2-3 phrases concrètes (ex : "tutoie", "un peu d'humour", "direct et rassurant").
+- "pain_points" : exactement 3 galères concrètes de son audience — ce qui la pousse à chercher de l'aide. Phrases courtes, ancrées dans le réel (pas de généralités).
+- "approach" : 2-3 phrases qui expliquent CONCRÈTEMENT comment elle aide — sa méthode, sa façon de faire. Pas une liste de services : une explication simple, comme elle le dirait elle-même.
 - "key_messages" : exactement 3 messages ou preuves à répéter dans son contenu pour construire la confiance.
-- "pillars" : exactement 3 thèmes de contenu. Même structure que l'assistant de thèmes existant : "name" avec un emoji au début, "share_pct" (le total des piliers ≈ 100), "objective" en 1 phrase COURTE, exactement 4 "rubriques" (formats récurrents courts), exactement 4 "examples" (vidéos/posts concrets, courts), "note" en 1 phrase COURTE (le pourquoi).
+- Ne propose PAS de thèmes/piliers de contenu (ce qu'il faut poster) — ce n'est pas le rôle de cette stratégie, une autre fonctionnalité de l'app s'en charge déjà.
 - Reste concis partout — des phrases courtes, jamais de paragraphes à rallonge. Le JSON complet doit rester compact.
 
 Réponds UNIQUEMENT avec un objet JSON valide, rien autour, pas de markdown :
@@ -900,10 +903,9 @@ Réponds UNIQUEMENT avec un objet JSON valide, rien autour, pas de markdown :
   "tagline": "...",
   "audience_summary": "...",
   "voice_summary": "...",
-  "key_messages": ["...", "..."],
-  "pillars": [
-    { "name": "🦶 Nom du thème", "share_pct": 40, "objective": "...", "rubriques": ["...", "..."], "examples": ["...", "..."], "note": "..." }
-  ]
+  "pain_points": ["...", "...", "..."],
+  "approach": "...",
+  "key_messages": ["...", "...", "..."]
 }
 Réponds dans la langue des réponses de la personne (français par défaut).`;
 

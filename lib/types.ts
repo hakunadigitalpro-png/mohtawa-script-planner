@@ -28,31 +28,21 @@ export type BrandKit = {
 };
 
 /**
- * Un thème de contenu proposé par le Studio de marque (migration 0039).
- * Même forme que ThemeProposal (lib/ai.ts) — dupliqué ici pour que ce fichier
- * de types reste importable côté client sans tirer "server-only".
- */
-export type StrategyPillar = {
-  name: string;
-  share_pct: number;
-  objective: string;
-  rubriques: string[];
-  examples: string[];
-  note: string;
-};
-
-/**
  * Stratégie générée par le Studio de marque (migration 0039) : le
- * positionnement, l'audience et la voix reformulés, des messages clés à
- * répéter, et des thèmes de contenu prêts à appliquer.
+ * positionnement, l'audience et la voix reformulés, les galères de
+ * l'audience, la méthode, et des messages clés à répéter. Volontairement
+ * SANS thèmes de contenu — ça reste le rôle de l'assistant de thèmes
+ * existant (PillarManager / ThemeAssistant), pour ne pas dupliquer la même
+ * capacité à deux endroits.
  */
 export type GeneratedStrategy = {
   positioning: string;
   tagline: string;
   audience_summary: string;
   voice_summary: string;
+  pain_points: string[];
+  approach: string;
   key_messages: string[];
-  pillars: StrategyPillar[];
 };
 
 /**

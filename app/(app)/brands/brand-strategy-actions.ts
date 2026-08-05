@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { guardAiAction } from "@/lib/ai-guard";
 import { generateBrandStrategy, AiError } from "@/lib/ai";
-import { applyBrandThemes } from "./taxonomy-actions";
 import type { GeneratedStrategy } from "@/lib/types";
 
 /**
@@ -65,9 +64,9 @@ export async function generateBrandStrategyAction(
 
 /**
  * Applique la stratégie générée : pousse tagline/audience/voix dans le Brand
- * Kit et les thèmes dans brand_pillars (réutilise applyBrandThemes, qui
- * dé-doublonne déjà par nom). Le Studio reste un COMPLÉMENT — cette action
- * n'écrase que ce que la personne choisit explicitement d'appliquer.
+ * Kit. Ne touche PAS aux thèmes de contenu — ça reste le rôle de l'assistant
+ * de thèmes existant. Le Studio reste un COMPLÉMENT — cette action n'écrase
+ * que ce que la personne choisit explicitement d'appliquer.
  */
 export async function applyBrandStrategy(
   brandId: string,
@@ -83,12 +82,6 @@ export async function applyBrandStrategy(
     updated_at: new Date().toISOString(),
   });
   if (kitError) return { ok: false as const, error: kitError.message };
-
-  const pillarsRes = await applyBrandThemes({
-    brandId,
-    themes: generated.pillars ?? [],
-  });
-  if (!pillarsRes.ok) return { ok: false as const, error: pillarsRes.error };
 
   revalidatePath(`/brands/${brandId}`);
   revalidatePath("/calendar");

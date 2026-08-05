@@ -44,9 +44,10 @@ type Phase = "intro" | "question" | "generating" | "results";
 /**
  * Studio de marque : questionnaire guidé (1 question à la fois, aide +
  * exemple systématiques) qui génère une stratégie de contenu complète et
- * l'applique (sur confirmation) au Brand Kit + aux thèmes de contenu.
- * Complément du Brand Kit / de l'assistant de thèmes existants — ne les
- * remplace pas.
+ * l'applique (sur confirmation) au Brand Kit. Volontairement SANS thèmes de
+ * contenu — ça reste le rôle de l'assistant de thèmes existant, pour ne pas
+ * dupliquer la même capacité à deux endroits. Complément du Brand Kit / de
+ * l'assistant de thèmes existants — ne les remplace pas.
  *
  * L'état (réponses, écran courant) vit ICI, dans le composant qui reste
  * monté tant que la page est ouverte — pas dans la modal elle-même — pour
@@ -363,8 +364,9 @@ function StrategyHero({
       )}
 
       <p className="mt-4 text-xs text-muted">
-        Ton identité et tes thèmes de contenu ci-dessous en découlent —
-        modifiables à tout moment.
+        Ton identité de marque ci-dessous en découle — modifiable à tout
+        moment. Pour tes thèmes de contenu, utilise l&apos;assistant IA dédié
+        plus bas.
       </p>
     </div>
   );
@@ -398,8 +400,8 @@ function IntroScreen({
         <ul className="space-y-2.5 text-sm">
           {[
             "Ton positionnement, en une phrase claire",
-            "Ton audience et le ton à adopter",
-            "3 à 4 thèmes de contenu prêts à utiliser",
+            "Ton audience, ses galères, et le ton à adopter",
+            "Ta méthode expliquée simplement",
           ].map((item) => (
             <li key={item} className="flex items-center gap-2.5">
               <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
@@ -586,9 +588,9 @@ function QuestionInput({
 
 const GENERATION_STEPS = [
   { icon: Target, label: "Je découpe ton positionnement" },
-  { icon: Users, label: "Je cerne ton audience" },
+  { icon: Users, label: "Je cerne ton audience et ses galères" },
   { icon: MessageCircle, label: "Je choisis ta voix de marque" },
-  { icon: Layers, label: "Je pose tes thèmes de contenu" },
+  { icon: Layers, label: "Je clarifie ta méthode" },
 ] as const;
 
 function GeneratingScreen() {
@@ -672,7 +674,8 @@ function ResultsScreen({
         </DialogTitle>
         <DialogDescription>
           Vérifie, puis applique-la à ta marque — elle remplira ton identité
-          et tes thèmes de contenu.
+          (audience, voix, tagline). Pour tes thèmes de contenu, utilise
+          l&apos;assistant IA dédié plus bas sur la page.
         </DialogDescription>
       </DialogHeader>
       <DialogBody
@@ -710,6 +713,31 @@ function ResultsScreen({
           </div>
         </div>
 
+        {generated.pain_points?.length > 0 && (
+          <div className="rounded-2xl border border-border bg-card p-3.5">
+            <p className="text-xs font-semibold text-muted">
+              Galères de ton audience
+            </p>
+            <ul className="mt-1.5 space-y-1 text-sm">
+              {generated.pain_points.map((m, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-accent">•</span>
+                  {m}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {generated.approach && (
+          <div className="rounded-2xl border border-border bg-card p-3.5">
+            <p className="text-xs font-semibold text-muted">Ta méthode</p>
+            <p className="mt-1 text-sm leading-relaxed">
+              {generated.approach}
+            </p>
+          </div>
+        )}
+
         {generated.key_messages?.length > 0 && (
           <div className="rounded-2xl border border-border bg-card p-3.5">
             <p className="text-xs font-semibold text-muted">
@@ -723,17 +751,6 @@ function ResultsScreen({
                 </li>
               ))}
             </ul>
-          </div>
-        )}
-
-        {generated.pillars?.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-muted">
-              Thèmes de contenu proposés
-            </p>
-            {generated.pillars.map((p, i) => (
-              <PillarPreview key={i} pillar={p} />
-            ))}
           </div>
         )}
 
@@ -763,30 +780,6 @@ function ResultsScreen({
         )}
       </DialogFooter>
     </>
-  );
-}
-
-function PillarPreview({
-  pillar,
-}: {
-  pillar: GeneratedStrategy["pillars"][number];
-}) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-3">
-      <div className="flex items-center gap-2">
-        <h5 className="text-sm font-bold">{pillar.name}</h5>
-        {typeof pillar.share_pct === "number" && (
-          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-bold text-accent">
-            {pillar.share_pct}%
-          </span>
-        )}
-      </div>
-      {pillar.objective && (
-        <p className="mt-1 text-sm leading-relaxed text-foreground/80">
-          {pillar.objective}
-        </p>
-      )}
-    </div>
   );
 }
 

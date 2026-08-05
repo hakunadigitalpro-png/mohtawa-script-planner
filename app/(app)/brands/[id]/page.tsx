@@ -168,9 +168,8 @@ export default async function BrandDetailPage({
             Thèmes de contenu
           </CardTitle>
           <CardDescription>
-            {strategy?.generated
-              ? "Les sujets récurrents de ta marque, proposés par ta stratégie — ajuste-les ici, ou relance l'assistant IA."
-              : "Les sujets récurrents de ta marque — ce dont tu parles dans tes vidéos. Laisse l'IA te les proposer, ou ajoute-les à la main."}
+            Les sujets récurrents de ta marque — ce dont tu parles dans tes
+            vidéos. Laisse l&apos;IA te les proposer, ou ajoute-les à la main.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
