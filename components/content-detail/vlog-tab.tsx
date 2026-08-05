@@ -50,7 +50,7 @@ export function VlogTab({
     ],
   );
 
-  const { state, setState, isDirty, isSaving, handleSave, handleReset } =
+  const { state, setState, isDirty, isSaving, error, handleSave, handleReset } =
     useExplicitSave(initial, async (v) => upsertVlogDetails(content.id, v));
 
   type FieldKey = keyof typeof initial;
@@ -167,6 +167,7 @@ export function VlogTab({
       <SaveFooter
         isDirty={isDirty}
         isSaving={isSaving}
+        error={error}
         onSave={handleSave}
         onReset={handleReset}
       />

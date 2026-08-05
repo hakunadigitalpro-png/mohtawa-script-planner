@@ -16,11 +16,14 @@ import { cn } from "@/lib/utils";
 export function SaveFooter({
   isDirty,
   isSaving,
+  error,
   onSave,
   onReset,
 }: {
   isDirty: boolean;
   isSaving: boolean;
+  /** Message d'erreur du dernier essai de sauvegarde (null = pas d'erreur). */
+  error?: string | null;
   onSave: () => void;
   onReset?: () => void;
 }) {
@@ -29,7 +32,12 @@ export function SaveFooter({
   return (
     // bottom-20 sur mobile : au-dessus de la barre d'onglets du bas (h-16).
     // Dès md (pas de barre du bas) → bottom-4 comme avant.
-    <div className="sticky bottom-20 z-30 mt-4 md:bottom-4 md:z-10">
+    <div className="sticky bottom-20 z-30 mt-4 space-y-2 md:bottom-4 md:z-10">
+      {error && (
+        <p className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-xs font-medium text-destructive">
+          {error}
+        </p>
+      )}
       <div
         className={cn(
           "flex items-center justify-between gap-3 rounded-2xl border bg-card/95 px-4 py-2.5 shadow-[0_8px_24px_-12px_rgba(10,6,18,0.25)] backdrop-blur-sm transition-colors",

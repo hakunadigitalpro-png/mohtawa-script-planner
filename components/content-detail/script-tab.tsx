@@ -143,7 +143,7 @@ function ReelScript({
     ],
   );
 
-  const { state, setState, isDirty, isSaving, handleSave, handleReset } =
+  const { state, setState, isDirty, isSaving, error, handleSave, handleReset } =
     useExplicitSave(initial, async (v) => upsertReelDetails(contentId, v));
 
   // Mode d'écriture : guidé (Accroche/Corps/Outro) ou libre (un seul bloc).
@@ -282,6 +282,7 @@ function ReelScript({
       <SaveFooter
         isDirty={isDirty}
         isSaving={isSaving}
+        error={error}
         onSave={handleSave}
         onReset={handleReset}
       />
@@ -419,7 +420,7 @@ function StoryScript({
     [story?.objective, story?.cta_soft, slidesBodyHash],
   );
 
-  const { state, setState, isDirty, isSaving, handleSave, handleReset } =
+  const { state, setState, isDirty, isSaving, error, handleSave, handleReset } =
     useExplicitSave(initial, async (v) => {
       // On lance header + 5 slides en parallèle. Si un appel échoue, on retourne
       // l'erreur pour que le hook ne marque pas la baseline comme à jour.
@@ -577,6 +578,7 @@ function StoryScript({
       <SaveFooter
         isDirty={isDirty}
         isSaving={isSaving}
+        error={error}
         onSave={handleSave}
         onReset={handleReset}
       />

@@ -48,7 +48,7 @@ export function PerformanceTab({
     ],
   );
 
-  const { state, setState, isDirty, isSaving, handleSave, handleReset } =
+  const { state, setState, isDirty, isSaving, error, handleSave, handleReset } =
     useExplicitSave(initial, async (v) =>
       upsertPerformance(contentId, {
         views: v.views ? Number(v.views) : undefined,
@@ -113,6 +113,7 @@ export function PerformanceTab({
       <SaveFooter
         isDirty={isDirty}
         isSaving={isSaving}
+        error={error}
         onSave={handleSave}
         onReset={handleReset}
       />

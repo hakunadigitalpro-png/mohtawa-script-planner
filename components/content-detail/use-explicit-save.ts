@@ -20,6 +20,7 @@ export function useExplicitSave<T>(
 ) {
   const [state, setState] = useState<T>(initial);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const baselineRef = useRef<T>(initial);
   // Snapshot de l'`initial` reçu en prop : si le parent re-fetch (ex : router.refresh()
   // après une action atomique comme un upload image), on resync sans casser
@@ -41,13 +42,18 @@ export function useExplicitSave<T>(
   const handleSave = useCallback(async () => {
     if (!isDirty || isSaving) return;
     setIsSaving(true);
+    setError(null);
     try {
       const res = await save(state);
       // Si le serveur retourne une erreur explicite → on ne met PAS à jour
-      // la baseline (l'user verra toujours le dirty state, peut retry).
+      // la baseline (l'user verra toujours le dirty state, peut retry) —
+      // ET on affiche l'erreur (sinon "ça ne sauvegarde pas" sans aucune
+      // explication, comme un vrai souci vécu avec la contrainte de statut).
       const hasError = res && "error" in res && res.error;
       if (!hasError) {
         baselineRef.current = state;
+      } else {
+        setError(res.error as string);
       }
     } finally {
       setIsSaving(false);
@@ -56,6 +62,7 @@ export function useExplicitSave<T>(
 
   const handleReset = useCallback(() => {
     setState(baselineRef.current);
+    setError(null);
   }, []);
 
   // Warning navigateur quand l'user a des modifs en cours et tente de fermer
@@ -74,5 +81,5 @@ export function useExplicitSave<T>(
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
 
-  return { state, setState, isDirty, isSaving, handleSave, handleReset };
+  return { state, setState, isDirty, isSaving, error, handleSave, handleReset };
 }

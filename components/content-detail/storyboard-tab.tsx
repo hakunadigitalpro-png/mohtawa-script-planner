@@ -97,7 +97,7 @@ export function StoryboardTab({
     [scenesHash],
   );
 
-  const { state, setState, isDirty, isSaving, handleSave, handleReset } =
+  const { state, setState, isDirty, isSaving, error, handleSave, handleReset } =
     useExplicitSave(initial, async (v) => {
       const ops = await Promise.all(
         v.scenes.map((scene) =>
@@ -313,6 +313,7 @@ export function StoryboardTab({
       <SaveFooter
         isDirty={isDirty}
         isSaving={isSaving}
+        error={error}
         onSave={handleSave}
         onReset={handleReset}
       />
