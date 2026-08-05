@@ -1,3 +1,8 @@
+// Les Server Actions IA de cette page (Studio de marque, assistant de
+// thèmes) dépassent facilement les 10s par défaut du plan Hobby Vercel —
+// même fix que content/[id]/page.tsx. On monte à 60s (max autorisé).
+export const maxDuration = 60;
+
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Clapperboard, Layers, Palette, Users } from "lucide-react";
