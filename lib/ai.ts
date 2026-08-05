@@ -459,11 +459,11 @@ export async function transcribeWithGroq(
  * basées uniquement sur du texte (ne touche pas à generateAutopsy qui, lui,
  * envoie aussi des captures).
  */
-async function callClaudeText(
+async function callClaudeRaw(
   system: string,
   userText: string,
   maxTokens: number,
-): Promise<string> {
+): Promise<{ text: string; stopReason: string | null }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new AiError(
@@ -518,6 +518,7 @@ async function callClaudeText(
 
   const data = (await res.json()) as {
     content?: { type: string; text?: string }[];
+    stop_reason?: string | null;
   };
   const text = data.content
     ?.filter((b) => b.type === "text")
@@ -525,6 +526,15 @@ async function callClaudeText(
     .join("\n")
     .trim();
   if (!text) throw new AiError("empty", "Réponse vide de l'IA.");
+  return { text, stopReason: data.stop_reason ?? null };
+}
+
+async function callClaudeText(
+  system: string,
+  userText: string,
+  maxTokens: number,
+): Promise<string> {
+  const { text } = await callClaudeRaw(system, userText, maxTokens);
   return text;
 }
 
@@ -533,13 +543,25 @@ async function callClaudeText(
  * "json_object" natif (contrairement à OpenAI) → on demande du JSON pur dans
  * le prompt, puis on extrait défensivement : on retire un éventuel bloc
  * ```json … ```, sinon on prend du premier "{" au dernier "}".
+ *
+ * Si la réponse est coupée avant la fin (stop_reason "max_tokens" — arrive
+ * sur les JSON volumineux comme la stratégie de marque), on retente UNE fois
+ * avec le double de budget avant d'abandonner : ça évite une erreur "format
+ * invalide" qui, pour l'utilisateur, ne veut rien dire de plus qu'"réessaie".
  */
 async function callClaudeJSON<T>(
   system: string,
   userText: string,
   maxTokens: number,
 ): Promise<T> {
-  const text = await callClaudeText(system, userText, maxTokens);
+  let { text, stopReason } = await callClaudeRaw(system, userText, maxTokens);
+  if (stopReason === "max_tokens") {
+    ({ text, stopReason } = await callClaudeRaw(
+      system,
+      userText,
+      Math.min(maxTokens * 2, 8000),
+    ));
+  }
   const raw = extractJsonBlock(text);
   try {
     return JSON.parse(raw) as T;
@@ -868,8 +890,9 @@ RÈGLES :
 - "tagline" : une accroche courte et mémorable (5-8 mots).
 - "audience_summary" : un paragraphe clair décrivant son client idéal (qui, ce qu'il veut, où il traîne en ligne).
 - "voice_summary" : le ton à adopter dans son contenu, en 2-3 phrases concrètes (ex : "tutoie", "un peu d'humour", "direct et rassurant").
-- "key_messages" : 3 à 5 messages ou preuves à répéter dans son contenu pour construire la confiance.
-- "pillars" : 3 à 4 thèmes de contenu. Même structure que l'assistant de thèmes existant : "name" avec un emoji au début, "share_pct" (le total des piliers ≈ 100), "objective" en 1 phrase, 5 à 7 "rubriques" (formats récurrents courts), 5 à 7 "examples" (vidéos/posts concrets), "note" (le pourquoi).
+- "key_messages" : exactement 3 messages ou preuves à répéter dans son contenu pour construire la confiance.
+- "pillars" : exactement 3 thèmes de contenu. Même structure que l'assistant de thèmes existant : "name" avec un emoji au début, "share_pct" (le total des piliers ≈ 100), "objective" en 1 phrase COURTE, exactement 4 "rubriques" (formats récurrents courts), exactement 4 "examples" (vidéos/posts concrets, courts), "note" en 1 phrase COURTE (le pourquoi).
+- Reste concis partout — des phrases courtes, jamais de paragraphes à rallonge. Le JSON complet doit rester compact.
 
 Réponds UNIQUEMENT avec un objet JSON valide, rien autour, pas de markdown :
 {
@@ -890,5 +913,5 @@ ${brief || "(aucune réponse fournie — propose une stratégie générique mais
 
 Génère sa stratégie de contenu en suivant exactement le format demandé.`;
 
-  return callClaudeJSON<GeneratedStrategy>(system, user, 2800);
+  return callClaudeJSON<GeneratedStrategy>(system, user, 3200);
 }
