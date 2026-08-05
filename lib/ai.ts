@@ -1,6 +1,7 @@
 import "server-only";
 
 import { extractJsonBlock } from "@/lib/utils";
+import type { GeneratedStrategy } from "@/lib/types";
 
 /**
  * Wrappers minimalistes (fetch, pas de SDK) autour des API IA utilisées côté
@@ -810,4 +811,76 @@ ${input.transcript.trim()}
 Décortique le wording et propose un nouveau script en suivant EXACTEMENT le format demandé.`;
 
   return callClaudeText(system, user, 2200);
+}
+
+/* =========================================================================
+   Studio de marque — génération de stratégie (API Claude)
+   ========================================================================= */
+
+const STRATEGY_ANSWER_LABELS: Record<string, string> = {
+  brand_name_context: "Nom de la marque",
+  domain: "Domaine",
+  what_you_do: "Ce qu'elle fait",
+  ideal_client: "Client idéal",
+  problem_solved: "Problème résolu",
+  where_online: "Présence en ligne",
+  why_started: "Pourquoi elle a commencé",
+  legitimacy: "Ce qui la rend légitime",
+  why_you: "Pourquoi la choisir",
+  signature_method: "Méthode signature",
+  proof_result: "Résultat / preuve",
+  content_goal: "Objectif n°1 du contenu",
+};
+
+/**
+ * Transforme les réponses du questionnaire du Studio de marque en stratégie
+ * complète : positionnement, audience et voix reformulées, messages clés, et
+ * thèmes de contenu (même structure que l'assistant de thèmes existant).
+ * Pensé pour un PATRON DE PETITE ENTREPRISE : zéro jargon, tout est
+ * directement réutilisable.
+ */
+export function generateBrandStrategy(opts: {
+  brandName: string;
+  answers: Record<string, string>;
+}): Promise<GeneratedStrategy> {
+  const brief = Object.entries(STRATEGY_ANSWER_LABELS)
+    .map(([key, label]) => {
+      const v = (opts.answers[key] ?? "").trim();
+      return v ? `${label} : ${v}` : null;
+    })
+    .filter((line): line is string => Boolean(line))
+    .join("\n");
+
+  const system = `Tu es un stratège de marque qui aide un PATRON DE PETITE ENTREPRISE (pas un expert marketing) à transformer ses réponses en une STRATÉGIE DE CONTENU claire, prête à l'emploi. Multilingue : français ET arabe (dialectes maghrébins inclus). Marque : "${opts.brandName || "(sans nom)"}".
+
+RÈGLES :
+- Zéro jargon marketing. Écris comme si tu expliquais directement à la personne, avec chaleur et clarté.
+- Base-toi UNIQUEMENT sur ce qu'elle a répondu. Si une info manque, déduis raisonnablement à partir du reste — ne dis jamais "information manquante", ne repose jamais de question (ce n'est pas un dialogue).
+- "positioning" : 1-2 phrases qui résument QUI elle aide et EN QUOI elle est différente — la phrase qu'elle pourrait dire pour se présenter.
+- "tagline" : une accroche courte et mémorable (5-8 mots).
+- "audience_summary" : un paragraphe clair décrivant son client idéal (qui, ce qu'il veut, où il traîne en ligne).
+- "voice_summary" : le ton à adopter dans son contenu, en 2-3 phrases concrètes (ex : "tutoie", "un peu d'humour", "direct et rassurant").
+- "key_messages" : 3 à 5 messages ou preuves à répéter dans son contenu pour construire la confiance.
+- "pillars" : 3 à 4 thèmes de contenu. Même structure que l'assistant de thèmes existant : "name" avec un emoji au début, "share_pct" (le total des piliers ≈ 100), "objective" en 1 phrase, 5 à 7 "rubriques" (formats récurrents courts), 5 à 7 "examples" (vidéos/posts concrets), "note" (le pourquoi).
+
+Réponds UNIQUEMENT avec un objet JSON valide, rien autour, pas de markdown :
+{
+  "positioning": "...",
+  "tagline": "...",
+  "audience_summary": "...",
+  "voice_summary": "...",
+  "key_messages": ["...", "..."],
+  "pillars": [
+    { "name": "🦶 Nom du thème", "share_pct": 40, "objective": "...", "rubriques": ["...", "..."], "examples": ["...", "..."], "note": "..." }
+  ]
+}
+Réponds dans la langue des réponses de la personne (français par défaut).`;
+
+  const user = `Voici ce que la personne a répondu au questionnaire du Studio de marque :
+
+${brief || "(aucune réponse fournie — propose une stratégie générique mais actionnable)"}
+
+Génère sa stratégie de contenu en suivant exactement le format demandé.`;
+
+  return callClaudeJSON<GeneratedStrategy>(system, user, 2800);
 }
