@@ -68,6 +68,17 @@ export default async function CalendarPage({
   // dans cette app, donc on recalcule à chaque chargement de page (0041).
   await supabase.rpc("recompute_live_statuses", { p_brand_id: active.id });
 
+  // Compteurs de non-lus pour le badge des commentaires (Calendrier +
+  // Planning) — 1 seul appel groupé, pas une requête par contenu affiché.
+  const { data: unreadRows } = await supabase.rpc("count_unread_comments");
+  const commentCounts: Record<string, number> = {};
+  for (const row of (unreadRows ?? []) as {
+    content_id: string;
+    unread_count: number;
+  }[]) {
+    commentCounts[row.content_id] = row.unread_count;
+  }
+
   const { data } = await supabase
     .from("contents")
     .select("*")
@@ -182,10 +193,14 @@ export default async function CalendarPage({
               <ChevronRight className="size-4 rtl-flip" />
             </Link>
           </div>
-          <PlanningTable contents={contents} />
+          <PlanningTable contents={contents} commentCounts={commentCounts} />
         </div>
       ) : (
-        <CalendarMonth initialMonth={monthStart} entries={entries} />
+        <CalendarMonth
+          initialMonth={monthStart}
+          entries={entries}
+          commentCounts={commentCounts}
+        />
       )}
     </div>
   );

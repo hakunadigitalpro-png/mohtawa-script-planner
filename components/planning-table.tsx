@@ -7,6 +7,7 @@ import {
   platformLabel,
 } from "@/lib/constants";
 import { formatDateFr } from "@/lib/utils";
+import { ContentCommentsButton } from "@/components/comments";
 import type { Content } from "@/lib/types";
 
 /**
@@ -14,7 +15,14 @@ import type { Content } from "@/lib/types";
  * carrousels, vidéos) en lignes, groupés par semaine, avec Type / Plateforme /
  * Statut / Titre. La tour de contrôle éditoriale (équivalent du tableau Notion).
  */
-export function PlanningTable({ contents }: { contents: Content[] }) {
+export function PlanningTable({
+  contents,
+  commentCounts = {},
+}: {
+  contents: Content[];
+  /** contentId → nombre de commentaires non lus (badge). */
+  commentCounts?: Record<string, number>;
+}) {
   const sorted = [...contents].sort((a, b) =>
     (a.date ?? "9999-99-99").localeCompare(b.date ?? "9999-99-99"),
   );
@@ -65,44 +73,53 @@ export function PlanningTable({ contents }: { contents: Content[] }) {
               {g.label}
             </div>
             {g.items.map((c) => (
-              <Link
-                key={c.id}
-                href={`/content/${c.id}`}
-                className={`grid ${cols} items-center gap-3 border-b border-border/40 px-4 py-3 text-sm transition last:border-b-0 hover:bg-secondary/40`}
-              >
-                <span className="text-muted">
-                  {c.date ? formatDateFr(c.date) : "—"}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span
-                    className="size-2.5 shrink-0 rounded-full"
-                    style={{ background: typeColor(c.type) }}
+              <div key={c.id} className="relative">
+                <Link
+                  href={`/content/${c.id}`}
+                  className={`grid ${cols} items-center gap-3 border-b border-border/40 px-4 py-3 pe-10 text-sm transition last:border-b-0 hover:bg-secondary/40`}
+                >
+                  <span className="text-muted">
+                    {c.date ? formatDateFr(c.date) : "—"}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{ background: typeColor(c.type) }}
+                    />
+                    {typeLabel(c.type)}
+                  </span>
+                  <span className="truncate text-muted">
+                    {c.platform ? platformLabel(c.platform) : "—"}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{ background: statusColor(c.status) }}
+                    />
+                    {statusLabel(c.status)}
+                  </span>
+                  <span dir="auto">
+                    {c.pillar ? (
+                      <span className="inline-block max-w-full truncate rounded-md bg-secondary px-1.5 py-0.5 align-middle text-xs font-medium text-foreground/70">
+                        {c.pillar}
+                      </span>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </span>
+                  <span className="truncate font-medium text-foreground" dir="auto">
+                    {c.title || "Sans titre"}
+                  </span>
+                </Link>
+                {/* Sibling du Link (pas nesté dedans) pour commenter sans
+                    quitter le Planning. */}
+                <div className="absolute end-3 top-1/2 -translate-y-1/2">
+                  <ContentCommentsButton
+                    contentId={c.id}
+                    unreadCount={commentCounts[c.id] ?? 0}
                   />
-                  {typeLabel(c.type)}
-                </span>
-                <span className="truncate text-muted">
-                  {c.platform ? platformLabel(c.platform) : "—"}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span
-                    className="size-2.5 shrink-0 rounded-full"
-                    style={{ background: statusColor(c.status) }}
-                  />
-                  {statusLabel(c.status)}
-                </span>
-                <span dir="auto">
-                  {c.pillar ? (
-                    <span className="inline-block max-w-full truncate rounded-md bg-secondary px-1.5 py-0.5 align-middle text-xs font-medium text-foreground/70">
-                      {c.pillar}
-                    </span>
-                  ) : (
-                    <span className="text-muted">—</span>
-                  )}
-                </span>
-                <span className="truncate font-medium text-foreground" dir="auto">
-                  {c.title || "Sans titre"}
-                </span>
-              </Link>
+                </div>
+              </div>
             ))}
           </div>
         ))}

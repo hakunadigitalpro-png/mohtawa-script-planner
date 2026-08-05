@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/badge";
 import { typeColor, statusColor, statusLabel } from "@/lib/constants";
 import { NewContentModal } from "@/components/new-content-modal";
+import { ContentCommentsButton } from "@/components/comments";
 import { updateContent, updatePublication } from "@/app/(app)/contents/actions";
 
 const DRAG_MIME = "application/x-mohtawa-calendar-entry";
@@ -78,9 +79,12 @@ function formatTimeFr(time: string | null): string | null {
 export function CalendarMonth({
   initialMonth,
   entries,
+  commentCounts = {},
 }: {
   initialMonth: string; // YYYY-MM-01
   entries: CalendarEntry[];
+  /** contentId → nombre de commentaires non lus (badge). */
+  commentCounts?: Record<string, number>;
 }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -232,7 +236,7 @@ export function CalendarMonth({
                       : null;
                     const timeLabel = formatTimeFr(entry.scheduledTime);
                     return (
-                      <li key={entry.key}>
+                      <li key={entry.key} className="relative">
                         <Link
                           href={`/content/${entry.contentId}`}
                           draggable
@@ -249,7 +253,7 @@ export function CalendarMonth({
                           }}
                           dir="auto"
                           style={{ borderInlineStartColor: typeColor(entry.type) }}
-                          className="block cursor-grab rounded-lg border-s-[3px] bg-secondary/40 p-2 transition-colors hover:bg-secondary active:cursor-grabbing"
+                          className="block cursor-grab rounded-lg border-s-[3px] bg-secondary/40 p-2 pe-6 transition-colors hover:bg-secondary active:cursor-grabbing"
                         >
                           {/* Plateforme + heure */}
                           {(PlatformIcon || timeLabel) && (
@@ -282,6 +286,15 @@ export function CalendarMonth({
                             </span>
                           </div>
                         </Link>
+                        {/* Bouton "sibling" (pas nesté dans le <Link>) pour
+                            commenter sans quitter le calendrier. */}
+                        <div className="absolute end-1 top-1">
+                          <ContentCommentsButton
+                            contentId={entry.contentId}
+                            unreadCount={commentCounts[entry.contentId] ?? 0}
+                            className="bg-card/80"
+                          />
+                        </div>
                       </li>
                     );
                   })}
