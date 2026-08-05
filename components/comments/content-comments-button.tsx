@@ -126,10 +126,14 @@ function ContentCommentsLoader({
 
 /** Ouvre directement l'inbox (pas de "thread" précis pertinent ici). */
 function AutoOpenInbox({ onClose }: { onClose: () => void }) {
-  const { openInbox, drawer } = useComments();
+  const { openThread, drawer } = useComments();
 
+  // Va directement sur le thread "plan/general" (la discussion générale du
+  // contenu) plutôt que sur l'inbox : l'inbox liste des threads existants
+  // mais n'a PAS de zone pour écrire — sans ça, un contenu sans commentaire
+  // encore ouvrait un écran vide sans aucun moyen d'en poster un premier.
   React.useEffect(() => {
-    openInbox("all");
+    openThread("plan", "general");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
