@@ -14,15 +14,23 @@ export function Dialog({
   open,
   onOpenChange,
   children,
+  dismissible = true,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   children: React.ReactNode;
+  /**
+   * Quand false, le clic sur le fond et la touche Échap ne ferment plus la
+   * modal (seul le bouton "X" explicite le fait encore) — utile pour un
+   * formulaire en plusieurs étapes où un clic accidentel à côté ne doit pas
+   * faire disparaître la progression en cours.
+   */
+  dismissible?: boolean;
 }) {
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onOpenChange(false);
+      if (e.key === "Escape" && dismissible) onOpenChange(false);
     };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -31,7 +39,7 @@ export function Dialog({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, onOpenChange]);
+  }, [open, onOpenChange, dismissible]);
 
   if (!open) return null;
 
@@ -39,7 +47,7 @@ export function Dialog({
     <DialogContext.Provider value={{ open, setOpen: onOpenChange }}>
       <div
         className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/30 p-4 backdrop-blur-sm"
-        onClick={() => onOpenChange(false)}
+        onClick={() => dismissible && onOpenChange(false)}
       >
         {children}
       </div>

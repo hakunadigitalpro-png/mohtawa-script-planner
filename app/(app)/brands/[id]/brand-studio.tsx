@@ -9,6 +9,10 @@ import {
   Check,
   RefreshCcw,
   Lightbulb,
+  Target,
+  Users,
+  MessageCircle,
+  Layers,
 } from "lucide-react";
 import {
   Dialog,
@@ -43,70 +47,42 @@ type Phase = "intro" | "question" | "generating" | "results";
  * l'applique (sur confirmation) au Brand Kit + aux thèmes de contenu.
  * Complément du Brand Kit / de l'assistant de thèmes existants — ne les
  * remplace pas.
+ *
+ * L'état (réponses, écran courant) vit ICI, dans le composant qui reste
+ * monté tant que la page est ouverte — pas dans la modal elle-même — pour
+ * qu'un clic accidentel qui referme la modal ne fasse RIEN perdre : rouvrir
+ * reprend exactement là où on en était. Un autosave débouncé persiste aussi
+ * les réponses côté serveur pour survivre à un vrai rechargement de page.
  */
 export function BrandStudio({
   brandId,
+  brandName,
+  existingAudience,
   initialStrategy,
 }: {
   brandId: string;
+  brandName: string;
+  existingAudience: string | null;
   initialStrategy: BrandStrategy | null;
-}) {
-  const [open, setOpen] = React.useState(false);
-  const hasStrategy = !!initialStrategy?.generated;
-
-  return (
-    <>
-      <div className="rounded-3xl border border-accent/25 bg-gradient-to-br from-accent/10 via-card to-card p-5 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent/15 text-accent">
-              <Sparkles className="size-5" />
-            </span>
-            <div>
-              <h2 className="text-lg font-bold">Studio de marque</h2>
-              <p className="text-sm text-muted">
-                {hasStrategy
-                  ? "Ta stratégie personnalisée est prête. Consulte-la ou ajuste-la."
-                  : "Réponds à quelques questions simples pour obtenir ta stratégie de contenu sur mesure."}
-              </p>
-            </div>
-          </div>
-          <Button type="button" onClick={() => setOpen(true)}>
-            <Sparkles className="size-4" />
-            {hasStrategy ? "Voir ma stratégie" : "Commencer"}
-          </Button>
-        </div>
-      </div>
-
-      {open && (
-        <StudioModal
-          brandId={brandId}
-          initialStrategy={initialStrategy}
-          onClose={() => setOpen(false)}
-        />
-      )}
-    </>
-  );
-}
-
-function StudioModal({
-  brandId,
-  initialStrategy,
-  onClose,
-}: {
-  brandId: string;
-  initialStrategy: BrandStrategy | null;
-  onClose: () => void;
 }) {
   const router = useRouter();
   const hasStrategy = !!initialStrategy?.generated;
 
+  const [open, setOpen] = React.useState(false);
   const [phase, setPhase] = React.useState<Phase>(
     hasStrategy ? "results" : "intro",
   );
-  const [answers, setAnswers] = React.useState<Record<string, string>>(
-    initialStrategy?.answers ?? {},
-  );
+  const [answers, setAnswers] = React.useState<Record<string, string>>(() => {
+    // Pré-remplit avec ce qu'on connaît déjà — pas de double saisie.
+    const draft: Record<string, string> = { ...(initialStrategy?.answers ?? {}) };
+    if (!draft.brand_name_context && brandName) {
+      draft.brand_name_context = brandName;
+    }
+    if (!draft.ideal_client && existingAudience) {
+      draft.ideal_client = existingAudience;
+    }
+    return draft;
+  });
   const [qIndex, setQIndex] = React.useState(0);
   const [generated, setGenerated] = React.useState<GeneratedStrategy | null>(
     initialStrategy?.generated ?? null,
@@ -115,13 +91,37 @@ function StudioModal({
   const [applying, setApplying] = React.useState(false);
   const [applied, setApplied] = React.useState(false);
 
+  // Autosave débouncé (700ms, même pattern que le reste de l'app) — les
+  // réponses survivent même si la personne ferme l'onglet en pleine saisie.
+  const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  React.useEffect(() => {
+    if (Object.keys(answers).length === 0) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      saveStrategyAnswers(brandId, answers).catch(() => {});
+    }, 700);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+  }, [answers, brandId]);
+
   const question = STRATEGY_QUESTIONS[qIndex];
   const total = STRATEGY_QUESTIONS.length;
   const value = answers[question?.id ?? ""] ?? "";
-  const canContinue = question?.optional || value.trim().length > 0;
 
-  const setAnswer = (v: string) => {
-    setAnswers((prev) => ({ ...prev, [question.id]: v }));
+  const canContinue = React.useMemo(() => {
+    if (!question) return false;
+    if (question.optional) return true;
+    if (question.type === "guided2" && question.guidedParts) {
+      return question.guidedParts.every(
+        (p) => (answers[`${question.id}__${p.key}`] ?? "").trim().length > 0,
+      );
+    }
+    return value.trim().length > 0;
+  }, [question, answers, value]);
+
+  const setAnswerKey = (key: string, v: string) => {
+    setAnswers((prev) => ({ ...prev, [key]: v }));
   };
 
   const generate = async (finalAnswers: Record<string, string>) => {
@@ -145,7 +145,6 @@ function StudioModal({
   };
 
   const goNext = () => {
-    saveStrategyAnswers(brandId, answers).catch(() => {});
     if (qIndex + 1 < total) {
       setQIndex(qIndex + 1);
     } else {
@@ -176,75 +175,113 @@ function StudioModal({
     }
   };
 
+  // Fermeture "sûre" via le bouton X / clic hors modal : autorisée seulement
+  // sur les écrans où il n'y a rien à perdre (intro, résultats). Pendant le
+  // questionnaire ou la génération, seul le bouton X reste actif (dismissible
+  // du Dialog est coupé pour le fond + Échap) — voir le composant Dialog.
+  const dismissible = phase === "intro" || phase === "results";
+
   return (
-    <Dialog open onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl">
-        {phase === "intro" && (
-          <IntroScreen
-            hasDraft={Object.keys(answers).length > 0}
-            onStart={() => setPhase("question")}
-          />
-        )}
+    <>
+      <div className="rounded-3xl border border-accent/25 bg-gradient-to-br from-accent/10 via-card to-card p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-accent/15 text-accent">
+              <Sparkles className="size-5" />
+            </span>
+            <div>
+              <h2 className="text-lg font-bold">Stratégie de contenu</h2>
+              <p className="text-sm text-muted">
+                {hasStrategy
+                  ? "Ta stratégie personnalisée est prête. Consulte-la ou ajuste-la."
+                  : "Réponds à quelques questions simples pour obtenir ta stratégie de contenu sur mesure."}
+              </p>
+            </div>
+          </div>
+          <Button type="button" onClick={() => setOpen(true)}>
+            <Sparkles className="size-4" />
+            {hasStrategy ? "Voir ma stratégie" : "Commencer"}
+          </Button>
+        </div>
+      </div>
 
-        {phase === "question" && question && (
-          <>
-            <DialogHeader>
-              <SectionProgress
-                currentSection={question.section}
-                qIndex={qIndex}
-                total={total}
-              />
-              <DialogTitle className="mt-2">{question.label}</DialogTitle>
-              <DialogDescription>{question.help}</DialogDescription>
-            </DialogHeader>
-            <DialogBody className="space-y-4">
-              <ExampleBox text={question.example} />
-              <QuestionInput
-                question={question}
-                value={value}
-                onChange={setAnswer}
-              />
-              {error && <ErrorNote>{error}</ErrorNote>}
-            </DialogBody>
-            <DialogFooter className="justify-between">
-              <Button type="button" variant="ghost" onClick={goBack}>
-                <ArrowLeft className="size-4 rtl-flip" />
-                Retour
-              </Button>
-              <div className="flex items-center gap-2">
-                {question.optional && !value.trim() && (
-                  <Button type="button" variant="ghost" onClick={goNext}>
-                    Passer
-                  </Button>
-                )}
-                <Button type="button" onClick={goNext} disabled={!canContinue}>
-                  {qIndex + 1 === total ? "Générer ma stratégie" : "Suivant"}
-                  <ArrowRight className="size-4 rtl-flip" />
+      <Dialog
+        open={open}
+        onOpenChange={setOpen}
+        dismissible={dismissible}
+      >
+        <DialogContent className="max-w-2xl">
+          {phase === "intro" && (
+            <IntroScreen
+              hasDraft={Object.keys(answers).length > 0}
+              onStart={() => setPhase("question")}
+            />
+          )}
+
+          {phase === "question" && question && (
+            <>
+              <DialogHeader>
+                <SectionProgress
+                  currentSection={question.section}
+                  qIndex={qIndex}
+                  total={total}
+                />
+                <DialogTitle className="mt-2">{question.label}</DialogTitle>
+                <DialogDescription>{question.help}</DialogDescription>
+              </DialogHeader>
+              <DialogBody className="space-y-4">
+                <ExampleBox text={question.example} />
+                <QuestionInput
+                  question={question}
+                  answers={answers}
+                  onChange={setAnswerKey}
+                />
+                {error && <ErrorNote>{error}</ErrorNote>}
+              </DialogBody>
+              <DialogFooter className="justify-between">
+                <Button type="button" variant="ghost" onClick={goBack}>
+                  <ArrowLeft className="size-4 rtl-flip" />
+                  Retour
                 </Button>
-              </div>
-            </DialogFooter>
-          </>
-        )}
+                <div className="flex items-center gap-2">
+                  {question.optional && !value.trim() && (
+                    <Button type="button" variant="ghost" onClick={goNext}>
+                      Passer
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={goNext}
+                    disabled={!canContinue}
+                  >
+                    {qIndex + 1 === total ? "Générer ma stratégie" : "Suivant"}
+                    <ArrowRight className="size-4 rtl-flip" />
+                  </Button>
+                </div>
+              </DialogFooter>
+            </>
+          )}
 
-        {phase === "generating" && <GeneratingScreen />}
+          {phase === "generating" && <GeneratingScreen />}
 
-        {phase === "results" && generated && (
-          <ResultsScreen
-            generated={generated}
-            applying={applying}
-            applied={applied}
-            error={error}
-            onApply={apply}
-            onRedo={() => {
-              setPhase("question");
-              setQIndex(0);
-              setApplied(false);
-              setError(null);
-            }}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
+          {phase === "results" && generated && (
+            <ResultsScreen
+              generated={generated}
+              applying={applying}
+              applied={applied}
+              error={error}
+              onApply={apply}
+              onRedo={() => {
+                setPhase("question");
+                setQIndex(0);
+                setApplied(false);
+                setError(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -265,9 +302,11 @@ function IntroScreen({
           Créons ta stratégie, ensemble
         </DialogTitle>
         <DialogDescription>
-          Réponds à quelques questions simples — avec une explication et un
-          exemple à chaque étape, tu ne peux pas te tromper. L&apos;IA
-          construit ensuite ta stratégie de contenu complète.
+          Tu vas répondre à quelques questions simples — avec une explication
+          et un exemple à chaque étape, tu ne peux pas te tromper. Plus tu
+          prends le temps d&apos;être précis(e), plus la stratégie que
+          l&apos;IA construit sera adaptée à TON objectif. Ça, il n&apos;y a
+          que toi qui le sais : c&apos;est ton business.
         </DialogDescription>
       </DialogHeader>
       <DialogBody className="space-y-4">
@@ -355,13 +394,48 @@ function ExampleBox({ text }: { text: string }) {
 
 function QuestionInput({
   question,
-  value,
+  answers,
   onChange,
 }: {
   question: StrategyQuestion;
-  value: string;
-  onChange: (v: string) => void;
+  answers: Record<string, string>;
+  onChange: (key: string, v: string) => void;
 }) {
+  if (question.type === "guided2" && question.guidedParts) {
+    return (
+      <div className="flex flex-wrap items-center gap-2" dir="auto">
+        {question.guidedPrefix && (
+          <span className="text-sm font-semibold text-foreground/70">
+            {question.guidedPrefix}
+          </span>
+        )}
+        {question.guidedParts.map((part, i) => {
+          const key = `${question.id}__${part.key}`;
+          return (
+            <React.Fragment key={key}>
+              {i > 0 && question.guidedJoiner && (
+                <span className="text-sm font-semibold text-foreground/70">
+                  {question.guidedJoiner}
+                </span>
+              )}
+              <Input
+                autoFocus={i === 0}
+                value={answers[key] ?? ""}
+                onChange={(e) => onChange(key, e.target.value)}
+                dir="auto"
+                aria-label={part.label}
+                placeholder={part.placeholder}
+                className="w-auto min-w-[10rem] flex-1"
+              />
+            </React.Fragment>
+          );
+        })}
+      </div>
+    );
+  }
+
+  const value = answers[question.id] ?? "";
+
   if (question.type === "chips" && question.chips) {
     const selected = value
       ? value
@@ -373,7 +447,7 @@ function QuestionInput({
       const next = selected.includes(opt)
         ? selected.filter((s) => s !== opt)
         : [...selected, opt];
-      onChange(next.join(", "));
+      onChange(question.id, next.join(", "));
     };
     return (
       <div className="flex flex-wrap gap-2">
@@ -405,7 +479,7 @@ function QuestionInput({
         key={question.id}
         autoFocus
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(question.id, e.target.value)}
         dir="auto"
         placeholder={`Ex : ${question.example}`}
         className="min-h-24 text-sm leading-relaxed [field-sizing:content]"
@@ -418,16 +492,32 @@ function QuestionInput({
       key={question.id}
       autoFocus
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => onChange(question.id, e.target.value)}
       dir="auto"
       placeholder={`Ex : ${question.example}`}
     />
   );
 }
 
+const GENERATION_STEPS = [
+  { icon: Target, label: "Je découpe ton positionnement" },
+  { icon: Users, label: "Je cerne ton audience" },
+  { icon: MessageCircle, label: "Je choisis ta voix de marque" },
+  { icon: Layers, label: "Je pose tes thèmes de contenu" },
+] as const;
+
 function GeneratingScreen() {
+  const [stepIndex, setStepIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      setStepIndex((i) => Math.min(i + 1, GENERATION_STEPS.length - 1));
+    }, 1300);
+    return () => clearInterval(id);
+  }, []);
+
   return (
-    <DialogBody className="flex flex-col items-center gap-4 py-14 text-center">
+    <DialogBody className="flex flex-col items-center gap-6 py-12 text-center">
       <span className="flex size-14 items-center justify-center rounded-full bg-accent/15 text-accent">
         <Sparkles className="size-6 animate-pulse" />
       </span>
@@ -437,6 +527,38 @@ function GeneratingScreen() {
           Quelques secondes, le temps de tout assembler.
         </p>
       </div>
+      <ul className="w-full max-w-xs space-y-2.5 text-start">
+        {GENERATION_STEPS.map((step, i) => {
+          const Icon = step.icon;
+          const done = i < stepIndex;
+          const active = i === stepIndex;
+          return (
+            <li
+              key={step.label}
+              className={cn(
+                "flex items-center gap-2.5 rounded-xl border px-3 py-2 text-sm transition-all duration-500",
+                done && "border-emerald-300/50 bg-emerald-50/60 text-foreground",
+                active && "border-accent/40 bg-accent/5 text-foreground",
+                !done &&
+                  !active &&
+                  "border-border/60 bg-secondary/30 text-muted",
+              )}
+            >
+              {done ? (
+                <Check className="size-4 shrink-0 text-emerald-600" />
+              ) : (
+                <Icon
+                  className={cn(
+                    "size-4 shrink-0",
+                    active && "animate-pulse text-accent",
+                  )}
+                />
+              )}
+              {step.label}
+            </li>
+          );
+        })}
+      </ul>
     </DialogBody>
   );
 }

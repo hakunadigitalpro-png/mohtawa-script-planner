@@ -820,7 +820,6 @@ Décortique le wording et propose un nouveau script en suivant EXACTEMENT le for
 const STRATEGY_ANSWER_LABELS: Record<string, string> = {
   brand_name_context: "Nom de la marque",
   domain: "Domaine",
-  what_you_do: "Ce qu'elle fait",
   ideal_client: "Client idéal",
   problem_solved: "Problème résolu",
   where_online: "Présence en ligne",
@@ -843,11 +842,20 @@ export function generateBrandStrategy(opts: {
   brandName: string;
   answers: Record<string, string>;
 }): Promise<GeneratedStrategy> {
-  const brief = Object.entries(STRATEGY_ANSWER_LABELS)
-    .map(([key, label]) => {
+  // "Tu aides qui, à faire quoi ?" est une question guidée en 2 blancs (pas
+  // un champ libre) — on la recompose en une ligne de brief lisible.
+  const who = (opts.answers["what_you_do__who"] ?? "").trim();
+  const what = (opts.answers["what_you_do__what"] ?? "").trim();
+  const whatYouDoLine =
+    who || what ? `Ce qu'elle fait : J'aide ${who || "…"} à ${what || "…"}.` : null;
+
+  const brief = [
+    whatYouDoLine,
+    ...Object.entries(STRATEGY_ANSWER_LABELS).map(([key, label]) => {
       const v = (opts.answers[key] ?? "").trim();
       return v ? `${label} : ${v}` : null;
-    })
+    }),
+  ]
     .filter((line): line is string => Boolean(line))
     .join("\n");
 

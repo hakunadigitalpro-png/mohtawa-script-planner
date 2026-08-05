@@ -118,7 +118,12 @@ export default async function BrandDetailPage({
         <GuidedTour />
       </div>
 
-      <BrandStudio brandId={brand.id} initialStrategy={strategy} />
+      <BrandStudio
+        brandId={brand.id}
+        brandName={brand.name}
+        existingAudience={kit?.audience ?? null}
+        initialStrategy={strategy}
+      />
 
       <Card>
         <CardHeader>

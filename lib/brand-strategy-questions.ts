@@ -3,10 +3,13 @@
  * fois. Chaque question porte une explication ("help") ET un exemple concret
  * ("example") — le public cible (patron de PME, pas marketeur) ne doit
  * JAMAIS se retrouver bloqué face à un champ vide sans savoir quoi mettre.
- * Contenu validé avec l'utilisatrice avant implémentation.
+ * Contenu validé avec l'utilisatrice avant implémentation (puis affiné après
+ * un premier essai réel).
  */
 
-export type StrategyQuestionType = "text" | "textarea" | "chips";
+export type StrategyQuestionType = "text" | "textarea" | "chips" | "guided2";
+
+export type GuidedPart = { key: string; label: string; placeholder: string };
 
 export type StrategyQuestion = {
   id: string;
@@ -16,6 +19,11 @@ export type StrategyQuestion = {
   example: string;
   type: StrategyQuestionType;
   chips?: string[];
+  /** Mot qui précède les 2 blancs (ex : "J'aide"), type "guided2" uniquement. */
+  guidedPrefix?: string;
+  /** Mot qui relie les 2 blancs (ex : "à"), type "guided2" uniquement. */
+  guidedJoiner?: string;
+  guidedParts?: GuidedPart[];
   optional?: boolean;
 };
 
@@ -32,7 +40,7 @@ export const STRATEGY_QUESTIONS: StrategyQuestion[] = [
     id: "brand_name_context",
     section: "essentials",
     label: "Comment s'appelle ta marque ?",
-    help: "Le nom sous lequel tes clients te connaissent.",
+    help: "Le nom sous lequel tes clients te connaissent — déjà pré-rempli, corrige-le si besoin.",
     example: "Chez Leila · Ahmed Coaching",
     type: "text",
   },
@@ -47,16 +55,26 @@ export const STRATEGY_QUESTIONS: StrategyQuestion[] = [
   {
     id: "what_you_do",
     section: "essentials",
-    label: "Que fais-tu, en une phrase ?",
-    help: "Comme si tu l'expliquais à un ami.",
-    example: "J'aide les petits restos à remplir leur salle grâce à Instagram.",
-    type: "textarea",
+    label: "Tu aides qui, et à faire quoi ?",
+    help: "Complète juste les deux blancs, comme tu le dirais à un ami — pas besoin de bien formuler.",
+    example: "Les petits restos → remplir leur salle grâce à Instagram.",
+    type: "guided2",
+    guidedPrefix: "J'aide",
+    guidedJoiner: "à",
+    guidedParts: [
+      { key: "who", label: "Tu aides qui ?", placeholder: "les petits restos" },
+      {
+        key: "what",
+        label: "À faire quoi ?",
+        placeholder: "remplir leur salle grâce à Instagram",
+      },
+    ],
   },
   {
     id: "ideal_client",
     section: "audience",
     label: "Qui est ton client idéal ?",
-    help: "La personne type : qui elle est, ce qu'elle veut.",
+    help: "La personne type : qui elle est, ce qu'elle veut. Déjà pré-rempli si tu l'as renseigné dans ton Identité de marque.",
     example: "Cheffes de PME, 30-45 ans, débordées.",
     type: "textarea",
   },
@@ -81,15 +99,15 @@ export const STRATEGY_QUESTIONS: StrategyQuestion[] = [
     id: "why_started",
     section: "story",
     label: "Pourquoi tu as commencé ?",
-    help: "Ton déclic — c'est ce qui crée la connexion avec ton audience.",
+    help: "C'est pour ton storytelling : ton histoire perso, c'est ce qui va te rendre unique et créer une vraie connexion — on achète à des humains, pas à des logos. 2-3 phrases suffisent, pas besoin d'un roman.",
     example: "J'ai galéré à me faire connaître, puis j'ai trouvé une méthode.",
     type: "textarea",
   },
   {
     id: "legitimacy",
     section: "story",
-    label: "Qu'est-ce qui te rend légitime ?",
-    help: "Ton expérience, tes résultats.",
+    label: "Pourquoi on peut te faire confiance ?",
+    help: "Ton expérience, ta formation, tes résultats — ce qui prouve que tu sais de quoi tu parles. Pas besoin de diplômes, l'expérience terrain compte tout autant.",
     example: "8 ans dans le métier, 50 comptes gérés.",
     type: "textarea",
   },
