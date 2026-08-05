@@ -123,7 +123,7 @@ export function PublicationsEditor({
   );
 }
 
-/** Une ligne dans la liste — plateforme + date prévue + delete. */
+/** Une ligne dans la liste — plateforme + date + heure prévues + delete. */
 function PublicationRow({
   publication,
   contentId,
@@ -140,11 +140,18 @@ function PublicationRow({
 
   // État local pour permettre d'éditer sans flicker avant le save.
   const [date, setDate] = React.useState(publication.scheduled_date ?? "");
+  // Le time input attend "HH:MM" — on tronque le "HH:MM:SS" renvoyé par Postgres.
+  const [time, setTime] = React.useState(
+    publication.scheduled_time?.slice(0, 5) ?? "",
+  );
 
   // Resync si les props changent (server refresh après autre modif)
   React.useEffect(() => {
     setDate(publication.scheduled_date ?? "");
   }, [publication.scheduled_date]);
+  React.useEffect(() => {
+    setTime(publication.scheduled_time?.slice(0, 5) ?? "");
+  }, [publication.scheduled_time]);
 
   const saveDate = (next: string) => {
     if ((publication.scheduled_date ?? "") === next) return;
@@ -152,6 +159,18 @@ function PublicationRow({
       await updatePublication(
         publication.id,
         { scheduled_date: next || null },
+        contentId,
+      );
+      router.refresh();
+    });
+  };
+
+  const saveTime = (next: string) => {
+    if ((publication.scheduled_time?.slice(0, 5) ?? "") === next) return;
+    startTransition(async () => {
+      await updatePublication(
+        publication.id,
+        { scheduled_time: next || null },
         contentId,
       );
       router.refresh();
@@ -170,8 +189,17 @@ function PublicationRow({
           value={date}
           onChange={(e) => setDate(e.target.value)}
           onBlur={() => saveDate(date)}
-          className="h-9 flex-1 text-sm sm:max-w-56"
+          className="h-9 flex-1 text-sm sm:max-w-44"
           aria-label={`Date de publication sur ${publication.platform}`}
+        />
+
+        <Input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          onBlur={() => saveTime(time)}
+          className="h-9 flex-1 text-sm sm:max-w-32"
+          aria-label={`Heure de publication sur ${publication.platform}`}
         />
 
         <span className="flex-1 text-[10px] text-muted sm:text-right">
@@ -210,6 +238,7 @@ function AddPublicationDialog({
     availablePlatforms[0]?.value ?? "",
   );
   const [scheduledDate, setScheduledDate] = React.useState("");
+  const [scheduledTime, setScheduledTime] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
 
   // Resync la valeur par défaut quand la liste change (nouvelles options dispo)
@@ -217,6 +246,7 @@ function AddPublicationDialog({
     if (open && availablePlatforms.length > 0) {
       setPlatform(availablePlatforms[0].value);
       setScheduledDate("");
+      setScheduledTime("");
       setError(null);
     }
   }, [open, availablePlatforms]);
@@ -229,6 +259,7 @@ function AddPublicationDialog({
         contentId,
         platform,
         scheduledDate: scheduledDate || null,
+        scheduledTime: scheduledTime || null,
       });
       if ("error" in res && res.error) {
         setError(res.error);
@@ -260,14 +291,25 @@ function AddPublicationDialog({
               placeholder="—"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="add-pub-date">Date de publication (optionnel)</Label>
-            <Input
-              id="add-pub-date"
-              type="date"
-              value={scheduledDate}
-              onChange={(e) => setScheduledDate(e.target.value)}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="add-pub-date">Date (optionnel)</Label>
+              <Input
+                id="add-pub-date"
+                type="date"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-pub-time">Heure (optionnel)</Label>
+              <Input
+                id="add-pub-time"
+                type="time"
+                value={scheduledTime}
+                onChange={(e) => setScheduledTime(e.target.value)}
+              />
+            </div>
           </div>
           {error && (
             <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">

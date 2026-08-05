@@ -4,7 +4,17 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Instagram,
+  Facebook,
+  Youtube,
+  Linkedin,
+  Music2,
+  type LucideIcon,
+} from "lucide-react";
 import {
   startOfMonth,
   endOfMonth,
@@ -23,17 +33,54 @@ import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/badge";
 import { typeColor, statusColor, statusLabel } from "@/lib/constants";
 import { NewContentModal } from "@/components/new-content-modal";
-import { updateContent } from "@/app/(app)/contents/actions";
-import type { Content } from "@/lib/types";
+import { updateContent, updatePublication } from "@/app/(app)/contents/actions";
 
-const DRAG_MIME = "application/x-mohtawa-content-id";
+const DRAG_MIME = "application/x-mohtawa-calendar-entry";
+
+/**
+ * Une carte du calendrier = une (contenu × plateforme), pas un contenu. Un
+ * même contenu programmé sur Instagram le 4 ET Facebook le 6 apparaît donc
+ * deux fois, chacune sur sa propre date avec l'icône de SA plateforme.
+ * `publicationId` est null pour les contenus datés sans plateforme choisie
+ * (ou cas legacy sans publication associée) — affichés sans icône, comme
+ * avant cette refonte.
+ */
+export type CalendarEntry = {
+  key: string;
+  contentId: string;
+  publicationId: string | null;
+  platform: string | null;
+  scheduledDate: string; // YYYY-MM-DD
+  scheduledTime: string | null; // HH:MM:SS
+  title: string | null;
+  type: string;
+  pillar: string | null;
+  status: string;
+};
+
+const PLATFORM_ICONS: Record<string, LucideIcon> = {
+  instagram: Instagram,
+  facebook: Facebook,
+  youtube: Youtube,
+  linkedin: Linkedin,
+  // Pas d'icône TikTok dans lucide-react — la note de musique est le
+  // meilleur équivalent disponible dans le set.
+  tiktok: Music2,
+};
+
+function formatTimeFr(time: string | null): string | null {
+  if (!time) return null;
+  const [h, m] = time.split(":");
+  if (!h || !m) return null;
+  return `${h}h${m}`;
+}
 
 export function CalendarMonth({
   initialMonth,
-  contents,
+  entries,
 }: {
   initialMonth: string; // YYYY-MM-01
-  contents: Content[];
+  entries: CalendarEntry[];
 }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -60,24 +107,41 @@ export function CalendarMonth({
   };
 
   const byDay = useMemo(() => {
-    const map = new Map<string, Content[]>();
-    for (const c of contents) {
-      if (!c.date) continue;
-      const key = c.date.slice(0, 10);
+    const map = new Map<string, CalendarEntry[]>();
+    for (const e of entries) {
+      const key = e.scheduledDate.slice(0, 10);
       if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(c);
+      map.get(key)!.push(e);
+    }
+    // Dans une même journée, les entrées avec heure passent avant, triées ;
+    // celles sans heure restent à la fin.
+    for (const list of map.values()) {
+      list.sort((a, b) => (a.scheduledTime ?? "99:99").localeCompare(b.scheduledTime ?? "99:99"));
     }
     return map;
-  }, [contents]);
+  }, [entries]);
 
   const onDrop = (e: React.DragEvent, targetDate: string) => {
     e.preventDefault();
     setDragOverKey(null);
-    const id = e.dataTransfer.getData(DRAG_MIME);
-    if (!id) return;
-    // Optimistic feel: kick off the update and refresh
+    const raw = e.dataTransfer.getData(DRAG_MIME);
+    if (!raw) return;
+    let payload: { contentId: string; publicationId: string | null };
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      return;
+    }
     startTransition(async () => {
-      await updateContent(id, { date: targetDate });
+      if (payload.publicationId) {
+        await updatePublication(
+          payload.publicationId,
+          { scheduled_date: targetDate },
+          payload.contentId,
+        );
+      } else {
+        await updateContent(payload.contentId, { date: targetDate });
+      }
       router.refresh();
     });
   };
@@ -162,42 +226,65 @@ export function CalendarMonth({
                   </button>
                 </div>
                 <ul className="mt-1.5 space-y-1.5">
-                  {items.slice(0, 3).map((c) => (
-                    <li key={c.id}>
-                      <Link
-                        href={`/content/${c.id}`}
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.effectAllowed = "move";
-                          e.dataTransfer.setData(DRAG_MIME, c.id);
-                          e.dataTransfer.setData("text/plain", c.title ?? "");
-                        }}
-                        dir="auto"
-                        style={{ borderInlineStartColor: typeColor(c.type) }}
-                        className="block cursor-grab rounded-lg border-s-[3px] bg-secondary/40 p-2 transition-colors hover:bg-secondary active:cursor-grabbing"
-                      >
-                        {/* Nom */}
-                        <div className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
-                          {c.title || tContent("untitled")}
-                        </div>
-                        {/* Pilier */}
-                        {c.pillar && (
-                          <div className="mt-1">
-                            <span className="inline-block max-w-full truncate rounded-md bg-secondary px-1.5 py-0.5 align-middle text-xs font-medium text-foreground/70">
-                              {c.pillar}
+                  {items.slice(0, 3).map((entry) => {
+                    const PlatformIcon = entry.platform
+                      ? PLATFORM_ICONS[entry.platform]
+                      : null;
+                    const timeLabel = formatTimeFr(entry.scheduledTime);
+                    return (
+                      <li key={entry.key}>
+                        <Link
+                          href={`/content/${entry.contentId}`}
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData(
+                              DRAG_MIME,
+                              JSON.stringify({
+                                contentId: entry.contentId,
+                                publicationId: entry.publicationId,
+                              }),
+                            );
+                            e.dataTransfer.setData("text/plain", entry.title ?? "");
+                          }}
+                          dir="auto"
+                          style={{ borderInlineStartColor: typeColor(entry.type) }}
+                          className="block cursor-grab rounded-lg border-s-[3px] bg-secondary/40 p-2 transition-colors hover:bg-secondary active:cursor-grabbing"
+                        >
+                          {/* Plateforme + heure */}
+                          {(PlatformIcon || timeLabel) && (
+                            <div className="flex items-center gap-1 text-muted">
+                              {PlatformIcon && <PlatformIcon className="size-3" />}
+                              {timeLabel && (
+                                <span className="text-[10px] font-semibold">
+                                  {timeLabel}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {/* Nom */}
+                          <div className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                            {entry.title || tContent("untitled")}
+                          </div>
+                          {/* Pilier */}
+                          {entry.pillar && (
+                            <div className="mt-1">
+                              <span className="inline-block max-w-full truncate rounded-md bg-secondary px-1.5 py-0.5 align-middle text-xs font-medium text-foreground/70">
+                                {entry.pillar}
+                              </span>
+                            </div>
+                          )}
+                          {/* Statut */}
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <ColorDot color={statusColor(entry.status)} />
+                            <span className="text-xs font-medium text-muted">
+                              {statusLabel(entry.status)}
                             </span>
                           </div>
-                        )}
-                        {/* Statut */}
-                        <div className="mt-1 flex items-center gap-1.5">
-                          <ColorDot color={statusColor(c.status)} />
-                          <span className="text-xs font-medium text-muted">
-                            {statusLabel(c.status)}
-                          </span>
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
+                        </Link>
+                      </li>
+                    );
+                  })}
                   {items.length > 3 && (
                     <li className="px-1 text-xs font-medium text-muted">
                       {t("moreItems", { count: items.length - 3 })}

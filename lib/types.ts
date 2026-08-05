@@ -211,6 +211,8 @@ export type ContentPublication = {
   content_id: string;
   platform: string;
   scheduled_date: string | null;
+  /** Heure de publication (HH:MM:SS), par plateforme. Migration 0040. */
+  scheduled_time: string | null;
   url: string | null;
   created_at: string;
 };

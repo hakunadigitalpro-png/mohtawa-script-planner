@@ -9,10 +9,26 @@ import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { cn } from "@/lib/utils";
-import { CalendarMonth } from "@/components/calendar-month";
+import { CalendarMonth, type CalendarEntry } from "@/components/calendar-month";
 import { CalendarQuickCreate } from "@/components/calendar-quick-create";
 import { PlanningTable } from "@/components/planning-table";
 import type { Content } from "@/lib/types";
+
+/** Ligne brute renvoyée par la requête publications × contenu (join !inner). */
+type PublicationJoinRow = {
+  id: string;
+  content_id: string;
+  platform: string;
+  scheduled_date: string;
+  scheduled_time: string | null;
+  contents: {
+    id: string;
+    title: string | null;
+    type: string;
+    pillar: string | null;
+    status: string;
+  };
+};
 
 export default async function CalendarPage({
   searchParams,
@@ -52,6 +68,54 @@ export default async function CalendarPage({
     .lt("date", monthEnd);
 
   const contents = (data ?? []) as Content[];
+
+  // Vue calendrier uniquement : une carte par (contenu × plateforme), sur SA
+  // propre date — pas juste la date "primaire" legacy de contents.date.
+  let entries: CalendarEntry[] = [];
+  if (view !== "planning") {
+    const { data: pubsData } = await supabase
+      .from("content_publications")
+      .select(
+        "id, content_id, platform, scheduled_date, scheduled_time, contents!inner(id, brand_id, title, type, pillar, status)",
+      )
+      .eq("contents.brand_id", active.id)
+      .gte("scheduled_date", monthStart)
+      .lt("scheduled_date", monthEnd);
+
+    const pubs = (pubsData ?? []) as unknown as PublicationJoinRow[];
+    const publishedContentIds = new Set(pubs.map((p) => p.content_id));
+
+    entries = [
+      ...pubs.map((p) => ({
+        key: p.id,
+        contentId: p.content_id,
+        publicationId: p.id,
+        platform: p.platform,
+        scheduledDate: p.scheduled_date,
+        scheduledTime: p.scheduled_time,
+        title: p.contents.title,
+        type: p.contents.type,
+        pillar: p.contents.pillar,
+        status: p.contents.status,
+      })),
+      // Contenus datés sans plateforme choisie (ou sans publication associée,
+      // cas legacy) — on continue de les afficher, juste sans icône plateforme.
+      ...contents
+        .filter((c) => c.date && !publishedContentIds.has(c.id))
+        .map((c) => ({
+          key: c.id,
+          contentId: c.id,
+          publicationId: null,
+          platform: null,
+          scheduledDate: c.date as string,
+          scheduledTime: null,
+          title: c.title,
+          type: c.type,
+          pillar: c.pillar,
+          status: c.status,
+        })),
+    ];
+  }
 
   const tabCls = (on: boolean) =>
     cn(
@@ -107,7 +171,7 @@ export default async function CalendarPage({
           <PlanningTable contents={contents} />
         </div>
       ) : (
-        <CalendarMonth initialMonth={monthStart} contents={contents} />
+        <CalendarMonth initialMonth={monthStart} entries={entries} />
       )}
     </div>
   );

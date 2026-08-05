@@ -50,6 +50,18 @@ export async function createContent(input: CreateContentInput) {
 
   if (error) return { error: error.message };
 
+  // Idée 10 (migration 0020) : contents.date/platform ne sont que des
+  // colonnes de compat, resynchronisées DEPUIS content_publications. Sans
+  // cet insert, un contenu créé avec une plateforme n'apparaîtrait pas sur
+  // le calendrier multi-plateformes (qui se base sur content_publications).
+  if (input.platform) {
+    await supabase.from("content_publications").insert({
+      content_id: data.id,
+      platform: input.platform,
+      scheduled_date: input.date || null,
+    });
+  }
+
   if (data.type === "reel") {
     await supabase.from("reel_details").insert({ content_id: data.id });
   } else if (data.type === "story") {
@@ -764,6 +776,7 @@ export async function addPublication(input: {
   contentId: string;
   platform: string;
   scheduledDate?: string | null;
+  scheduledTime?: string | null;
   url?: string | null;
 }) {
   const supabase = await createClient();
@@ -771,6 +784,7 @@ export async function addPublication(input: {
     content_id: input.contentId,
     platform: input.platform,
     scheduled_date: input.scheduledDate ?? null,
+    scheduled_time: input.scheduledTime ?? null,
     url: input.url ?? null,
   });
   if (error) {
@@ -795,6 +809,7 @@ export async function updatePublication(
   patch: Partial<{
     platform: string;
     scheduled_date: string | null;
+    scheduled_time: string | null;
     url: string | null;
   }>,
   contentId: string,
@@ -802,7 +817,7 @@ export async function updatePublication(
   const supabase = await createClient();
   const { error } = await supabase
     .from("content_publications")
-    .update(pick(patch, ["platform", "scheduled_date", "url"]))
+    .update(pick(patch, ["platform", "scheduled_date", "scheduled_time", "url"]))
     .eq("id", publicationId);
   if (error) {
     if (error.code === "23505") {
