@@ -102,6 +102,8 @@ export default async function BrandDetailPage({
   const members = (membersRes.data ?? []) as MemberRow[];
   const invitations = (invitationsRes.data ?? []) as InvitationRow[];
   const myRole = (selfMembershipRes.data?.role ?? "viewer") as BrandRole;
+  // Un "viewer" (client invité) est cantonné au Calendrier.
+  if (myRole === "viewer") redirect("/calendar");
 
   const t = await getTranslations("brandDetail");
 

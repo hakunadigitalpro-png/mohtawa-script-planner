@@ -18,7 +18,7 @@ export default async function AppLayout({
 
   if (!user) redirect("/login");
 
-  const { brands, active } = await resolveActiveBrand();
+  const { brands, active, role } = await resolveActiveBrand();
 
   if (brands.length === 0) {
     return <NoBrandWelcome email={user.email ?? null} />;
@@ -42,6 +42,7 @@ export default async function AppLayout({
         userEmail={user.email ?? null}
         userId={user.id}
         initialNotifications={initialNotifications}
+        role={role}
       />
       <div className="flex min-h-screen flex-1 flex-col">
         {/* Barre du haut : mobile uniquement (md:hidden). */}
@@ -60,7 +61,7 @@ export default async function AppLayout({
         </main>
       </div>
       {/* Barre d'onglets du bas : mobile uniquement (md:hidden). */}
-      <MobileBottomNav userEmail={user.email ?? null} />
+      <MobileBottomNav userEmail={user.email ?? null} role={role} />
     </div>
   );
 }

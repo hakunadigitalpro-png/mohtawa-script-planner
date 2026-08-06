@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
@@ -20,8 +21,10 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const { active } = await resolveActiveBrand();
+  const { active, role } = await resolveActiveBrand();
   if (!active) return null;
+  // Un "viewer" (client invité) est cantonné au Calendrier.
+  if (role === "viewer") redirect("/calendar");
 
   const t = await getTranslations("dashboard");
   const params = await searchParams;

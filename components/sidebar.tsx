@@ -20,6 +20,7 @@ import { LocaleSwitcherCompact } from "./locale-switcher";
 import { NotificationsBell } from "./notifications/notifications-bell";
 import type { Notification } from "./notifications/types";
 import type { Brand } from "@/lib/types";
+import type { BrandRole } from "@/lib/brand";
 
 type NavItem = {
   href: string;
@@ -46,15 +47,25 @@ export function Sidebar({
   userEmail,
   userId,
   initialNotifications,
+  role,
 }: {
   brands: Brand[];
   active: Brand | null;
   userEmail: string | null;
   userId: string;
   initialNotifications: Notification[];
+  /** Un "viewer" (client invité) est cantonné au Calendrier + son Profil. */
+  role: BrandRole | null;
 }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
+  const isClientOnly = role === "viewer";
+  const primaryNav = isClientOnly
+    ? PRIMARY_NAV.filter((item) => item.key === "calendar")
+    : PRIMARY_NAV;
+  const secondaryNav = isClientOnly
+    ? SECONDARY_NAV.filter((item) => item.key === "profile")
+    : SECONDARY_NAV;
 
   return (
     <aside className="sticky top-0 z-30 hidden h-screen w-20 shrink-0 flex-col items-center gap-3 py-5 md:flex">
@@ -79,7 +90,7 @@ export function Sidebar({
 
       {/* Primary nav */}
       <nav className="flex flex-col items-center gap-2">
-        {PRIMARY_NAV.map((item) => (
+        {primaryNav.map((item) => (
           <NavIcon
             key={item.href}
             href={item.href}
@@ -98,7 +109,7 @@ export function Sidebar({
 
       {/* Secondary nav */}
       <nav className="flex flex-col items-center gap-2">
-        {SECONDARY_NAV.map((item) => (
+        {secondaryNav.map((item) => (
           <NavIcon
             key={item.href}
             href={item.href}

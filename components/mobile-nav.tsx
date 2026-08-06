@@ -20,6 +20,7 @@ import { BrandSwitcher } from "./brand-switcher";
 import { NotificationsBell } from "./notifications/notifications-bell";
 import type { Brand } from "@/lib/types";
 import type { Notification } from "./notifications/types";
+import type { BrandRole } from "@/lib/brand";
 
 /**
  * Navigation mobile (remplace le rail latéral, caché en <md).
@@ -72,15 +73,26 @@ export function MobileTopBar({
   );
 }
 
-export function MobileBottomNav({ userEmail }: { userEmail: string | null }) {
+export function MobileBottomNav({
+  userEmail,
+  role,
+}: {
+  userEmail: string | null;
+  /** Un "viewer" (client invité) est cantonné au Calendrier + son Profil. */
+  role: BrandRole | null;
+}) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const [menuOpen, setMenuOpen] = useState(false);
+  const isClientOnly = role === "viewer";
+  const nav = isClientOnly
+    ? PRIMARY_NAV.filter((item) => item.key === "calendar")
+    : PRIMARY_NAV;
 
   return (
     <>
       <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch justify-around border-t border-border/60 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_-8px_rgba(10,6,18,0.15)] backdrop-blur md:hidden">
-        {PRIMARY_NAV.map((item) => {
+        {nav.map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(item.href + "/");
           return (
@@ -117,6 +129,7 @@ export function MobileBottomNav({ userEmail }: { userEmail: string | null }) {
             profile: t("profile"),
             logout: t("logout"),
           }}
+          showBrands={!isClientOnly}
           onClose={() => setMenuOpen(false)}
         />
       )}
@@ -127,10 +140,12 @@ export function MobileBottomNav({ userEmail }: { userEmail: string | null }) {
 function MobileMenuSheet({
   userEmail,
   labels,
+  showBrands,
   onClose,
 }: {
   userEmail: string | null;
   labels: { brands: string; profile: string; logout: string };
+  showBrands: boolean;
   onClose: () => void;
 }) {
   return (
@@ -144,14 +159,16 @@ function MobileMenuSheet({
       <div className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-border/60 bg-card p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl">
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-border" />
         <nav className="flex flex-col gap-1">
-          <Link
-            href="/brands"
-            onClick={onClose}
-            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition hover:bg-secondary/60"
-          >
-            <Building2 className="size-5 text-muted" />
-            {labels.brands}
-          </Link>
+          {showBrands && (
+            <Link
+              href="/brands"
+              onClick={onClose}
+              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition hover:bg-secondary/60"
+            >
+              <Building2 className="size-5 text-muted" />
+              {labels.brands}
+            </Link>
+          )}
           <Link
             href="/profile"
             onClick={onClose}

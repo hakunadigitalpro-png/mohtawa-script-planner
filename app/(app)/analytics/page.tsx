@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { TrendingUp, BarChart3, Sparkles, Target, Award } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
@@ -90,8 +91,10 @@ function toRankedItems<T extends string>(
 }
 
 export default async function AnalyticsPage() {
-  const { active } = await resolveActiveBrand();
+  const { active, role } = await resolveActiveBrand();
   if (!active) return null;
+  // Un "viewer" (client invité) est cantonné au Calendrier.
+  if (role === "viewer") redirect("/calendar");
 
   const t = await getTranslations("analytics");
   const tType = await getTranslations("contentTypes");

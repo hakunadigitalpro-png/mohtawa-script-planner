@@ -1,5 +1,7 @@
+import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
+import { resolveActiveBrand } from "@/lib/brand";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { BrandsList } from "./brands-list";
 import { CreateBrandButton } from "./create-brand-button";
@@ -20,6 +22,9 @@ export default async function BrandsPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
+  // Un "viewer" (client invité) est cantonné au Calendrier.
+  const { role } = await resolveActiveBrand();
+  if (role === "viewer") redirect("/calendar");
 
   const { data: members } = await supabase
     .from("brand_members")
