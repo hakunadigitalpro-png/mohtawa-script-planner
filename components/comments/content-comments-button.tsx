@@ -127,6 +127,12 @@ function ContentCommentsLoader({
 /** Ouvre directement l'inbox (pas de "thread" précis pertinent ici). */
 function AutoOpenInbox({ onClose }: { onClose: () => void }) {
   const { openThread, drawer } = useComments();
+  // `drawer` démarre à { open: false } (état initial du Provider). Sans ce
+  // ref, l'effet ci-dessous voyait ce false initial AVANT que openThread()
+  // n'ait eu le temps d'appliquer son setState (les deux effets tournent
+  // dans la même passe au montage) → il appelait onClose() aussitôt, donc
+  // le panneau se refermait tout seul avant même d'être visible.
+  const hasOpenedRef = React.useRef(false);
 
   // Va directement sur le thread "plan/general" (la discussion générale du
   // contenu) plutôt que sur l'inbox : l'inbox liste des threads existants
@@ -138,7 +144,11 @@ function AutoOpenInbox({ onClose }: { onClose: () => void }) {
   }, []);
 
   React.useEffect(() => {
-    if (!drawer.open) onClose();
+    if (drawer.open) {
+      hasOpenedRef.current = true;
+    } else if (hasOpenedRef.current) {
+      onClose();
+    }
   }, [drawer.open, onClose]);
 
   return <CommentsDrawer targetLabels={{}} />;
