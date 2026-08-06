@@ -29,7 +29,7 @@ import {
   DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { formatDateFr } from "@/lib/utils";
+import { formatDateFr, isFarFuture } from "@/lib/utils";
 import {
   createBrandInvitation,
   revokeBrandInvitation,
@@ -360,7 +360,9 @@ function InvitationRow({
         <span className="text-muted">— {invitation.note}</span>
       )}
       <span className="text-xs text-muted">
-        {t("expiresOn", { date: formatDateFr(new Date(invitation.expires_at)) })}
+        {isFarFuture(invitation.expires_at)
+          ? t("neverExpires")
+          : t("expiresOn", { date: formatDateFr(new Date(invitation.expires_at)) })}
       </span>
       <div className="ms-auto flex items-center gap-1.5">
         <Button

@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { formatDateFr } from "@/lib/utils";
+import { formatDateFr, isFarFuture } from "@/lib/utils";
 import { AcceptInviteForm } from "./accept-form";
 
 export const dynamic = "force-dynamic";
@@ -97,7 +97,9 @@ export default async function InvitePage({
             )}
             <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
               <Clock className="size-3" />
-              {t("validUntil", { date: formatDateFr(new Date(preview.expires_at)) })}
+              {isFarFuture(preview.expires_at)
+                ? t("noExpiration")
+                : t("validUntil", { date: formatDateFr(new Date(preview.expires_at)) })}
             </p>
           </div>
 

@@ -65,3 +65,15 @@ export function formatDateFr(date: string | Date) {
     year: "numeric",
   });
 }
+
+/**
+ * Une invitation "sans expiration" (migration 0043) a en réalité un
+ * `expires_at` poussé à +100 ans plutôt qu'une colonne nullable — ça évite
+ * de retoucher la logique existante. Ici on détecte ce cas côté affichage
+ * pour ne pas montrer une date absurde ("expire en 2126") à l'utilisateur.
+ */
+export function isFarFuture(isoDate: string, thresholdYears = 5): boolean {
+  const years =
+    (new Date(isoDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 365);
+  return years > thresholdYears;
+}

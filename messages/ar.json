@@ -97,19 +97,41 @@
     "title": "لوحة التحكم",
     "subtitle": "{brand} · نظرة سريعة على نشاطك.",
     "kpi": {
-      "total": "إجمالي الفيديوهات",
+      "total": "إجمالي المحتوى",
       "drafts": "المسودات",
-      "published": "المنشورة",
+      "published": "المنشور",
       "thisMonth": "هذا الشهر"
     },
-    "recent": "الفيديوهات الأخيرة",
+    "coach": {
+      "aboveThreshold": "{count} محتوى هذا الشهر — أعلى بكثير من وتيرتك المعتادة ({threshold}/شهر). أحسنت، واصل هكذا!"
+    },
+    "upcoming": {
+      "title": "قريباً",
+      "seeAll": "التقويم",
+      "empty": "لا شيء مبرمج للأيام القادمة.",
+      "ready": "جاهز",
+      "missing": "يحتاج تحضير"
+    },
+    "miniAnalytics": {
+      "title": "الإحصائيات",
+      "seeAll": "عرض الكل",
+      "trendSub": "من المشاهدات هذا الشهر مقابل السابق",
+      "highlightPillar": "المحور الأفضل أداءً: {pillar}",
+      "empty": "لا توجد إحصائيات بعد هذا الشهر."
+    },
+    "comments": {
+      "title": "التعليقات",
+      "seeAll": "عرض الكل",
+      "empty": "لا توجد تعليقات حديثة."
+    },
+    "recent": "المحتوى الأخير",
     "resultsCount": "{count, plural, =0 {لا توجد نتائج} one {# نتيجة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}",
-    "emptyTitle": "لا توجد فيديوهات بعد.",
-    "emptySubtitle": "ابدأ بإنشاء أول فيديو لك.",
+    "emptyTitle": "لا يوجد محتوى بعد.",
+    "emptySubtitle": "ابدأ بإنشاء أول محتوى لك.",
     "noResultsTitle": "لا توجد نتائج.",
     "noResultsSubtitle": "جرّب تعديل الفلاتر أو مسحها.",
     "filters": {
-      "searchPlaceholder": "ابحث عن فيديو بالعنوان...",
+      "searchPlaceholder": "ابحث عن محتوى بالعنوان...",
       "allStatuses": "كل الحالات",
       "allTypes": "كل الصيغ",
       "allPlatforms": "كل المنصات",
@@ -435,6 +457,7 @@
     "removeConfirm": "إزالة {email} من العلامة التجارية؟",
     "pendingTitle": "دعوات معلقة ({count})",
     "expiresOn": "تنتهي في {date}",
+    "neverExpires": "لا تنتهي أبداً",
     "copyLink": "نسخ الرابط",
     "copied": "تم النسخ",
     "revokeConfirm": "إلغاء هذه الدعوة؟\n\nلن يعمل الرابط بعد ذلك.",
@@ -567,6 +590,7 @@
     "headerSubtitle": "{inviter} يدعوك للانضمام إلى العلامة التجارية {brand}.",
     "yourRole": "دورك",
     "validUntil": "صالح حتى {date}",
+    "noExpiration": "بدون تاريخ انتهاء",
     "accept": "قبول الدعوة",
     "accepting": "جاري القبول…",
     "connectedAs": "متصل باسم {email}.",

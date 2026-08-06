@@ -97,19 +97,41 @@
     "title": "Dashboard",
     "subtitle": "{brand} · quick view of your activity.",
     "kpi": {
-      "total": "Total videos",
+      "total": "Total content",
       "drafts": "Drafts",
       "published": "Published",
       "thisMonth": "This month"
     },
-    "recent": "Recent videos",
+    "coach": {
+      "aboveThreshold": "{count} pieces of content this month — well above your usual pace ({threshold}/month). Nice work, keep it up!"
+    },
+    "upcoming": {
+      "title": "Coming up",
+      "seeAll": "Calendar",
+      "empty": "Nothing scheduled for the next few days.",
+      "ready": "Ready",
+      "missing": "Needs work"
+    },
+    "miniAnalytics": {
+      "title": "Analytics",
+      "seeAll": "See all",
+      "trendSub": "views this month vs last",
+      "highlightPillar": "Your top-performing pillar: {pillar}",
+      "empty": "No stats yet this month."
+    },
+    "comments": {
+      "title": "Comments",
+      "seeAll": "See all",
+      "empty": "No recent comments."
+    },
+    "recent": "Recent content",
     "resultsCount": "{count, plural, =0 {No results} one {# result} other {# results}}",
-    "emptyTitle": "No videos yet.",
-    "emptySubtitle": "Start by creating your first video.",
+    "emptyTitle": "No content yet.",
+    "emptySubtitle": "Start by creating your first piece of content.",
     "noResultsTitle": "No results.",
     "noResultsSubtitle": "Try changing or clearing the filters.",
     "filters": {
-      "searchPlaceholder": "Search a video by title...",
+      "searchPlaceholder": "Search content by title...",
       "allStatuses": "All statuses",
       "allTypes": "All formats",
       "allPlatforms": "All platforms",
@@ -435,6 +457,7 @@
     "removeConfirm": "Remove {email} from the brand?",
     "pendingTitle": "Pending invitations ({count})",
     "expiresOn": "expires on {date}",
+    "neverExpires": "never expires",
     "copyLink": "Copy link",
     "copied": "Copied",
     "revokeConfirm": "Revoke this invitation?\n\nThe link will stop working.",
@@ -567,6 +590,7 @@
     "headerSubtitle": "{inviter} invites you to join the brand {brand}.",
     "yourRole": "Your role",
     "validUntil": "Valid until {date}",
+    "noExpiration": "No expiration date",
     "accept": "Accept invitation",
     "accepting": "Accepting…",
     "connectedAs": "Signed in as {email}.",

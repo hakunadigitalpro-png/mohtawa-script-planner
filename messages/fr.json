@@ -97,19 +97,41 @@
     "title": "Tableau de bord",
     "subtitle": "{brand} · vue rapide de ton activité.",
     "kpi": {
-      "total": "Total vidéos",
+      "total": "Total contenus",
       "drafts": "Brouillons",
-      "published": "Publiées",
+      "published": "Publiés",
       "thisMonth": "Ce mois-ci"
     },
-    "recent": "Vidéos récentes",
+    "coach": {
+      "aboveThreshold": "{count} contenus ce mois — largement au-dessus de ton rythme habituel ({threshold}/mois). Bravo, continue comme ça !"
+    },
+    "upcoming": {
+      "title": "Prochainement",
+      "seeAll": "Calendrier",
+      "empty": "Rien de programmé pour les prochains jours.",
+      "ready": "Prêt",
+      "missing": "À préparer"
+    },
+    "miniAnalytics": {
+      "title": "Analytics",
+      "seeAll": "Voir tout",
+      "trendSub": "de vues ce mois vs le précédent",
+      "highlightPillar": "Ton pilier qui cartonne : {pillar}",
+      "empty": "Pas encore de statistiques ce mois-ci."
+    },
+    "comments": {
+      "title": "Commentaires",
+      "seeAll": "Voir tout",
+      "empty": "Aucun commentaire récent."
+    },
+    "recent": "Contenus récents",
     "resultsCount": "{count, plural, =0 {Aucun résultat} one {# résultat} other {# résultats}}",
-    "emptyTitle": "Aucune vidéo pour le moment.",
-    "emptySubtitle": "Commence par créer ta première vidéo.",
+    "emptyTitle": "Aucun contenu pour le moment.",
+    "emptySubtitle": "Commence par créer ton premier contenu.",
     "noResultsTitle": "Aucun résultat.",
     "noResultsSubtitle": "Essaie de modifier ou d'effacer les filtres.",
     "filters": {
-      "searchPlaceholder": "Rechercher une vidéo par titre...",
+      "searchPlaceholder": "Rechercher un contenu par titre...",
       "allStatuses": "Tous les statuts",
       "allTypes": "Tous les formats",
       "allPlatforms": "Toutes les plateformes",
@@ -435,6 +457,7 @@
     "removeConfirm": "Retirer {email} de la marque ?",
     "pendingTitle": "Invitations en attente ({count})",
     "expiresOn": "expire le {date}",
+    "neverExpires": "n'expire jamais",
     "copyLink": "Copier le lien",
     "copied": "Copié",
     "revokeConfirm": "Révoquer cette invitation ?\n\nLe lien ne fonctionnera plus.",
@@ -567,6 +590,7 @@
     "headerSubtitle": "{inviter} t'invite à rejoindre la marque {brand}.",
     "yourRole": "Ton rôle",
     "validUntil": "Valide jusqu'au {date}",
+    "noExpiration": "Pas de date d'expiration",
     "accept": "Accepter l'invitation",
     "accepting": "Acceptation…",
     "connectedAs": "Connecté en tant que {email}.",
