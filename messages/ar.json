@@ -557,7 +557,8 @@
     "targetPlan": "الخطة",
     "targetScript": "النص",
     "targetScene": "المشهد",
-    "targetSlide": "الشريحة"
+    "targetSlide": "الشريحة",
+    "readyToScheduleMessage": "« {title} » تم اعتماده — لا تنسَ برمجته!"
   },
   "sharing": {
     "buttonOff": "مشاركة",

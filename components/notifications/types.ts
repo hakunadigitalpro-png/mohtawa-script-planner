@@ -6,7 +6,7 @@ export type Notification = {
   id: string;
   content_id: string | null;
   comment_id: string | null;
-  type: "comment";
+  type: "comment" | "ready_to_schedule";
   read: boolean;
   created_at: string;
   content_title: string | null;

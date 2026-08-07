@@ -557,7 +557,8 @@
     "targetPlan": "Plan",
     "targetScript": "Script",
     "targetScene": "Scene",
-    "targetSlide": "Slide"
+    "targetSlide": "Slide",
+    "readyToScheduleMessage": "“{title}” is approved — don't forget to schedule it!"
   },
   "sharing": {
     "buttonOff": "Share",

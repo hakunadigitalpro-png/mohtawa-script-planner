@@ -557,7 +557,8 @@
     "targetPlan": "Plan",
     "targetScript": "Script",
     "targetScene": "Scène",
-    "targetSlide": "Slide"
+    "targetSlide": "Slide",
+    "readyToScheduleMessage": "« {title} » est validé — pense à le programmer !"
   },
   "sharing": {
     "buttonOff": "Partager",

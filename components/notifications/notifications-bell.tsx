@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Bell, Check } from "lucide-react";
+import { Bell, Check, CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import type { Notification } from "./types";
@@ -206,14 +206,6 @@ function NotificationRow({
 }) {
   const t = useTranslations("notifications");
   const tTime = useTranslations("comments.time");
-  const targetLabelKey = targetLabelKeyFor(notification.comment_target_type);
-  const author = notification.is_guest
-    ? `${notification.guest_name?.trim() || t("guestBadge")} (${t("guestBadge")})`
-    : notification.author_email?.split("@")[0] ?? "anon";
-
-  // Preview du body : on coupe à 80 caractères
-  const body = notification.comment_body ?? "";
-  const bodyPreview = body.length > 80 ? body.slice(0, 80) + "…" : body;
 
   // Temps relatif via les clés i18n `comments.time.*` (déjà câblées en FR/EN/AR)
   const relative = formatRelative(notification.created_at, tTime);
@@ -235,21 +227,11 @@ function NotificationRow({
             <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-accent" />
           )}
           <div className="flex-1 min-w-0">
-            <p className="truncate text-xs text-muted-foreground">
-              {notification.content_title || t("untitled")}
-              {targetLabelKey && (
-                <>
-                  {" · "}
-                  <span className="font-medium text-foreground/70">
-                    {t(targetLabelKey)}
-                  </span>
-                </>
-              )}
-            </p>
-            <p className="mt-0.5 text-sm">
-              <span className="font-medium">{author}</span>{" "}
-              <span className="text-muted-foreground">{bodyPreview}</span>
-            </p>
+            {notification.type === "ready_to_schedule" ? (
+              <ReadyToScheduleContent notification={notification} t={t} />
+            ) : (
+              <CommentContent notification={notification} t={t} />
+            )}
             <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground/70">
               {relative}
             </p>
@@ -257,6 +239,62 @@ function NotificationRow({
         </div>
       </button>
     </li>
+  );
+}
+
+function CommentContent({
+  notification,
+  t,
+}: {
+  notification: Notification;
+  t: (key: string) => string;
+}) {
+  const targetLabelKey = targetLabelKeyFor(notification.comment_target_type);
+  const author = notification.is_guest
+    ? `${notification.guest_name?.trim() || t("guestBadge")} (${t("guestBadge")})`
+    : notification.author_email?.split("@")[0] ?? "anon";
+
+  // Preview du body : on coupe à 80 caractères
+  const body = notification.comment_body ?? "";
+  const bodyPreview = body.length > 80 ? body.slice(0, 80) + "…" : body;
+
+  return (
+    <>
+      <p className="truncate text-xs text-muted-foreground">
+        {notification.content_title || t("untitled")}
+        {targetLabelKey && (
+          <>
+            {" · "}
+            <span className="font-medium text-foreground/70">
+              {t(targetLabelKey)}
+            </span>
+          </>
+        )}
+      </p>
+      <p className="mt-0.5 text-sm">
+        <span className="font-medium">{author}</span>{" "}
+        <span className="text-muted-foreground">{bodyPreview}</span>
+      </p>
+    </>
+  );
+}
+
+function ReadyToScheduleContent({
+  notification,
+  t,
+}: {
+  notification: Notification;
+  t: (key: string, values?: Record<string, string>) => string;
+}) {
+  return (
+    <p className="mt-0.5 flex items-start gap-1.5 text-sm">
+      <CalendarClock className="mt-0.5 size-3.5 shrink-0 text-accent" />
+      <span>
+        {t("readyToScheduleMessage", {
+          title: notification.content_title || "—",
+        })}
+      </span>
+    </p>
   );
 }
 
