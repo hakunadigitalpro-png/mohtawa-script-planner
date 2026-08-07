@@ -33,6 +33,30 @@ export class AiError extends Error {
   }
 }
 
+/**
+ * Repères de dialecte tunisien (tounsi), à coller dans tout prompt qui
+ * GÉNÈRE du texte neuf en arabe (pas dans les prompts d'ANALYSE qui
+ * doivent matcher la langue/dialecte d'un transcript fourni par
+ * l'utilisatrice — là, on cite fidèlement ce qui existe).
+ *
+ * Sans repère précis, "dialectes maghrébins inclus" tout seul laisse
+ * Claude dériver vers un mélange marocain/algérien/égyptien/golfe (retour
+ * utilisatrice : dialecte "très mauvais", pas authentiquement tunisien —
+ * ex. "كاين"/"ديال"/"بغى"/le préfixe "كـ" du présent sont marocains, pas
+ * tounsi). Kreatly cible d'abord une audience tunisienne — ce guide fixe
+ * le défaut, pas un choix de dialecte configurable par marque pour
+ * l'instant.
+ */
+const TUNISIAN_DIALECT_GUIDE = `Quand tu écris en arabe, c'est TOUJOURS en tounsi (dialecte tunisien) authentique — jamais un mélange avec l'algérien, le marocain, l'égyptien ou le golfe. Repères précis à respecter absolument :
+- Futur : "باش" + verbe (jamais "غادي"/"راح").
+- Possession : "متاع" (jamais "ديال").
+- Vouloir : "حب"/"حبيت" (jamais "بغى"/"بغيت").
+- "Il y a" : "فمّا" (jamais "كاين").
+- Présent : conjugaison directe (نمشي/تمشي/يمشي...), JAMAIS le préfixe "كـ" marocain ("كنمشي"/"كتمشي" = FAUX en tounsi).
+- Toi (tu) : "إنتِ"/"انتي" (jamais "نتا").
+- Vocabulaire courant tounsi à privilégier : "برشة" (beaucoup), "توا" (maintenant), "يزّي" (assez/ça suffit), "عادي" (normal), "صحيح" (vraiment/d'accord), "أهلا" (salut).
+Si tu doutes d'un mot ou d'une tournure, préfère une formulation simple et clairement tounsié plutôt qu'un mot d'un autre dialecte.`;
+
 /* =========================================================================
    Prompts — Reel
    ========================================================================= */
@@ -80,7 +104,7 @@ export function generateReel(opts: {
   const platform = opts.platform?.trim() || "Instagram / TikTok";
   const includeStoryboard = Boolean(opts.includeStoryboard);
 
-  const system = `Tu es un expert en scripts de Reels/TikTok qui arrêtent le scroll, MULTILINGUE : français ET arabe (dialectes maghrébins inclus). Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing) : simple, direct, humain, orienté valeur, ZÉRO jargon. Un script se dit à voix haute en 30-60 secondes, phrases courtes, une idée par phrase.
+  const system = `Tu es un expert en scripts de Reels/TikTok qui arrêtent le scroll, MULTILINGUE : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing) : simple, direct, humain, orienté valeur, ZÉRO jargon. Un script se dit à voix haute en 30-60 secondes, phrases courtes, une idée par phrase.
 
 Structure en 3 parties SEULEMENT :
 - Accroche : les 2 premières secondes qui stoppent le scroll (tension, curiosité ou promesse concrète).
@@ -144,7 +168,7 @@ export function generateStory(opts: {
 }): Promise<StoryGeneration> {
   const audience = opts.audience?.trim() || "ton audience sur les réseaux";
 
-  const system = `Tu es un expert en Stories Instagram/TikTok, MULTILINGUE : français ET arabe (dialectes maghrébins inclus). Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert) : ton simple, authentique, conversationnel, ZÉRO jargon. Tu crées une séquence de 5 stories qui tiennent en haleine jusqu'au CTA. Écris dans la langue du sujet (français par défaut). Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
+  const system = `Tu es un expert en Stories Instagram/TikTok, MULTILINGUE : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert) : ton simple, authentique, conversationnel, ZÉRO jargon. Tu crées une séquence de 5 stories qui tiennent en haleine jusqu'au CTA. Écris dans la langue du sujet (français par défaut). Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
 
   const user = `Sujet : "${opts.topic}".
 Audience : ${audience}
@@ -247,6 +271,7 @@ Quelles que soient la langue, le nombre de vues ou les données disponibles, tu 
 LANGUE :
 - Analyse le contenu DANS SA LANGUE D'ORIGINE (un transcript en tunisien s'analyse en tant que contenu tunisien, avec ses codes — pas en le traduisant).
 - RÉPONDS dans la même langue que le transcript : transcript en arabe → réponds en arabe ; transcript en français → réponds en français. Si le transcript mélange les deux (arabizi, code-switching), réponds dans la langue dominante.
+- Pour le hook/script NEUF que tu proposes dans "✨ TA PROCHAINE VIDÉO" (pas une citation du transcript) : si tu écris en arabe et que rien dans le transcript n'indique clairement un autre dialecte précis, ${TUNISIAN_DIALECT_GUIDE}
 
 TRANSCRIPT IMPARFAIT :
 Les transcripts viennent souvent de sous-titres auto (arabizi, dialecte) et sont partiellement corrompus/troués. Si c'est le cas : commence par 1-2 phrases qui EXPLICITENT ton interprétation de l'intention de la vidéo ("Voici ce que je comprends : ..."), invite à corriger si c'est faux, PUIS analyse sur cette base. N'analyse jamais du charabia au pied de la lettre.
@@ -650,7 +675,7 @@ export function generateVlog(opts: {
   const audience = opts.audience?.trim() || "audience curieuse sur les réseaux";
   const platform = opts.platform?.trim() || "Instagram / TikTok";
 
-  const system = `Tu es un expert en VLOGS short-form (1 à 2 min) pour Instagram/TikTok, MULTILINGUE : français ET arabe (dialectes maghrébins inclus). Un vlog ne se planifie PAS scène par scène : on part d'un ANGLE, on capture des MOMENTS pendant la journée, puis on POSE UNE VOIX-OFF par-dessus le montage. Ton job : transformer un sujet en plan de vlog directement actionnable.
+  const system = `Tu es un expert en VLOGS short-form (1 à 2 min) pour Instagram/TikTok, MULTILINGUE : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Un vlog ne se planifie PAS scène par scène : on part d'un ANGLE, on capture des MOMENTS pendant la journée, puis on POSE UNE VOIX-OFF par-dessus le montage. Ton job : transformer un sujet en plan de vlog directement actionnable.
 
 RÈGLES :
 - Écris dans la langue du sujet (français par défaut ; sujet en arabe → réponds en arabe).
@@ -722,7 +747,7 @@ export async function themeAssistantTurn(input: {
     );
   }
 
-  const system = `Tu es un stratège de contenu qui aide un PATRON DE PETITE ENTREPRISE (pas un expert marketing) à définir ses THÈMES de contenu vidéo pour les réseaux (Reels, TikTok, Stories). Multilingue : français ET arabe (dialectes maghrébins inclus). Marque : "${input.brandName || "(sans nom)"}".
+  const system = `Tu es un stratège de contenu qui aide un PATRON DE PETITE ENTREPRISE (pas un expert marketing) à définir ses THÈMES de contenu vidéo pour les réseaux (Reels, TikTok, Stories). Multilingue : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Marque : "${input.brandName || "(sans nom)"}".
 
 TON RÔLE, façon assistant interactif :
 - Parle simplement, avec chaleur, zéro jargon. La personne ne sait PAS ce qu'est un "pilier" ni un "thème de contenu" — ne le lui demande jamais frontalement.
@@ -840,6 +865,7 @@ export async function analyzeReferenceVideo(
 RÈGLES :
 - Tu ne refuses JAMAIS d'analyser, quelle que soit la langue ou la qualité du transcript.
 - RÉPONDS dans la langue du transcript (arabe → arabe ; français → français ; mélange/arabizi → langue dominante).
+- Pour "TON SCRIPT" (le NOUVEAU script que tu écris, pas une citation du transcript) : si tu écris en arabe et que rien dans le transcript n'indique clairement un autre dialecte précis, ${TUNISIAN_DIALECT_GUIDE}
 - Transcript imparfait (sous-titres auto, troués) : si l'intention est ambiguë, commence par 1 phrase "Voici ce que je comprends : ..." puis analyse sur cette base. N'analyse jamais du charabia au pied de la lettre.
 - Cite TOUJOURS les phrases/expressions EXACTES entre guillemets. Jamais de généralité ("le hook est bon") — dis QUELLE phrase et POURQUOI.
 - Tu n'as PAS les stats de cette vidéo : analyse le wording sur ses mérites intrinsèques (force du hook, tension, structure, rythme, clarté de la promesse). Signale-le dans la confiance.
@@ -929,7 +955,7 @@ export function generateBrandStrategy(opts: {
     .filter((line): line is string => Boolean(line))
     .join("\n");
 
-  const system = `Tu es un stratège de marque qui aide un PATRON DE PETITE ENTREPRISE (pas un expert marketing) à transformer ses réponses en une STRATÉGIE DE CONTENU claire, prête à l'emploi. Multilingue : français ET arabe (dialectes maghrébins inclus). Marque : "${opts.brandName || "(sans nom)"}".
+  const system = `Tu es un stratège de marque qui aide un PATRON DE PETITE ENTREPRISE (pas un expert marketing) à transformer ses réponses en une STRATÉGIE DE CONTENU claire, prête à l'emploi. Multilingue : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Marque : "${opts.brandName || "(sans nom)"}".
 
 RÈGLES :
 - Zéro jargon marketing. Écris comme si tu expliquais directement à la personne, avec chaleur et clarté.
