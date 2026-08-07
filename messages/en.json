@@ -279,9 +279,9 @@
       "scenesReady": "Scenes approved",
       "filmed": "Video filmed",
       "edited": "Editing done",
-      "published": "Video published"
+      "published": "Video live"
     },
-    "markPublished": "Mark as published",
+    "markPublished": "Mark as live",
     "filmedAutoHint": "Calculated automatically from your scenes",
     "filmedAutoFraction": "{done}/{total} filmed",
     "equipment": {

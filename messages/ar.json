@@ -279,9 +279,9 @@
       "scenesReady": "المشاهد مُعتمدة",
       "filmed": "تم تصوير الفيديو",
       "edited": "تم المونتاج",
-      "published": "تم نشر الفيديو"
+      "published": "الفيديو مباشر"
     },
-    "markPublished": "وضع علامة تم النشر",
+    "markPublished": "وضع علامة مباشر",
     "filmedAutoHint": "محسوب تلقائياً من المشاهد",
     "filmedAutoFraction": "{done}/{total} مُصوَّر",
     "equipment": {

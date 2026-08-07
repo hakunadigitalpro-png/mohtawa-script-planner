@@ -279,9 +279,9 @@
       "scenesReady": "Scènes validées",
       "filmed": "Vidéo filmée",
       "edited": "Montage terminé",
-      "published": "Vidéo publiée"
+      "published": "Vidéo live"
     },
-    "markPublished": "Marquer comme publiée",
+    "markPublished": "Marquer comme live",
     "filmedAutoHint": "Calculé automatiquement depuis tes scènes",
     "filmedAutoFraction": "{done}/{total} filmées",
     "equipment": {

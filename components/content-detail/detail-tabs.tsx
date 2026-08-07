@@ -10,7 +10,7 @@ import { ChecklistTab } from "./checklist-tab";
 import { CaptionTab } from "./caption-tab";
 import { ContentTab } from "./content-tab";
 import { PerformanceTab } from "./performance-tab";
-import { isSimpleType } from "@/lib/constants";
+import { isSimpleType, isLiveStatus } from "@/lib/constants";
 import type {
   Content,
   ContentMedia,
@@ -71,7 +71,7 @@ export function DetailTabs({
   const captureItems = checklistItems.filter((it) => it.category === "capture");
   // L'onglet Performance ne sert à rien tant que la vidéo n'est pas publiée
   // (pas encore de données à saisir). On le masque pour réduire le bruit visuel.
-  const isPublished = content.status === "published";
+  const isPublished = isLiveStatus(content.status);
 
   return (
     <Tabs defaultValue="plan">

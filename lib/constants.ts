@@ -42,14 +42,22 @@ export function platformsForType(type: string | null | undefined) {
   return PLATFORMS.filter((p) => allowed.includes(p.value));
 }
 
-/** Statuts des types "vidéo" (reel/story/vlog) — production pas à pas. */
+/**
+ * Statuts des types "vidéo" (reel/story/vlog) — production pas à pas.
+ * "approved" et "live" sont volontairement les MÊMES valeurs que sur
+ * SIMPLE_STATUSES (même vocabulaire pour "prêt à programmer" et "sorti"),
+ * pour que la nouvelle notification "validé mais pas programmé" et le
+ * passage automatique en Live (recompute_live_statuses) marchent pareil
+ * quel que soit le format du contenu.
+ */
 export const STATUSES = [
   { value: "idea", label: "Idée", color: "var(--color-status-idea)" },
   { value: "script", label: "Script", color: "var(--color-status-script)" },
   { value: "filming", label: "Tournage", color: "var(--color-status-filming)" },
   { value: "editing", label: "Montage", color: "var(--color-status-editing)" },
+  { value: "approved", label: "Validé", color: "var(--color-status-approved)" },
   { value: "scheduled", label: "Programmée", color: "var(--color-status-scheduled)" },
-  { value: "published", label: "Publiée", color: "var(--color-status-published)" },
+  { value: "live", label: "Live", color: "var(--color-status-live)" },
 ] as const;
 
 /**
@@ -123,6 +131,17 @@ export function statusColor(status: string | null | undefined) {
 }
 export function statusLabel(status: string | null | undefined) {
   return ALL_STATUSES.find((s) => s.value === status)?.label ?? status ?? "—";
+}
+
+/**
+ * "C'est sorti" pour n'importe quel type de contenu. "live" est la valeur
+ * courante (vidéo comme post/carrousel/infographie) ; "published" reste
+ * accepté en legacy pour la fenêtre entre un déploiement de code et
+ * l'exécution manuelle de la migration qui bascule les anciennes vidéos
+ * "published" vers "live" (migration 0045).
+ */
+export function isLiveStatus(status: string | null | undefined) {
+  return status === "live" || status === "published";
 }
 export function platformLabel(platform: string | null | undefined) {
   return PLATFORMS.find((p) => p.value === platform)?.label ?? platform ?? "—";

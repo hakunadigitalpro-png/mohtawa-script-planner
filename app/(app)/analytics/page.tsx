@@ -7,7 +7,7 @@ import { resolveActiveBrand } from "@/lib/brand";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { BarChart, type BarPoint } from "@/components/charts/bar-chart";
 import { RankedList, type RankedItem } from "@/components/charts/ranked-list";
-import { platformLabel, typeLabel, typeColor } from "@/lib/constants";
+import { platformLabel, typeLabel, typeColor, isLiveStatus } from "@/lib/constants";
 
 type PerfRow = { views: number | null; likes: number | null } | null;
 type ContentWithPerf = {
@@ -170,7 +170,7 @@ export default async function AnalyticsPage() {
 
   const publishedByMonth: Record<string, number> = Object.fromEntries(months.map((m) => [m, 0]));
   for (const c of rows) {
-    if (c.status !== "published" || !c.date) continue;
+    if (!isLiveStatus(c.status) || !c.date) continue;
     const key = monthKey(c.date);
     if (!(key in publishedByMonth)) continue;
     publishedByMonth[key] += 1;
@@ -182,7 +182,7 @@ export default async function AnalyticsPage() {
 
   // ============== KPIs ==============
   const totalViews = rows.reduce((s, c) => s + getViews(c), 0);
-  const totalPublished = rows.filter((c) => c.status === "published").length;
+  const totalPublished = rows.filter((c) => isLiveStatus(c.status)).length;
   const withStats = rows.filter((c) => getViews(c) > 0).length;
   const hasAnyPerf = totalViews > 0;
 

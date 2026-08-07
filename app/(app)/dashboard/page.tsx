@@ -15,7 +15,7 @@ import { Card } from "@/components/ui/card";
 import { ContentCard } from "@/components/content-card";
 import { NewContentButton } from "@/components/new-content-modal";
 import { DashboardFilters } from "@/components/dashboard-filters";
-import { typeColor, typeLabel, platformLabel } from "@/lib/constants";
+import { typeColor, typeLabel, platformLabel, isLiveStatus } from "@/lib/constants";
 import type { Content } from "@/lib/types";
 
 type SearchParams = {
@@ -137,11 +137,8 @@ export default async function DashboardPage({
 
   const allContents = allRes.data ?? [];
   const total = allContents.length;
-  // "published" (vidéos) et "live" (post/carrousel/infographie, migration
-  // 0041) sont les deux équivalents "c'est sorti" selon le type de contenu.
-  const isOut = (status: string) => status === "published" || status === "live";
-  const drafts = allContents.filter((c) => !isOut(c.status)).length;
-  const published = allContents.filter((c) => isOut(c.status)).length;
+  const drafts = allContents.filter((c) => !isLiveStatus(c.status)).length;
+  const published = allContents.filter((c) => isLiveStatus(c.status)).length;
   const thisMonth = allContents.filter((c) => {
     if (!c.date) return false;
     const d = new Date(c.date);

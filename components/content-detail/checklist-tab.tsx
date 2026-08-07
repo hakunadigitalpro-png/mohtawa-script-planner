@@ -87,7 +87,7 @@ export function ChecklistTab({
     });
   };
 
-  const markPublished = () => {
+  const markLive = () => {
     const next: Record<Key, boolean> = {
       script_ready: true,
       scenes_ready: true,
@@ -99,7 +99,7 @@ export function ChecklistTab({
     startTransition(async () => {
       await Promise.all([
         upsertReelDetails(contentId, { checklist: next }),
-        updateContent(contentId, { status: "published" }),
+        updateContent(contentId, { status: "live" }),
       ]);
     });
   };
@@ -175,7 +175,7 @@ export function ChecklistTab({
         </ul>
 
         <div>
-          <Button onClick={markPublished} disabled={pending}>
+          <Button onClick={markLive} disabled={pending}>
             {t("markPublished")}
           </Button>
         </div>
