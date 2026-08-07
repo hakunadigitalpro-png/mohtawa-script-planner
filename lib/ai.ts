@@ -1,7 +1,7 @@
 import "server-only";
 
 import { extractJsonBlock } from "@/lib/utils";
-import type { GeneratedStrategy } from "@/lib/types";
+import type { GeneratedStrategy, FilmingGuide } from "@/lib/types";
 
 /**
  * Wrappers minimalistes (fetch, pas de SDK) autour des API IA utilisées côté
@@ -43,20 +43,42 @@ export class AiError extends Error {
  * l'utilisatrice n'est acceptée que chez Anthropic ; OpenAI est inaccessible).
  * Multilingue FR + arabe, ton patron-de-PME (zéro jargon).
  */
+export type StoryboardSceneGeneration = {
+  description: string;
+  camera_angle: string;
+  expression: string;
+  movement: string;
+};
+
 export type ReelGeneration = {
   accroche: string;
   corps: string;
   outro: string;
+  /** Présent seulement si `includeStoryboard` était demandé (migration 0047). */
+  storyboard?: {
+    scenes: StoryboardSceneGeneration[];
+    filming_guide: FilmingGuide;
+  };
 };
 
+/**
+ * Génère un script de Reel simplifié (Accroche / Corps / Outro), et — si
+ * `includeStoryboard` est coché — découpe CE MÊME script en scènes de
+ * storyboard tournage-prêtes (cadrage + expression + mouvement) plus un
+ * résumé de tournage (éclairage, style caméra, rythme, énergie, conseil).
+ * Un seul appel Claude dans les deux cas (pas de 2e appel séparé) : la
+ * cible n'a pas besoin de savoir ce qu'est un storyboard pour en avoir un.
+ */
 export function generateReel(opts: {
   topic: string;
   audience?: string;
   platform?: string;
+  includeStoryboard?: boolean;
 }): Promise<ReelGeneration> {
   const audience =
     opts.audience?.trim() || "des clients potentiels sur les réseaux";
   const platform = opts.platform?.trim() || "Instagram / TikTok";
+  const includeStoryboard = Boolean(opts.includeStoryboard);
 
   const system = `Tu es un expert en scripts de Reels/TikTok qui arrêtent le scroll, MULTILINGUE : français ET arabe (dialectes maghrébins inclus). Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing) : simple, direct, humain, orienté valeur, ZÉRO jargon. Un script se dit à voix haute en 30-60 secondes, phrases courtes, une idée par phrase.
 
@@ -64,7 +86,16 @@ Structure en 3 parties SEULEMENT :
 - Accroche : les 2 premières secondes qui stoppent le scroll (tension, curiosité ou promesse concrète).
 - Corps : le développement, dans l'ordre où le dire.
 - Outro : la fermeture + un appel à l'action clair.
-
+${
+  includeStoryboard
+    ? `
+Tu découpes AUSSI ce script en un STORYBOARD tournage-prêt, pour quelqu'un qui n'a jamais filmé et ne sait pas ce qu'est un storyboard — il doit pouvoir filmer juste en suivant tes instructions, sans réfléchir :
+- Découpe par BEAT naturel (une idée/phrase forte = une scène), pas rigidement par accroche/corps/outro. Vise 4 à 7 scènes pour 30-60s.
+- Pour chaque scène : "description" (l'action + ce qui est dit, en 1 phrase concrète), "camera_angle" (cadrage, TRÈS court : "Plan rapproché, face caméra"), "expression" (jeu de visage à adopter, TRÈS court : "Souriant, sourcils levés"), "movement" (gestuelle, TRÈS court : "Main sur le cœur, hoche la tête").
+- Le "filming_guide" est un résumé global du tournage (pas la durée — elle est calculée ailleurs à partir du script, ne l'invente pas) : "lighting" (conseil d'éclairage court), "camera_style" (style de plan général pour toute la vidéo), "pacing" (rythme/rétention, ex : "Change de plan toutes les 3-4s pour garder l'attention"), "energy" (niveau d'énergie à tenir), "tip" (UN conseil pro actionnable).
+- Reste TRÈS court sur chaque champ (une poignée de mots, pas une phrase longue) — c'est un pense-bête à lire pendant le tournage, pas un article.`
+    : ""
+}
 Écris dans la langue du sujet (français par défaut). Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
 
   const user = `Sujet de la vidéo : "${opts.topic}".
@@ -75,10 +106,26 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
 {
   "accroche": "La phrase d'accroche qui arrête le scroll (1 phrase forte, ≤ 2s)",
   "corps": "Le cœur du script : développe l'idée en phrases courtes, dans l'ordre où la dire. 30-45s.",
-  "outro": "La fermeture + un appel à l'action clair (sauvegarde, commente, DM…)"
+  "outro": "La fermeture + un appel à l'action clair (sauvegarde, commente, DM…)"${
+    includeStoryboard
+      ? `,
+  "storyboard": {
+    "scenes": [
+      { "description": "...", "camera_angle": "...", "expression": "...", "movement": "..." }
+    ],
+    "filming_guide": {
+      "lighting": "...",
+      "camera_style": "...",
+      "pacing": "...",
+      "energy": "...",
+      "tip": "..."
+    }
+  }`
+      : ""
+  }
 }`;
 
-  return callClaudeJSON<ReelGeneration>(system, user, 1500);
+  return callClaudeJSON<ReelGeneration>(system, user, includeStoryboard ? 3000 : 1500);
 }
 
 /* =========================================================================

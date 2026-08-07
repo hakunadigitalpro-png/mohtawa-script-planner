@@ -11,6 +11,7 @@ import {
   Bookmark,
   X,
   ImageIcon,
+  Film,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,13 +39,14 @@ import {
   addSceneFromPreset,
   createScenePreset,
   deleteScenePreset,
+  upsertReelDetails,
 } from "@/app/(app)/contents/actions";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
 import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
-import type { StoryboardScene, ScenePreset } from "@/lib/types";
+import type { StoryboardScene, ScenePreset, FilmingGuide } from "@/lib/types";
 
 const DRAG_MIME = "application/x-mohtawa-scene-id";
 
@@ -54,6 +56,16 @@ type SceneFormState = {
   camera_angle: string;
   on_screen_text: string;
   editing_notes: string;
+  expression: string;
+  movement: string;
+};
+
+const EMPTY_GUIDE: FilmingGuide = {
+  lighting: "",
+  camera_style: "",
+  pacing: "",
+  energy: "",
+  tip: "",
 };
 
 export function StoryboardTab({
@@ -61,14 +73,18 @@ export function StoryboardTab({
   scenes: initialScenes,
   scenePresets,
   brandId,
+  filmingGuide: initialFilmingGuide,
 }: {
   contentId: string;
   scenes: StoryboardScene[];
   /** Setups réutilisables de la marque (Lot 2, migration 0021). */
   scenePresets: ScenePreset[];
   brandId: string;
+  /** Résumé de tournage généré par l'IA (migration 0047), éditable ici. */
+  filmingGuide: FilmingGuide | null;
 }) {
   const t = useTranslations("storyboard");
+  const g = useTranslations("filmingGuide");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -79,9 +95,10 @@ export function StoryboardTab({
   const scenesHash = initialScenes
     .map(
       (s) =>
-        `${s.id}:${s.description ?? ""}:${s.camera_angle ?? ""}:${s.on_screen_text ?? ""}:${s.editing_notes ?? ""}`,
+        `${s.id}:${s.description ?? ""}:${s.camera_angle ?? ""}:${s.on_screen_text ?? ""}:${s.editing_notes ?? ""}:${s.expression ?? ""}:${s.movement ?? ""}`,
     )
     .join("|");
+  const guideHash = JSON.stringify(initialFilmingGuide ?? EMPTY_GUIDE);
 
   const initial = useMemo(
     () => ({
@@ -91,16 +108,19 @@ export function StoryboardTab({
         camera_angle: s.camera_angle ?? "",
         on_screen_text: s.on_screen_text ?? "",
         editing_notes: s.editing_notes ?? "",
+        expression: s.expression ?? "",
+        movement: s.movement ?? "",
       })),
+      guide: initialFilmingGuide ?? EMPTY_GUIDE,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [scenesHash],
+    [scenesHash, guideHash],
   );
 
   const { state, setState, isDirty, isSaving, error, handleSave, handleReset } =
     useExplicitSave(initial, async (v) => {
-      const ops = await Promise.all(
-        v.scenes.map((scene) =>
+      const ops = await Promise.all([
+        ...v.scenes.map((scene) =>
           updateScene(
             scene.id,
             {
@@ -108,11 +128,14 @@ export function StoryboardTab({
               camera_angle: scene.camera_angle,
               on_screen_text: scene.on_screen_text,
               editing_notes: scene.editing_notes,
+              expression: scene.expression,
+              movement: scene.movement,
             },
             contentId,
           ),
         ),
-      );
+        upsertReelDetails(contentId, { filming_guide: v.guide }),
+      ]);
       const firstError = ops.find(
         (r) => r && typeof r === "object" && "error" in r && r.error,
       );
@@ -121,7 +144,13 @@ export function StoryboardTab({
 
   const updateSceneField = (
     sceneId: string,
-    key: "description" | "camera_angle" | "on_screen_text" | "editing_notes",
+    key:
+      | "description"
+      | "camera_angle"
+      | "on_screen_text"
+      | "editing_notes"
+      | "expression"
+      | "movement",
     value: string,
   ) => {
     setState((s) => ({
@@ -131,6 +160,12 @@ export function StoryboardTab({
       ),
     }));
   };
+
+  const updateGuideField = (key: keyof FilmingGuide, value: string) => {
+    setState((s) => ({ ...s, guide: { ...s.guide, [key]: value } }));
+  };
+
+  const hasGuideContent = Object.values(state.guide).some((v) => v.trim());
 
   /* ============== Drag & drop reorder (immédiat) ============== */
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -216,6 +251,53 @@ export function StoryboardTab({
             </Button>
           </div>
         </div>
+
+        {/* Résumé de tournage — généré par l'IA en même temps que le
+            storyboard (migration 0047), toujours modifiable ensuite. Masqué
+            tant qu'il n'y a rien (ni généré, ni saisi à la main). */}
+        {hasGuideContent && (
+          <div className="rounded-2xl border border-accent/30 bg-accent/5 p-3">
+            <div className="mb-2 flex items-center gap-1.5">
+              <Film className="size-3.5 text-accent" />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
+                {g("title")}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <GuideField
+                label={g("lighting")}
+                value={state.guide.lighting}
+                onChange={(v) => updateGuideField("lighting", v)}
+              />
+              <GuideField
+                label={g("cameraStyle")}
+                value={state.guide.camera_style}
+                onChange={(v) => updateGuideField("camera_style", v)}
+              />
+              <GuideField
+                label={g("pacing")}
+                value={state.guide.pacing}
+                onChange={(v) => updateGuideField("pacing", v)}
+              />
+              <GuideField
+                label={g("energy")}
+                value={state.guide.energy}
+                onChange={(v) => updateGuideField("energy", v)}
+              />
+            </div>
+            <div className="mt-2 space-y-1">
+              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                {g("tip")}
+              </Label>
+              <Input
+                className="h-8 text-xs"
+                dir="auto"
+                value={state.guide.tip}
+                onChange={(e) => updateGuideField("tip", e.target.value)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Barre de setups réutilisables : clique pour insérer une scène
             pré-remplie. La biblio se remplit en avance (dialog "Nouveau
@@ -321,6 +403,31 @@ export function StoryboardTab({
   );
 }
 
+/** Un champ court du résumé de tournage (éclairage, style caméra...). */
+function GuideField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+        {label}
+      </Label>
+      <Input
+        className="h-8 text-xs"
+        dir="auto"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
 function SceneCard({
   sceneForm,
   serverImageUrl,
@@ -337,7 +444,13 @@ function SceneCard({
   contentId: string;
   brandId: string;
   onFieldChange: (
-    key: "description" | "camera_angle" | "on_screen_text" | "editing_notes",
+    key:
+      | "description"
+      | "camera_angle"
+      | "on_screen_text"
+      | "editing_notes"
+      | "expression"
+      | "movement",
     value: string,
   ) => void;
 }) {
@@ -364,7 +477,9 @@ function SceneCard({
   const hasDetailsContent = Boolean(
     sceneForm.camera_angle.trim() ||
       sceneForm.on_screen_text.trim() ||
-      sceneForm.editing_notes.trim(),
+      sceneForm.editing_notes.trim() ||
+      sceneForm.expression.trim() ||
+      sceneForm.movement.trim(),
   );
   const [detailsOpen, setDetailsOpen] = useState(hasDetailsContent);
 
@@ -521,6 +636,33 @@ function SceneCard({
                 onChange={(e) => onFieldChange("camera_angle", e.target.value)}
                 placeholder={t("fields.cameraPlaceholder")}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                  {t("fields.expression")}
+                </Label>
+                <Input
+                  className="h-8 text-xs"
+                  dir="auto"
+                  value={sceneForm.expression}
+                  onChange={(e) => onFieldChange("expression", e.target.value)}
+                  placeholder={t("fields.expressionPlaceholder")}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                  {t("fields.movement")}
+                </Label>
+                <Input
+                  className="h-8 text-xs"
+                  dir="auto"
+                  value={sceneForm.movement}
+                  onChange={(e) => onFieldChange("movement", e.target.value)}
+                  placeholder={t("fields.movementPlaceholder")}
+                />
+              </div>
             </div>
 
             <div className="space-y-1">

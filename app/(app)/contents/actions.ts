@@ -313,6 +313,13 @@ export async function upsertReelDetails(
     script_full: string;
     script_free_mode: boolean;
     checklist: Record<string, boolean>;
+    filming_guide: {
+      lighting: string;
+      camera_style: string;
+      pacing: string;
+      energy: string;
+      tip: string;
+    };
   }>,
 ) {
   const supabase = await createClient();
@@ -332,6 +339,7 @@ export async function upsertReelDetails(
         "script_full",
         "script_free_mode",
         "checklist",
+        "filming_guide",
       ]),
     });
   if (error) return { error: error.message };
@@ -516,6 +524,8 @@ export async function updateScene(
     image_url: string | null;
     filmed: boolean;
     editing_notes: string;
+    expression: string;
+    movement: string;
   }>,
   contentId: string,
 ) {
@@ -531,6 +541,8 @@ export async function updateScene(
         "image_url",
         "filmed",
         "editing_notes",
+        "expression",
+        "movement",
       ]),
     )
     .eq("id", sceneId);

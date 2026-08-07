@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Sparkles, RefreshCcw, Wand2 } from "lucide-react";
+import { Sparkles, RefreshCcw, Wand2, Film } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   aiGenerateReel,
   applyReelGeneration,
@@ -82,7 +83,9 @@ function AiGeneratorModal({
   const router = useRouter();
   const [topic, setTopic] = useState(defaultTopic ?? "");
   const [audience, setAudience] = useState("");
+  const [includeStoryboard, setIncludeStoryboard] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [storyboardNotice, setStoryboardNotice] = useState<string | null>(null);
   const [reelPreview, setReelPreview] = useState<ReelGeneration | null>(null);
   const [storyPreview, setStoryPreview] = useState<StoryGeneration | null>(null);
   const [pending, startTransition] = useTransition();
@@ -91,6 +94,7 @@ function AiGeneratorModal({
     setReelPreview(null);
     setStoryPreview(null);
     setError(null);
+    setStoryboardNotice(null);
   };
 
   const generate = () => {
@@ -106,6 +110,7 @@ function AiGeneratorModal({
           topic,
           audience,
           platform,
+          includeStoryboard,
         });
         if (!res.ok) setError(res.error);
         else setReelPreview(res.data);
@@ -126,9 +131,16 @@ function AiGeneratorModal({
           accroche: reelPreview.accroche,
           corps: reelPreview.corps,
           outro: reelPreview.outro,
+          storyboard: reelPreview.storyboard,
         });
         if (!res.ok) setError(res.error);
-        else {
+        else if (res.storyboardSkipped) {
+          // Script appliqué, mais le storyboard existant a été préservé
+          // (non-destructif) — on ne ferme pas tout de suite pour que
+          // l'utilisatrice voie pourquoi.
+          router.refresh();
+          setStoryboardNotice(t("storyboardSkippedNotice"));
+        } else {
           onClose();
           router.refresh();
         }
@@ -185,6 +197,24 @@ function AiGeneratorModal({
                   placeholder={t("audiencePlaceholder")}
                 />
               </div>
+              {type === "reel" && (
+                <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2.5 transition hover:bg-secondary/50">
+                  <Checkbox
+                    checked={includeStoryboard}
+                    onCheckedChange={(v) => setIncludeStoryboard(Boolean(v))}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="flex items-center gap-1.5 text-sm font-semibold">
+                      <Film className="size-3.5 text-accent" />
+                      {t("includeStoryboard")}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted">
+                      {t("includeStoryboardHint")}
+                    </span>
+                  </span>
+                </label>
+              )}
             </>
           )}
 
@@ -194,6 +224,11 @@ function AiGeneratorModal({
           {error && (
             <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
+            </p>
+          )}
+          {storyboardNotice && (
+            <p className="rounded-md border border-accent/30 bg-accent/10 px-3 py-2 text-sm">
+              {storyboardNotice}
             </p>
           )}
         </DialogBody>
@@ -249,19 +284,61 @@ function PreviewField({ label, value }: { label: string; value: string }) {
 }
 
 function ReelPreview({ data }: { data: ReelGeneration }) {
+  const t = useTranslations("ai");
+  const g = useTranslations("filmingGuide");
   return (
-    <div
-      className="space-y-3 rounded-md border border-border bg-secondary/30 p-4"
-      dir="auto"
-    >
-      <PreviewField label="Accroche" value={data.accroche} />
-      <PreviewField label="Corps" value={data.corps} />
-      <PreviewField label="Outro" value={data.outro} />
+    <div className="space-y-3">
+      <div
+        className="space-y-3 rounded-md border border-border bg-secondary/30 p-4"
+        dir="auto"
+      >
+        <PreviewField label="Accroche" value={data.accroche} />
+        <PreviewField label="Corps" value={data.corps} />
+        <PreviewField label="Outro" value={data.outro} />
+      </div>
+
+      {data.storyboard && (
+        <div className="space-y-3 rounded-md border border-border bg-secondary/30 p-4" dir="auto">
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
+            <Film className="size-3.5 text-accent" />
+            {t("storyboardPreviewTitle")}
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+            <PreviewField label={g("lighting")} value={data.storyboard.filming_guide.lighting} />
+            <PreviewField label={g("cameraStyle")} value={data.storyboard.filming_guide.camera_style} />
+            <PreviewField label={g("pacing")} value={data.storyboard.filming_guide.pacing} />
+            <PreviewField label={g("energy")} value={data.storyboard.filming_guide.energy} />
+          </div>
+          <p className="text-xs italic text-muted">💡 {data.storyboard.filming_guide.tip}</p>
+
+          <ul className="space-y-2">
+            {data.storyboard.scenes.map((s, i) => (
+              <li key={i} className="rounded border border-border bg-card p-2 text-sm">
+                <span className="me-2 font-semibold">#{i + 1}</span>
+                {s.description}
+                <div className="mt-1 flex flex-wrap gap-1">
+                  <ScenePill label={g("camera")} value={s.camera_angle} />
+                  <ScenePill label={g("expression")} value={s.expression} />
+                  <ScenePill label={g("movement")} value={s.movement} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <p className="text-xs text-muted">
-        « Appliquer » remplit ton script (Accroche · Corps · Outro). Tu pourras
-        tout modifier ensuite.
+        {data.storyboard ? t("previewHintWithStoryboard") : t("previewHint")}
       </p>
     </div>
+  );
+}
+
+function ScenePill({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+      {label} : {value}
+    </span>
   );
 }
 

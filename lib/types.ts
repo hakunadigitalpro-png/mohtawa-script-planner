@@ -140,6 +140,18 @@ export type ReelDetails = {
     edited?: boolean;
     published?: boolean;
   } | null;
+  /** Résumé de tournage généré par l'IA (migration 0047), en même temps que
+   *  le storyboard — éclairage, style caméra, rythme, énergie, conseil pro.
+   *  Éditable ensuite comme le reste. */
+  filming_guide: FilmingGuide | null;
+};
+
+export type FilmingGuide = {
+  lighting: string;
+  camera_style: string;
+  pacing: string;
+  energy: string;
+  tip: string;
 };
 
 export type StoryDetails = {
@@ -200,6 +212,10 @@ export type StoryboardScene = {
   filmed: boolean;
   /** Notes de montage / post-prod (migration 0016) : filtres, effets, transitions, son. */
   editing_notes: string | null;
+  /** Direction de jeu, courte (migration 0047) : "Souriant, regard caméra". */
+  expression: string | null;
+  /** Gestuelle / mouvement, courte (migration 0047) : "Main sur le cœur, hoche la tête". */
+  movement: string | null;
 };
 
 /**

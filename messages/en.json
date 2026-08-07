@@ -263,13 +263,28 @@
       "camera": "Camera / Shot",
       "cameraPlaceholder": "Ex: Wide shot, slightly low angle, fixed camera",
       "onScreenText": "On-screen text",
-      "onScreenTextPlaceholder": "Ex: \"Don't do this in 2026\""
+      "onScreenTextPlaceholder": "Ex: \"Don't do this in 2026\"",
+      "expression": "Expression",
+      "expressionPlaceholder": "Ex: Smiling, eyebrows raised",
+      "movement": "Movement",
+      "movementPlaceholder": "Ex: Hand on heart, nodding"
     },
     "deleteScene": "Delete scene",
     "filmed": "Filmed",
     "filmedBadge": "✓ Filmed",
     "markFilmed": "Mark as filmed",
     "filmedProgress": "{done} of {total} filmed"
+  },
+  "filmingGuide": {
+    "title": "Filming guide",
+    "lighting": "Lighting",
+    "cameraStyle": "Camera style",
+    "pacing": "Pacing",
+    "energy": "Energy",
+    "tip": "Pro tip",
+    "camera": "Camera",
+    "expression": "Expression",
+    "movement": "Movement"
   },
   "checklist": {
     "title": "Video preparation",
@@ -661,6 +676,8 @@
     "topicPlaceholder": "e.g. The 3 mistakes new creators make on Instagram",
     "audience": "Target audience (optional)",
     "audiencePlaceholder": "e.g. solo founders, B2B marketers, students...",
+    "includeStoryboard": "Also break down into a storyboard",
+    "includeStoryboardHint": "The AI turns your script into a shot-by-shot filming plan (framing, expression, movement).",
     "generate": "Generate",
     "generating": "Generating...",
     "regenerate": "Regenerate",
@@ -668,7 +685,10 @@
     "applying": "Applying...",
     "errorTopic": "Enter a topic to generate.",
     "previewHint": "💡 You'll be able to edit every field after applying.",
+    "previewHintWithStoryboard": "💡 \"Apply\" fills in your script AND your storyboard (if empty). You'll be able to edit everything afterwards.",
     "previewStoryHint": "💡 You'll be able to edit each story and add an image after applying.",
+    "storyboardPreviewTitle": "Suggested storyboard",
+    "storyboardSkippedNotice": "Script applied ✓ — your existing storyboard was kept as-is (not overwritten).",
     "preview": {
       "hook": "Hook",
       "intro": "Intro",

@@ -263,13 +263,28 @@
       "camera": "الكاميرا / اللقطة",
       "cameraPlaceholder": "مثال: لقطة عامة ثابتة من زاوية منخفضة قليلًا",
       "onScreenText": "النص الظاهر",
-      "onScreenTextPlaceholder": "مثال: «لا تفعل ذلك في 2026»"
+      "onScreenTextPlaceholder": "مثال: «لا تفعل ذلك في 2026»",
+      "expression": "التعبير",
+      "expressionPlaceholder": "مثال: مبتسم، حاجبان مرفوعان",
+      "movement": "الحركة",
+      "movementPlaceholder": "مثال: يد على القلب، يهز رأسه"
     },
     "deleteScene": "حذف المشهد",
     "filmed": "تم التصوير",
     "filmedBadge": "✓ مُصوَّر",
     "markFilmed": "تحديد كمُصوَّر",
     "filmedProgress": "{done} من {total} مُصوَّر"
+  },
+  "filmingGuide": {
+    "title": "دليل التصوير",
+    "lighting": "الإضاءة",
+    "cameraStyle": "أسلوب الكاميرا",
+    "pacing": "الإيقاع",
+    "energy": "الطاقة",
+    "tip": "نصيحة احترافية",
+    "camera": "الكاميرا",
+    "expression": "التعبير",
+    "movement": "الحركة"
   },
   "checklist": {
     "title": "تحضير الفيديو",
@@ -661,6 +676,8 @@
     "topicPlaceholder": "مثال: 3 أخطاء يرتكبها المبتدئون على إنستجرام",
     "audience": "الجمهور المستهدف (اختياري)",
     "audiencePlaceholder": "مثال: رواد أعمال منفردون، مسوقون B2B، طلاب...",
+    "includeStoryboard": "قسّم أيضاً إلى ستوري بورد",
+    "includeStoryboardHint": "الذكاء الاصطناعي يحوّل نصك إلى خطة تصوير مشهدًا بمشهد (الكادر، التعبير، الحركة).",
     "generate": "توليد",
     "generating": "جاري التوليد...",
     "regenerate": "إعادة التوليد",
@@ -668,7 +685,10 @@
     "applying": "جاري التطبيق...",
     "errorTopic": "حدد موضوعاً للتوليد.",
     "previewHint": "💡 يمكنك تعديل كل حقل بعد التطبيق.",
+    "previewHintWithStoryboard": "💡 «تطبيق» يملأ نصك والستوري بورد (إذا كان فارغًا). يمكنك تعديل كل شيء بعد ذلك.",
     "previewStoryHint": "💡 يمكنك تعديل كل ستوري وإضافة صورة بعد التطبيق.",
+    "storyboardPreviewTitle": "الستوري بورد المقترح",
+    "storyboardSkippedNotice": "تم تطبيق النص ✓ — تم الحفاظ على الستوري بورد الحالي كما هو (لم يُستبدل).",
     "preview": {
       "hook": "العنوان الجذاب",
       "intro": "المقدمة",

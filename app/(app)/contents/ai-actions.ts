@@ -23,6 +23,7 @@ export async function aiGenerateReel(input: {
   topic: string;
   audience?: string;
   platform?: string;
+  includeStoryboard?: boolean;
 }) {
   try {
     await guardAiAction("reel");
@@ -30,6 +31,7 @@ export async function aiGenerateReel(input: {
       topic: input.topic,
       audience: input.audience,
       platform: input.platform,
+      includeStoryboard: input.includeStoryboard,
     });
     return { ok: true as const, data };
   } catch (e) {
@@ -42,12 +44,33 @@ export async function aiGenerateReel(input: {
  * Persiste un script de Reel généré (déjà prévisualisé) : Accroche → intro,
  * Corps → script_full, Outro → outro. Sync hook/cta sur contents (lus par
  * share/print/analytics).
+ *
+ * Si `storyboard` est fourni (migration 0047) : NON-DESTRUCTIF. On ne crée
+ * les scènes + le résumé de tournage QUE si le storyboard est encore
+ * entièrement vide (aucune scène, pas de résumé déjà enregistré) — sinon on
+ * laisse tel quel ce que l'utilisatrice a déjà retouché à la main (photos,
+ * "filmé", ordre...) et on le signale via `storyboardSkipped`.
  */
 export async function applyReelGeneration(input: {
   contentId: string;
   accroche: string;
   corps: string;
   outro: string;
+  storyboard?: {
+    scenes: {
+      description: string;
+      camera_angle: string;
+      expression: string;
+      movement: string;
+    }[];
+    filming_guide: {
+      lighting: string;
+      camera_style: string;
+      pacing: string;
+      energy: string;
+      tip: string;
+    };
+  };
 }) {
   try {
     const supabase = await createClient();
@@ -67,8 +90,46 @@ export async function applyReelGeneration(input: {
       })
       .eq("id", input.contentId);
 
+    let storyboardSkipped = false;
+    if (input.storyboard) {
+      const [{ count: sceneCount }, { data: existingReel }] =
+        await Promise.all([
+          supabase
+            .from("storyboard_scenes")
+            .select("id", { count: "exact", head: true })
+            .eq("content_id", input.contentId),
+          supabase
+            .from("reel_details")
+            .select("filming_guide")
+            .eq("content_id", input.contentId)
+            .maybeSingle(),
+        ]);
+      const storyboardIsEmpty =
+        !sceneCount && !existingReel?.filming_guide;
+
+      if (storyboardIsEmpty) {
+        const scenesToInsert = input.storyboard.scenes.map((s, i) => ({
+          content_id: input.contentId,
+          scene_number: i + 1,
+          description: s.description,
+          camera_angle: s.camera_angle,
+          expression: s.expression,
+          movement: s.movement,
+        }));
+        if (scenesToInsert.length) {
+          await supabase.from("storyboard_scenes").insert(scenesToInsert);
+        }
+        await supabase
+          .from("reel_details")
+          .update({ filming_guide: input.storyboard.filming_guide })
+          .eq("content_id", input.contentId);
+      } else {
+        storyboardSkipped = true;
+      }
+    }
+
     revalidatePath(`/content/${input.contentId}`);
-    return { ok: true as const };
+    return { ok: true as const, storyboardSkipped };
   } catch (e) {
     if (e instanceof AiError) return { ok: false as const, error: e.message };
     return { ok: false as const, error: "Erreur inattendue. Réessaie." };

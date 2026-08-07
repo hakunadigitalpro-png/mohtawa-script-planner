@@ -263,13 +263,28 @@
       "camera": "Caméra / Plan",
       "cameraPlaceholder": "Ex : Plan large fixe, légèrement plongé",
       "onScreenText": "Texte affiché",
-      "onScreenTextPlaceholder": "Ex : « Ne fais plus ça en 2026 »"
+      "onScreenTextPlaceholder": "Ex : « Ne fais plus ça en 2026 »",
+      "expression": "Expression",
+      "expressionPlaceholder": "Ex : Souriant, sourcils levés",
+      "movement": "Mouvement",
+      "movementPlaceholder": "Ex : Main sur le cœur, hoche la tête"
     },
     "deleteScene": "Supprimer la scène",
     "filmed": "Filmée",
     "filmedBadge": "✓ Filmée",
     "markFilmed": "Marquer comme filmée",
     "filmedProgress": "{done} sur {total} filmées"
+  },
+  "filmingGuide": {
+    "title": "Guide de tournage",
+    "lighting": "Éclairage",
+    "cameraStyle": "Style caméra",
+    "pacing": "Rythme",
+    "energy": "Énergie",
+    "tip": "Conseil pro",
+    "camera": "Caméra",
+    "expression": "Expression",
+    "movement": "Mouvement"
   },
   "checklist": {
     "title": "Préparation de la vidéo",
@@ -661,6 +676,8 @@
     "topicPlaceholder": "Ex : Les 3 erreurs que font les créateurs débutants sur Instagram",
     "audience": "Audience cible (optionnel)",
     "audiencePlaceholder": "Ex : entrepreneurs solo, marketeurs B2B, étudiants...",
+    "includeStoryboard": "Découper aussi en storyboard",
+    "includeStoryboardHint": "L'IA transforme ton script en plan de tournage scène par scène (cadrage, jeu, mouvement).",
     "generate": "Générer",
     "generating": "Génération...",
     "regenerate": "Régénérer",
@@ -668,7 +685,10 @@
     "applying": "Application...",
     "errorTopic": "Indique un sujet pour générer.",
     "previewHint": "💡 Tu pourras éditer chaque champ après avoir appliqué.",
+    "previewHintWithStoryboard": "💡 « Appliquer » remplit ton script ET ton storyboard (s'il est vide). Tu pourras tout modifier ensuite.",
     "previewStoryHint": "💡 Tu pourras éditer chaque story et ajouter une image après avoir appliqué.",
+    "storyboardPreviewTitle": "Storyboard proposé",
+    "storyboardSkippedNotice": "Script appliqué ✓ — ton storyboard existant a été gardé tel quel (pas écrasé).",
     "preview": {
       "hook": "Accroche",
       "intro": "Introduction",
