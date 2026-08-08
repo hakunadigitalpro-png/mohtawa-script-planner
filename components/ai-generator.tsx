@@ -24,8 +24,15 @@ import {
   applyReelGeneration,
   aiGenerateStory,
   applyStoryGeneration,
+  aiSegmentStoryboard,
+  applyStoryboardSegmentation,
 } from "@/app/(app)/contents/ai-actions";
-import type { ReelGeneration, StoryGeneration, GenerationLanguage } from "@/lib/ai";
+import type {
+  ReelGeneration,
+  StoryGeneration,
+  GenerationLanguage,
+  StoryboardSegmentation,
+} from "@/lib/ai";
 
 type Mode = "reel" | "story";
 
@@ -296,6 +303,153 @@ function AiGeneratorModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Découpe le script DÉJÀ ÉCRIT (Guidé ou Libre) en storyboard, sans le
+ * regénérer — complète AiGeneratorButton pour le cas où le script n'a pas
+ * été produit par l'IA. Même pattern preview → Apply, même garde
+ * non-destructive côté serveur (storyboard laissé tel quel s'il n'est plus
+ * vide).
+ */
+export function StoryboardSegmentButton({
+  contentId,
+  script,
+}: {
+  contentId: string;
+  script: string;
+}) {
+  const t = useTranslations("ai");
+  const tCommon = useTranslations("common");
+  const g = useTranslations("filmingGuide");
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [skippedNotice, setSkippedNotice] = useState<string | null>(null);
+  const [preview, setPreview] = useState<StoryboardSegmentation | null>(null);
+
+  const openAndGenerate = () => {
+    setOpen(true);
+    setError(null);
+    setPreview(null);
+    setSkippedNotice(null);
+    startTransition(async () => {
+      const res = await aiSegmentStoryboard({ contentId, script });
+      if (!res.ok) setError(res.error);
+      else setPreview(res.data);
+    });
+  };
+
+  const apply = () => {
+    if (!preview) return;
+    startTransition(async () => {
+      const res = await applyStoryboardSegmentation({
+        contentId,
+        scenes: preview.scenes,
+        filming_guide: preview.filming_guide,
+      });
+      if (!res.ok) setError(res.error);
+      else if (res.skipped) {
+        router.refresh();
+        setSkippedNotice(t("storyboardSkippedNotice"));
+      } else {
+        setOpen(false);
+        router.refresh();
+      }
+    });
+  };
+
+  return (
+    <>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={openAndGenerate}
+        disabled={!script.trim()}
+      >
+        <Film className="size-3.5 text-accent" />
+        {t("segmentButtonLabel")}
+      </Button>
+      {open && (
+        <Dialog open onOpenChange={(v) => !v && setOpen(false)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Film className="size-4 text-accent" />
+                {t("segmentTitle")}
+              </DialogTitle>
+              <DialogDescription>{t("segmentSubtitle")}</DialogDescription>
+            </DialogHeader>
+
+            <DialogBody className="space-y-4">
+              {pending && !preview ? (
+                <ThinkingIndicator label={t("thinking")} />
+              ) : (
+                preview && (
+                  <div
+                    className="space-y-3 rounded-md border border-border bg-secondary/30 p-4"
+                    dir="auto"
+                  >
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                      <PreviewField label={g("lighting")} value={preview.filming_guide.lighting} />
+                      <PreviewField label={g("cameraStyle")} value={preview.filming_guide.camera_style} />
+                      <PreviewField label={g("pacing")} value={preview.filming_guide.pacing} />
+                      <PreviewField label={g("energy")} value={preview.filming_guide.energy} />
+                    </div>
+                    <p className="text-xs italic text-muted">💡 {preview.filming_guide.tip}</p>
+
+                    <ul className="space-y-2">
+                      {preview.scenes.map((s, i) => (
+                        <li key={i} className="rounded border border-border bg-card p-2 text-sm">
+                          <span className="me-2 font-semibold">#{i + 1}</span>
+                          {s.description}
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            <ScenePill label={g("camera")} value={s.camera_angle} />
+                            <ScenePill label={g("expression")} value={s.expression} />
+                            <ScenePill label={g("movement")} value={s.movement} />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+              )}
+
+              {error && (
+                <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </p>
+              )}
+              {skippedNotice && (
+                <p className="rounded-md border border-accent/30 bg-accent/10 px-3 py-2 text-sm">
+                  {skippedNotice}
+                </p>
+              )}
+            </DialogBody>
+
+            <DialogFooter>
+              {!preview ? (
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                  {tCommon("cancel")}
+                </Button>
+              ) : (
+                <>
+                  <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                    {tCommon("cancel")}
+                  </Button>
+                  <Button type="button" onClick={apply} disabled={pending}>
+                    {pending ? t("applying") : t("apply")}
+                  </Button>
+                </>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
   );
 }
 

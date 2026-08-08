@@ -10,6 +10,7 @@ import {
   generateVlog,
   transcribeWithGroq,
   analyzeReferenceVideo,
+  segmentScriptIntoStoryboard,
   AiError,
   type GenerationLanguage,
 } from "@/lib/ai";
@@ -133,6 +134,94 @@ export async function applyReelGeneration(input: {
 
     revalidatePath(`/content/${input.contentId}`);
     return { ok: true as const, storyboardSkipped };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false as const, error: e.message };
+    return { ok: false as const, error: "Erreur inattendue. Réessaie." };
+  }
+}
+
+/**
+ * Découpe un script DÉJÀ ÉCRIT (Guidé ou Libre) en storyboard, sans le
+ * regénérer. NE PERSISTE PAS — renvoie le preview, comme les autres
+ * générations. Bucket de rate-limit dédié ("storyboard") pour ne pas
+ * consommer le quota "reel".
+ */
+export async function aiSegmentStoryboard(input: {
+  contentId: string;
+  script: string;
+}) {
+  try {
+    await guardAiAction("storyboard");
+    const data = await segmentScriptIntoStoryboard({ script: input.script });
+    return { ok: true as const, data };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false as const, error: e.message };
+    return { ok: false as const, error: "Erreur inattendue. Réessaie." };
+  }
+}
+
+/**
+ * Persiste un découpage de storyboard déjà prévisualisé. Même garde
+ * non-destructive que dans applyReelGeneration : n'écrit QUE si le
+ * storyboard est encore entièrement vide, sinon signale `skipped` sans
+ * toucher à ce que l'utilisatrice a déjà rempli à la main.
+ */
+export async function applyStoryboardSegmentation(input: {
+  contentId: string;
+  scenes: {
+    description: string;
+    camera_angle: string;
+    expression: string;
+    movement: string;
+  }[];
+  filming_guide: {
+    lighting: string;
+    camera_style: string;
+    pacing: string;
+    energy: string;
+    tip: string;
+  };
+}) {
+  try {
+    const supabase = await createClient();
+
+    const [{ count: sceneCount }, { data: existingReel }] = await Promise.all([
+      supabase
+        .from("storyboard_scenes")
+        .select("id", { count: "exact", head: true })
+        .eq("content_id", input.contentId),
+      supabase
+        .from("reel_details")
+        .select("filming_guide")
+        .eq("content_id", input.contentId)
+        .maybeSingle(),
+    ]);
+    const storyboardIsEmpty = !sceneCount && !existingReel?.filming_guide;
+
+    if (!storyboardIsEmpty) {
+      return { ok: true as const, skipped: true };
+    }
+
+    const scenesToInsert = input.scenes.map((s, i) => ({
+      content_id: input.contentId,
+      scene_number: i + 1,
+      description: s.description,
+      camera_angle: s.camera_angle,
+      expression: s.expression,
+      movement: s.movement,
+    }));
+    if (scenesToInsert.length) {
+      const { error } = await supabase
+        .from("storyboard_scenes")
+        .insert(scenesToInsert);
+      if (error) return { ok: false as const, error: error.message };
+    }
+    await supabase
+      .from("reel_details")
+      .upsert({ content_id: input.contentId, filming_guide: input.filming_guide });
+
+    revalidatePath(`/content/${input.contentId}`);
+    return { ok: true as const, skipped: false };
   } catch (e) {
     if (e instanceof AiError) return { ok: false as const, error: e.message };
     return { ok: false as const, error: "Erreur inattendue. Réessaie." };

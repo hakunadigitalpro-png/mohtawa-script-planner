@@ -105,6 +105,17 @@ export type StoryboardSceneGeneration = {
   movement: string;
 };
 
+/**
+ * Règles de découpage partagées entre generateReel(includeStoryboard) — qui
+ * génère le script ET le découpe dans le même appel — et
+ * segmentScriptIntoStoryboard — qui découpe un script DÉJÀ ÉCRIT par
+ * l'utilisatrice (Guidé ou Libre) sans le regénérer.
+ */
+const STORYBOARD_SEGMENTATION_RULES = `- Découpe par BEAT naturel (une idée/phrase forte = une scène), pas rigidement par accroche/corps/outro. Vise 4 à 7 scènes pour 30-60s.
+- Pour chaque scène : "description" (l'action + ce qui est dit, en 1 phrase concrète), "camera_angle" (cadrage, TRÈS court : "Plan rapproché, face caméra"), "expression" (jeu de visage à adopter, TRÈS court : "Souriant, sourcils levés"), "movement" (gestuelle, TRÈS court : "Main sur le cœur, hoche la tête").
+- Le "filming_guide" est un résumé global du tournage (pas la durée — elle est calculée ailleurs à partir du script, ne l'invente pas) : "lighting" (conseil d'éclairage court), "camera_style" (style de plan général pour toute la vidéo), "pacing" (rythme/rétention, ex : "Change de plan toutes les 3-4s pour garder l'attention"), "energy" (niveau d'énergie à tenir), "tip" (UN conseil pro actionnable).
+- Reste TRÈS court sur chaque champ (une poignée de mots, pas une phrase longue) — c'est un pense-bête à lire pendant le tournage, pas un article.`;
+
 export type ReelGeneration = {
   accroche: string;
   corps: string;
@@ -146,10 +157,7 @@ ${
   includeStoryboard
     ? `
 Tu découpes AUSSI ce script en un STORYBOARD tournage-prêt, pour quelqu'un qui n'a jamais filmé et ne sait pas ce qu'est un storyboard — il doit pouvoir filmer juste en suivant tes instructions, sans réfléchir :
-- Découpe par BEAT naturel (une idée/phrase forte = une scène), pas rigidement par accroche/corps/outro. Vise 4 à 7 scènes pour 30-60s.
-- Pour chaque scène : "description" (l'action + ce qui est dit, en 1 phrase concrète), "camera_angle" (cadrage, TRÈS court : "Plan rapproché, face caméra"), "expression" (jeu de visage à adopter, TRÈS court : "Souriant, sourcils levés"), "movement" (gestuelle, TRÈS court : "Main sur le cœur, hoche la tête").
-- Le "filming_guide" est un résumé global du tournage (pas la durée — elle est calculée ailleurs à partir du script, ne l'invente pas) : "lighting" (conseil d'éclairage court), "camera_style" (style de plan général pour toute la vidéo), "pacing" (rythme/rétention, ex : "Change de plan toutes les 3-4s pour garder l'attention"), "energy" (niveau d'énergie à tenir), "tip" (UN conseil pro actionnable).
-- Reste TRÈS court sur chaque champ (une poignée de mots, pas une phrase longue) — c'est un pense-bête à lire pendant le tournage, pas un article.`
+${STORYBOARD_SEGMENTATION_RULES}`
     : ""
 }
 ${languageInstruction(opts.language)} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
@@ -182,6 +190,46 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
 }`;
 
   return callClaudeJSON<ReelGeneration>(system, user, includeStoryboard ? 3000 : 2000);
+}
+
+export type StoryboardSegmentation = {
+  scenes: StoryboardSceneGeneration[];
+  filming_guide: FilmingGuide;
+};
+
+/**
+ * Découpe un script DÉJÀ ÉCRIT par l'utilisatrice (Guidé ou Libre) en
+ * storyboard tournage-prêt, SANS le regénérer ni le corriger. Complète
+ * generateReel(includeStoryboard) — qui ne marche que sur un script généré
+ * par l'IA au même moment — pour le cas où le script a été écrit à la main.
+ */
+export function segmentScriptIntoStoryboard(opts: {
+  script: string;
+}): Promise<StoryboardSegmentation> {
+  const system = `Tu es un expert en réalisation de Reels/TikTok. Tu prends un script DÉJÀ ÉCRIT par l'utilisatrice — tu ne le réécris PAS, tu ne le corriges PAS, tu ne changes RIEN au fond ni au texte — et tu le découpes en STORYBOARD tournage-prêt, pour quelqu'un qui n'a jamais filmé et ne sait pas ce qu'est un storyboard — il doit pouvoir filmer juste en suivant tes instructions, sans réfléchir :
+${STORYBOARD_SEGMENTATION_RULES}
+Écris tes réponses (description, cadrage, expression, mouvement, résumé de tournage) dans la MÊME langue que le script fourni (ne traduis pas). Si le script fourni est en arabe : ${TUNISIAN_DIALECT_GUIDE} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
+
+  const user = `Script à découper (ne pas réécrire, juste segmenter en scènes) :
+"""
+${opts.script}
+"""
+
+Renvoie UNIQUEMENT ce JSON (sans markdown) :
+{
+  "scenes": [
+    { "description": "...", "camera_angle": "...", "expression": "...", "movement": "..." }
+  ],
+  "filming_guide": {
+    "lighting": "...",
+    "camera_style": "...",
+    "pacing": "...",
+    "energy": "...",
+    "tip": "..."
+  }
+}`;
+
+  return callClaudeJSON<StoryboardSegmentation>(system, user, 2500);
 }
 
 /* =========================================================================

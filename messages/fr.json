@@ -685,6 +685,9 @@
       "ar_tn": "Arabe tunisien (dialecte)"
     },
     "thinking": "L'IA réfléchit à ton script...",
+    "segmentButtonLabel": "Découper en storyboard",
+    "segmentTitle": "Découper ton script en storyboard",
+    "segmentSubtitle": "L'IA garde ton script tel quel et le découpe juste en scènes de tournage.",
     "includeStoryboard": "Découper aussi en storyboard",
     "includeStoryboardHint": "L'IA transforme ton script en plan de tournage scène par scène (cadrage, jeu, mouvement).",
     "generate": "Générer",

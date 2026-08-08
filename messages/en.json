@@ -685,6 +685,9 @@
       "ar_tn": "Tunisian Arabic (dialect)"
     },
     "thinking": "AI is thinking through your script...",
+    "segmentButtonLabel": "Break down into storyboard",
+    "segmentTitle": "Break your script down into a storyboard",
+    "segmentSubtitle": "The AI keeps your script as-is and only breaks it down into filming scenes.",
     "includeStoryboard": "Also break down into a storyboard",
     "includeStoryboardHint": "The AI turns your script into a shot-by-shot filming plan (framing, expression, movement).",
     "generate": "Generate",
