@@ -256,6 +256,7 @@
     "addScene": "Add a scene",
     "emptyTitle": "No scenes yet.",
     "emptySubtitle": "Click \"Add a scene\" to get started.",
+    "emptyAiHint": "Or generate your script in the Script tab (check \"Also break down into a storyboard\")",
     "planNumber": "Shot {n}",
     "fields": {
       "action": "Action / Dialogue",

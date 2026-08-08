@@ -12,6 +12,7 @@ import {
   X,
   ImageIcon,
   Film,
+  Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { useTabs } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -86,6 +88,7 @@ export function StoryboardTab({
   const t = useTranslations("storyboard");
   const g = useTranslations("filmingGuide");
   const router = useRouter();
+  const tabs = useTabs();
   const [pending, startTransition] = useTransition();
 
   // L'état des champs texte de toutes les scènes (un seul Save pour tout).
@@ -345,6 +348,16 @@ export function StoryboardTab({
           <div className="rounded-2xl border border-dashed border-border p-10 text-center">
             <p className="text-sm font-medium">{t("emptyTitle")}</p>
             <p className="mt-1 text-xs text-muted">{t("emptySubtitle")}</p>
+            {tabs && (
+              <button
+                type="button"
+                onClick={() => tabs.setValue("script")}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/5 px-4 py-2 text-xs font-semibold text-accent transition hover:bg-accent/10"
+              >
+                <Sparkles className="size-3.5" />
+                {t("emptyAiHint")}
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

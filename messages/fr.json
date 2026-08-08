@@ -256,6 +256,7 @@
     "addScene": "Ajouter une scène",
     "emptyTitle": "Aucune scène pour le moment.",
     "emptySubtitle": "Clique sur « Ajouter une scène » pour commencer.",
+    "emptyAiHint": "Ou génère ton script dans l'onglet Script (coche « Découper aussi en storyboard »)",
     "planNumber": "Plan {n}",
     "fields": {
       "action": "Action / Dialogue",
