@@ -58,7 +58,11 @@ const TUNISIAN_DIALECT_GUIDE = `Quand tu écris en arabe, c'est TOUJOURS en toun
 - Vocabulaire courant tounsi à privilégier : "برشة" (beaucoup), "توا" (maintenant), "يزّي" (assez/ça suffit), "عادي" (normal), "صحيح" (vraiment/d'accord), "أهلا" (salut).
 Si tu doutes d'un mot ou d'une tournure, préfère une formulation simple et clairement tounsié plutôt qu'un mot d'un autre dialecte.
 
-Un bon copywriter tounsi ne bâcle JAMAIS l'argument pour aller vite. Pour un texte de vente/persuasion (corps de script, story, vlog...), développe l'idée sur PLUSIEURS phrases courtes qui s'enchaînent (une respiration = une phrase, comme à l'oral) — jamais un paragraphe compact qui résume tout en 2 lignes. Structure qui marche bien en tounsi : objection courante du public ("برشة ناس يقولولي...") → tu recadres la vraie question → tu expliques le POURQUOI concrètement → une chute qui retourne l'idée (pas juste une reformulation plate de l'accroche).`;
+Un bon copywriter tounsi ne bâcle JAMAIS l'argument pour aller vite. Pour un texte de vente/persuasion (corps de script, story, vlog...), développe l'idée sur PLUSIEURS phrases courtes qui s'enchaînent (une respiration = une phrase, comme à l'oral) — jamais un paragraphe compact qui résume tout en 2 lignes. Structure qui marche bien en tounsi, CHAQUE beat sur sa propre ligne (sépare-les avec un retour à la ligne "\\n\\n" DANS le texte que tu écris, jamais tout enchaîné sans respiration visuelle) :
+1. Objection courante du public ("برشة ناس يقولولي...")
+2. Tu recadres la vraie question
+3. Tu expliques le POURQUOI concrètement, sur 2-3 phrases courtes
+4. Une chute qui retourne l'idée (pas juste une reformulation plate de l'accroche)`;
 
 /* =========================================================================
    Prompts — Reel
@@ -132,7 +136,7 @@ Audience : ${audience}
 Renvoie UNIQUEMENT ce JSON (sans markdown) :
 {
   "accroche": "La phrase d'accroche qui arrête le scroll (1 phrase forte, ≤ 2s)",
-  "corps": "Le cœur du script : développe l'idée en phrases courtes, dans l'ordre où la dire. 30-45s.",
+  "corps": "Le cœur du script : développe l'idée en phrases courtes, dans l'ordre où la dire. 30-45s. Sépare les beats par des \\n\\n (jamais un seul bloc compact).",
   "outro": "La fermeture + un appel à l'action clair (sauvegarde, commente, DM…)"${
     includeStoryboard
       ? `,

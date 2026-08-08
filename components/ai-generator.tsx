@@ -278,7 +278,7 @@ function PreviewField({ label, value }: { label: string; value: string }) {
       <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
         {label}
       </div>
-      <div className="mt-0.5 text-sm leading-snug">{value}</div>
+      <div className="mt-0.5 whitespace-pre-line text-sm leading-snug">{value}</div>
     </div>
   );
 }
