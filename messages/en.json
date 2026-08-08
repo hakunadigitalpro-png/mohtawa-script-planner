@@ -256,7 +256,7 @@
     "addScene": "Add a scene",
     "emptyTitle": "No scenes yet.",
     "emptySubtitle": "Click \"Add a scene\" to get started.",
-    "emptyAiHint": "Or generate your script in the Script tab (check \"Also break down into a storyboard\")",
+    "emptySubtitleWithScript": "Click \"Break down into storyboard\" to let the AI suggest scenes from your script.",
     "planNumber": "Shot {n}",
     "fields": {
       "action": "Action / Dialogue",
@@ -688,6 +688,7 @@
     "segmentButtonLabel": "Break down into storyboard",
     "segmentTitle": "Break your script down into a storyboard",
     "segmentSubtitle": "The AI keeps your script as-is and only breaks it down into filming scenes.",
+    "segmentDisabledHint": "Write and save your script in the Script tab first.",
     "includeStoryboard": "Also break down into a storyboard",
     "includeStoryboardHint": "The AI turns your script into a shot-by-shot filming plan (framing, expression, movement).",
     "generate": "Generate",

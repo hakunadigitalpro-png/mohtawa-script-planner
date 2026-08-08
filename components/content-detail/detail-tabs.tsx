@@ -142,6 +142,7 @@ export function DetailTabs({
                 scenePresets={scenePresets}
                 brandId={brandId}
                 filmingGuide={reel?.filming_guide ?? null}
+                reel={reel}
               />
             </TabsContent>
           )}

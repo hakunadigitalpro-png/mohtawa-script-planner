@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { AiGeneratorButton, StoryboardSegmentButton } from "@/components/ai-generator";
+import { AiGeneratorButton } from "@/components/ai-generator";
 import { CommentButton } from "@/components/comments";
 import { ScriptHelp } from "@/components/field-help/script-help";
 import { HooksPickerButton } from "@/components/hooks-picker";
@@ -195,14 +195,6 @@ function ReelScript({
         ? "text-emerald-700"
         : "text-amber-600";
 
-  // Script complet écrit par l'utilisatrice (Guidé ou Libre), pour le
-  // découpage IA en storyboard — sans jamais réécrire ce texte.
-  const fullScriptText = freeMode
-    ? state.script_full
-    : [state.intro, state.script_full, state.outro]
-        .filter((s) => s.trim())
-        .join("\n\n");
-
   return (
     <div className="space-y-4">
       <Card className="space-y-4 p-6">
@@ -220,16 +212,13 @@ function ReelScript({
               </span>
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <StoryboardSegmentButton contentId={contentId} script={fullScriptText} />
-            <AiGeneratorButton
-              contentId={contentId}
-              type="reel"
-              defaultTopic={content.title ?? undefined}
-              defaultAudience={brandAudience ?? undefined}
-              platform={content.platform ?? undefined}
-            />
-          </div>
+          <AiGeneratorButton
+            contentId={contentId}
+            type="reel"
+            defaultTopic={content.title ?? undefined}
+            defaultAudience={brandAudience ?? undefined}
+            platform={content.platform ?? undefined}
+          />
         </div>
 
         {/* Switch Guidé / Libre */}

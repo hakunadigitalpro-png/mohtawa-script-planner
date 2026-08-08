@@ -369,6 +369,7 @@ export function StoryboardSegmentButton({
         variant="outline"
         onClick={openAndGenerate}
         disabled={!script.trim()}
+        title={!script.trim() ? t("segmentDisabledHint") : undefined}
       >
         <Film className="size-3.5 text-accent" />
         {t("segmentButtonLabel")}

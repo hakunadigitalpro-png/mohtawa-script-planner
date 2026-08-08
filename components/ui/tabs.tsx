@@ -9,12 +9,6 @@ type TabsContextType = {
 };
 const TabsContext = React.createContext<TabsContextType | null>(null);
 
-/** Permet à un descendant profond (ex: un bouton "Aller à Script" depuis
- * l'onglet Storyboard) de changer l'onglet actif sans faire remonter l'état. */
-export function useTabs() {
-  return React.useContext(TabsContext);
-}
-
 export function Tabs({
   defaultValue,
   value: controlledValue,

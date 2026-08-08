@@ -12,7 +12,6 @@ import {
   X,
   ImageIcon,
   Film,
-  Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { useTabs } from "@/components/ui/tabs";
+import { StoryboardSegmentButton } from "@/components/ai-generator";
 import {
   Dialog,
   DialogContent,
@@ -48,7 +47,7 @@ import { SaveFooter } from "./save-footer";
 import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
-import type { StoryboardScene, ScenePreset, FilmingGuide } from "@/lib/types";
+import type { StoryboardScene, ScenePreset, FilmingGuide, ReelDetails } from "@/lib/types";
 
 const DRAG_MIME = "application/x-mohtawa-scene-id";
 
@@ -76,6 +75,7 @@ export function StoryboardTab({
   scenePresets,
   brandId,
   filmingGuide: initialFilmingGuide,
+  reel,
 }: {
   contentId: string;
   scenes: StoryboardScene[];
@@ -84,12 +84,22 @@ export function StoryboardTab({
   brandId: string;
   /** Résumé de tournage généré par l'IA (migration 0047), éditable ici. */
   filmingGuide: FilmingGuide | null;
+  /** Pour le bouton "Découper en storyboard" — lit le script déjà enregistré. */
+  reel: ReelDetails | null;
 }) {
   const t = useTranslations("storyboard");
   const g = useTranslations("filmingGuide");
   const router = useRouter();
-  const tabs = useTabs();
   const [pending, startTransition] = useTransition();
+
+  // Script complet tel qu'enregistré (Guidé ou Libre), pour le découpage IA
+  // en storyboard — on ne lit jamais le brouillon non sauvegardé de l'onglet
+  // Script, seulement ce qui est en base.
+  const fullScriptText = reel?.script_free_mode
+    ? (reel.script_full ?? "")
+    : [reel?.intro, reel?.script_full, reel?.outro]
+        .filter((s): s is string => Boolean(s?.trim()))
+        .join("\n\n");
 
   // L'état des champs texte de toutes les scènes (un seul Save pour tout).
   // Ordre + image_url restent gérés par le serveur (actions atomiques).
@@ -234,10 +244,14 @@ export function StoryboardTab({
             <h2 className="text-base font-semibold">{t("title")}</h2>
             <p className="text-xs text-muted">{t("subtitle")}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <FilmedProgress
               {...computeFilmedStatus(initialScenes, undefined)}
               variant="scenes"
+            />
+            <StoryboardSegmentButton
+              contentId={contentId}
+              script={fullScriptText}
             />
             <Button
               size="sm"
@@ -347,17 +361,9 @@ export function StoryboardTab({
         {state.scenes.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border p-10 text-center">
             <p className="text-sm font-medium">{t("emptyTitle")}</p>
-            <p className="mt-1 text-xs text-muted">{t("emptySubtitle")}</p>
-            {tabs && (
-              <button
-                type="button"
-                onClick={() => tabs.setValue("script")}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/5 px-4 py-2 text-xs font-semibold text-accent transition hover:bg-accent/10"
-              >
-                <Sparkles className="size-3.5" />
-                {t("emptyAiHint")}
-              </button>
-            )}
+            <p className="mt-1 text-xs text-muted">
+              {fullScriptText.trim() ? t("emptySubtitleWithScript") : t("emptySubtitle")}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

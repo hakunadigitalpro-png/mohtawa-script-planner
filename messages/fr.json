@@ -256,7 +256,7 @@
     "addScene": "Ajouter une scène",
     "emptyTitle": "Aucune scène pour le moment.",
     "emptySubtitle": "Clique sur « Ajouter une scène » pour commencer.",
-    "emptyAiHint": "Ou génère ton script dans l'onglet Script (coche « Découper aussi en storyboard »)",
+    "emptySubtitleWithScript": "Clique sur « Découper en storyboard » pour laisser l'IA proposer les scènes à partir de ton script.",
     "planNumber": "Plan {n}",
     "fields": {
       "action": "Action / Dialogue",
@@ -688,6 +688,7 @@
     "segmentButtonLabel": "Découper en storyboard",
     "segmentTitle": "Découper ton script en storyboard",
     "segmentSubtitle": "L'IA garde ton script tel quel et le découpe juste en scènes de tournage.",
+    "segmentDisabledHint": "Écris et enregistre d'abord ton script dans l'onglet Script.",
     "includeStoryboard": "Découper aussi en storyboard",
     "includeStoryboardHint": "L'IA transforme ton script en plan de tournage scène par scène (cadrage, jeu, mouvement).",
     "generate": "Générer",
