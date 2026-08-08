@@ -77,6 +77,7 @@ export default async function ContentDetailPage({
     publicationsRes,
     scenePresetsRes,
     mediaRes,
+    brandKitRes,
   ] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
@@ -144,6 +145,13 @@ export default async function ContentDetailPage({
       .select("*")
       .eq("content_id", id)
       .order("position", { ascending: true }),
+    // Audience du Brand Kit (migration 0031) : pré-remplit le champ
+    // "audience" du générateur IA — évite de la retaper à chaque vidéo.
+    supabase
+      .from("brand_kits")
+      .select("audience")
+      .eq("brand_id", content.brand_id)
+      .maybeSingle(),
   ]);
 
   const reel = (reelRes.data ?? null) as ReelDetails | null;
@@ -172,6 +180,8 @@ export default async function ContentDetailPage({
   }[];
   const publications = (publicationsRes.data ?? []) as ContentPublication[];
   const scenePresets = (scenePresetsRes.data ?? []) as ScenePreset[];
+  const brandAudience = (brandKitRes.data as { audience: string | null } | null)
+    ?.audience ?? null;
 
   const c = content as Content;
 
@@ -281,6 +291,7 @@ export default async function ContentDetailPage({
           publications={publications}
           scenePresets={scenePresets}
           brandId={content.brand_id}
+          brandAudience={brandAudience}
         />
       </div>
 

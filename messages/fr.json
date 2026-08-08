@@ -676,6 +676,14 @@
     "topicPlaceholder": "Ex : Les 3 erreurs que font les créateurs débutants sur Instagram",
     "audience": "Audience cible (optionnel)",
     "audiencePlaceholder": "Ex : entrepreneurs solo, marketeurs B2B, étudiants...",
+    "language": "Langue de génération",
+    "languageOptions": {
+      "fr": "Français",
+      "en": "Anglais",
+      "ar_msa": "Arabe standard",
+      "ar_tn": "Arabe tunisien (dialecte)"
+    },
+    "thinking": "L'IA réfléchit à ton script...",
     "includeStoryboard": "Découper aussi en storyboard",
     "includeStoryboardHint": "L'IA transforme ton script en plan de tournage scène par scène (cadrage, jeu, mouvement).",
     "generate": "Générer",

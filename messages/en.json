@@ -676,6 +676,14 @@
     "topicPlaceholder": "e.g. The 3 mistakes new creators make on Instagram",
     "audience": "Target audience (optional)",
     "audiencePlaceholder": "e.g. solo founders, B2B marketers, students...",
+    "language": "Generation language",
+    "languageOptions": {
+      "fr": "French",
+      "en": "English",
+      "ar_msa": "Standard Arabic",
+      "ar_tn": "Tunisian Arabic (dialect)"
+    },
+    "thinking": "AI is thinking through your script...",
     "includeStoryboard": "Also break down into a storyboard",
     "includeStoryboardHint": "The AI turns your script into a shot-by-shot filming plan (framing, expression, movement).",
     "generate": "Generate",

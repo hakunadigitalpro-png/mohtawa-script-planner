@@ -34,16 +34,33 @@ export function ScriptTab({
   reel,
   story,
   slides,
+  brandAudience,
 }: {
   content: Content;
   reel: ReelDetails | null;
   story: StoryDetails | null;
   slides: StorySlide[];
+  brandAudience: string | null;
 }) {
   if (content.type === "story") {
-    return <StoryScript contentId={content.id} story={story} slides={slides} />;
+    return (
+      <StoryScript
+        contentId={content.id}
+        story={story}
+        slides={slides}
+        title={content.title}
+        brandAudience={brandAudience}
+      />
+    );
   }
-  return <ReelScript contentId={content.id} content={content} reel={reel} />;
+  return (
+    <ReelScript
+      contentId={content.id}
+      content={content}
+      reel={reel}
+      brandAudience={brandAudience}
+    />
+  );
 }
 
 /* ============================== REEL ============================== */
@@ -113,10 +130,12 @@ function ReelScript({
   contentId,
   content,
   reel,
+  brandAudience,
 }: {
   contentId: string;
   content: Content;
   reel: ReelDetails | null;
+  brandAudience: string | null;
 }) {
   const t = useTranslations("script");
 
@@ -193,7 +212,13 @@ function ReelScript({
               </span>
             </p>
           </div>
-          <AiGeneratorButton contentId={contentId} type="reel" />
+          <AiGeneratorButton
+            contentId={contentId}
+            type="reel"
+            defaultTopic={content.title ?? undefined}
+            defaultAudience={brandAudience ?? undefined}
+            platform={content.platform ?? undefined}
+          />
         </div>
 
         {/* Switch Guidé / Libre */}
@@ -391,10 +416,14 @@ function StoryScript({
   contentId,
   story,
   slides: initialSlides,
+  title,
+  brandAudience,
 }: {
   contentId: string;
   story: StoryDetails | null;
   slides: StorySlide[];
+  title: string | null;
+  brandAudience: string | null;
 }) {
   const router = useRouter();
   const t = useTranslations("stories");
@@ -471,7 +500,12 @@ function StoryScript({
               {...computeFilmedStatus(undefined, initialSlides)}
               variant="stories"
             />
-            <AiGeneratorButton contentId={contentId} type="story" />
+            <AiGeneratorButton
+              contentId={contentId}
+              type="story"
+              defaultTopic={title ?? undefined}
+              defaultAudience={brandAudience ?? undefined}
+            />
           </div>
         </div>
 

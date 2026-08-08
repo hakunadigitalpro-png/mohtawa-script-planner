@@ -64,6 +64,30 @@ Un bon copywriter tounsi ne bâcle JAMAIS l'argument pour aller vite. Pour un te
 3. Tu expliques le POURQUOI concrètement, sur 2-3 phrases courtes
 4. Une chute qui retourne l'idée (pas juste une reformulation plate de l'accroche)`;
 
+export type GenerationLanguage = "fr" | "en" | "ar_msa" | "ar_tn";
+
+/**
+ * Consigne de langue explicite choisie par l'utilisatrice dans le générateur
+ * IA (remplace l'ancienne auto-détection "langue du sujet, français par
+ * défaut", qui laissait Claude deviner). "ar_tn" applique le guide dialecte
+ * tounsi ; "ar_msa" l'exclut volontairement pour rester en arabe standard
+ * (pas de tounsi ni d'autre dialecte).
+ */
+function languageInstruction(language?: GenerationLanguage): string {
+  switch (language) {
+    case "fr":
+      return "Écris exclusivement en français.";
+    case "en":
+      return "Écris exclusivement en anglais.";
+    case "ar_msa":
+      return "Écris exclusivement en arabe standard moderne (fus7a) : clair, correct, accessible à tous les pays arabophones — PAS de dialecte (ni tounsi, ni autre), pas d'expressions familières régionales.";
+    case "ar_tn":
+      return `Écris exclusivement en arabe. ${TUNISIAN_DIALECT_GUIDE}`;
+    default:
+      return `Écris dans la langue du sujet (français par défaut). ${TUNISIAN_DIALECT_GUIDE}`;
+  }
+}
+
 /* =========================================================================
    Prompts — Reel
    ========================================================================= */
@@ -105,13 +129,14 @@ export function generateReel(opts: {
   audience?: string;
   platform?: string;
   includeStoryboard?: boolean;
+  language?: GenerationLanguage;
 }): Promise<ReelGeneration> {
   const audience =
     opts.audience?.trim() || "des clients potentiels sur les réseaux";
   const platform = opts.platform?.trim() || "Instagram / TikTok";
   const includeStoryboard = Boolean(opts.includeStoryboard);
 
-  const system = `Tu es un expert en scripts de Reels/TikTok qui arrêtent le scroll, MULTILINGUE : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing) : simple, direct, humain, orienté valeur, ZÉRO jargon. Un script se dit à voix haute en 30-60 secondes, phrases courtes, une idée par phrase.
+  const system = `Tu es un expert en scripts de Reels/TikTok qui arrêtent le scroll, MULTILINGUE : français, anglais et arabe. Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing) : simple, direct, humain, orienté valeur, ZÉRO jargon. Un script se dit à voix haute en 30-60 secondes, phrases courtes, une idée par phrase.
 
 Structure en 3 parties SEULEMENT :
 - Accroche : les 2 premières secondes qui stoppent le scroll (tension, curiosité ou promesse concrète).
@@ -127,7 +152,7 @@ Tu découpes AUSSI ce script en un STORYBOARD tournage-prêt, pour quelqu'un qui
 - Reste TRÈS court sur chaque champ (une poignée de mots, pas une phrase longue) — c'est un pense-bête à lire pendant le tournage, pas un article.`
     : ""
 }
-Écris dans la langue du sujet (français par défaut). Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
+${languageInstruction(opts.language)} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
 
   const user = `Sujet de la vidéo : "${opts.topic}".
 Plateforme : ${platform}
@@ -172,10 +197,11 @@ export type StoryGeneration = {
 export function generateStory(opts: {
   topic: string;
   audience?: string;
+  language?: GenerationLanguage;
 }): Promise<StoryGeneration> {
   const audience = opts.audience?.trim() || "ton audience sur les réseaux";
 
-  const system = `Tu es un expert en Stories Instagram/TikTok, MULTILINGUE : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert) : ton simple, authentique, conversationnel, ZÉRO jargon. Tu crées une séquence de 5 stories qui tiennent en haleine jusqu'au CTA. Écris dans la langue du sujet (français par défaut). Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
+  const system = `Tu es un expert en Stories Instagram/TikTok, MULTILINGUE : français, anglais et arabe. Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert) : ton simple, authentique, conversationnel, ZÉRO jargon. Tu crées une séquence de 5 stories qui tiennent en haleine jusqu'au CTA. ${languageInstruction(opts.language)} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
 
   const user = `Sujet : "${opts.topic}".
 Audience : ${audience}

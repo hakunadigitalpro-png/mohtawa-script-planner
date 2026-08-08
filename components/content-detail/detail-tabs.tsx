@@ -42,6 +42,7 @@ export function DetailTabs({
   publications,
   scenePresets,
   brandId,
+  brandAudience,
 }: {
   content: Content;
   reel: ReelDetails | null;
@@ -59,6 +60,7 @@ export function DetailTabs({
   publications: ContentPublication[];
   scenePresets: ScenePreset[];
   brandId: string;
+  brandAudience: string | null;
 }) {
   const t = useTranslations("tabs");
   const isStory = content.type === "story";
@@ -128,6 +130,7 @@ export function DetailTabs({
                 reel={reel}
                 story={story}
                 slides={slides}
+                brandAudience={brandAudience}
               />
             )}
           </TabsContent>

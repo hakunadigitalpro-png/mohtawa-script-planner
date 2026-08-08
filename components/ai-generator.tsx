@@ -18,13 +18,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select } from "@/components/ui/select";
 import {
   aiGenerateReel,
   applyReelGeneration,
   aiGenerateStory,
   applyStoryGeneration,
 } from "@/app/(app)/contents/ai-actions";
-import type { ReelGeneration, StoryGeneration } from "@/lib/ai";
+import type { ReelGeneration, StoryGeneration, GenerationLanguage } from "@/lib/ai";
 
 type Mode = "reel" | "story";
 
@@ -32,11 +33,13 @@ export function AiGeneratorButton({
   contentId,
   type,
   defaultTopic,
+  defaultAudience,
   platform,
 }: {
   contentId: string;
   type: Mode;
   defaultTopic?: string;
+  defaultAudience?: string;
   platform?: string;
 }) {
   const t = useTranslations("ai");
@@ -57,6 +60,7 @@ export function AiGeneratorButton({
           contentId={contentId}
           type={type}
           defaultTopic={defaultTopic}
+          defaultAudience={defaultAudience}
           platform={platform}
           onClose={() => setOpen(false)}
         />
@@ -69,12 +73,14 @@ function AiGeneratorModal({
   contentId,
   type,
   defaultTopic,
+  defaultAudience,
   platform,
   onClose,
 }: {
   contentId: string;
   type: Mode;
   defaultTopic?: string;
+  defaultAudience?: string;
   platform?: string;
   onClose: () => void;
 }) {
@@ -82,7 +88,8 @@ function AiGeneratorModal({
   const tCommon = useTranslations("common");
   const router = useRouter();
   const [topic, setTopic] = useState(defaultTopic ?? "");
-  const [audience, setAudience] = useState("");
+  const [audience, setAudience] = useState(defaultAudience ?? "");
+  const [language, setLanguage] = useState<GenerationLanguage>("fr");
   const [includeStoryboard, setIncludeStoryboard] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [storyboardNotice, setStoryboardNotice] = useState<string | null>(null);
@@ -111,11 +118,12 @@ function AiGeneratorModal({
           audience,
           platform,
           includeStoryboard,
+          language,
         });
         if (!res.ok) setError(res.error);
         else setReelPreview(res.data);
       } else {
-        const res = await aiGenerateStory({ contentId, topic, audience });
+        const res = await aiGenerateStory({ contentId, topic, audience, language });
         if (!res.ok) setError(res.error);
         else setStoryPreview(res.data);
       }
@@ -162,6 +170,12 @@ function AiGeneratorModal({
   };
 
   const hasPreview = reelPreview !== null || storyPreview !== null;
+  const languageOptions: { value: GenerationLanguage; label: string }[] = [
+    { value: "fr", label: t("languageOptions.fr") },
+    { value: "en", label: t("languageOptions.en") },
+    { value: "ar_msa", label: t("languageOptions.ar_msa") },
+    { value: "ar_tn", label: t("languageOptions.ar_tn") },
+  ];
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
@@ -175,47 +189,60 @@ function AiGeneratorModal({
         </DialogHeader>
 
         <DialogBody className="space-y-4">
-          {!hasPreview && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="ai-topic">{t("topic")}</Label>
-                <Textarea
-                  id="ai-topic"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder={t("topicPlaceholder")}
-                  className="min-h-20"
-                  autoFocus
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ai-audience">{t("audience")}</Label>
-                <Input
-                  id="ai-audience"
-                  value={audience}
-                  onChange={(e) => setAudience(e.target.value)}
-                  placeholder={t("audiencePlaceholder")}
-                />
-              </div>
-              {type === "reel" && (
-                <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2.5 transition hover:bg-secondary/50">
-                  <Checkbox
-                    checked={includeStoryboard}
-                    onCheckedChange={(v) => setIncludeStoryboard(Boolean(v))}
-                    className="mt-0.5"
+          {pending && !hasPreview ? (
+            <ThinkingIndicator label={t("thinking")} />
+          ) : (
+            !hasPreview && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="ai-topic">{t("topic")}</Label>
+                  <Textarea
+                    id="ai-topic"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder={t("topicPlaceholder")}
+                    className="min-h-20"
+                    autoFocus
                   />
-                  <span>
-                    <span className="flex items-center gap-1.5 text-sm font-semibold">
-                      <Film className="size-3.5 text-accent" />
-                      {t("includeStoryboard")}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ai-audience">{t("audience")}</Label>
+                  <Input
+                    id="ai-audience"
+                    value={audience}
+                    onChange={(e) => setAudience(e.target.value)}
+                    placeholder={t("audiencePlaceholder")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ai-language">{t("language")}</Label>
+                  <Select
+                    id="ai-language"
+                    value={language}
+                    onValueChange={(v) => setLanguage(v as GenerationLanguage)}
+                    options={languageOptions}
+                  />
+                </div>
+                {type === "reel" && (
+                  <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-border/60 bg-secondary/30 px-3 py-2.5 transition hover:bg-secondary/50">
+                    <Checkbox
+                      checked={includeStoryboard}
+                      onCheckedChange={(v) => setIncludeStoryboard(Boolean(v))}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="flex items-center gap-1.5 text-sm font-semibold">
+                        <Film className="size-3.5 text-accent" />
+                        {t("includeStoryboard")}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted">
+                        {t("includeStoryboardHint")}
+                      </span>
                     </span>
-                    <span className="mt-0.5 block text-xs text-muted">
-                      {t("includeStoryboardHint")}
-                    </span>
-                  </span>
-                </label>
-              )}
-            </>
+                  </label>
+                )}
+              </>
+            )
           )}
 
           {reelPreview && <ReelPreview data={reelPreview} />}
@@ -269,6 +296,23 @@ function AiGeneratorModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ThinkingIndicator({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-accent/20 bg-accent/5 px-6 py-12 text-center">
+      <div className="relative flex size-12 items-center justify-center">
+        <span className="absolute inset-0 animate-ping rounded-full bg-accent/25" />
+        <Sparkles className="relative size-6 text-accent" />
+      </div>
+      <p className="text-sm font-semibold text-foreground">{label}</p>
+      <div className="flex items-center gap-1.5">
+        <span className="size-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.3s]" />
+        <span className="size-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
+        <span className="size-1.5 animate-bounce rounded-full bg-accent" />
+      </div>
+    </div>
   );
 }
 

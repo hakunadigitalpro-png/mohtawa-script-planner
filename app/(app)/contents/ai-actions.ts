@@ -11,6 +11,7 @@ import {
   transcribeWithGroq,
   analyzeReferenceVideo,
   AiError,
+  type GenerationLanguage,
 } from "@/lib/ai";
 
 /**
@@ -24,6 +25,7 @@ export async function aiGenerateReel(input: {
   audience?: string;
   platform?: string;
   includeStoryboard?: boolean;
+  language?: GenerationLanguage;
 }) {
   try {
     await guardAiAction("reel");
@@ -32,6 +34,7 @@ export async function aiGenerateReel(input: {
       audience: input.audience,
       platform: input.platform,
       includeStoryboard: input.includeStoryboard,
+      language: input.language,
     });
     return { ok: true as const, data };
   } catch (e) {
@@ -144,12 +147,14 @@ export async function aiGenerateStory(input: {
   contentId: string;
   topic: string;
   audience?: string;
+  language?: GenerationLanguage;
 }) {
   try {
     await guardAiAction("story");
     const data = await generateStory({
       topic: input.topic,
       audience: input.audience,
+      language: input.language,
     });
     return { ok: true as const, data };
   } catch (e) {
