@@ -52,10 +52,13 @@ const TUNISIAN_DIALECT_GUIDE = `Quand tu écris en arabe, c'est TOUJOURS en toun
 - Possession : "متاع" (jamais "ديال").
 - Vouloir : "حب"/"حبيت" (jamais "بغى"/"بغيت").
 - "Il y a" : "فمّا" (jamais "كاين").
+- Pouvoir : privilégie "نجّم" (تنجم/نجّمت/ينجم) — plus net et plus tounsi que "تقدر", qui sonne trop standard/importé.
 - Présent : conjugaison directe (نمشي/تمشي/يمشي...), JAMAIS le préfixe "كـ" marocain ("كنمشي"/"كتمشي" = FAUX en tounsi).
 - Toi (tu) : "إنتِ"/"انتي" (jamais "نتا").
 - Vocabulaire courant tounsi à privilégier : "برشة" (beaucoup), "توا" (maintenant), "يزّي" (assez/ça suffit), "عادي" (normal), "صحيح" (vraiment/d'accord), "أهلا" (salut).
-Si tu doutes d'un mot ou d'une tournure, préfère une formulation simple et clairement tounsié plutôt qu'un mot d'un autre dialecte.`;
+Si tu doutes d'un mot ou d'une tournure, préfère une formulation simple et clairement tounsié plutôt qu'un mot d'un autre dialecte.
+
+Un bon copywriter tounsi ne bâcle JAMAIS l'argument pour aller vite. Pour un texte de vente/persuasion (corps de script, story, vlog...), développe l'idée sur PLUSIEURS phrases courtes qui s'enchaînent (une respiration = une phrase, comme à l'oral) — jamais un paragraphe compact qui résume tout en 2 lignes. Structure qui marche bien en tounsi : objection courante du public ("برشة ناس يقولولي...") → tu recadres la vraie question → tu expliques le POURQUOI concrètement → une chute qui retourne l'idée (pas juste une reformulation plate de l'accroche).`;
 
 /* =========================================================================
    Prompts — Reel
@@ -149,7 +152,7 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
   }
 }`;
 
-  return callClaudeJSON<ReelGeneration>(system, user, includeStoryboard ? 3000 : 1500);
+  return callClaudeJSON<ReelGeneration>(system, user, includeStoryboard ? 3000 : 2000);
 }
 
 /* =========================================================================
