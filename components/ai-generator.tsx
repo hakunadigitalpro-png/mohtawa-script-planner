@@ -19,7 +19,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select } from "@/components/ui/select";
-import { KreaThinking } from "@/components/krea-thinking";
 import {
   aiGenerateReel,
   applyReelGeneration,
@@ -184,9 +183,6 @@ function AiGeneratorModal({
     { value: "ar_msa", label: t("languageOptions.ar_msa") },
     { value: "ar_tn", label: t("languageOptions.ar_tn") },
   ];
-  const thinkingMessages = t.raw(
-    type === "reel" ? "krea.thinkingReel" : "krea.thinkingStory",
-  ) as string[];
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
@@ -201,7 +197,7 @@ function AiGeneratorModal({
 
         <DialogBody className="space-y-4">
           {pending && !hasPreview ? (
-            <KreaThinking messages={thinkingMessages} />
+            <ThinkingIndicator label={t("thinking")} />
           ) : (
             !hasPreview && (
               <>
@@ -327,7 +323,6 @@ export function StoryboardSegmentButton({
   const t = useTranslations("ai");
   const tCommon = useTranslations("common");
   const g = useTranslations("filmingGuide");
-  const thinkingMessages = t.raw("krea.thinkingStoryboard") as string[];
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -392,7 +387,7 @@ export function StoryboardSegmentButton({
 
             <DialogBody className="space-y-4">
               {pending && !preview ? (
-                <KreaThinking messages={thinkingMessages} />
+                <ThinkingIndicator label={t("thinking")} />
               ) : (
                 preview && (
                   <div
@@ -456,6 +451,23 @@ export function StoryboardSegmentButton({
         </Dialog>
       )}
     </>
+  );
+}
+
+function ThinkingIndicator({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-accent/20 bg-accent/5 px-6 py-12 text-center">
+      <div className="relative flex size-12 items-center justify-center">
+        <span className="absolute inset-0 animate-ping rounded-full bg-accent/25" />
+        <Sparkles className="relative size-6 text-accent" />
+      </div>
+      <p className="text-sm font-semibold text-foreground">{label}</p>
+      <div className="flex items-center gap-1.5">
+        <span className="size-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.3s]" />
+        <span className="size-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
+        <span className="size-1.5 animate-bounce rounded-full bg-accent" />
+      </div>
+    </div>
   );
 }
 

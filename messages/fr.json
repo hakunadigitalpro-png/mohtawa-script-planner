@@ -684,23 +684,7 @@
       "ar_msa": "Arabe standard",
       "ar_tn": "Arabe tunisien (dialecte)"
     },
-    "krea": {
-      "thinkingReel": [
-        "Hmm, je réfléchis à un contenu original...",
-        "Je suis en train d'écrire ton script...",
-        "Je peaufine les mots qui vont accrocher..."
-      ],
-      "thinkingStory": [
-        "Hmm, je réfléchis à une séquence qui capte...",
-        "Je suis en train d'écrire tes stories...",
-        "Je peaufine la chute et le call-to-action..."
-      ],
-      "thinkingStoryboard": [
-        "Je regarde comment découper ton script...",
-        "Je réfléchis au meilleur cadrage pour chaque scène...",
-        "Je prépare ton plan de tournage..."
-      ]
-    },
+    "thinking": "L'IA réfléchit à ton script...",
     "segmentButtonLabel": "Découper en storyboard",
     "segmentTitle": "Découper ton script en storyboard",
     "segmentSubtitle": "L'IA garde ton script tel quel et le découpe juste en scènes de tournage.",

@@ -1,10 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import {
   CalendarClock,
   TrendingUp,
   MessageSquare,
+  Sparkles,
   Check,
   Clock3,
 } from "lucide-react";
@@ -234,13 +234,7 @@ export default async function DashboardPage({
 
       {thisMonth > MONTHLY_GOAL_THRESHOLD && (
         <div className="flex items-center gap-3 rounded-3xl bg-accent/10 px-5 py-3.5 text-sm text-foreground">
-          <Image
-            src="/mascot/krea-avatar.png"
-            alt="Krea"
-            width={32}
-            height={32}
-            className="size-8 shrink-0 rounded-full object-cover object-top"
-          />
+          <Sparkles className="size-4 shrink-0 text-accent" />
           <span>
             {t("coach.aboveThreshold", {
               count: thisMonth,
