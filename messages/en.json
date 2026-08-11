@@ -574,7 +574,22 @@
     "targetScript": "Script",
     "targetScene": "Scene",
     "targetSlide": "Slide",
-    "readyToScheduleMessage": "“{title}” is approved — don't forget to schedule it!"
+    "readyToScheduleMessage": "“{title}” is approved — don't forget to schedule it!",
+    "addToTasks": "Add to my tasks",
+    "addTaskLabelComment": "Reply to the comment on “{title}”: {body}",
+    "addTaskLabelSchedule": "Schedule “{title}”"
+  },
+  "tasks": {
+    "ariaLabel": "My tasks",
+    "tooltip": "My tasks",
+    "title": "My tasks",
+    "close": "Close",
+    "addPlaceholder": "Add a task...",
+    "add": "Add",
+    "empty": "No tasks yet.",
+    "priorityUrgent": "Urgent — click to set back to normal",
+    "priorityNormal": "Normal — click to mark urgent",
+    "delete": "Delete"
   },
   "sharing": {
     "buttonOff": "Share",

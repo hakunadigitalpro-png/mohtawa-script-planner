@@ -18,8 +18,9 @@ import { LogoMark } from "./brand/logo";
 import { BrandSwitcher } from "./brand-switcher";
 import { LocaleSwitcherCompact } from "./locale-switcher";
 import { NotificationsBell } from "./notifications/notifications-bell";
+import { TasksPanel } from "./tasks/tasks-panel";
 import type { Notification } from "./notifications/types";
-import type { Brand } from "@/lib/types";
+import type { Brand, PersonalTask } from "@/lib/types";
 import type { BrandRole } from "@/lib/brand";
 
 type NavItem = {
@@ -47,6 +48,7 @@ export function Sidebar({
   userEmail,
   userId,
   initialNotifications,
+  initialTasks,
   role,
 }: {
   brands: Brand[];
@@ -54,6 +56,7 @@ export function Sidebar({
   userEmail: string | null;
   userId: string;
   initialNotifications: Notification[];
+  initialTasks: PersonalTask[];
   /** Un "viewer" (client invité) est cantonné au Calendrier + son Profil. */
   role: BrandRole | null;
 }) {
@@ -87,6 +90,9 @@ export function Sidebar({
         userId={userId}
         initialNotifications={initialNotifications}
       />
+
+      {/* Mes tâches */}
+      <TasksPanel initialTasks={initialTasks} />
 
       {/* Primary nav */}
       <nav className="flex flex-col items-center gap-2">

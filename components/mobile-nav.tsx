@@ -18,7 +18,8 @@ import {
 import { cn } from "@/lib/utils";
 import { BrandSwitcher } from "./brand-switcher";
 import { NotificationsBell } from "./notifications/notifications-bell";
-import type { Brand } from "@/lib/types";
+import { TasksPanel } from "./tasks/tasks-panel";
+import type { Brand, PersonalTask } from "@/lib/types";
 import type { Notification } from "./notifications/types";
 import type { BrandRole } from "@/lib/brand";
 
@@ -50,11 +51,13 @@ export function MobileTopBar({
   active,
   userId,
   initialNotifications,
+  initialTasks,
 }: {
   brands: Brand[];
   active: Brand | null;
   userId: string;
   initialNotifications: Notification[];
+  initialTasks: PersonalTask[];
 }) {
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-border/60 bg-card/85 px-3 backdrop-blur md:hidden">
@@ -64,11 +67,14 @@ export function MobileTopBar({
           {active?.name ?? "Kreatly"}
         </span>
       </div>
-      <NotificationsBell
-        userId={userId}
-        initialNotifications={initialNotifications}
-        channelSuffix="mobile"
-      />
+      <div className="flex items-center gap-1">
+        <NotificationsBell
+          userId={userId}
+          initialNotifications={initialNotifications}
+          channelSuffix="mobile"
+        />
+        <TasksPanel initialTasks={initialTasks} channelSuffix="mobile" />
+      </div>
     </header>
   );
 }

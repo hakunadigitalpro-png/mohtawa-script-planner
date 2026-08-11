@@ -574,7 +574,22 @@
     "targetScript": "النص",
     "targetScene": "المشهد",
     "targetSlide": "الشريحة",
-    "readyToScheduleMessage": "« {title} » تم اعتماده — لا تنسَ برمجته!"
+    "readyToScheduleMessage": "« {title} » تم اعتماده — لا تنسَ برمجته!",
+    "addToTasks": "أضف إلى مهامي",
+    "addTaskLabelComment": "الرد على التعليق في « {title} »: {body}",
+    "addTaskLabelSchedule": "برمجة « {title} »"
+  },
+  "tasks": {
+    "ariaLabel": "مهامي",
+    "tooltip": "مهامي",
+    "title": "مهامي",
+    "close": "إغلاق",
+    "addPlaceholder": "أضف مهمة...",
+    "add": "إضافة",
+    "empty": "لا توجد مهام بعد.",
+    "priorityUrgent": "عاجل — اضغط للرجوع إلى عادي",
+    "priorityNormal": "عادي — اضغط لتعليمه عاجلاً",
+    "delete": "حذف"
   },
   "sharing": {
     "buttonOff": "مشاركة",

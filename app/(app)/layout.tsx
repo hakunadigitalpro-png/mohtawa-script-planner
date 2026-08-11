@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/sidebar";
 import { MobileTopBar, MobileBottomNav } from "@/components/mobile-nav";
 import { NoBrandWelcome } from "@/components/no-brand";
 import type { Notification } from "@/components/notifications/types";
+import type { PersonalTask } from "@/lib/types";
 
 export default async function AppLayout({
   children,
@@ -33,6 +34,17 @@ export default async function AppLayout({
   );
   const initialNotifications = (notificationsData as Notification[] | null) ?? [];
 
+  // "Mes tâches" (migration 0048) : bloc-notes perso, PAS scopé à la marque
+  // active (les policies RLS filtrent déjà sur user_id = auth.uid()).
+  // Tolérant aux échecs : si la migration n'est pas encore appliquée, on
+  // rend juste 0 tâche.
+  const { data: tasksData } = await supabase
+    .from("personal_tasks")
+    .select("*")
+    .order("done", { ascending: true })
+    .order("created_at", { ascending: true });
+  const initialTasks = (tasksData as PersonalTask[] | null) ?? [];
+
   return (
     <div className="flex min-h-screen">
       {/* Rail latéral : desktop uniquement (caché en <md via la classe interne). */}
@@ -42,6 +54,7 @@ export default async function AppLayout({
         userEmail={user.email ?? null}
         userId={user.id}
         initialNotifications={initialNotifications}
+        initialTasks={initialTasks}
         role={role}
       />
       <div className="flex min-h-screen flex-1 flex-col">
@@ -51,6 +64,7 @@ export default async function AppLayout({
           active={active}
           userId={user.id}
           initialNotifications={initialNotifications}
+          initialTasks={initialTasks}
         />
         <main className="flex-1 overflow-x-hidden">
           {/* pb-24 sur mobile = espace pour la barre du bas fixe ; px-4 gagne

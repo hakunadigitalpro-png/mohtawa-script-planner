@@ -291,3 +291,24 @@ export type Performance = {
   performance_label: string | null;
   updated_at: string;
 };
+
+/**
+ * Tâche personnelle ("Mes tâches", migration 0048) — bloc-notes perso de
+ * l'utilisatrice, PAS partagé avec l'équipe de la marque (contrairement à
+ * `ChecklistItem` qui reste par vidéo). `content_id`/`content_title` sont
+ * optionnels : renseignés quand la tâche vient d'une notification, pour
+ * pouvoir rebondir vers la vidéo concernée.
+ */
+export type TaskPriority = "urgent" | "normal";
+
+export type PersonalTask = {
+  id: string;
+  user_id: string;
+  content_id: string | null;
+  content_title: string | null;
+  label: string;
+  priority: TaskPriority;
+  done: boolean;
+  created_at: string;
+  done_at: string | null;
+};

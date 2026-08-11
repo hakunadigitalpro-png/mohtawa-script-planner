@@ -3,9 +3,10 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Bell, Check, CalendarClock } from "lucide-react";
+import { Bell, Check, CalendarClock, ListPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { createTask } from "@/app/(app)/tasks/actions";
 import type { Notification } from "./types";
 
 /**
@@ -128,6 +129,26 @@ export function NotificationsBell({
     void supabase.rpc("mark_all_notifications_read");
   }, [supabase]);
 
+  // -------- "Ajouter à mes tâches" sur une notif --------
+  const handleAddTask = React.useCallback(
+    async (notif: Notification) => {
+      const label =
+        notif.type === "ready_to_schedule"
+          ? t("addTaskLabelSchedule", { title: notif.content_title || t("untitled") })
+          : t("addTaskLabelComment", {
+              title: notif.content_title || t("untitled"),
+              body: notif.comment_body ?? "",
+            });
+      await createTask({
+        label,
+        contentId: notif.content_id,
+        contentTitle: notif.content_title,
+      });
+      router.refresh();
+    },
+    [t, router],
+  );
+
   return (
     <div className="relative">
       <button
@@ -186,6 +207,7 @@ export function NotificationsBell({
                     key={n.id}
                     notification={n}
                     onClick={() => handleClick(n)}
+                    onAddTask={() => handleAddTask(n)}
                   />
                 ))}
               </ul>
@@ -200,23 +222,31 @@ export function NotificationsBell({
 function NotificationRow({
   notification,
   onClick,
+  onAddTask,
 }: {
   notification: Notification;
   onClick: () => void;
+  onAddTask: () => Promise<void>;
 }) {
   const t = useTranslations("notifications");
   const tTime = useTranslations("comments.time");
+  const [added, setAdded] = React.useState(false);
 
   // Temps relatif via les clés i18n `comments.time.*` (déjà câblées en FR/EN/AR)
   const relative = formatRelative(notification.created_at, tTime);
 
+  const handleAddTask = () => {
+    setAdded(true);
+    void onAddTask();
+  };
+
   return (
-    <li>
+    <li className="group relative">
       <button
         type="button"
         onClick={onClick}
         className={cn(
-          "flex w-full flex-col items-start gap-1 rounded-xl px-3 py-2.5 text-left transition",
+          "flex w-full flex-col items-start gap-1 rounded-xl px-3 py-2.5 pe-9 text-left transition",
           notification.read
             ? "hover:bg-background/60"
             : "bg-accent/5 hover:bg-accent/10",
@@ -238,6 +268,22 @@ function NotificationRow({
           </div>
         </div>
       </button>
+
+      {!added ? (
+        <button
+          type="button"
+          onClick={handleAddTask}
+          title={t("addToTasks")}
+          aria-label={t("addToTasks")}
+          className="absolute end-2 top-2 flex size-6 items-center justify-center rounded-full text-muted-foreground opacity-0 shadow-sm transition hover:bg-accent/10 hover:text-accent focus-visible:opacity-100 group-hover:opacity-100"
+        >
+          <ListPlus className="size-3.5" />
+        </button>
+      ) : (
+        <span className="absolute end-2 top-2 flex size-6 items-center justify-center rounded-full text-emerald-600">
+          <Check className="size-3.5" />
+        </span>
+      )}
     </li>
   );
 }

@@ -574,7 +574,22 @@
     "targetScript": "Script",
     "targetScene": "Scène",
     "targetSlide": "Slide",
-    "readyToScheduleMessage": "« {title} » est validé — pense à le programmer !"
+    "readyToScheduleMessage": "« {title} » est validé — pense à le programmer !",
+    "addToTasks": "Ajouter à mes tâches",
+    "addTaskLabelComment": "Répondre au commentaire sur « {title} » : {body}",
+    "addTaskLabelSchedule": "Programmer « {title} »"
+  },
+  "tasks": {
+    "ariaLabel": "Mes tâches",
+    "tooltip": "Mes tâches",
+    "title": "Mes tâches",
+    "close": "Fermer",
+    "addPlaceholder": "Ajouter une tâche...",
+    "add": "Ajouter",
+    "empty": "Aucune tâche pour l'instant.",
+    "priorityUrgent": "Urgent — clique pour repasser en normal",
+    "priorityNormal": "Normal — clique pour marquer urgent",
+    "delete": "Supprimer"
   },
   "sharing": {
     "buttonOff": "Partager",
