@@ -684,7 +684,23 @@
       "ar_msa": "Standard Arabic",
       "ar_tn": "Tunisian Arabic (dialect)"
     },
-    "thinking": "AI is thinking through your script...",
+    "krea": {
+      "thinkingReel": [
+        "Hmm, thinking of an original piece of content...",
+        "Writing your script...",
+        "Polishing the words that'll grab attention..."
+      ],
+      "thinkingStory": [
+        "Hmm, thinking of a sequence that grabs attention...",
+        "Writing your stories...",
+        "Polishing the ending and the call-to-action..."
+      ],
+      "thinkingStoryboard": [
+        "Looking at how to break down your script...",
+        "Thinking about the best framing for each scene...",
+        "Prepping your filming plan..."
+      ]
+    },
     "segmentButtonLabel": "Break down into storyboard",
     "segmentTitle": "Break your script down into a storyboard",
     "segmentSubtitle": "The AI keeps your script as-is and only breaks it down into filming scenes.",

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Sparkles,
   ArrowLeft,
@@ -780,9 +781,13 @@ function GeneratingScreen() {
             }
           />
         ))}
-        <span className="relative flex size-14 items-center justify-center rounded-full bg-accent/15 text-accent">
-          <Sparkles className="size-6 animate-pulse" />
-        </span>
+        <Image
+          src="/mascot/krea-avatar.png"
+          alt="Krea"
+          width={56}
+          height={56}
+          className="relative size-14 rounded-full border-2 border-card object-cover object-top shadow-sm"
+        />
       </div>
       <div>
         <p className="font-semibold">Je construis ta stratégie…</p>
