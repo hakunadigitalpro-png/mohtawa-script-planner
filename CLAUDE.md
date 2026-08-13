@@ -11,6 +11,8 @@ Repo : <https://github.com/hakunadigitalpro-png/mohtawa-script-planner>
 
 **Obligatoire** : avant de construire toute fonctionnalité proposée par l'utilisatrice (nouveau workflow, nouveau statut, nouvel écran, nouvelle notification...), consulte d'abord le sous-agent `logique-produit` (`.claude/agents/logique-produit.md`) pour vérifier qu'elle est cohérente avec la logique métier et l'architecture existantes de toute la plateforme — statuts, rôles/accès, sécurité multi-tenant, ton "coach", cible SBO. S'il répond ❌ ou ⚠️, explique le point de friction à l'utilisatrice et propose l'alternative avant de coder — ne construis pas quelque chose que le gardien de cohérence a explicitement déconseillé sans qu'elle ait tranché en connaissance de cause.
 
+**Si la fonctionnalité appelle Claude** (nouveau bouton IA, ou modification d'un appel existant dans `lib/ai.ts`) : consulte AUSSI le sous-agent `logique-tokens` (`.claude/agents/logique-tokens.md`) pour vérifier qu'elle limite et optimise l'usage des tokens — pas d'appel redondant, `max_tokens` bien dimensionné, rate-limiting (`guardAiAction`) en place. Même traitement s'il répond ❌ ou ⚠️ : explique le point avant de coder.
+
 ---
 
 ## 📐 Architecture
