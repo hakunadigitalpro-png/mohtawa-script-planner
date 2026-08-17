@@ -33,6 +33,7 @@ export function BrandKitManager({
   const [tagline, setTagline] = React.useState(kit?.tagline ?? "");
   const [audience, setAudience] = React.useState(kit?.audience ?? "");
   const [voice, setVoice] = React.useState(kit?.voice ?? "");
+  const [equipment, setEquipment] = React.useState(kit?.equipment ?? "");
   const [hashtags, setHashtags] = React.useState<string[]>(kit?.hashtags ?? []);
   const [tagInput, setTagInput] = React.useState("");
   const [pending, startTransition] = React.useTransition();
@@ -66,6 +67,7 @@ export function BrandKitManager({
         tagline: tagline.trim() || null,
         audience: audience.trim() || null,
         voice: voice.trim() || null,
+        equipment: equipment.trim() || null,
         hashtags,
       });
       setSaved(true);
@@ -148,6 +150,28 @@ export function BrandKitManager({
           dir="auto"
           className="min-h-16 text-sm [field-sizing:content]"
         />
+      </div>
+
+      {/* Matériel — nourrira l'IA (découpage storyboard : lighting/cadrage) */}
+      <div className="space-y-1.5">
+        <Label className="text-sm font-semibold">
+          Matériel de tournage disponible{" "}
+          <span className="text-xs font-normal text-accent">
+            (utilisé par l&apos;IA)
+          </span>
+        </Label>
+        <Textarea
+          value={equipment}
+          onChange={(e) => setEquipment(e.target.value)}
+          placeholder="Ex : anneau lumineux LED, trépied, micro-cravate, fond blanc, iPhone 14."
+          dir="auto"
+          className="min-h-16 text-sm [field-sizing:content]"
+        />
+        <p className="text-xs text-muted">
+          Krea s&apos;en sert pour proposer un éclairage et des cadrages qui
+          collent à ce que tu as vraiment, quand tu découpes un script en
+          storyboard.
+        </p>
       </div>
 
       {/* Hashtags */}

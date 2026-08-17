@@ -110,11 +110,21 @@ export type StoryboardSceneGeneration = {
  * génère le script ET le découpe dans le même appel — et
  * segmentScriptIntoStoryboard — qui découpe un script DÉJÀ ÉCRIT par
  * l'utilisatrice (Guidé ou Libre) sans le regénérer.
+ *
+ * `equipment` (Brand Kit, optionnel) : quand rempli, le "lighting" et les
+ * cadrages doivent s'appuyer sur ce matériel RÉEL plutôt que des conseils
+ * génériques — bloc injecté conditionnellement, jamais "au cas où".
  */
-const STORYBOARD_SEGMENTATION_RULES = `- Découpe par BEAT naturel (une idée/phrase forte = une scène), pas rigidement par accroche/corps/outro. Vise 4 à 7 scènes pour 30-60s.
+function storyboardSegmentationRules(equipment?: string): string {
+  return `- Découpe par BEAT naturel (une idée/phrase forte = une scène), pas rigidement par accroche/corps/outro. Vise 4 à 7 scènes pour 30-60s.
 - Pour chaque scène : "description" (l'action + ce qui est dit, en 1 phrase concrète), "camera_angle" (cadrage, TRÈS court : "Plan rapproché, face caméra"), "expression" (jeu de visage à adopter, TRÈS court : "Souriant, sourcils levés"), "movement" (gestuelle, TRÈS court : "Main sur le cœur, hoche la tête").
 - Le "filming_guide" est un résumé global du tournage (pas la durée — elle est calculée ailleurs à partir du script, ne l'invente pas) : "lighting" (conseil d'éclairage court), "camera_style" (style de plan général pour toute la vidéo), "pacing" (rythme/rétention, ex : "Change de plan toutes les 3-4s pour garder l'attention"), "energy" (niveau d'énergie à tenir), "tip" (UN conseil pro actionnable).
-- Reste TRÈS court sur chaque champ (une poignée de mots, pas une phrase longue) — c'est un pense-bête à lire pendant le tournage, pas un article.`;
+- Reste TRÈS court sur chaque champ (une poignée de mots, pas une phrase longue) — c'est un pense-bête à lire pendant le tournage, pas un article.${
+    equipment
+      ? `\n- Matériel de tournage RÉELLEMENT disponible pour cette marque : ${equipment}. Base "lighting" et les cadrages caméra sur CE matériel précis (comment le positionner, l'utiliser) — jamais une suggestion générique qui suppose un équipement qu'elle n'a pas (ex : ne propose pas d'anneau lumineux si elle n'en a pas listé un).`
+      : ""
+  }`;
+}
 
 export type ReelGeneration = {
   accroche: string;
@@ -141,6 +151,7 @@ export function generateReel(opts: {
   platform?: string;
   includeStoryboard?: boolean;
   language?: GenerationLanguage;
+  equipment?: string;
 }): Promise<ReelGeneration> {
   const audience =
     opts.audience?.trim() || "des clients potentiels sur les réseaux";
@@ -157,7 +168,7 @@ ${
   includeStoryboard
     ? `
 Tu découpes AUSSI ce script en un STORYBOARD tournage-prêt, pour quelqu'un qui n'a jamais filmé et ne sait pas ce qu'est un storyboard — il doit pouvoir filmer juste en suivant tes instructions, sans réfléchir :
-${STORYBOARD_SEGMENTATION_RULES}`
+${storyboardSegmentationRules(opts.equipment)}`
     : ""
 }
 ${languageInstruction(opts.language)} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
@@ -205,9 +216,10 @@ export type StoryboardSegmentation = {
  */
 export function segmentScriptIntoStoryboard(opts: {
   script: string;
+  equipment?: string;
 }): Promise<StoryboardSegmentation> {
   const system = `Tu es un expert en réalisation de Reels/TikTok. Tu prends un script DÉJÀ ÉCRIT par l'utilisatrice — tu ne le réécris PAS, tu ne le corriges PAS, tu ne changes RIEN au fond ni au texte — et tu le découpes en STORYBOARD tournage-prêt, pour quelqu'un qui n'a jamais filmé et ne sait pas ce qu'est un storyboard — il doit pouvoir filmer juste en suivant tes instructions, sans réfléchir :
-${STORYBOARD_SEGMENTATION_RULES}
+${storyboardSegmentationRules(opts.equipment)}
 Écris tes réponses (description, cadrage, expression, mouvement, résumé de tournage) dans la MÊME langue que le script fourni (ne traduis pas). Si le script fourni est en arabe : ${TUNISIAN_DIALECT_GUIDE} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
 
   const user = `Script à découper (ne pas réécrire, juste segmenter en scènes) :

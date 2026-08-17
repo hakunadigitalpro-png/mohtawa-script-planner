@@ -24,6 +24,7 @@ export type BrandKit = {
   tagline: string | null;
   audience: string | null;
   voice: string | null;
+  equipment: string | null;
   hashtags: string[];
 };
 

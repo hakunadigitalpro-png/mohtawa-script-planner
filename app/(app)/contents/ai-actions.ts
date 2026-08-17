@@ -16,6 +16,31 @@ import {
 } from "@/lib/ai";
 
 /**
+ * Matériel de tournage renseigné dans le Brand Kit de la marque du contenu
+ * — nourrit le "lighting"/cadrage du découpage storyboard (0050). `undefined`
+ * si non rempli, marque introuvable, etc. : le prompt gère déjà l'absence
+ * sans planter (bloc conditionnel).
+ */
+async function getBrandEquipment(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  contentId: string,
+): Promise<string | undefined> {
+  const { data: content } = await supabase
+    .from("contents")
+    .select("brand_id")
+    .eq("id", contentId)
+    .maybeSingle();
+  if (!content) return undefined;
+
+  const { data: kit } = await supabase
+    .from("brand_kits")
+    .select("equipment")
+    .eq("brand_id", content.brand_id)
+    .maybeSingle();
+  return kit?.equipment ?? undefined;
+}
+
+/**
  * Génère un script de Reel simplifié (Accroche / Corps / Outro) via Claude.
  * NE PERSISTE PAS — renvoie le preview. L'application passe par
  * applyReelGeneration (pas de 2e appel IA → on ne paie qu'une fois).
@@ -29,13 +54,17 @@ export async function aiGenerateReel(input: {
   language?: GenerationLanguage;
 }) {
   try {
-    await guardAiAction("reel");
+    const { supabase } = await guardAiAction("reel");
+    const equipment = input.includeStoryboard
+      ? await getBrandEquipment(supabase, input.contentId)
+      : undefined;
     const data = await generateReel({
       topic: input.topic,
       audience: input.audience,
       platform: input.platform,
       includeStoryboard: input.includeStoryboard,
       language: input.language,
+      equipment,
     });
     return { ok: true as const, data };
   } catch (e) {
@@ -151,8 +180,12 @@ export async function aiSegmentStoryboard(input: {
   script: string;
 }) {
   try {
-    await guardAiAction("storyboard");
-    const data = await segmentScriptIntoStoryboard({ script: input.script });
+    const { supabase } = await guardAiAction("storyboard");
+    const equipment = await getBrandEquipment(supabase, input.contentId);
+    const data = await segmentScriptIntoStoryboard({
+      script: input.script,
+      equipment,
+    });
     return { ok: true as const, data };
   } catch (e) {
     if (e instanceof AiError) return { ok: false as const, error: e.message };
