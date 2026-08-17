@@ -29,6 +29,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "calendar": "Calendar",
+    "tasks": "Tasks",
     "analytics": "Analytics",
     "hooks": "Hooks",
     "brands": "My brands",
@@ -580,13 +581,18 @@
     "addTaskLabelSchedule": "Schedule “{title}”"
   },
   "tasks": {
-    "ariaLabel": "My tasks",
-    "tooltip": "My tasks",
-    "title": "My tasks",
-    "close": "Close",
+    "title": "Tasks",
+    "subtitle": "Board shared with {brand}'s team — drag a card to change its status.",
     "addPlaceholder": "Add a task...",
     "add": "Add",
-    "empty": "No tasks yet.",
+    "columnTodo": "To do",
+    "columnInProgress": "In progress",
+    "columnDone": "Done",
+    "emptyColumn": "Nothing here yet.",
+    "unassigned": "Unassigned",
+    "me": "me",
+    "unknownMember": "Unknown member",
+    "noMembersHint": "Invite members to the brand's team to be able to assign tasks to them.",
     "priorityUrgent": "Urgent — click to set back to normal",
     "priorityNormal": "Normal — click to mark urgent",
     "delete": "Delete"

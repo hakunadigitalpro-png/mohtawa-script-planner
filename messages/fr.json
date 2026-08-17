@@ -29,6 +29,7 @@
   "nav": {
     "dashboard": "Tableau de bord",
     "calendar": "Calendrier",
+    "tasks": "Tâches",
     "analytics": "Analytics",
     "hooks": "Accroches",
     "brands": "Mes marques",
@@ -580,13 +581,18 @@
     "addTaskLabelSchedule": "Programmer « {title} »"
   },
   "tasks": {
-    "ariaLabel": "Mes tâches",
-    "tooltip": "Mes tâches",
-    "title": "Mes tâches",
-    "close": "Fermer",
+    "title": "Tâches",
+    "subtitle": "Board partagé avec l'équipe de {brand} — glisse une carte pour changer son statut.",
     "addPlaceholder": "Ajouter une tâche...",
     "add": "Ajouter",
-    "empty": "Aucune tâche pour l'instant.",
+    "columnTodo": "À faire",
+    "columnInProgress": "En cours",
+    "columnDone": "Fait",
+    "emptyColumn": "Rien ici pour l'instant.",
+    "unassigned": "Non assigné",
+    "me": "moi",
+    "unknownMember": "Membre inconnu",
+    "noMembersHint": "Invite des membres dans l'équipe de la marque pour pouvoir leur assigner des tâches.",
     "priorityUrgent": "Urgent — clique pour repasser en normal",
     "priorityNormal": "Normal — clique pour marquer urgent",
     "delete": "Supprimer"

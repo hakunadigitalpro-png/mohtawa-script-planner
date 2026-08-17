@@ -29,6 +29,7 @@
   "nav": {
     "dashboard": "لوحة التحكم",
     "calendar": "التقويم",
+    "tasks": "المهام",
     "analytics": "التحليلات",
     "hooks": "العناوين الجذابة",
     "brands": "علاماتي التجارية",
@@ -580,13 +581,18 @@
     "addTaskLabelSchedule": "برمجة « {title} »"
   },
   "tasks": {
-    "ariaLabel": "مهامي",
-    "tooltip": "مهامي",
-    "title": "مهامي",
-    "close": "إغلاق",
+    "title": "المهام",
+    "subtitle": "لوحة مشتركة مع فريق {brand} — اسحب البطاقة لتغيير حالتها.",
     "addPlaceholder": "أضف مهمة...",
     "add": "إضافة",
-    "empty": "لا توجد مهام بعد.",
+    "columnTodo": "قيد الانتظار",
+    "columnInProgress": "جاري التنفيذ",
+    "columnDone": "منجزة",
+    "emptyColumn": "لا يوجد شيء هنا بعد.",
+    "unassigned": "غير مسندة",
+    "me": "أنا",
+    "unknownMember": "عضو غير معروف",
+    "noMembersHint": "ادعُ أعضاء إلى فريق العلامة التجارية لتتمكن من إسناد المهام إليهم.",
     "priorityUrgent": "عاجل — اضغط للرجوع إلى عادي",
     "priorityNormal": "عادي — اضغط لتعليمه عاجلاً",
     "delete": "حذف"

@@ -11,6 +11,7 @@ import {
   User,
   BarChart3,
   BookOpen,
+  KanbanSquare,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,21 +19,21 @@ import { LogoMark } from "./brand/logo";
 import { BrandSwitcher } from "./brand-switcher";
 import { LocaleSwitcherCompact } from "./locale-switcher";
 import { NotificationsBell } from "./notifications/notifications-bell";
-import { TasksPanel } from "./tasks/tasks-panel";
 import type { Notification } from "./notifications/types";
-import type { Brand, PersonalTask } from "@/lib/types";
+import type { Brand } from "@/lib/types";
 import type { BrandRole } from "@/lib/brand";
 
 type NavItem = {
   href: string;
   /** Clé i18n dans `nav.*` */
-  key: "dashboard" | "calendar" | "analytics" | "hooks" | "brands" | "profile";
+  key: "dashboard" | "calendar" | "analytics" | "hooks" | "tasks" | "brands" | "profile";
   icon: LucideIcon;
 };
 
 const PRIMARY_NAV: NavItem[] = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
+  { href: "/tasks", key: "tasks", icon: KanbanSquare },
   { href: "/analytics", key: "analytics", icon: BarChart3 },
   { href: "/hooks", key: "hooks", icon: BookOpen },
 ];
@@ -48,7 +49,6 @@ export function Sidebar({
   userEmail,
   userId,
   initialNotifications,
-  initialTasks,
   role,
 }: {
   brands: Brand[];
@@ -56,7 +56,6 @@ export function Sidebar({
   userEmail: string | null;
   userId: string;
   initialNotifications: Notification[];
-  initialTasks: PersonalTask[];
   /** Un "viewer" (client invité) est cantonné au Calendrier + son Profil. */
   role: BrandRole | null;
 }) {
@@ -90,9 +89,6 @@ export function Sidebar({
         userId={userId}
         initialNotifications={initialNotifications}
       />
-
-      {/* Mes tâches */}
-      <TasksPanel initialTasks={initialTasks} />
 
       {/* Primary nav */}
       <nav className="flex flex-col items-center gap-2">

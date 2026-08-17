@@ -293,22 +293,29 @@ export type Performance = {
 };
 
 /**
- * Tâche personnelle ("Mes tâches", migration 0048) — bloc-notes perso de
- * l'utilisatrice, PAS partagé avec l'équipe de la marque (contrairement à
- * `ChecklistItem` qui reste par vidéo). `content_id`/`content_title` sont
- * optionnels : renseignés quand la tâche vient d'une notification, pour
- * pouvoir rebondir vers la vidéo concernée.
+ * Tâche d'équipe (board Kanban "/tasks", migration 0049 — remplace le
+ * bloc-notes perso `personal_tasks` de la migration 0048) : visible par
+ * toute l'équipe de la marque (`brand_id`), assignable à un membre
+ * (`assignee_id`), avec un statut à 3 colonnes façon Trello. `brand_id`
+ * reste nullable pour les rares tâches créées avant ce changement sans
+ * marque associée — elles restent visibles seulement par leur créatrice
+ * (voir policy RLS `tasks_select`). `content_id`/`content_title` optionnels :
+ * renseignés quand la tâche vient d'une notification, pour rebondir vers
+ * la vidéo concernée.
  */
 export type TaskPriority = "urgent" | "normal";
+export type TaskStatus = "todo" | "in_progress" | "done";
 
-export type PersonalTask = {
+export type Task = {
   id: string;
   user_id: string;
+  brand_id: string | null;
+  assignee_id: string | null;
   content_id: string | null;
   content_title: string | null;
   label: string;
   priority: TaskPriority;
-  done: boolean;
+  status: TaskStatus;
   created_at: string;
   done_at: string | null;
 };

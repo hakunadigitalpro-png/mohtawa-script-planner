@@ -9,6 +9,7 @@ import {
   CalendarDays,
   BarChart3,
   BookOpen,
+  KanbanSquare,
   Menu,
   Building2,
   User,
@@ -18,8 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { BrandSwitcher } from "./brand-switcher";
 import { NotificationsBell } from "./notifications/notifications-bell";
-import { TasksPanel } from "./tasks/tasks-panel";
-import type { Brand, PersonalTask } from "@/lib/types";
+import type { Brand } from "@/lib/types";
 import type { Notification } from "./notifications/types";
 import type { BrandRole } from "@/lib/brand";
 
@@ -37,11 +37,12 @@ import type { BrandRole } from "@/lib/brand";
 
 const PRIMARY_NAV: {
   href: string;
-  key: "dashboard" | "calendar" | "analytics" | "hooks";
+  key: "dashboard" | "calendar" | "tasks" | "analytics" | "hooks";
   icon: LucideIcon;
 }[] = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
+  { href: "/tasks", key: "tasks", icon: KanbanSquare },
   { href: "/analytics", key: "analytics", icon: BarChart3 },
   { href: "/hooks", key: "hooks", icon: BookOpen },
 ];
@@ -51,13 +52,11 @@ export function MobileTopBar({
   active,
   userId,
   initialNotifications,
-  initialTasks,
 }: {
   brands: Brand[];
   active: Brand | null;
   userId: string;
   initialNotifications: Notification[];
-  initialTasks: PersonalTask[];
 }) {
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-2 border-b border-border/60 bg-card/85 px-3 backdrop-blur md:hidden">
@@ -67,14 +66,11 @@ export function MobileTopBar({
           {active?.name ?? "Kreatly"}
         </span>
       </div>
-      <div className="flex items-center gap-1">
-        <NotificationsBell
-          userId={userId}
-          initialNotifications={initialNotifications}
-          channelSuffix="mobile"
-        />
-        <TasksPanel initialTasks={initialTasks} channelSuffix="mobile" />
-      </div>
+      <NotificationsBell
+        userId={userId}
+        initialNotifications={initialNotifications}
+        channelSuffix="mobile"
+      />
     </header>
   );
 }
