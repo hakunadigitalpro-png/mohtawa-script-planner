@@ -141,7 +141,8 @@ function storyboardSegmentationRules(
   return `- Découpe par BEAT naturel (une idée/phrase forte = une scène), pas rigidement par accroche/corps/outro. Vise 4 à 7 scènes pour 30-60s.
 - Pour chaque scène : "description" (l'action + ce qui est dit, en 1 phrase concrète), "camera_angle" (cadrage, TRÈS court : "Plan rapproché, face caméra"), "expression" (jeu de visage à adopter, TRÈS court : "Souriant, sourcils levés"), "movement" (gestuelle, TRÈS court : "Main sur le cœur, hoche la tête").
 - Le "filming_guide" est un résumé global du tournage (pas la durée — elle est calculée ailleurs à partir du script, ne l'invente pas) : "lighting" (conseil d'éclairage court), "camera_style" (style de plan général pour toute la vidéo), "pacing" (rythme/rétention, ex : "Change de plan toutes les 3-4s pour garder l'attention"), "energy" (niveau d'énergie à tenir), "tip" (UN conseil pro actionnable).
-- Reste TRÈS court sur chaque champ (une poignée de mots, pas une phrase longue) — c'est un pense-bête à lire pendant le tournage, pas un article.${
+- Reste TRÈS court sur chaque champ (une poignée de mots, pas une phrase longue) — c'est un pense-bête à lire pendant le tournage, pas un article.
+- Remplis TOUJOURS "camera_position" : où poser le téléphone/la caméra vu du DESSUS par rapport à la personne qui filme, parmi les 8 mêmes positions ("face" le plus souvent — cadrage face caméra classique — sauf si le style de plan demande un angle différent, ex : "droite" pour un profil).${
     equipment
       ? `\n- Matériel de tournage RÉELLEMENT disponible pour cette marque : ${equipment}. Base "lighting" et les cadrages caméra sur CE matériel précis (comment le positionner, l'utiliser) — jamais une suggestion générique qui suppose un équipement qu'elle n'a pas (ex : ne propose pas d'anneau lumineux si elle n'en a pas listé un).
 - Remplis AUSSI "equipment_layout" : pour CHAQUE élément de matériel listé (reprends son nom exact), une position vue du DESSUS autour de la personne qui filme, parmi ces 8 seulement : "face" (à côté/juste derrière la caméra, face à la personne), "avant_droite", "droite", "arriere_droite", "arriere", "arriere_gauche", "gauche", "avant_gauche". Choisis la position qui a du sens pour CET équipement précis (ex : lumière principale souvent "face" ou proche, lumière d'accentuation souvent "arriere" ou sur le côté). "note" : conseil très court (hauteur, angle, intensité).`
@@ -155,7 +156,8 @@ function storyboardSegmentationRules(
 
 /**
  * Gabarit JSON du "filming_guide", partagé entre generateReel et
- * segmentScriptIntoStoryboard — inclut "equipment_layout" UNIQUEMENT si du
+ * segmentScriptIntoStoryboard — "camera_position" est TOUJOURS demandé
+ * (utile même sans matériel configuré), "equipment_layout" UNIQUEMENT si du
  * matériel a été fourni (sinon le modèle produirait un champ vide inutile).
  */
 function filmingGuideJsonTemplate(equipment?: string): string {
@@ -164,7 +166,8 @@ function filmingGuideJsonTemplate(equipment?: string): string {
       "camera_style": "...",
       "pacing": "...",
       "energy": "...",
-      "tip": "..."${
+      "tip": "...",
+      "camera_position": "face|avant_droite|droite|arriere_droite|arriere|arriere_gauche|gauche|avant_gauche"${
         equipment
           ? `,
       "equipment_layout": [

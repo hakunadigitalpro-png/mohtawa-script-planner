@@ -408,6 +408,7 @@ export function StoryboardSegmentButton({
 
                     <EquipmentLayoutDiagram
                       items={preview.filming_guide.equipment_layout ?? []}
+                      cameraPosition={preview.filming_guide.camera_position}
                     />
 
                     <ul className="space-y-2">
@@ -523,6 +524,7 @@ function ReelPreview({ data }: { data: ReelGeneration }) {
 
           <EquipmentLayoutDiagram
             items={data.storyboard.filming_guide.equipment_layout ?? []}
+            cameraPosition={data.storyboard.filming_guide.camera_position}
           />
 
           <ul className="space-y-2">

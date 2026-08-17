@@ -324,7 +324,10 @@ export function StoryboardTab({
               />
             </div>
 
-            <EquipmentLayoutDiagram items={state.guide.equipment_layout ?? []} />
+            <EquipmentLayoutDiagram
+              items={state.guide.equipment_layout ?? []}
+              cameraPosition={state.guide.camera_position}
+            />
           </div>
         )}
 

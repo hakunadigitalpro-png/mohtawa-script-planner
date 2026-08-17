@@ -172,6 +172,9 @@ export type FilmingGuide = {
   /** Où placer le matériel du Brand Kit (0050), vu du dessus — seulement
    *  rempli si du matériel était renseigné au moment de la génération. */
   equipment_layout?: EquipmentPlacement[];
+  /** Où poser le téléphone/la caméra, vu du dessus — toujours demandé (pas
+   *  besoin de matériel configuré pour savoir où filmer depuis). */
+  camera_position?: EquipmentPosition;
 };
 
 export type StoryDetails = {
