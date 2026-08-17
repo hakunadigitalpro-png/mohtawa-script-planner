@@ -300,7 +300,8 @@
     "expression": "Expression",
     "movement": "Mouvement",
     "equipmentLayoutTitle": "Placement du matériel",
-    "equipmentLayoutSelf": "Toi"
+    "equipmentLayoutSelf": "Toi",
+    "preset": "Setup"
   },
   "checklist": {
     "title": "Préparation de la vidéo",

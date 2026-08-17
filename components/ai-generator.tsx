@@ -419,6 +419,9 @@ export function StoryboardSegmentButton({
                             <ScenePill label={g("camera")} value={s.camera_angle} />
                             <ScenePill label={g("expression")} value={s.expression} />
                             <ScenePill label={g("movement")} value={s.movement} />
+                            {s.preset_label && (
+                              <ScenePill label={g("preset")} value={s.preset_label} />
+                            )}
                           </div>
                         </li>
                       ))}
@@ -531,6 +534,9 @@ function ReelPreview({ data }: { data: ReelGeneration }) {
                   <ScenePill label={g("camera")} value={s.camera_angle} />
                   <ScenePill label={g("expression")} value={s.expression} />
                   <ScenePill label={g("movement")} value={s.movement} />
+                  {s.preset_label && (
+                    <ScenePill label={g("preset")} value={s.preset_label} />
+                  )}
                 </div>
               </li>
             ))}

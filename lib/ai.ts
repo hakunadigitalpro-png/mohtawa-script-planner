@@ -103,7 +103,20 @@ export type StoryboardSceneGeneration = {
   camera_angle: string;
   expression: string;
   movement: string;
+  /** Label EXACT d'un setup de tournage (Mes setups) le plus adapté à cette
+   *  scène, si la marque en a — sert à récupérer la photo de référence du
+   *  lieu à l'application. Absent si aucun setup ne convient. */
+  preset_label?: string;
 };
+
+export type ScenePresetHint = { label: string; hint?: string };
+
+function presetsPromptBlock(presets?: ScenePresetHint[]): string {
+  if (!presets || presets.length === 0) return "";
+  return `\n\nSetups de tournage disponibles pour cette marque (lieux réutilisables) :\n${presets
+    .map((p) => `- "${p.label}"${p.hint ? ` — ${p.hint}` : ""}`)
+    .join("\n")}`;
+}
 
 /**
  * Règles de découpage partagées entre generateReel(includeStoryboard) — qui
@@ -114,8 +127,17 @@ export type StoryboardSceneGeneration = {
  * `equipment` (Brand Kit, optionnel) : quand rempli, le "lighting" et les
  * cadrages doivent s'appuyer sur ce matériel RÉEL plutôt que des conseils
  * génériques — bloc injecté conditionnellement, jamais "au cas où".
+ *
+ * `presets` (Mes setups, optionnel) : quand la marque a des lieux de
+ * tournage réutilisables, chaque scène reçoit le "preset_label" du plus
+ * adapté — sert à récupérer sa photo de référence à l'application, pour
+ * ne pas laisser les scènes générées sans image.
  */
-function storyboardSegmentationRules(equipment?: string): string {
+function storyboardSegmentationRules(
+  equipment?: string,
+  presets?: ScenePresetHint[],
+): string {
+  const hasPresets = Boolean(presets && presets.length > 0);
   return `- Découpe par BEAT naturel (une idée/phrase forte = une scène), pas rigidement par accroche/corps/outro. Vise 4 à 7 scènes pour 30-60s.
 - Pour chaque scène : "description" (l'action + ce qui est dit, en 1 phrase concrète), "camera_angle" (cadrage, TRÈS court : "Plan rapproché, face caméra"), "expression" (jeu de visage à adopter, TRÈS court : "Souriant, sourcils levés"), "movement" (gestuelle, TRÈS court : "Main sur le cœur, hoche la tête").
 - Le "filming_guide" est un résumé global du tournage (pas la durée — elle est calculée ailleurs à partir du script, ne l'invente pas) : "lighting" (conseil d'éclairage court), "camera_style" (style de plan général pour toute la vidéo), "pacing" (rythme/rétention, ex : "Change de plan toutes les 3-4s pour garder l'attention"), "energy" (niveau d'énergie à tenir), "tip" (UN conseil pro actionnable).
@@ -123,6 +145,10 @@ function storyboardSegmentationRules(equipment?: string): string {
     equipment
       ? `\n- Matériel de tournage RÉELLEMENT disponible pour cette marque : ${equipment}. Base "lighting" et les cadrages caméra sur CE matériel précis (comment le positionner, l'utiliser) — jamais une suggestion générique qui suppose un équipement qu'elle n'a pas (ex : ne propose pas d'anneau lumineux si elle n'en a pas listé un).
 - Remplis AUSSI "equipment_layout" : pour CHAQUE élément de matériel listé (reprends son nom exact), une position vue du DESSUS autour de la personne qui filme, parmi ces 8 seulement : "face" (à côté/juste derrière la caméra, face à la personne), "avant_droite", "droite", "arriere_droite", "arriere", "arriere_gauche", "gauche", "avant_gauche". Choisis la position qui a du sens pour CET équipement précis (ex : lumière principale souvent "face" ou proche, lumière d'accentuation souvent "arriere" ou sur le côté). "note" : conseil très court (hauteur, angle, intensité).`
+      : ""
+  }${
+    hasPresets
+      ? `\n- Pour CHAQUE scène, assigne le "preset_label" du setup de tournage le plus adapté parmi ceux listés plus bas (reprends le label EXACTEMENT, aucune reformulation) — varie entre les setups disponibles selon ce qui convient à chaque scène, ne mets pas toujours le même. Si vraiment aucun ne convient pour une scène précise, omets "preset_label" plutôt que de deviner au hasard.`
       : ""
   }`;
 }
@@ -175,11 +201,13 @@ export function generateReel(opts: {
   includeStoryboard?: boolean;
   language?: GenerationLanguage;
   equipment?: string;
+  presets?: ScenePresetHint[];
 }): Promise<ReelGeneration> {
   const audience =
     opts.audience?.trim() || "des clients potentiels sur les réseaux";
   const platform = opts.platform?.trim() || "Instagram / TikTok";
   const includeStoryboard = Boolean(opts.includeStoryboard);
+  const hasPresets = includeStoryboard && Boolean(opts.presets?.length);
 
   const system = `Tu es un expert en scripts de Reels/TikTok qui arrêtent le scroll, MULTILINGUE : français, anglais et arabe. Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing) : simple, direct, humain, orienté valeur, ZÉRO jargon. Un script se dit à voix haute en 30-60 secondes, phrases courtes, une idée par phrase.
 
@@ -191,14 +219,14 @@ ${
   includeStoryboard
     ? `
 Tu découpes AUSSI ce script en un STORYBOARD tournage-prêt, pour quelqu'un qui n'a jamais filmé et ne sait pas ce qu'est un storyboard — il doit pouvoir filmer juste en suivant tes instructions, sans réfléchir :
-${storyboardSegmentationRules(opts.equipment)}`
+${storyboardSegmentationRules(opts.equipment, opts.presets)}`
     : ""
 }
 ${languageInstruction(opts.language)} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
 
   const user = `Sujet de la vidéo : "${opts.topic}".
 Plateforme : ${platform}
-Audience : ${audience}
+Audience : ${audience}${includeStoryboard ? presetsPromptBlock(opts.presets) : ""}
 
 Renvoie UNIQUEMENT ce JSON (sans markdown) :
 {
@@ -209,7 +237,7 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
       ? `,
   "storyboard": {
     "scenes": [
-      { "description": "...", "camera_angle": "...", "expression": "...", "movement": "..." }
+      { "description": "...", "camera_angle": "...", "expression": "...", "movement": "..."${hasPresets ? `, "preset_label": "..."` : ""} }
     ],
     "filming_guide": ${filmingGuideJsonTemplate(opts.equipment)}
   }`
@@ -217,7 +245,9 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
   }
 }`;
 
-  const maxTokens = includeStoryboard ? (opts.equipment ? 3300 : 3000) : 2000;
+  const maxTokens = includeStoryboard
+    ? (opts.equipment ? 3300 : 3000) + (hasPresets ? 300 : 0)
+    : 2000;
   return callClaudeJSON<ReelGeneration>(system, user, maxTokens);
 }
 
@@ -235,20 +265,22 @@ export type StoryboardSegmentation = {
 export function segmentScriptIntoStoryboard(opts: {
   script: string;
   equipment?: string;
+  presets?: ScenePresetHint[];
 }): Promise<StoryboardSegmentation> {
+  const hasPresets = Boolean(opts.presets?.length);
   const system = `Tu es un expert en réalisation de Reels/TikTok. Tu prends un script DÉJÀ ÉCRIT par l'utilisatrice — tu ne le réécris PAS, tu ne le corriges PAS, tu ne changes RIEN au fond ni au texte — et tu le découpes en STORYBOARD tournage-prêt, pour quelqu'un qui n'a jamais filmé et ne sait pas ce qu'est un storyboard — il doit pouvoir filmer juste en suivant tes instructions, sans réfléchir :
-${storyboardSegmentationRules(opts.equipment)}
+${storyboardSegmentationRules(opts.equipment, opts.presets)}
 Écris tes réponses (description, cadrage, expression, mouvement, résumé de tournage) dans la MÊME langue que le script fourni (ne traduis pas). Si le script fourni est en arabe : ${TUNISIAN_DIALECT_GUIDE} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
 
   const user = `Script à découper (ne pas réécrire, juste segmenter en scènes) :
 """
 ${opts.script}
-"""
+"""${presetsPromptBlock(opts.presets)}
 
 Renvoie UNIQUEMENT ce JSON (sans markdown) :
 {
   "scenes": [
-    { "description": "...", "camera_angle": "...", "expression": "...", "movement": "..." }
+    { "description": "...", "camera_angle": "...", "expression": "...", "movement": "..."${hasPresets ? `, "preset_label": "..."` : ""} }
   ],
   "filming_guide": ${filmingGuideJsonTemplate(opts.equipment)}
 }`;
@@ -256,7 +288,7 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
   return callClaudeJSON<StoryboardSegmentation>(
     system,
     user,
-    opts.equipment ? 2900 : 2500,
+    (opts.equipment ? 2900 : 2500) + (hasPresets ? 300 : 0),
   );
 }
 

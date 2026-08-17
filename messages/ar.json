@@ -300,7 +300,8 @@
     "expression": "التعبير",
     "movement": "الحركة",
     "equipmentLayoutTitle": "توزيع المعدات",
-    "equipmentLayoutSelf": "أنتِ"
+    "equipmentLayoutSelf": "أنتِ",
+    "preset": "الإعداد"
   },
   "checklist": {
     "title": "تحضير الفيديو",

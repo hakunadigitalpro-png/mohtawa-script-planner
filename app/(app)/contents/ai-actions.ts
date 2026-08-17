@@ -13,32 +13,86 @@ import {
   segmentScriptIntoStoryboard,
   AiError,
   type GenerationLanguage,
+  type ScenePresetHint,
+  type StoryboardSceneGeneration,
 } from "@/lib/ai";
 import type { FilmingGuide } from "@/lib/types";
 
 /**
- * Matériel de tournage renseigné dans le Brand Kit de la marque du contenu
- * — nourrit le "lighting"/cadrage du découpage storyboard (0050). `undefined`
- * si non rempli, marque introuvable, etc. : le prompt gère déjà l'absence
- * sans planter (bloc conditionnel).
+ * Contexte de marque qui nourrit le découpage storyboard (0050) : matériel
+ * de tournage (Brand Kit) + setups réutisables (Mes setups), tous deux
+ * optionnels — le prompt gère déjà leur absence sans planter (blocs
+ * conditionnels). Une seule résolution de `contents.brand_id`, réutilisée
+ * pour les deux, plutôt que 2 helpers qui la refont chacun.
  */
-async function getBrandEquipment(
+async function getBrandGenerationContext(
   supabase: Awaited<ReturnType<typeof createClient>>,
   contentId: string,
-): Promise<string | undefined> {
+): Promise<{ equipment?: string; presets: ScenePresetHint[] }> {
   const { data: content } = await supabase
     .from("contents")
     .select("brand_id")
     .eq("id", contentId)
     .maybeSingle();
-  if (!content) return undefined;
+  if (!content) return { presets: [] };
 
-  const { data: kit } = await supabase
-    .from("brand_kits")
-    .select("equipment")
-    .eq("brand_id", content.brand_id)
+  const [{ data: kit }, { data: presetRows }] = await Promise.all([
+    supabase
+      .from("brand_kits")
+      .select("equipment")
+      .eq("brand_id", content.brand_id)
+      .maybeSingle(),
+    supabase
+      .from("brand_scene_presets")
+      .select("label, default_camera, default_editing_notes")
+      .eq("brand_id", content.brand_id)
+      .order("position", { ascending: true }),
+  ]);
+
+  const presets: ScenePresetHint[] = (presetRows ?? []).map((p) => ({
+    label: p.label,
+    hint: [p.default_camera, p.default_editing_notes]
+      .filter((s): s is string => Boolean(s?.trim()))
+      .join(" · ") || undefined,
+  }));
+
+  return { equipment: kit?.equipment ?? undefined, presets };
+}
+
+/**
+ * Map "label de setup en minuscules" → photo de référence, pour résoudre
+ * les `preset_label` renvoyés par l'IA au moment d'ENREGISTRER les scènes
+ * (étape séparée de la génération — on retrouve simplement au vol le setup
+ * correspondant plutôt que de faire transiter les URLs via le client).
+ */
+async function getPresetImageByLabel(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  contentId: string,
+): Promise<Map<string, string>> {
+  const { data: content } = await supabase
+    .from("contents")
+    .select("brand_id")
+    .eq("id", contentId)
     .maybeSingle();
-  return kit?.equipment ?? undefined;
+  const map = new Map<string, string>();
+  if (!content) return map;
+
+  const { data: presets } = await supabase
+    .from("brand_scene_presets")
+    .select("label, reference_image_url")
+    .eq("brand_id", content.brand_id);
+  for (const p of presets ?? []) {
+    if (p.reference_image_url) map.set(p.label.trim().toLowerCase(), p.reference_image_url);
+  }
+  return map;
+}
+
+function resolveSceneImage(
+  scene: Pick<StoryboardSceneGeneration, "preset_label">,
+  presetImages: Map<string, string>,
+): string | null {
+  if (!scene.preset_label) return null;
+  return presetImages.get(scene.preset_label.trim().toLowerCase()) ?? null;
 }
 
 /**
@@ -56,9 +110,9 @@ export async function aiGenerateReel(input: {
 }) {
   try {
     const { supabase } = await guardAiAction("reel");
-    const equipment = input.includeStoryboard
-      ? await getBrandEquipment(supabase, input.contentId)
-      : undefined;
+    const { equipment, presets } = input.includeStoryboard
+      ? await getBrandGenerationContext(supabase, input.contentId)
+      : { equipment: undefined, presets: [] };
     const data = await generateReel({
       topic: input.topic,
       audience: input.audience,
@@ -66,6 +120,7 @@ export async function aiGenerateReel(input: {
       includeStoryboard: input.includeStoryboard,
       language: input.language,
       equipment,
+      presets,
     });
     return { ok: true as const, data };
   } catch (e) {
@@ -91,12 +146,7 @@ export async function applyReelGeneration(input: {
   corps: string;
   outro: string;
   storyboard?: {
-    scenes: {
-      description: string;
-      camera_angle: string;
-      expression: string;
-      movement: string;
-    }[];
+    scenes: StoryboardSceneGeneration[];
     filming_guide: FilmingGuide;
   };
 }) {
@@ -136,6 +186,10 @@ export async function applyReelGeneration(input: {
         !sceneCount && !existingReel?.filming_guide;
 
       if (storyboardIsEmpty) {
+        const presetImages = await getPresetImageByLabel(
+          supabase,
+          input.contentId,
+        );
         const scenesToInsert = input.storyboard.scenes.map((s, i) => ({
           content_id: input.contentId,
           scene_number: i + 1,
@@ -143,6 +197,7 @@ export async function applyReelGeneration(input: {
           camera_angle: s.camera_angle,
           expression: s.expression,
           movement: s.movement,
+          image_url: resolveSceneImage(s, presetImages),
         }));
         if (scenesToInsert.length) {
           await supabase.from("storyboard_scenes").insert(scenesToInsert);
@@ -176,10 +231,14 @@ export async function aiSegmentStoryboard(input: {
 }) {
   try {
     const { supabase } = await guardAiAction("storyboard");
-    const equipment = await getBrandEquipment(supabase, input.contentId);
+    const { equipment, presets } = await getBrandGenerationContext(
+      supabase,
+      input.contentId,
+    );
     const data = await segmentScriptIntoStoryboard({
       script: input.script,
       equipment,
+      presets,
     });
     return { ok: true as const, data };
   } catch (e) {
@@ -196,12 +255,7 @@ export async function aiSegmentStoryboard(input: {
  */
 export async function applyStoryboardSegmentation(input: {
   contentId: string;
-  scenes: {
-    description: string;
-    camera_angle: string;
-    expression: string;
-    movement: string;
-  }[];
+  scenes: StoryboardSceneGeneration[];
   filming_guide: FilmingGuide;
 }) {
   try {
@@ -224,6 +278,7 @@ export async function applyStoryboardSegmentation(input: {
       return { ok: true as const, skipped: true };
     }
 
+    const presetImages = await getPresetImageByLabel(supabase, input.contentId);
     const scenesToInsert = input.scenes.map((s, i) => ({
       content_id: input.contentId,
       scene_number: i + 1,
@@ -231,6 +286,7 @@ export async function applyStoryboardSegmentation(input: {
       camera_angle: s.camera_angle,
       expression: s.expression,
       movement: s.movement,
+      image_url: resolveSceneImage(s, presetImages),
     }));
     if (scenesToInsert.length) {
       const { error } = await supabase
