@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { Card } from "@/components/ui/card";
 import { KreaBadge } from "@/components/krea-avatar";
+import { KreaProgressPanel } from "@/components/krea-progress-panel";
 import { ContentCard } from "@/components/content-card";
 import { NewContentButton } from "@/components/new-content-modal";
 import { DashboardFilters } from "@/components/dashboard-filters";
@@ -115,7 +116,7 @@ export default async function DashboardPage({
   // KPIs + les 3 nouveaux modules "mission control" (Prochainement, mini
   // Analytics, Commentaires) — tout en parallèle, indépendant de la liste
   // filtrée plus bas.
-  const [allRes, upcomingRes, perfRes, commentsRes] = await Promise.all([
+  const [allRes, upcomingRes, perfRes, commentsRes, pillarsCountRes] = await Promise.all([
     supabase.from("contents").select("status, date").eq("brand_id", active.id),
     supabase
       .from("contents")
@@ -133,6 +134,12 @@ export default async function DashboardPage({
       p_brand_id: active.id,
       p_limit: 4,
     }),
+    // Pour le panneau de progression Krea (étape "thèmes créés") — juste un
+    // compte, pas besoin des lignes.
+    supabase
+      .from("brand_pillars")
+      .select("id", { count: "exact", head: true })
+      .eq("brand_id", active.id),
   ]);
 
   const allContents = allRes.data ?? [];
@@ -146,6 +153,13 @@ export default async function DashboardPage({
   }).length;
 
   const upcoming = (upcomingRes.data ?? []) as UpcomingRow[];
+
+  // Panneau de progression Krea : masqué une fois les 3 vraies étapes
+  // franchies, pour ne pas encombrer l'écran d'une marque déjà lancée.
+  const hasThemes = (pillarsCountRes.count ?? 0) > 0;
+  const hasContent = total > 0;
+  const hasPublished = published > 0;
+  const journeyComplete = hasThemes && hasContent && hasPublished;
 
   // Mini-Analytics : vues ce mois vs le précédent + pilier qui progresse le
   // plus (même logique que /analytics, en plus léger pour la carte).
@@ -224,6 +238,15 @@ export default async function DashboardPage({
         </div>
         <NewContentButton />
       </div>
+
+      {!journeyComplete && (
+        <KreaProgressPanel
+          brandId={active.id}
+          hasThemes={hasThemes}
+          hasContent={hasContent}
+          hasPublished={hasPublished}
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Kpi label={t("kpi.total")} value={total} accent />

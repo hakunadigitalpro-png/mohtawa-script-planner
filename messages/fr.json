@@ -107,6 +107,17 @@
     "coach": {
       "aboveThreshold": "{count} contenus ce mois — largement au-dessus de ton rythme habituel ({threshold}/mois). Bravo, continue comme ça !"
     },
+    "progress": {
+      "brand": "Marque créée",
+      "themes": "Tes thèmes de contenu",
+      "themesHint": "Réponds à 3 questions, je construis tes thèmes.",
+      "themesCta": "Créer mes thèmes",
+      "content": "Ton premier contenu",
+      "contentHint": "Un sujet suffit, je m'occupe du script.",
+      "contentCta": "Créer un contenu",
+      "publish": "Premier contenu publié",
+      "publishHint": "Plus qu'à le passer en Live quand il est prêt !"
+    },
     "upcoming": {
       "title": "Prochainement",
       "seeAll": "Calendrier",
