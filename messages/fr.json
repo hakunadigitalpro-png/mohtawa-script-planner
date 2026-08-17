@@ -298,7 +298,9 @@
     "tip": "Conseil pro",
     "camera": "Caméra",
     "expression": "Expression",
-    "movement": "Mouvement"
+    "movement": "Mouvement",
+    "equipmentLayoutTitle": "Placement du matériel",
+    "equipmentLayoutSelf": "Toi"
   },
   "checklist": {
     "title": "Préparation de la vidéo",

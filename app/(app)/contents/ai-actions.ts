@@ -14,6 +14,7 @@ import {
   AiError,
   type GenerationLanguage,
 } from "@/lib/ai";
+import type { FilmingGuide } from "@/lib/types";
 
 /**
  * Matériel de tournage renseigné dans le Brand Kit de la marque du contenu
@@ -96,13 +97,7 @@ export async function applyReelGeneration(input: {
       expression: string;
       movement: string;
     }[];
-    filming_guide: {
-      lighting: string;
-      camera_style: string;
-      pacing: string;
-      energy: string;
-      tip: string;
-    };
+    filming_guide: FilmingGuide;
   };
 }) {
   try {
@@ -207,13 +202,7 @@ export async function applyStoryboardSegmentation(input: {
     expression: string;
     movement: string;
   }[];
-  filming_guide: {
-    lighting: string;
-    camera_style: string;
-    pacing: string;
-    energy: string;
-    tip: string;
-  };
+  filming_guide: FilmingGuide;
 }) {
   try {
     const supabase = await createClient();

@@ -47,6 +47,7 @@ import { SaveFooter } from "./save-footer";
 import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
+import { EquipmentLayoutDiagram } from "@/components/equipment-layout-diagram";
 import type { StoryboardScene, ScenePreset, FilmingGuide, ReelDetails } from "@/lib/types";
 
 const DRAG_MIME = "application/x-mohtawa-scene-id";
@@ -67,6 +68,7 @@ const EMPTY_GUIDE: FilmingGuide = {
   pacing: "",
   energy: "",
   tip: "",
+  equipment_layout: [],
 };
 
 export function StoryboardTab({
@@ -178,7 +180,15 @@ export function StoryboardTab({
     setState((s) => ({ ...s, guide: { ...s.guide, [key]: value } }));
   };
 
-  const hasGuideContent = Object.values(state.guide).some((v) => v.trim());
+  // Champs texte explicitement listés (pas Object.values) : "guide" porte
+  // aussi equipment_layout, un tableau — .trim() y planterait.
+  const hasGuideContent = [
+    state.guide.lighting,
+    state.guide.camera_style,
+    state.guide.pacing,
+    state.guide.energy,
+    state.guide.tip,
+  ].some((v) => v.trim());
 
   /* ============== Drag & drop reorder (immédiat) ============== */
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -313,6 +323,8 @@ export function StoryboardTab({
                 onChange={(e) => updateGuideField("tip", e.target.value)}
               />
             </div>
+
+            <EquipmentLayoutDiagram items={state.guide.equipment_layout ?? []} />
           </div>
         )}
 

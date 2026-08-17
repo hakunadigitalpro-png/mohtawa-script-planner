@@ -147,12 +147,31 @@ export type ReelDetails = {
   filming_guide: FilmingGuide | null;
 };
 
+export type EquipmentPosition =
+  | "face"
+  | "avant_droite"
+  | "droite"
+  | "arriere_droite"
+  | "arriere"
+  | "arriere_gauche"
+  | "gauche"
+  | "avant_gauche";
+
+export type EquipmentPlacement = {
+  label: string;
+  position: EquipmentPosition;
+  note: string;
+};
+
 export type FilmingGuide = {
   lighting: string;
   camera_style: string;
   pacing: string;
   energy: string;
   tip: string;
+  /** Où placer le matériel du Brand Kit (0050), vu du dessus — seulement
+   *  rempli si du matériel était renseigné au moment de la génération. */
+  equipment_layout?: EquipmentPlacement[];
 };
 
 export type StoryDetails = {

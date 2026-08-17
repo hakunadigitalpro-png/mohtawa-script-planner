@@ -298,7 +298,9 @@
     "tip": "نصيحة احترافية",
     "camera": "الكاميرا",
     "expression": "التعبير",
-    "movement": "الحركة"
+    "movement": "الحركة",
+    "equipmentLayoutTitle": "توزيع المعدات",
+    "equipmentLayoutSelf": "أنتِ"
   },
   "checklist": {
     "title": "تحضير الفيديو",

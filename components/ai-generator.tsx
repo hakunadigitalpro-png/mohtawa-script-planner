@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select } from "@/components/ui/select";
 import { KreaBadge } from "@/components/krea-avatar";
+import { EquipmentLayoutDiagram } from "@/components/equipment-layout-diagram";
 import {
   aiGenerateReel,
   applyReelGeneration,
@@ -405,6 +406,10 @@ export function StoryboardSegmentButton({
                     </div>
                     <p className="text-xs italic text-muted">💡 {preview.filming_guide.tip}</p>
 
+                    <EquipmentLayoutDiagram
+                      items={preview.filming_guide.equipment_layout ?? []}
+                    />
+
                     <ul className="space-y-2">
                       {preview.scenes.map((s, i) => (
                         <li key={i} className="rounded border border-border bg-card p-2 text-sm">
@@ -512,6 +517,10 @@ function ReelPreview({ data }: { data: ReelGeneration }) {
             <PreviewField label={g("energy")} value={data.storyboard.filming_guide.energy} />
           </div>
           <p className="text-xs italic text-muted">💡 {data.storyboard.filming_guide.tip}</p>
+
+          <EquipmentLayoutDiagram
+            items={data.storyboard.filming_guide.equipment_layout ?? []}
+          />
 
           <ul className="space-y-2">
             {data.storyboard.scenes.map((s, i) => (

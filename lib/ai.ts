@@ -121,9 +121,32 @@ function storyboardSegmentationRules(equipment?: string): string {
 - Le "filming_guide" est un résumé global du tournage (pas la durée — elle est calculée ailleurs à partir du script, ne l'invente pas) : "lighting" (conseil d'éclairage court), "camera_style" (style de plan général pour toute la vidéo), "pacing" (rythme/rétention, ex : "Change de plan toutes les 3-4s pour garder l'attention"), "energy" (niveau d'énergie à tenir), "tip" (UN conseil pro actionnable).
 - Reste TRÈS court sur chaque champ (une poignée de mots, pas une phrase longue) — c'est un pense-bête à lire pendant le tournage, pas un article.${
     equipment
-      ? `\n- Matériel de tournage RÉELLEMENT disponible pour cette marque : ${equipment}. Base "lighting" et les cadrages caméra sur CE matériel précis (comment le positionner, l'utiliser) — jamais une suggestion générique qui suppose un équipement qu'elle n'a pas (ex : ne propose pas d'anneau lumineux si elle n'en a pas listé un).`
+      ? `\n- Matériel de tournage RÉELLEMENT disponible pour cette marque : ${equipment}. Base "lighting" et les cadrages caméra sur CE matériel précis (comment le positionner, l'utiliser) — jamais une suggestion générique qui suppose un équipement qu'elle n'a pas (ex : ne propose pas d'anneau lumineux si elle n'en a pas listé un).
+- Remplis AUSSI "equipment_layout" : pour CHAQUE élément de matériel listé (reprends son nom exact), une position vue du DESSUS autour de la personne qui filme, parmi ces 8 seulement : "face" (à côté/juste derrière la caméra, face à la personne), "avant_droite", "droite", "arriere_droite", "arriere", "arriere_gauche", "gauche", "avant_gauche". Choisis la position qui a du sens pour CET équipement précis (ex : lumière principale souvent "face" ou proche, lumière d'accentuation souvent "arriere" ou sur le côté). "note" : conseil très court (hauteur, angle, intensité).`
       : ""
   }`;
+}
+
+/**
+ * Gabarit JSON du "filming_guide", partagé entre generateReel et
+ * segmentScriptIntoStoryboard — inclut "equipment_layout" UNIQUEMENT si du
+ * matériel a été fourni (sinon le modèle produirait un champ vide inutile).
+ */
+function filmingGuideJsonTemplate(equipment?: string): string {
+  return `{
+      "lighting": "...",
+      "camera_style": "...",
+      "pacing": "...",
+      "energy": "...",
+      "tip": "..."${
+        equipment
+          ? `,
+      "equipment_layout": [
+        { "label": "nom exact repris de la liste de matériel", "position": "face|avant_droite|droite|arriere_droite|arriere|arriere_gauche|gauche|avant_gauche", "note": "..." }
+      ]`
+          : ""
+      }
+    }`;
 }
 
 export type ReelGeneration = {
@@ -188,19 +211,14 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
     "scenes": [
       { "description": "...", "camera_angle": "...", "expression": "...", "movement": "..." }
     ],
-    "filming_guide": {
-      "lighting": "...",
-      "camera_style": "...",
-      "pacing": "...",
-      "energy": "...",
-      "tip": "..."
-    }
+    "filming_guide": ${filmingGuideJsonTemplate(opts.equipment)}
   }`
       : ""
   }
 }`;
 
-  return callClaudeJSON<ReelGeneration>(system, user, includeStoryboard ? 3000 : 2000);
+  const maxTokens = includeStoryboard ? (opts.equipment ? 3300 : 3000) : 2000;
+  return callClaudeJSON<ReelGeneration>(system, user, maxTokens);
 }
 
 export type StoryboardSegmentation = {
@@ -232,16 +250,14 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
   "scenes": [
     { "description": "...", "camera_angle": "...", "expression": "...", "movement": "..." }
   ],
-  "filming_guide": {
-    "lighting": "...",
-    "camera_style": "...",
-    "pacing": "...",
-    "energy": "...",
-    "tip": "..."
-  }
+  "filming_guide": ${filmingGuideJsonTemplate(opts.equipment)}
 }`;
 
-  return callClaudeJSON<StoryboardSegmentation>(system, user, 2500);
+  return callClaudeJSON<StoryboardSegmentation>(
+    system,
+    user,
+    opts.equipment ? 2900 : 2500,
+  );
 }
 
 /* =========================================================================

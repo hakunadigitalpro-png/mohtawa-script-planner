@@ -298,7 +298,9 @@
     "tip": "Pro tip",
     "camera": "Camera",
     "expression": "Expression",
-    "movement": "Movement"
+    "movement": "Movement",
+    "equipmentLayoutTitle": "Equipment placement",
+    "equipmentLayoutSelf": "You"
   },
   "checklist": {
     "title": "Video preparation",
