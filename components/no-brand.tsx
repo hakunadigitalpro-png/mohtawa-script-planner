@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { KreaBadge } from "@/components/krea-avatar";
 import { createBrand } from "@/app/(app)/actions";
 
 export function NoBrandWelcome({ email }: { email: string | null }) {
@@ -23,6 +24,12 @@ export function NoBrandWelcome({ email }: { email: string | null }) {
           </div>
           <CardTitle>{t("welcomeTitle")}</CardTitle>
           <CardDescription>{t("welcomeSubtitle")}</CardDescription>
+          <div className="mt-2 rounded-2xl bg-accent/10 px-3 py-2.5">
+            <KreaBadge className="mb-1" />
+            <p className="text-xs leading-relaxed text-foreground/80">
+              {t("kreaIntro")}
+            </p>
+          </div>
         </CardHeader>
         <CardContent>
           <form

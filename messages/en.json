@@ -92,7 +92,8 @@
     "brandNamePlaceholder": "e.g. My personal account",
     "create": "Create my first brand",
     "creating": "Creating...",
-    "connectedAs": "Signed in as {email}"
+    "connectedAs": "Signed in as {email}",
+    "kreaIntro": "I'm Krea, your AI coach — I'll guide you from creating your brand to publishing your content."
   },
   "dashboard": {
     "title": "Dashboard",
@@ -690,9 +691,9 @@
     }
   },
   "ai": {
-    "buttonLabel": "Generate with AI",
-    "reelTitle": "Generate your Reel script with AI",
-    "storyTitle": "Generate your Story sequence with AI",
+    "buttonLabel": "Generate with Krea",
+    "reelTitle": "Generate your Reel script with Krea",
+    "storyTitle": "Generate your Story sequence with Krea",
     "subtitle": "Give me a topic, I handle the rest. You can edit everything after.",
     "topic": "Video topic",
     "topicPlaceholder": "e.g. The 3 mistakes new creators make on Instagram",
@@ -705,7 +706,7 @@
       "ar_msa": "Standard Arabic",
       "ar_tn": "Tunisian Arabic (dialect)"
     },
-    "thinking": "AI is thinking through your script...",
+    "thinking": "Krea is thinking through your script...",
     "segmentButtonLabel": "Break down into storyboard",
     "segmentTitle": "Break your script down into a storyboard",
     "segmentSubtitle": "The AI keeps your script as-is and only breaks it down into filming scenes.",

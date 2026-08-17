@@ -4,7 +4,6 @@ import {
   CalendarClock,
   TrendingUp,
   MessageSquare,
-  Sparkles,
   Check,
   Clock3,
 } from "lucide-react";
@@ -12,6 +11,7 @@ import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { Card } from "@/components/ui/card";
+import { KreaBadge } from "@/components/krea-avatar";
 import { ContentCard } from "@/components/content-card";
 import { NewContentButton } from "@/components/new-content-modal";
 import { DashboardFilters } from "@/components/dashboard-filters";
@@ -234,7 +234,7 @@ export default async function DashboardPage({
 
       {thisMonth > MONTHLY_GOAL_THRESHOLD && (
         <div className="flex items-center gap-3 rounded-3xl bg-accent/10 px-5 py-3.5 text-sm text-foreground">
-          <Sparkles className="size-4 shrink-0 text-accent" />
+          <KreaBadge />
           <span>
             {t("coach.aboveThreshold", {
               count: thisMonth,

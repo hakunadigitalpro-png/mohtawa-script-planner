@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { KreaBadge } from "@/components/krea-avatar";
 import {
   themeAssistant,
   applyBrandThemes,
@@ -52,7 +53,7 @@ export function ThemeAssistant({ brandId }: { brandId: string }) {
     <>
       <Button type="button" onClick={() => setOpen(true)}>
         <Sparkles className="size-4" />
-        Créer mes thèmes avec l&apos;IA
+        Créer mes thèmes avec Krea
       </Button>
       {open && (
         <AssistantModal brandId={brandId} onClose={() => setOpen(false)} />
@@ -164,6 +165,7 @@ function AssistantModal({
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
+          <KreaBadge className="mb-1" />
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="size-4 text-amber-500" />
             {phase === "form"
@@ -172,7 +174,7 @@ function AssistantModal({
           </DialogTitle>
           <DialogDescription>
             {phase === "form"
-              ? "Réponds simplement — l'IA s'occupe de construire tes thèmes de contenu."
+              ? "Réponds simplement — je m'occupe de construire tes thèmes de contenu."
               : "Applique-les, régénère, ou demande un ajustement."}
           </DialogDescription>
         </DialogHeader>
@@ -258,7 +260,7 @@ function AssistantModal({
                   themes.map((th, j) => <ThemePreview key={j} theme={th} />)
                 ) : (
                   <p className="rounded-xl bg-secondary/40 px-3 py-2 text-sm text-muted">
-                    L&apos;IA a besoin d&apos;une précision — réponds ci-dessous.
+                    Krea a besoin d&apos;une précision — réponds ci-dessous.
                   </p>
                 )}
               </div>

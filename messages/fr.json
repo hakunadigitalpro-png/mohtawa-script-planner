@@ -92,7 +92,8 @@
     "brandNamePlaceholder": "Ex : Mon compte perso",
     "create": "Créer ma première marque",
     "creating": "Création...",
-    "connectedAs": "Connecté en tant que {email}"
+    "connectedAs": "Connecté en tant que {email}",
+    "kreaIntro": "Je suis Krea, ta coach IA — je t'accompagne de la création de ta marque jusqu'à la publication de tes contenus."
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -690,9 +691,9 @@
     }
   },
   "ai": {
-    "buttonLabel": "Générer avec l'IA",
-    "reelTitle": "Générer le script de ton Reel avec l'IA",
-    "storyTitle": "Générer ta séquence Story avec l'IA",
+    "buttonLabel": "Générer avec Krea",
+    "reelTitle": "Générer le script de ton Reel avec Krea",
+    "storyTitle": "Générer ta séquence Story avec Krea",
     "subtitle": "Donne-moi un sujet, je m'occupe du reste. Tu pourras tout éditer après.",
     "topic": "Sujet de la vidéo",
     "topicPlaceholder": "Ex : Les 3 erreurs que font les créateurs débutants sur Instagram",
@@ -705,7 +706,7 @@
       "ar_msa": "Arabe standard",
       "ar_tn": "Arabe tunisien (dialecte)"
     },
-    "thinking": "L'IA réfléchit à ton script...",
+    "thinking": "Krea réfléchit à ton script...",
     "segmentButtonLabel": "Découper en storyboard",
     "segmentTitle": "Découper ton script en storyboard",
     "segmentSubtitle": "L'IA garde ton script tel quel et le découpe juste en scènes de tournage.",

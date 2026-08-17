@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, ArrowRight, ArrowLeft, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { KreaBadge } from "@/components/krea-avatar";
 
 /**
  * Visite guidée en COACH-MARKS : chaque étape met en surbrillance un vrai
@@ -17,28 +18,30 @@ import { cn } from "@/lib/utils";
  * centrée sans surbrillance — jamais de plantage.
  */
 
-const KEY = "mohtawa_tour_brand_v2";
+// v3 : passage à la voix de Krea — on rebump la clé pour que les users
+// déjà passés par la v2 revoient l'intro une fois et découvrent qui elle est.
+const KEY = "mohtawa_tour_brand_v3";
 
 type Step = { selector?: string; title: string; body: string };
 
 const STEPS: Step[] = [
   {
-    title: "Bienvenue 👋",
-    body: "En 3 étapes, tu passes de zéro à un planning de vidéos. Je te montre exactement où cliquer.",
+    title: "Salut, moi c'est Krea 👋",
+    body: "En 3 étapes, je te fais passer de zéro à un planning de contenus. Je te montre exactement où cliquer.",
   },
   {
     selector: '[data-tour="create-themes"]',
     title: "Étape 1 · Crée tes thèmes",
-    body: "Clique ce bouton : réponds à 2-3 questions simples et l'IA construit tes thèmes de contenu, avec des idées de vidéos prêtes.",
+    body: "Clique ce bouton : réponds à 2-3 questions simples et je construis tes thèmes de contenu, avec des idées prêtes à l'emploi.",
   },
   {
     selector: '[data-tour="themes-list"]',
-    title: "Étape 2 · D'une idée à une vidéo",
-    body: "Tes thèmes s'affichent ici. Survole une idée d'exemple et clique le bouton 🎬 : une vidéo se crée déjà remplie.",
+    title: "Étape 2 · D'une idée à un contenu",
+    body: "Tes thèmes s'affichent ici. Survole une idée d'exemple et clique le bouton 🎬 : un contenu se crée déjà rempli.",
   },
   {
     title: "C'est parti 🚀",
-    body: "Retrouve ensuite tes vidéos au Dashboard et au Calendrier — avec script, checklist de tournage et date de publication.",
+    body: "Retrouve ensuite tes contenus au Dashboard et au Calendrier — script, checklist de tournage et date de publication. Je reste dispo à chaque étape via le bouton « Générer avec Krea ».",
   },
 ];
 
@@ -51,6 +54,19 @@ export function GuidedTour() {
     null,
   );
   const bubbleRef = React.useRef<HTMLDivElement>(null);
+
+  // Déclaré avant les effets ci-dessous : l'écouteur Escape le référence.
+  const finish = () => {
+    try {
+      localStorage.setItem(KEY, "1");
+    } catch {
+      // ignore
+    }
+    setOpen(false);
+    setStep(0);
+    setPos(null);
+    setRect(null);
+  };
 
   React.useEffect(() => setMounted(true), []);
 
@@ -97,7 +113,6 @@ export function GuidedTour() {
       window.removeEventListener("scroll", measure, true);
       window.removeEventListener("keydown", onKey);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, step]);
 
   // Positionne la bulle par rapport à la cible (dessous si la place le permet,
@@ -119,18 +134,6 @@ export function GuidedTour() {
     setPos({ top, left });
   }, [rect, open, step]);
 
-  const finish = () => {
-    try {
-      localStorage.setItem(KEY, "1");
-    } catch {
-      // ignore
-    }
-    setOpen(false);
-    setStep(0);
-    setPos(null);
-    setRect(null);
-  };
-
   const replay = () => {
     setStep(0);
     setPos(null);
@@ -145,7 +148,7 @@ export function GuidedTour() {
     <>
       <Button type="button" variant="outline" size="sm" onClick={replay}>
         <HelpCircle className="size-4" />
-        Visite guidée
+        Revoir avec Krea
       </Button>
 
       {mounted &&
@@ -192,6 +195,7 @@ export function GuidedTour() {
                 <X className="size-4" />
               </button>
 
+              <KreaBadge className="mb-1.5" />
               <h3 className="pe-6 text-base font-bold">{s.title}</h3>
               <p className="mt-1 text-sm leading-relaxed text-muted">{s.body}</p>
 

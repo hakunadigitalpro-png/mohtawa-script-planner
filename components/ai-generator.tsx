@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select } from "@/components/ui/select";
+import { KreaBadge } from "@/components/krea-avatar";
 import {
   aiGenerateReel,
   applyReelGeneration,
@@ -188,6 +189,7 @@ function AiGeneratorModal({
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
+          <KreaBadge className="mb-1" />
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="size-4 text-amber-500" />
             {type === "reel" ? t("reelTitle") : t("storyTitle")}
@@ -378,6 +380,7 @@ export function StoryboardSegmentButton({
         <Dialog open onOpenChange={(v) => !v && setOpen(false)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
+              <KreaBadge className="mb-1" />
               <DialogTitle className="flex items-center gap-2">
                 <Film className="size-4 text-accent" />
                 {t("segmentTitle")}
