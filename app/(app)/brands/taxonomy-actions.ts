@@ -281,7 +281,6 @@ export async function upsertBrandKit(
     tagline: string | null;
     audience: string | null;
     voice: string | null;
-    equipment: string | null;
     hashtags: string[];
   }>,
 ) {
@@ -298,7 +297,6 @@ export async function upsertBrandKit(
         "tagline",
         "audience",
         "voice",
-        "equipment",
         "hashtags",
       ]),
       updated_at: new Date().toISOString(),

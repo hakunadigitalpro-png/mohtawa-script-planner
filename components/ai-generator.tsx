@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select } from "@/components/ui/select";
 import { KreaBadge } from "@/components/krea-avatar";
-import { EquipmentLayoutDiagram } from "@/components/equipment-layout-diagram";
+import { FilmingLayouts } from "@/components/equipment-layout-diagram";
 import {
   aiGenerateReel,
   applyReelGeneration,
@@ -406,8 +406,8 @@ export function StoryboardSegmentButton({
                     </div>
                     <p className="text-xs italic text-muted">💡 {preview.filming_guide.tip}</p>
 
-                    <EquipmentLayoutDiagram
-                      items={preview.filming_guide.equipment_layout ?? []}
+                    <FilmingLayouts
+                      presetLayouts={preview.filming_guide.preset_layouts}
                       cameraPosition={preview.filming_guide.camera_position}
                     />
 
@@ -522,8 +522,8 @@ function ReelPreview({ data }: { data: ReelGeneration }) {
           </div>
           <p className="text-xs italic text-muted">💡 {data.storyboard.filming_guide.tip}</p>
 
-          <EquipmentLayoutDiagram
-            items={data.storyboard.filming_guide.equipment_layout ?? []}
+          <FilmingLayouts
+            presetLayouts={data.storyboard.filming_guide.preset_layouts}
             cameraPosition={data.storyboard.filming_guide.camera_position}
           />
 

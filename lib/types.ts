@@ -24,7 +24,6 @@ export type BrandKit = {
   tagline: string | null;
   audience: string | null;
   voice: string | null;
-  equipment: string | null;
   hashtags: string[];
 };
 
@@ -163,18 +162,27 @@ export type EquipmentPlacement = {
   note: string;
 };
 
+/** Placement du matériel d'UN setup précis, vu du dessus (0051) — un
+ *  storyboard qui mélange plusieurs lieux a un layout par lieu utilisé,
+ *  pas un seul global (le matériel dépend du lieu, pas de la marque). */
+export type PresetEquipmentLayout = {
+  /** Reprend le label exact du setup (brand_scene_presets.label). */
+  preset_label: string;
+  equipment_layout: EquipmentPlacement[];
+};
+
 export type FilmingGuide = {
   lighting: string;
   camera_style: string;
   pacing: string;
   energy: string;
   tip: string;
-  /** Où placer le matériel du Brand Kit (0050), vu du dessus — seulement
-   *  rempli si du matériel était renseigné au moment de la génération. */
-  equipment_layout?: EquipmentPlacement[];
   /** Où poser le téléphone/la caméra, vu du dessus — toujours demandé (pas
    *  besoin de matériel configuré pour savoir où filmer depuis). */
   camera_position?: EquipmentPosition;
+  /** Un layout par setup RÉELLEMENT utilisé dans ce storyboard et qui a du
+   *  matériel renseigné (0051) — absent si aucun setup équipé n'est utilisé. */
+  preset_layouts?: PresetEquipmentLayout[];
 };
 
 export type StoryDetails = {
@@ -269,6 +277,9 @@ export type ScenePreset = {
   reference_image_url: string | null;
   default_camera: string | null;
   default_editing_notes: string | null;
+  /** Matériel dispo à CE lieu précis (0051) — un setup "face fenêtre" n'a
+   *  souvent aucun matériel, un setup "bureau" peut en avoir plusieurs. */
+  equipment: string | null;
   position: number;
   created_at: string;
 };

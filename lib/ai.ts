@@ -109,12 +109,17 @@ export type StoryboardSceneGeneration = {
   preset_label?: string;
 };
 
-export type ScenePresetHint = { label: string; hint?: string };
+/** `equipment` : matériel RÉEL de CE setup précis (0051) — un setup "face
+ *  fenêtre" peut très bien n'en avoir aucun, c'est normal, pas une lacune. */
+export type ScenePresetHint = { label: string; hint?: string; equipment?: string };
 
 function presetsPromptBlock(presets?: ScenePresetHint[]): string {
   if (!presets || presets.length === 0) return "";
   return `\n\nSetups de tournage disponibles pour cette marque (lieux réutilisables) :\n${presets
-    .map((p) => `- "${p.label}"${p.hint ? ` — ${p.hint}` : ""}`)
+    .map((p) => {
+      const bits = [p.hint, p.equipment ? `matériel : ${p.equipment}` : "aucun matériel (lumière naturelle par ex.)"];
+      return `- "${p.label}" — ${bits.filter(Boolean).join(" · ")}`;
+    })
     .join("\n")}`;
 }
 
@@ -124,33 +129,29 @@ function presetsPromptBlock(presets?: ScenePresetHint[]): string {
  * segmentScriptIntoStoryboard — qui découpe un script DÉJÀ ÉCRIT par
  * l'utilisatrice (Guidé ou Libre) sans le regénérer.
  *
- * `equipment` (Brand Kit, optionnel) : quand rempli, le "lighting" et les
- * cadrages doivent s'appuyer sur ce matériel RÉEL plutôt que des conseils
- * génériques — bloc injecté conditionnellement, jamais "au cas où".
- *
  * `presets` (Mes setups, optionnel) : quand la marque a des lieux de
  * tournage réutilisables, chaque scène reçoit le "preset_label" du plus
- * adapté — sert à récupérer sa photo de référence à l'application, pour
- * ne pas laisser les scènes générées sans image.
+ * adapté — sert à récupérer sa photo de référence à l'application. Le
+ * matériel vit sur CHAQUE setup (0051, pas sur la marque) : deux setups de
+ * la même marque peuvent avoir un matériel complètement différent (l'un
+ * équipé, l'autre à la lumière naturelle) — jamais de layout matériel
+ * unique pour toute la vidéo.
  */
-function storyboardSegmentationRules(
-  equipment?: string,
-  presets?: ScenePresetHint[],
-): string {
+function storyboardSegmentationRules(presets?: ScenePresetHint[]): string {
   const hasPresets = Boolean(presets && presets.length > 0);
+  const presetsWithEquipment = (presets ?? []).filter((p) => p.equipment?.trim());
   return `- Découpe par BEAT naturel (une idée/phrase forte = une scène), pas rigidement par accroche/corps/outro. Vise 4 à 7 scènes pour 30-60s.
 - Pour chaque scène : "description" (l'action + ce qui est dit, en 1 phrase concrète), "camera_angle" (cadrage, TRÈS court : "Plan rapproché, face caméra"), "expression" (jeu de visage à adopter, TRÈS court : "Souriant, sourcils levés"), "movement" (gestuelle, TRÈS court : "Main sur le cœur, hoche la tête").
 - Le "filming_guide" est un résumé global du tournage (pas la durée — elle est calculée ailleurs à partir du script, ne l'invente pas) : "lighting" (conseil d'éclairage court), "camera_style" (style de plan général pour toute la vidéo), "pacing" (rythme/rétention, ex : "Change de plan toutes les 3-4s pour garder l'attention"), "energy" (niveau d'énergie à tenir), "tip" (UN conseil pro actionnable).
 - Reste TRÈS court sur chaque champ (une poignée de mots, pas une phrase longue) — c'est un pense-bête à lire pendant le tournage, pas un article.
 - Si le script est en arabe : "camera_angle", "expression", "movement" et les champs de "filming_guide" doivent être du VRAI vocabulaire arabe de tournage, PAS une translittération phonétique de termes français en lettres arabes (mauvais, à ne jamais faire : "بلان رابروشي", "فاس كاميرا" ; bon : "لقطة قريبة", "مواجهة الكاميرا").
 - Remplis TOUJOURS "camera_position" : où poser le téléphone/la caméra vu du DESSUS par rapport à la personne qui filme, parmi les 8 mêmes positions ("face" le plus souvent — cadrage face caméra classique — sauf si le style de plan demande un angle différent, ex : "droite" pour un profil).${
-    equipment
-      ? `\n- Matériel de tournage RÉELLEMENT disponible pour cette marque : ${equipment}. Base "lighting" et les cadrages caméra sur CE matériel précis (comment le positionner, l'utiliser) — jamais une suggestion générique qui suppose un équipement qu'elle n'a pas (ex : ne propose pas d'anneau lumineux si elle n'en a pas listé un).
-- Remplis AUSSI "equipment_layout" : pour CHAQUE élément de matériel listé (reprends son nom exact), une position vue du DESSUS autour de la personne qui filme, parmi ces 8 seulement : "face" (à côté/juste derrière la caméra, face à la personne), "avant_droite", "droite", "arriere_droite", "arriere", "arriere_gauche", "gauche", "avant_gauche". Choisis la position qui a du sens pour CET équipement précis (ex : lumière principale souvent "face" ou proche, lumière d'accentuation souvent "arriere" ou sur le côté). "note" : conseil très court (hauteur, angle, intensité).`
-      : ""
-  }${
     hasPresets
       ? `\n- Pour CHAQUE scène, assigne le "preset_label" du setup de tournage le plus adapté parmi ceux listés plus bas (reprends le label EXACTEMENT, aucune reformulation) — varie entre les setups disponibles selon ce qui convient à chaque scène, ne mets pas toujours le même. Si vraiment aucun ne convient pour une scène précise, omets "preset_label" plutôt que de deviner au hasard.`
+      : ""
+  }${
+    presetsWithEquipment.length > 0
+      ? `\n- Remplis AUSSI "preset_layouts" : UN élément par setup listé plus bas qui a du matériel (ignore ceux sans matériel — rien à placer). Pour "${presetsWithEquipment.map((p) => p.label).join('", "')}" : reprends le "preset_label" EXACT, et pour CHAQUE élément de matériel de CE setup (reprends son nom exact), une position vue du DESSUS autour de la personne qui filme À CE LIEU, parmi ces 8 seulement : "face" (à côté/juste derrière la caméra, face à la personne), "avant_droite", "droite", "arriere_droite", "arriere", "arriere_gauche", "gauche", "avant_gauche". Choisis la position qui a du sens pour CET équipement précis (ex : lumière principale souvent "face" ou proche, lumière d'accentuation souvent "arriere" ou sur le côté). "note" : conseil très court (hauteur, angle, intensité). Ne mélange JAMAIS le matériel de deux setups différents dans un même "preset_layouts".`
       : ""
   }`;
 }
@@ -158,10 +159,10 @@ function storyboardSegmentationRules(
 /**
  * Gabarit JSON du "filming_guide", partagé entre generateReel et
  * segmentScriptIntoStoryboard — "camera_position" est TOUJOURS demandé
- * (utile même sans matériel configuré), "equipment_layout" UNIQUEMENT si du
- * matériel a été fourni (sinon le modèle produirait un champ vide inutile).
+ * (utile même sans matériel configuré), "preset_layouts" UNIQUEMENT si au
+ * moins un setup a du matériel (sinon le modèle produirait un champ vide).
  */
-function filmingGuideJsonTemplate(equipment?: string): string {
+function filmingGuideJsonTemplate(presetsWithEquipment: ScenePresetHint[]): string {
   return `{
       "lighting": "...",
       "camera_style": "...",
@@ -169,10 +170,12 @@ function filmingGuideJsonTemplate(equipment?: string): string {
       "energy": "...",
       "tip": "...",
       "camera_position": "face|avant_droite|droite|arriere_droite|arriere|arriere_gauche|gauche|avant_gauche"${
-        equipment
+        presetsWithEquipment.length > 0
           ? `,
-      "equipment_layout": [
-        { "label": "nom exact repris de la liste de matériel", "position": "face|avant_droite|droite|arriere_droite|arriere|arriere_gauche|gauche|avant_gauche", "note": "..." }
+      "preset_layouts": [
+        { "preset_label": "label exact du setup", "equipment_layout": [
+          { "label": "nom exact repris du matériel de CE setup", "position": "face|avant_droite|droite|arriere_droite|arriere|arriere_gauche|gauche|avant_gauche", "note": "..." }
+        ] }
       ]`
           : ""
       }
@@ -204,7 +207,6 @@ export function generateReel(opts: {
   platform?: string;
   includeStoryboard?: boolean;
   language?: GenerationLanguage;
-  equipment?: string;
   presets?: ScenePresetHint[];
 }): Promise<ReelGeneration> {
   const audience =
@@ -212,6 +214,9 @@ export function generateReel(opts: {
   const platform = opts.platform?.trim() || "Instagram / TikTok";
   const includeStoryboard = Boolean(opts.includeStoryboard);
   const hasPresets = includeStoryboard && Boolean(opts.presets?.length);
+  const presetsWithEquipment = includeStoryboard
+    ? (opts.presets ?? []).filter((p) => p.equipment?.trim())
+    : [];
 
   const system = `Tu es un expert en scripts de Reels/TikTok qui arrêtent le scroll, MULTILINGUE : français, anglais et arabe. Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing) : simple, direct, humain, orienté valeur, ZÉRO jargon. Un script se dit à voix haute en 30-60 secondes, phrases courtes, une idée par phrase.
 
@@ -223,7 +228,7 @@ ${
   includeStoryboard
     ? `
 Tu découpes AUSSI ce script en un STORYBOARD tournage-prêt, pour quelqu'un qui n'a jamais filmé et ne sait pas ce qu'est un storyboard — il doit pouvoir filmer juste en suivant tes instructions, sans réfléchir :
-${storyboardSegmentationRules(opts.equipment, opts.presets)}`
+${storyboardSegmentationRules(opts.presets)}`
     : ""
 }
 ${languageInstruction(opts.language)} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
@@ -243,14 +248,14 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
     "scenes": [
       { "description": "...", "camera_angle": "...", "expression": "...", "movement": "..."${hasPresets ? `, "preset_label": "..."` : ""} }
     ],
-    "filming_guide": ${filmingGuideJsonTemplate(opts.equipment)}
+    "filming_guide": ${filmingGuideJsonTemplate(presetsWithEquipment)}
   }`
       : ""
   }
 }`;
 
   const maxTokens = includeStoryboard
-    ? (opts.equipment ? 3300 : 3000) + (hasPresets ? 300 : 0)
+    ? 3000 + (hasPresets ? 300 : 0) + presetsWithEquipment.length * 150
     : 2000;
   return callClaudeJSON<ReelGeneration>(system, user, maxTokens);
 }
@@ -268,12 +273,12 @@ export type StoryboardSegmentation = {
  */
 export function segmentScriptIntoStoryboard(opts: {
   script: string;
-  equipment?: string;
   presets?: ScenePresetHint[];
 }): Promise<StoryboardSegmentation> {
   const hasPresets = Boolean(opts.presets?.length);
+  const presetsWithEquipment = (opts.presets ?? []).filter((p) => p.equipment?.trim());
   const system = `Tu es un expert en réalisation de Reels/TikTok. Tu prends un script DÉJÀ ÉCRIT par l'utilisatrice — tu ne le réécris PAS, tu ne le corriges PAS, tu ne changes RIEN au fond ni au texte — et tu le découpes en STORYBOARD tournage-prêt, pour quelqu'un qui n'a jamais filmé et ne sait pas ce qu'est un storyboard — il doit pouvoir filmer juste en suivant tes instructions, sans réfléchir :
-${storyboardSegmentationRules(opts.equipment, opts.presets)}
+${storyboardSegmentationRules(opts.presets)}
 Écris tes réponses (description, cadrage, expression, mouvement, résumé de tournage) dans la MÊME langue que le script fourni (ne traduis pas). Si le script fourni est en arabe : ${TUNISIAN_DIALECT_GUIDE} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
 
   const user = `Script à découper (ne pas réécrire, juste segmenter en scènes) :
@@ -286,13 +291,13 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
   "scenes": [
     { "description": "...", "camera_angle": "...", "expression": "...", "movement": "..."${hasPresets ? `, "preset_label": "..."` : ""} }
   ],
-  "filming_guide": ${filmingGuideJsonTemplate(opts.equipment)}
+  "filming_guide": ${filmingGuideJsonTemplate(presetsWithEquipment)}
 }`;
 
   return callClaudeJSON<StoryboardSegmentation>(
     system,
     user,
-    (opts.equipment ? 2900 : 2500) + (hasPresets ? 300 : 0),
+    2500 + (hasPresets ? 300 : 0) + presetsWithEquipment.length * 150,
   );
 }
 

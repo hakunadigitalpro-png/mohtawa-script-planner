@@ -19,44 +19,36 @@ import {
 import type { FilmingGuide } from "@/lib/types";
 
 /**
- * Contexte de marque qui nourrit le découpage storyboard (0050) : matériel
- * de tournage (Brand Kit) + setups réutisables (Mes setups), tous deux
- * optionnels — le prompt gère déjà leur absence sans planter (blocs
- * conditionnels). Une seule résolution de `contents.brand_id`, réutilisée
- * pour les deux, plutôt que 2 helpers qui la refont chacun.
+ * Setups réutisables (Mes setups) de la marque du contenu, avec leur
+ * matériel propre (0051 — le matériel vit sur CHAQUE setup, pas sur la
+ * marque : deux setups peuvent avoir un matériel complètement différent).
+ * Nourrit le découpage storyboard ; absence gérée sans planter côté prompt
+ * (blocs conditionnels).
  */
-async function getBrandGenerationContext(
+async function getBrandScenePresets(
   supabase: Awaited<ReturnType<typeof createClient>>,
   contentId: string,
-): Promise<{ equipment?: string; presets: ScenePresetHint[] }> {
+): Promise<ScenePresetHint[]> {
   const { data: content } = await supabase
     .from("contents")
     .select("brand_id")
     .eq("id", contentId)
     .maybeSingle();
-  if (!content) return { presets: [] };
+  if (!content) return [];
 
-  const [{ data: kit }, { data: presetRows }] = await Promise.all([
-    supabase
-      .from("brand_kits")
-      .select("equipment")
-      .eq("brand_id", content.brand_id)
-      .maybeSingle(),
-    supabase
-      .from("brand_scene_presets")
-      .select("label, default_camera, default_editing_notes")
-      .eq("brand_id", content.brand_id)
-      .order("position", { ascending: true }),
-  ]);
+  const { data: presetRows } = await supabase
+    .from("brand_scene_presets")
+    .select("label, default_camera, default_editing_notes, equipment")
+    .eq("brand_id", content.brand_id)
+    .order("position", { ascending: true });
 
-  const presets: ScenePresetHint[] = (presetRows ?? []).map((p) => ({
+  return (presetRows ?? []).map((p) => ({
     label: p.label,
     hint: [p.default_camera, p.default_editing_notes]
       .filter((s): s is string => Boolean(s?.trim()))
       .join(" · ") || undefined,
+    equipment: p.equipment?.trim() || undefined,
   }));
-
-  return { equipment: kit?.equipment ?? undefined, presets };
 }
 
 /**
@@ -110,16 +102,15 @@ export async function aiGenerateReel(input: {
 }) {
   try {
     const { supabase } = await guardAiAction("reel");
-    const { equipment, presets } = input.includeStoryboard
-      ? await getBrandGenerationContext(supabase, input.contentId)
-      : { equipment: undefined, presets: [] };
+    const presets = input.includeStoryboard
+      ? await getBrandScenePresets(supabase, input.contentId)
+      : [];
     const data = await generateReel({
       topic: input.topic,
       audience: input.audience,
       platform: input.platform,
       includeStoryboard: input.includeStoryboard,
       language: input.language,
-      equipment,
       presets,
     });
     return { ok: true as const, data };
@@ -231,13 +222,9 @@ export async function aiSegmentStoryboard(input: {
 }) {
   try {
     const { supabase } = await guardAiAction("storyboard");
-    const { equipment, presets } = await getBrandGenerationContext(
-      supabase,
-      input.contentId,
-    );
+    const presets = await getBrandScenePresets(supabase, input.contentId);
     const data = await segmentScriptIntoStoryboard({
       script: input.script,
-      equipment,
       presets,
     });
     return { ok: true as const, data };

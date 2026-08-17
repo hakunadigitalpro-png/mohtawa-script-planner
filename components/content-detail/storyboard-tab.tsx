@@ -16,6 +16,8 @@ import {
   Smile,
   Move,
   Type,
+  Pencil,
+  Zap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,6 +45,7 @@ import {
   reorderScenes,
   addSceneFromPreset,
   createScenePreset,
+  updateScenePreset,
   deleteScenePreset,
   upsertReelDetails,
 } from "@/app/(app)/contents/actions";
@@ -51,7 +54,7 @@ import { SaveFooter } from "./save-footer";
 import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
-import { EquipmentLayoutDiagram } from "@/components/equipment-layout-diagram";
+import { FilmingLayouts } from "@/components/equipment-layout-diagram";
 import type { StoryboardScene, ScenePreset, FilmingGuide, ReelDetails } from "@/lib/types";
 
 const DRAG_MIME = "application/x-mohtawa-scene-id";
@@ -72,7 +75,6 @@ const EMPTY_GUIDE: FilmingGuide = {
   pacing: "",
   energy: "",
   tip: "",
-  equipment_layout: [],
 };
 
 export function StoryboardTab({
@@ -185,7 +187,7 @@ export function StoryboardTab({
   };
 
   // Champs texte explicitement listés (pas Object.values) : "guide" porte
-  // aussi equipment_layout, un tableau — .trim() y planterait.
+  // aussi camera_position/preset_layouts, pas des string — .trim() y planterait.
   const hasGuideContent = [
     state.guide.lighting,
     state.guide.camera_style,
@@ -235,6 +237,7 @@ export function StoryboardTab({
 
   /* ============== Setups réutilisables (Lot 2) ============== */
   const [createPresetOpen, setCreatePresetOpen] = useState(false);
+  const [editPreset, setEditPreset] = useState<ScenePreset | null>(null);
 
   const insertFromPreset = (presetId: string) => {
     startTransition(async () => {
@@ -328,8 +331,8 @@ export function StoryboardTab({
               />
             </div>
 
-            <EquipmentLayoutDiagram
-              items={state.guide.equipment_layout ?? []}
+            <FilmingLayouts
+              presetLayouts={state.guide.preset_layouts}
               cameraPosition={state.guide.camera_position}
             />
           </div>
@@ -356,6 +359,7 @@ export function StoryboardTab({
                 disabled={pending}
                 onInsert={() => insertFromPreset(preset.id)}
                 onDelete={() => removePreset(preset.id)}
+                onEdit={() => setEditPreset(preset)}
               />
             ))}
             <button
@@ -375,6 +379,11 @@ export function StoryboardTab({
           onOpenChange={setCreatePresetOpen}
           brandId={brandId}
           contentId={contentId}
+        />
+
+        <EditPresetDialog
+          preset={editPreset}
+          onOpenChange={(v) => !v && setEditPreset(null)}
         />
 
         {state.scenes.length === 0 ? (
@@ -781,17 +790,19 @@ function SceneCard({
 
 /* ============================ Setups (Lot 2) ============================ */
 
-/** Vignette cliquable d'un setup dans la barre. Hover → bouton supprimer. */
+/** Vignette cliquable d'un setup dans la barre. Hover → boutons éditer/supprimer. */
 function PresetChip({
   preset,
   disabled,
   onInsert,
   onDelete,
+  onEdit,
 }: {
   preset: ScenePreset;
   disabled: boolean;
   onInsert: () => void;
   onDelete: () => void;
+  onEdit: () => void;
 }) {
   return (
     <div className="group relative">
@@ -817,10 +828,29 @@ function PresetChip({
           )}
         </span>
         {preset.label}
+        {preset.equipment?.trim() && (
+          <Zap className="size-3 shrink-0 text-accent" aria-label="Matériel renseigné" />
+        )}
       </button>
       <button
         type="button"
-        onClick={onDelete}
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit();
+        }}
+        disabled={disabled}
+        className="absolute -start-1 -top-1 hidden size-4 items-center justify-center rounded-full bg-accent text-white group-hover:flex"
+        aria-label={`Modifier le setup ${preset.label}`}
+        title="Modifier ce setup (dont le matériel)"
+      >
+        <Pencil className="size-2.5" />
+      </button>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
         disabled={disabled}
         className="absolute -end-1 -top-1 hidden size-4 items-center justify-center rounded-full bg-destructive text-white group-hover:flex"
         aria-label={`Supprimer le setup ${preset.label}`}
@@ -848,12 +878,14 @@ function CreatePresetDialog({
   const [pending, startTransition] = useTransition();
   const [label, setLabel] = useState("");
   const [camera, setCamera] = useState("");
+  const [equipment, setEquipment] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const reset = () => {
     setLabel("");
     setCamera("");
+    setEquipment("");
     setImageUrl(null);
     setError(null);
   };
@@ -870,6 +902,7 @@ function CreatePresetDialog({
         label,
         referenceImageUrl: imageUrl,
         defaultCamera: camera.trim() || null,
+        equipment: equipment.trim() || null,
       });
       if ("error" in res && res.error) {
         setError(res.error);
@@ -917,6 +950,17 @@ function CreatePresetDialog({
               value={camera}
               onChange={(e) => setCamera(e.target.value)}
               placeholder="Ex : Plan large fixe, légèrement plongé"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+              <Zap className="size-3" />
+              Matériel à ce lieu (optionnel)
+            </Label>
+            <Input
+              value={equipment}
+              onChange={(e) => setEquipment(e.target.value)}
+              placeholder="Ex : anneau lumineux, trépied — laisse vide si aucun (ex : lumière naturelle)"
             />
           </div>
           <div className="space-y-1.5">
@@ -976,6 +1020,7 @@ function SavePresetDialog({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [label, setLabel] = useState("");
+  const [equipment, setEquipment] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const submit = () => {
@@ -991,12 +1036,14 @@ function SavePresetDialog({
         referenceImageUrl: prefill.referenceImageUrl,
         defaultCamera: prefill.defaultCamera.trim() || null,
         defaultEditingNotes: prefill.defaultEditingNotes.trim() || null,
+        equipment: equipment.trim() || null,
       });
       if ("error" in res && res.error) {
         setError(res.error);
         return;
       }
       setLabel("");
+      setEquipment("");
       onOpenChange(false);
       router.refresh();
     });
@@ -1030,6 +1077,17 @@ function SavePresetDialog({
               maxLength={60}
             />
           </div>
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+              <Zap className="size-3" />
+              Matériel à ce lieu (optionnel)
+            </Label>
+            <Input
+              value={equipment}
+              onChange={(e) => setEquipment(e.target.value)}
+              placeholder="Ex : anneau lumineux, trépied — laisse vide si aucun"
+            />
+          </div>
           {error && (
             <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">
               {error}
@@ -1051,5 +1109,136 @@ function SavePresetDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Dialog d'édition d'un setup existant — surtout pour ajouter le matériel
+ *  après coup aux setups créés avant la migration 0051. */
+function EditPresetDialog({
+  preset,
+  onOpenChange,
+}: {
+  preset: ScenePreset | null;
+  onOpenChange: (v: boolean) => void;
+}) {
+  return (
+    <Dialog open={preset !== null} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        {/* key={preset.id} : remonte le formulaire à chaque changement de
+            setup édité, plutôt qu'un useEffect qui resynchroniserait l'état
+            après coup (cascading renders). */}
+        {preset && (
+          <EditPresetForm
+            key={preset.id}
+            preset={preset}
+            onOpenChange={onOpenChange}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditPresetForm({
+  preset,
+  onOpenChange,
+}: {
+  preset: ScenePreset;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [label, setLabel] = useState(preset.label);
+  const [camera, setCamera] = useState(preset.default_camera ?? "");
+  const [equipment, setEquipment] = useState(preset.equipment ?? "");
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = () => {
+    if (!label.trim()) {
+      setError("Le nom du setup est requis.");
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const res = await updateScenePreset(preset.id, {
+        label,
+        defaultCamera: camera.trim() || null,
+        equipment: equipment.trim() || null,
+      });
+      if ("error" in res && res.error) {
+        setError(res.error);
+        return;
+      }
+      onOpenChange(false);
+      router.refresh();
+    });
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>
+          <span className="inline-flex items-center gap-2">
+            <Pencil className="size-5 text-accent" />
+            Modifier le setup
+          </span>
+        </DialogTitle>
+        <DialogDescription>
+          Utile surtout pour ajouter le matériel de ce lieu précis — le
+          découpage storyboard IA s&apos;en sert pour te dire où le placer.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogBody className="space-y-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-preset-label">Nom du setup</Label>
+          <Input
+            id="edit-preset-label"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            autoFocus
+            maxLength={60}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+            Cadrage par défaut (optionnel)
+          </Label>
+          <Input
+            value={camera}
+            onChange={(e) => setCamera(e.target.value)}
+            placeholder="Ex : Plan large fixe, légèrement plongé"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+            <Zap className="size-3" />
+            Matériel à ce lieu (optionnel)
+          </Label>
+          <Input
+            value={equipment}
+            onChange={(e) => setEquipment(e.target.value)}
+            placeholder="Ex : anneau lumineux, trépied — laisse vide si aucun (ex : lumière naturelle)"
+          />
+        </div>
+        {error && (
+          <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {error}
+          </p>
+        )}
+      </DialogBody>
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => onOpenChange(false)}
+          disabled={pending}
+        >
+          Annuler
+        </Button>
+        <Button type="button" onClick={submit} disabled={pending || !label.trim()}>
+          {pending ? "Enregistrement…" : "Enregistrer"}
+        </Button>
+      </DialogFooter>
+    </>
   );
 }

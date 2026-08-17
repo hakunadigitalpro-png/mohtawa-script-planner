@@ -2,7 +2,11 @@
 
 import { Camera } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { EquipmentPlacement, EquipmentPosition } from "@/lib/types";
+import type {
+  EquipmentPlacement,
+  EquipmentPosition,
+  PresetEquipmentLayout,
+} from "@/lib/types";
 
 /**
  * Schéma vu du dessus : où placer le téléphone/caméra et chaque équipement
@@ -64,9 +68,13 @@ function Marker({
 export function EquipmentLayoutDiagram({
   items,
   cameraPosition,
+  label,
 }: {
   items: EquipmentPlacement[];
   cameraPosition?: EquipmentPosition;
+  /** Nom du setup/lieu (0051) — un storyboard peut mélanger plusieurs lieux
+   *  avec un matériel différent, ce titre dit CLAIREMENT pour lequel c'est. */
+  label?: string;
 }) {
   const g = useTranslations("filmingGuide");
   if (items.length === 0 && !cameraPosition) return null;
@@ -75,8 +83,15 @@ export function EquipmentLayoutDiagram({
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-4">
-      <div className="mb-3 text-[11px] font-bold uppercase tracking-wider text-accent">
-        {g("equipmentLayoutTitle")}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
+          {g("equipmentLayoutTitle")}
+        </span>
+        {label && (
+          <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent" dir="auto">
+            {label}
+          </span>
+        )}
       </div>
 
       <div className="relative mx-auto aspect-square w-full max-w-64">
@@ -135,4 +150,35 @@ export function EquipmentLayoutDiagram({
       )}
     </div>
   );
+}
+
+/**
+ * Un schéma PAR setup utilisé dans le storyboard (0051) — le matériel vit
+ * sur chaque lieu, pas sur la marque, donc pas de schéma global unique.
+ * Sans setup équipé, retombe sur un seul schéma "caméra seule" (si une
+ * position caméra existe) — jamais rien montré silencieusement là où il y
+ * avait un contenu à voir.
+ */
+export function FilmingLayouts({
+  presetLayouts,
+  cameraPosition,
+}: {
+  presetLayouts?: PresetEquipmentLayout[];
+  cameraPosition?: EquipmentPosition;
+}) {
+  if (presetLayouts && presetLayouts.length > 0) {
+    return (
+      <div className="space-y-3">
+        {presetLayouts.map((pl) => (
+          <EquipmentLayoutDiagram
+            key={pl.preset_label}
+            items={pl.equipment_layout}
+            cameraPosition={cameraPosition}
+            label={pl.preset_label}
+          />
+        ))}
+      </div>
+    );
+  }
+  return <EquipmentLayoutDiagram items={[]} cameraPosition={cameraPosition} />;
 }

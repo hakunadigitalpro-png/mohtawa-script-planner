@@ -880,6 +880,9 @@ export async function createScenePreset(input: {
   referenceImageUrl?: string | null;
   defaultCamera?: string | null;
   defaultEditingNotes?: string | null;
+  /** Matériel dispo à CE lieu (0051) — souvent vide (ex : setup "face
+   *  fenêtre", lumière naturelle), c'est normal. */
+  equipment?: string | null;
 }) {
   const label = input.label.trim();
   if (!label) return { error: "Le nom du setup est requis." };
@@ -901,10 +904,43 @@ export async function createScenePreset(input: {
     reference_image_url: input.referenceImageUrl ?? null,
     default_camera: input.defaultCamera ?? null,
     default_editing_notes: input.defaultEditingNotes ?? null,
+    equipment: input.equipment ?? null,
     position: nextPos,
   });
   if (error) return { error: error.message };
 
+  revalidatePath("/", "layout");
+  return { ok: true as const };
+}
+
+/**
+ * Met à jour un setup existant (ex : ajouter le matériel après coup à un
+ * setup créé avant la migration 0051). Patch partiel.
+ */
+export async function updateScenePreset(
+  presetId: string,
+  patch: Partial<{
+    label: string;
+    defaultCamera: string | null;
+    equipment: string | null;
+  }>,
+) {
+  const supabase = await createClient();
+  const update: Record<string, string | null> = {};
+  if (patch.label !== undefined) {
+    const label = patch.label.trim();
+    if (!label) return { error: "Le nom du setup est requis." };
+    if (label.length > 60) return { error: "Nom trop long (60 caractères max)." };
+    update.label = label;
+  }
+  if (patch.defaultCamera !== undefined) update.default_camera = patch.defaultCamera;
+  if (patch.equipment !== undefined) update.equipment = patch.equipment;
+
+  const { error } = await supabase
+    .from("brand_scene_presets")
+    .update(update)
+    .eq("id", presetId);
+  if (error) return { error: error.message };
   revalidatePath("/", "layout");
   return { ok: true as const };
 }
