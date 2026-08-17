@@ -12,6 +12,10 @@ import {
   X,
   ImageIcon,
   Film,
+  Camera,
+  Smile,
+  Move,
+  Type,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -540,27 +544,37 @@ function SceneCard({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-all",
+        "flex flex-col overflow-hidden rounded-2xl border-s-4 border bg-card shadow-sm transition-all",
         optimisticFilmed
-          ? "border-emerald-300/60 opacity-90"
-          : "border-border/60",
+          ? "border-emerald-400 opacity-90"
+          : "border-accent/70 border-e-border/60 border-t-border/60 border-b-border/60",
       )}
     >
       <div
         className={cn(
-          "flex items-center justify-between border-b px-3 py-2",
+          "flex items-center justify-between border-b px-3 py-2.5",
           optimisticFilmed
             ? "border-emerald-300/40 bg-emerald-50/40"
             : "border-border/60 bg-secondary/50",
         )}
       >
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <GripVertical className="size-3.5 cursor-grab text-muted active:cursor-grabbing" />
+          <span
+            className={cn(
+              "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+              optimisticFilmed
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-accent/15 text-accent",
+            )}
+          >
+            {index + 1}
+          </span>
           <span className="text-xs font-bold uppercase tracking-wider text-muted">
             {t("planNumber", { n: String(index + 1).padStart(2, "0") })}
           </span>
           {optimisticFilmed && (
-            <span className="ms-1 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
               {t("filmedBadge")}
             </span>
           )}
@@ -606,7 +620,7 @@ function SceneCard({
         }}
       />
 
-      <div className="space-y-2 p-2.5">
+      <div className="space-y-2.5 p-3">
         <ImageUpload
           contentId={contentId}
           value={serverImageUrl}
@@ -660,7 +674,8 @@ function SceneCard({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+              <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+                <Camera className="size-3" />
                 {t("fields.camera")}
               </Label>
               <Input
@@ -674,7 +689,8 @@ function SceneCard({
 
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+                  <Smile className="size-3" />
                   {t("fields.expression")}
                 </Label>
                 <Input
@@ -686,7 +702,8 @@ function SceneCard({
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+                <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+                  <Move className="size-3" />
                   {t("fields.movement")}
                 </Label>
                 <Input
@@ -700,7 +717,8 @@ function SceneCard({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+              <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+                <Type className="size-3" />
                 {t("fields.onScreenText")}
               </Label>
               <Input
