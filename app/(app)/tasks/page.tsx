@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { TasksBoard } from "@/components/tasks/tasks-board";
 import type { Task } from "@/lib/types";
@@ -13,9 +13,7 @@ export type BrandMember = {
 
 export default async function TasksPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) redirect("/login");
 
   const { active, role } = await resolveActiveBrand();

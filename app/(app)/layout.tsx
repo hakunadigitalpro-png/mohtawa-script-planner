@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { Sidebar } from "@/components/sidebar";
 import { MobileTopBar, MobileBottomNav } from "@/components/mobile-nav";
@@ -11,12 +11,10 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await getCachedUser();
   if (!user) redirect("/login");
+
+  const supabase = await createClient();
 
   const { brands, active, role } = await resolveActiveBrand();
 

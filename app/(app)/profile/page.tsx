@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedUser } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -7,10 +7,7 @@ import { LocaleSwitcherFull } from "@/components/locale-switcher";
 import { getThemeFromCookies } from "@/lib/theme";
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
 
   const t = await getTranslations("profile");

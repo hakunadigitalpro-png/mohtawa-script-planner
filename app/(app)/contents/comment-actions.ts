@@ -165,7 +165,10 @@ export async function markContentRead(contentId: string) {
   });
   if (error) return { error: error.message };
 
+  // Le "lu" ne concerne que le badge non-lu de cette vidéo (comments/
+  // content_reads) — pas la cloche de notifications (système séparé,
+  // migration 0013). Inutile d'invalider tout le layout à chaque ouverture
+  // de l'inbox commentaires.
   revalidatePath(`/content/${contentId}`);
-  revalidatePath("/", "layout");
   return { ok: true as const };
 }

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { BrandsList } from "./brands-list";
@@ -18,9 +18,7 @@ type BrandWithRole = {
 export default async function BrandsPage() {
   const supabase = await createClient();
   const t = await getTranslations("brands");
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) return null;
   // Un "viewer" (client invité) est cantonné au Calendrier.
   const { role } = await resolveActiveBrand();

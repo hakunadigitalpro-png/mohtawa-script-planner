@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, FileDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCachedUser } from "@/lib/supabase/server";
 
 // L'autopsie IA (appel Claude) peut prendre 15-30s. Le défaut Vercel est
 // de 10s sur le plan Hobby → la fonction était tuée avant de répondre.
@@ -47,9 +47,7 @@ export default async function ContentDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   if (!user) redirect("/login");
 
   const { data: content } = await supabase

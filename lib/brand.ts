@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { cache } from "react";
+import { createClient, getCachedUser } from "@/lib/supabase/server";
 import type { Brand } from "@/lib/types";
 
 const COOKIE_NAME = "active_brand";
@@ -35,23 +36,25 @@ export async function listUserBrands(): Promise<Brand[]> {
  * Résout la marque active + le rôle de l'user courant dessus (client = rôle
  * "viewer", cantonné au Calendrier — voir les guards dans dashboard/
  * analytics/hooks/brands). `role` est null si aucune marque n'est active.
+ *
+ * Mémoïsé par requête (React cache) : le layout ET la page appellent tous
+ * les deux `resolveActiveBrand()` — sans ça, chaque navigation refaisait
+ * la liste des marques + la requête `brand_members` deux fois.
  */
-export async function resolveActiveBrand(): Promise<{
+export const resolveActiveBrand = cache(async (): Promise<{
   brands: Brand[];
   active: Brand | null;
   role: BrandRole | null;
-}> {
+}> => {
   const brands = await listUserBrands();
   if (brands.length === 0) return { brands, active: null, role: null };
   const stored = await getActiveBrandId();
   const active = brands.find((b) => b.id === stored) ?? brands[0];
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCachedUser();
   let role: BrandRole | null = null;
   if (user) {
+    const supabase = await createClient();
     const { data } = await supabase
       .from("brand_members")
       .select("role")
@@ -62,4 +65,4 @@ export async function resolveActiveBrand(): Promise<{
   }
 
   return { brands, active, role };
-}
+});
