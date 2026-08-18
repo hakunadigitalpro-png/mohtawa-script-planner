@@ -301,7 +301,18 @@
     "movement": "الحركة",
     "equipmentLayoutTitle": "توزيع المعدات",
     "equipmentLayoutSelf": "أنتِ",
-    "preset": "الإعداد"
+    "preset": "الإعداد",
+    "lightingWarning": "توزيع يحتاج تصحيحاً: {lights} — لا يوجد ضوء أمامك. سيصبح وجهك في إضاءة خلفية، أي مظلماً. ضع الضوء الرئيسي أمامك مباشرة أو بزاوية 45° (أمام يمين / أمام يسار).",
+    "positions": {
+      "face": "أمامك",
+      "avant_droite": "أمام يمين",
+      "droite": "يمين",
+      "arriere_droite": "خلف يمين",
+      "arriere": "خلفك",
+      "arriere_gauche": "خلف يسار",
+      "gauche": "يسار",
+      "avant_gauche": "أمام يسار"
+    }
   },
   "checklist": {
     "title": "تحضير الفيديو",

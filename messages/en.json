@@ -301,7 +301,18 @@
     "movement": "Movement",
     "equipmentLayoutTitle": "Equipment placement",
     "equipmentLayoutSelf": "You",
-    "preset": "Setup"
+    "preset": "Setup",
+    "lightingWarning": "Placement to fix: {lights} — no light is in front of you. Your face would be backlit, so dark. Put your main light in front, or at 45° (front right / front left).",
+    "positions": {
+      "face": "In front",
+      "avant_droite": "Front right",
+      "droite": "Right",
+      "arriere_droite": "Back right",
+      "arriere": "Behind",
+      "arriere_gauche": "Back left",
+      "gauche": "Left",
+      "avant_gauche": "Front left"
+    }
   },
   "checklist": {
     "title": "Video preparation",

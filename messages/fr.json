@@ -301,7 +301,18 @@
     "movement": "Mouvement",
     "equipmentLayoutTitle": "Placement du matériel",
     "equipmentLayoutSelf": "Toi",
-    "preset": "Setup"
+    "preset": "Setup",
+    "lightingWarning": "Placement à corriger : {lights} — aucune lumière n'est devant toi. Ton visage serait à contre-jour, donc sombre. Mets ta lumière principale en face ou à 45° devant (avant droite / avant gauche).",
+    "positions": {
+      "face": "En face",
+      "avant_droite": "Avant droite",
+      "droite": "Droite",
+      "arriere_droite": "Arrière droite",
+      "arriere": "Derrière",
+      "arriere_gauche": "Arrière gauche",
+      "gauche": "Gauche",
+      "avant_gauche": "Avant gauche"
+    }
   },
   "checklist": {
     "title": "Préparation de la vidéo",

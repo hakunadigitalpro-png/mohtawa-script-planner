@@ -55,7 +55,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import { FilmingLayouts } from "@/components/equipment-layout-diagram";
 import { ScenePresetEditDialog } from "@/components/scene-preset-edit-dialog";
-import type { StoryboardScene, ScenePreset, FilmingGuide, ReelDetails } from "@/lib/types";
+import type {
+  StoryboardScene,
+  ScenePreset,
+  FilmingGuide,
+  ReelDetails,
+  EquipmentPosition,
+} from "@/lib/types";
 
 const DRAG_MIME = "application/x-mohtawa-scene-id";
 
@@ -184,6 +190,38 @@ export function StoryboardTab({
 
   const updateGuideField = (key: keyof FilmingGuide, value: string) => {
     setState((s) => ({ ...s, guide: { ...s.guide, [key]: value } }));
+  };
+
+  /**
+   * Corrige à la main la position d'un équipement proposée par l'IA (elle
+   * peut se tromper — cf. la fenêtre placée à contre-jour). Passe par le
+   * même formulaire que le reste : la modif part au Save global.
+   */
+  const updatePlacementPosition = (
+    presetLabel: string,
+    equipmentLabel: string,
+    position: EquipmentPosition,
+  ) => {
+    setState((s) => ({
+      ...s,
+      guide: {
+        ...s.guide,
+        preset_layouts: (s.guide.preset_layouts ?? []).map((pl) =>
+          pl.preset_label !== presetLabel
+            ? pl
+            : {
+                ...pl,
+                equipment_layout: pl.equipment_layout.map((it) =>
+                  it.label === equipmentLabel ? { ...it, position } : it,
+                ),
+              },
+        ),
+      },
+    }));
+  };
+
+  const updateCameraPosition = (position: EquipmentPosition) => {
+    setState((s) => ({ ...s, guide: { ...s.guide, camera_position: position } }));
   };
 
   // Champs texte explicitement listés (pas Object.values) : "guide" porte
@@ -334,6 +372,8 @@ export function StoryboardTab({
             <FilmingLayouts
               presetLayouts={state.guide.preset_layouts}
               cameraPosition={state.guide.camera_position}
+              onChangePlacement={updatePlacementPosition}
+              onChangeCamera={updateCameraPosition}
             />
           </div>
         )}
