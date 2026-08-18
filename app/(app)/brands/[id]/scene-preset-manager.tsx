@@ -3,10 +3,11 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Plus, Trash2, Clapperboard } from "lucide-react";
+import { Plus, Trash2, Clapperboard, Pencil, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { ScenePresetEditDialog } from "@/components/scene-preset-edit-dialog";
 import {
   createScenePreset,
   deleteScenePreset,
@@ -31,9 +32,11 @@ export function ScenePresetManager({
 }) {
   const router = useRouter();
   const [label, setLabel] = React.useState("");
+  const [equipment, setEquipment] = React.useState("");
   const [imageUrl, setImageUrl] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
+  const [editPreset, setEditPreset] = React.useState<ScenePreset | null>(null);
 
   const add = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,12 +50,14 @@ export function ScenePresetManager({
         brandId,
         label,
         referenceImageUrl: imageUrl,
+        equipment: equipment.trim() || null,
       });
       if ("error" in res && res.error) {
         setError(res.error);
         return;
       }
       setLabel("");
+      setEquipment("");
       setImageUrl(null);
       router.refresh();
     });
@@ -89,26 +94,60 @@ export function ScenePresetManager({
                     <Clapperboard className="size-6" />
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={() => remove(p.id)}
-                  disabled={pending}
-                  aria-label="Supprimer le setup"
-                  className="absolute end-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-black/55 text-white opacity-100 transition hover:bg-black/75 sm:opacity-0 sm:group-hover:opacity-100"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
+                <div className="absolute end-1.5 top-1.5 flex gap-1 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
+                  <button
+                    type="button"
+                    onClick={() => setEditPreset(p)}
+                    disabled={pending}
+                    aria-label="Modifier le setup"
+                    title="Modifier (nom, cadrage, matériel)"
+                    className="flex size-7 items-center justify-center rounded-full bg-black/55 text-white transition hover:bg-black/75"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => remove(p.id)}
+                    disabled={pending}
+                    aria-label="Supprimer le setup"
+                    className="flex size-7 items-center justify-center rounded-full bg-black/55 text-white transition hover:bg-black/75"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
               </div>
-              <p
-                dir="auto"
-                className="truncate px-2.5 py-2 text-sm font-semibold"
-              >
-                {p.label}
-              </p>
+              <div className="space-y-1 px-2.5 py-2">
+                <p dir="auto" className="truncate text-sm font-semibold">
+                  {p.label}
+                </p>
+                {p.equipment?.trim() ? (
+                  <p
+                    dir="auto"
+                    className="flex items-start gap-1 text-xs text-muted"
+                  >
+                    <Zap className="mt-0.5 size-3 shrink-0 text-accent" />
+                    <span className="line-clamp-2">{p.equipment}</span>
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setEditPreset(p)}
+                    className="flex items-center gap-1 text-xs text-muted underline-offset-2 hover:text-accent hover:underline"
+                  >
+                    <Plus className="size-3" />
+                    Ajouter le matériel
+                  </button>
+                )}
+              </div>
             </li>
           ))}
         </ul>
       )}
+
+      <ScenePresetEditDialog
+        preset={editPreset}
+        onOpenChange={(v) => !v && setEditPreset(null)}
+      />
 
       {/* Ajout d'un setup : photo + nom */}
       <form
@@ -134,6 +173,13 @@ export function ScenePresetManager({
               maxLength={60}
               disabled={pending}
             />
+            <Input
+              value={equipment}
+              onChange={(e) => setEquipment(e.target.value)}
+              placeholder="Matériel à ce lieu (ex : anneau lumineux, trépied) — optionnel"
+              dir="auto"
+              disabled={pending}
+            />
             {error && <p className="text-xs text-destructive">{error}</p>}
             <Button
               type="submit"
@@ -145,7 +191,10 @@ export function ScenePresetManager({
             </Button>
             <p className="text-xs text-muted">
               Ajoute tes lieux récurrents (ex : les 4 coins du bureau). Tu les
-              insères en 1 clic dans le storyboard d&apos;une vidéo.
+              insères en 1 clic dans le storyboard d&apos;une vidéo. Le matériel
+              est propre à chaque lieu — laisse vide si tu n&apos;en utilises
+              aucun ici (ex : face fenêtre) ; Krea s&apos;en sert pour te dire où
+              le placer.
             </p>
           </div>
         </div>
