@@ -19,7 +19,7 @@ function extractStoragePath(url: string): string | null {
 type CompressMode = "photo" | "keep-format";
 
 /**
- * Redimensionne (max 1600 px) + compresse une image côté navigateur AVANT
+ * Redimensionne (max 1200 px) + compresse une image côté navigateur AVANT
  * l'upload, pour économiser le stockage.
  *  - "photo" → JPEG 85 % : universel et "prêt à poster" sur les réseaux
  *    (Insta/LinkedIn recompressent de toute façon à ~1080 px → aucune perte
@@ -32,7 +32,11 @@ async function compressImage(
   file: File,
   mode: CompressMode,
 ): Promise<{ blob: Blob; ext: string; type: string }> {
-  const MAX = 1600;
+  // 1200 px (au lieu de 1600) : le poids d'un JPEG suit la surface, donc
+  // -44 % de stockage pour la même image. Sans perte visible ici — les
+  // visuels s'affichent à ~300 px dans l'app, les réseaux recompressent à
+  // ~1080 px, et 1200 px reste correct à l'impression PDF (~200 dpi en A4).
+  const MAX = 1200;
   const fallback = {
     blob: file,
     ext: file.name.split(".").pop()?.toLowerCase() ?? "jpg",
