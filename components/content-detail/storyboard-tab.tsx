@@ -861,7 +861,6 @@ function PresetChip({
               fill
               sizes="28px"
               className="object-cover"
-              unoptimized
             />
           ) : (
             <ImageIcon className="size-3.5 text-muted" />

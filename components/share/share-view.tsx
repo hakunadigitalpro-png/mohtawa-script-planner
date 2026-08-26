@@ -335,7 +335,6 @@ export function ShareView({
                         fill
                         sizes="(max-width: 768px) 100vw, 300px"
                         className="object-cover"
-                        unoptimized
                       />
                     </div>
                   )}
@@ -405,7 +404,6 @@ export function ShareView({
                             fill
                             sizes="200px"
                             className="object-cover"
-                            unoptimized
                           />
                         )}
                       </div>

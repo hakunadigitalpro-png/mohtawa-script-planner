@@ -121,7 +121,6 @@ export function ContentTab({
                     fill
                     sizes="96px"
                     className="object-cover"
-                    unoptimized
                   />
                 )}
                 {isCarousel && (
@@ -188,7 +187,6 @@ export function ContentTab({
               fill
               sizes="(max-width: 768px) 100vw, 640px"
               className="object-contain"
-              unoptimized
             />
           </div>
         </div>

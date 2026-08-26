@@ -237,7 +237,10 @@ export function ImageUpload({
                 fill
                 sizes="(max-width: 768px) 100vw, 300px"
                 className="object-cover"
-                unoptimized
+                // Les URLs signées (bucket privé) pointent sur /object/sign/…,
+                // hors des `remotePatterns` de next.config → non optimisables.
+                // Les URLs publiques, elles, passent par l'optimiseur (egress).
+                unoptimized={isPrivatePath}
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-muted">

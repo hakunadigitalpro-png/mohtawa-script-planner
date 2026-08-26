@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { setActiveBrandId } from "@/lib/brand";
+import { removeContentFiles, removeStorageFolder } from "@/lib/storage-cleanup";
 import { LOCALES, LOCALE_COOKIE, type Locale } from "@/i18n/config";
 
 export async function switchBrand(brandId: string) {
@@ -29,6 +30,21 @@ export async function renameBrand(brandId: string, name: string) {
 
 export async function deleteBrand(brandId: string) {
   const supabase = await createClient();
+
+  // Supprimer la marque cascade sur ses contenus en base, mais PAS sur le
+  // stockage : sans ce nettoyage préalable, toutes leurs images deviennent
+  // orphelines définitives (les policies RLS du stockage exigent que la
+  // ligne `contents` — et l'appartenance à la marque — existent encore).
+  const { data: contents } = await supabase
+    .from("contents")
+    .select("id")
+    .eq("brand_id", brandId);
+  await Promise.all([
+    ...(contents ?? []).map((c) => removeContentFiles(supabase, c.id)),
+    removeStorageFolder(supabase, "content-media", `brand/${brandId}`),
+    removeStorageFolder(supabase, "content-media", `presets/${brandId}`),
+  ]);
+
   const { error } = await supabase.from("brands").delete().eq("id", brandId);
   if (error) return { error: error.message };
   revalidatePath("/", "layout");

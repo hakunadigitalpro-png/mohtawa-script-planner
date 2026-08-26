@@ -87,7 +87,6 @@ export function ScenePresetManager({
                     fill
                     sizes="(max-width:640px) 50vw, 200px"
                     className="object-cover"
-                    unoptimized
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-muted">

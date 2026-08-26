@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveBrandId } from "@/lib/brand";
 import { pick } from "@/lib/utils";
+import { removeContentFiles, removeOwnedFile } from "@/lib/storage-cleanup";
 
 type CreateContentInput = {
   type: string;
@@ -136,6 +137,9 @@ export async function updateContent(
 
 export async function deleteContent(id: string) {
   const supabase = await createClient();
+  // Fichiers AVANT la ligne : la policy RLS du stockage exige que la ligne
+  // `contents` existe encore (voir lib/storage-cleanup.ts).
+  await removeContentFiles(supabase, id);
   const { error } = await supabase.from("contents").delete().eq("id", id);
   if (error) return { error: error.message };
 
@@ -146,6 +150,7 @@ export async function deleteContent(id: string) {
 
 export async function deleteContentInPlace(id: string) {
   const supabase = await createClient();
+  await removeContentFiles(supabase, id);
   const { error } = await supabase.from("contents").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/dashboard");
@@ -560,11 +565,25 @@ export async function updateScene(
 
 export async function deleteScene(sceneId: string, contentId: string) {
   const supabase = await createClient();
+  const { data: scene } = await supabase
+    .from("storyboard_scenes")
+    .select("image_url")
+    .eq("id", sceneId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("storyboard_scenes")
     .delete()
     .eq("id", sceneId);
   if (error) return { error: error.message };
+
+  // `removeOwnedFile` ne supprime QUE si le fichier est dans le dossier du
+  // contenu : une scène insérée depuis un setup pointe vers
+  // `presets/{brand_id}/…`, fichier partagé qu'il ne faut pas effacer.
+  if (scene?.image_url) {
+    await removeOwnedFile(supabase, scene.image_url, contentId);
+  }
+
   revalidatePath(`/content/${contentId}`);
   return { ok: true };
 }
@@ -951,11 +970,36 @@ export async function updateScenePreset(
  */
 export async function deleteScenePreset(presetId: string) {
   const supabase = await createClient();
+  const { data: preset } = await supabase
+    .from("brand_scene_presets")
+    .select("brand_id, reference_image_url")
+    .eq("id", presetId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("brand_scene_presets")
     .delete()
     .eq("id", presetId);
   if (error) return { error: error.message };
+
+  // La photo du setup a pu être copiée dans des scènes (addSceneFromPreset).
+  // On ne l'efface que si plus aucune scène ne l'affiche, sinon on casserait
+  // leur visuel — un fichier orphelin coûte moins cher qu'une image morte.
+  if (preset?.reference_image_url) {
+    const { data: stillUsed } = await supabase
+      .from("storyboard_scenes")
+      .select("id")
+      .eq("image_url", preset.reference_image_url)
+      .limit(1);
+    if (!stillUsed || stillUsed.length === 0) {
+      await removeOwnedFile(
+        supabase,
+        preset.reference_image_url,
+        `presets/${preset.brand_id}`,
+      );
+    }
+  }
+
   revalidatePath("/", "layout");
   return { ok: true as const };
 }
