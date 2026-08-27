@@ -834,9 +834,18 @@ export function generateVlog(opts: {
   topic: string;
   audience?: string;
   platform?: string;
+  /** Hashtags récurrents de la marque (issus de sa stratégie) — la légende
+   *  les réutilise au lieu d'en réinventer à chaque contenu. */
+  brandHashtags?: string[];
 }): Promise<VlogGeneration> {
   const audience = opts.audience?.trim() || "audience curieuse sur les réseaux";
   const platform = opts.platform?.trim() || "Instagram / TikTok";
+  const tags = (opts.brandHashtags ?? []).filter((h) => h.trim());
+  const captionSpec = tags.length
+    ? `La légende du post. Termine par ces hashtags RÉCURRENTS de la marque : ${tags
+        .map((h) => `#${h}`)
+        .join(" ")} — tu peux en ajouter 1 ou 2 spécifiques au sujet, pas plus.`
+    : "La légende du post + 3 à 5 hashtags pertinents";
 
   const system = `Tu es un expert en VLOGS short-form (1 à 2 min) pour Instagram/TikTok, MULTILINGUE : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Un vlog ne se planifie PAS scène par scène : on part d'un ANGLE, on capture des MOMENTS pendant la journée, puis on POSE UNE VOIX-OFF par-dessus le montage. Ton job : transformer un sujet en plan de vlog directement actionnable.
 
@@ -864,7 +873,7 @@ Renvoie UNIQUEMENT ce JSON (sans markdown autour) :
   },
   "captureShots": ["Moment à filmer 1", "Moment à filmer 2", "… 6 à 8 au total, dans l'ordre de la journée"],
   "voiceover": "Le script voix-off complet, en paragraphes courts, dans l'ordre. 1 à 2 min.",
-  "caption": "La légende du post + 3 à 5 hashtags pertinents"
+  "caption": "${captionSpec}"
 }`;
 
   return callClaudeJSON<VlogGeneration>(system, user, 2000);
@@ -1133,6 +1142,7 @@ RÈGLES :
 - "pain_points" : exactement 3 galères concrètes de son audience — ce qui la pousse à chercher de l'aide. Phrases courtes, ancrées dans le réel (pas de généralités).
 - "approach" : 2-3 phrases qui expliquent CONCRÈTEMENT comment elle aide — sa méthode, sa façon de faire. Pas une liste de services : une explication simple, comme elle le dirait elle-même.
 - "key_messages" : exactement 3 messages ou preuves à répéter dans son contenu pour construire la confiance.
+- "hashtags" : 5 à 8 hashtags récurrents pour cette marque, déduits de son domaine, son audience et son positionnement. SANS le "#", en minuscules, sans accents ni espaces. Mélange large (son secteur) et précis (sa niche, sa ville si pertinent). Dans la langue de ses réponses.
 - Ne propose PAS de thèmes/piliers de contenu (ce qu'il faut poster) — ce n'est pas le rôle de cette stratégie, une autre fonctionnalité de l'app s'en charge déjà.
 - Reste concis partout — des phrases courtes, jamais de paragraphes à rallonge. Le JSON complet doit rester compact.
 
@@ -1144,7 +1154,8 @@ Réponds UNIQUEMENT avec un objet JSON valide, rien autour, pas de markdown :
   "voice_summary": "...",
   "pain_points": ["...", "...", "..."],
   "approach": "...",
-  "key_messages": ["...", "...", "..."]
+  "key_messages": ["...", "...", "..."],
+  "hashtags": ["...", "...", "...", "...", "..."]
 }
 Réponds dans la langue des réponses de la personne (français par défaut).`;
 

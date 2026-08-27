@@ -273,11 +273,10 @@ export async function applyBrandThemes(input: {
  */
 export async function upsertBrandKit(
   brandId: string,
+  // Plus de couleurs : les colonnes existent toujours en base mais rien ne
+  // les consomme, donc plus rien ne les écrit non plus.
   patch: Partial<{
     logo_url: string | null;
-    color_primary: string | null;
-    color_secondary: string | null;
-    color_accent: string | null;
     tagline: string | null;
     audience: string | null;
     voice: string | null;
@@ -291,9 +290,6 @@ export async function upsertBrandKit(
       brand_id: brandId,
       ...pick(patch, [
         "logo_url",
-        "color_primary",
-        "color_secondary",
-        "color_accent",
         "tagline",
         "audience",
         "voice",

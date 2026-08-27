@@ -87,6 +87,11 @@ export async function applyBrandStrategy(
     tagline: generated.tagline?.trim() || null,
     audience: generated.audience_summary?.trim() || null,
     voice: generated.voice_summary?.trim() || null,
+    // Hashtags récurrents : déduits de la stratégie, plus jamais saisis à la
+    // main. Réutilisés ensuite dans les légendes générées.
+    hashtags: (generated.hashtags ?? [])
+      .map((h) => h.trim().replace(/^#/, ""))
+      .filter(Boolean),
     updated_at: new Date().toISOString(),
   });
   if (kitError) return { ok: false as const, error: kitError.message };

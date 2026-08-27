@@ -24,12 +24,22 @@ export async function setActiveBrandId(brandId: string) {
 
 export async function listUserBrands(): Promise<Brand[]> {
   const supabase = await createClient();
+  // Le logo est embarqué via la relation 1:1 brand_kits (PK = brand_id) :
+  // une seule requête au lieu de deux, pour afficher le logo à la place de
+  // l'initiale dans le switcher.
   const { data, error } = await supabase
     .from("brands")
-    .select("id, name, created_by, created_at")
+    .select("id, name, created_by, created_at, brand_kits(logo_url)")
     .order("created_at", { ascending: true });
   if (error) return [];
-  return (data as Brand[]) ?? [];
+
+  type Row = Omit<Brand, "logo_url"> & {
+    brand_kits: { logo_url: string | null } | { logo_url: string | null }[] | null;
+  };
+  return ((data ?? []) as Row[]).map(({ brand_kits, ...b }) => {
+    const kit = Array.isArray(brand_kits) ? brand_kits[0] : brand_kits;
+    return { ...b, logo_url: kit?.logo_url ?? null };
+  });
 }
 
 /**

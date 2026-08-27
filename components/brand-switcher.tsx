@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Check, Plus, Building2 } from "lucide-react";
@@ -49,10 +50,21 @@ export function BrandSwitcher({
         <DropdownTrigger asChild>
           <button
             type="button"
-            className="tooltip-trigger flex size-12 shrink-0 items-center justify-center rounded-full bg-card text-sm font-bold text-foreground shadow-sm transition hover:scale-105"
+            className="tooltip-trigger relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-card text-sm font-bold text-foreground shadow-sm transition hover:scale-105"
             aria-label={t("switchLabel", { name: active?.name ?? noBrand })}
           >
-            <span>{initial}</span>
+            {/* Le logo remplace l'initiale dès qu'il existe. */}
+            {active?.logo_url ? (
+              <Image
+                src={active.logo_url}
+                alt=""
+                fill
+                sizes="48px"
+                className="object-cover"
+              />
+            ) : (
+              <span>{initial}</span>
+            )}
             <span className="tooltip-content">{active?.name ?? noBrand}</span>
           </button>
         </DropdownTrigger>

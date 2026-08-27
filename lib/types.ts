@@ -3,6 +3,9 @@ export type Brand = {
   name: string;
   created_by: string;
   created_at: string;
+  /** Logo de la marque (brand_kits.logo_url), embarqué par listUserBrands —
+   *  affiché à la place de l'initiale. Null tant qu'aucun logo n'est posé. */
+  logo_url?: string | null;
 };
 
 export type BrandMember = {
@@ -18,9 +21,9 @@ export type BrandMember = {
 export type BrandKit = {
   brand_id: string;
   logo_url: string | null;
-  color_primary: string | null;
-  color_secondary: string | null;
-  color_accent: string | null;
+  // Les 3 colonnes de couleurs (color_primary/secondary/accent) existent
+  // toujours en base mais ne sont plus exposées ni demandées : rien ne les
+  // consommait — pas de génération d'image, pas d'affichage, pas d'export.
   tagline: string | null;
   audience: string | null;
   voice: string | null;
@@ -43,6 +46,9 @@ export type GeneratedStrategy = {
   pain_points: string[];
   approach: string;
   key_messages: string[];
+  /** Hashtags récurrents de la marque — déduits du positionnement et de
+   *  l'audience, jamais saisis à la main. Réutilisés dans les légendes. */
+  hashtags: string[];
 };
 
 /**

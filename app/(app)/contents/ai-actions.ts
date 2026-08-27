@@ -19,27 +19,31 @@ import {
 import type { FilmingGuide } from "@/lib/types";
 
 /**
- * Voix de marque, issue de la Stratégie de contenu (`brand_kits.voice`).
- * Récupérée côté SERVEUR et appliquée automatiquement : l'utilisatrice ne la
- * ressaisit jamais, elle découle de sa stratégie.
+ * Voix de marque + hashtags récurrents, issus de la Stratégie de contenu.
+ * Récupérés côté SERVEUR et appliqués automatiquement : l'utilisatrice ne les
+ * ressaisit jamais, ils découlent de sa stratégie.
  */
-async function getBrandVoice(
+async function getBrandKitContext(
   supabase: Awaited<ReturnType<typeof createClient>>,
   contentId: string,
-): Promise<string | undefined> {
+): Promise<{ voice?: string; hashtags: string[] }> {
   const { data: content } = await supabase
     .from("contents")
     .select("brand_id")
     .eq("id", contentId)
     .maybeSingle();
-  if (!content) return undefined;
+  if (!content) return { hashtags: [] };
 
   const { data: kit } = await supabase
     .from("brand_kits")
-    .select("voice")
+    .select("voice, hashtags")
     .eq("brand_id", content.brand_id)
     .maybeSingle();
-  return kit?.voice?.trim() || undefined;
+
+  return {
+    voice: kit?.voice?.trim() || undefined,
+    hashtags: (kit?.hashtags ?? []) as string[],
+  };
 }
 
 /**
@@ -126,11 +130,11 @@ export async function aiGenerateReel(input: {
 }) {
   try {
     const { supabase } = await guardAiAction("reel");
-    const [presets, voice] = await Promise.all([
+    const [presets, { voice }] = await Promise.all([
       input.includeStoryboard
         ? getBrandScenePresets(supabase, input.contentId)
         : Promise.resolve([] as ScenePresetHint[]),
-      getBrandVoice(supabase, input.contentId),
+      getBrandKitContext(supabase, input.contentId),
     ]);
     const data = await generateReel({
       topic: input.topic,
@@ -333,7 +337,7 @@ export async function aiGenerateStory(input: {
 }) {
   try {
     const { supabase } = await guardAiAction("story");
-    const voice = await getBrandVoice(supabase, input.contentId);
+    const { voice } = await getBrandKitContext(supabase, input.contentId);
     const data = await generateStory({
       topic: input.topic,
       audience: input.audience,
@@ -479,11 +483,13 @@ export async function aiGenerateVlog(input: {
   platform?: string;
 }) {
   try {
-    await guardAiAction("vlog");
+    const { supabase } = await guardAiAction("vlog");
+    const { hashtags } = await getBrandKitContext(supabase, input.contentId);
     const data = await generateVlog({
       topic: input.topic,
       audience: input.audience,
       platform: input.platform,
+      brandHashtags: hashtags,
     });
     return { ok: true as const, data };
   } catch (e) {

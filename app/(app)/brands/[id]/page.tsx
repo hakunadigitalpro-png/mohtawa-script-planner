@@ -123,8 +123,7 @@ export default async function BrandDetailPage({
         <GuidedTour />
       </div>
 
-      <BrandStudio brandId={brand.id} initialStrategy={strategy} />
-
+      {/* 1. Identité — 2. Équipe — 3. Stratégie, puis ce qui en découle. */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -132,8 +131,7 @@ export default async function BrandDetailPage({
             Identité de marque
           </CardTitle>
           <CardDescription>
-            Ton logo, tes couleurs et tes hashtags. Le slogan, l&apos;audience
-            et la voix viennent de ta stratégie — rien à ressaisir ici.
+            Le logo de ta marque, utilisé partout dans l&apos;app.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -159,6 +157,8 @@ export default async function BrandDetailPage({
           />
         </CardContent>
       </Card>
+
+      <BrandStudio brandId={brand.id} initialStrategy={strategy} />
 
       <Card>
         <CardHeader>
