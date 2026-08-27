@@ -686,7 +686,7 @@ function ResultsScreen({
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <Sparkles className="size-4 text-accent" />
-          Ta stratégie est prête
+          Ta stratégie de contenu
         </DialogTitle>
         <DialogDescription>
           Déjà appliquée à ta marque — l&apos;IA s&apos;en sert pour écrire tes
@@ -694,86 +694,105 @@ function ResultsScreen({
         </DialogDescription>
       </DialogHeader>
 
-      {/* Pas de hauteur max ici : la modale s'étire et c'est la page qui
-          défile. Un seul scroll au lieu d'un cadre étroit dans un grand
-          écran à moitié vide. */}
+      {/* Pas de hauteur max : la modale s'étire et c'est la page qui défile.
+          Un seul scroll au lieu d'un cadre étroit dans un grand écran. */}
       <DialogBody className="space-y-4" dir="auto">
-        {/* Positionnement : la pièce maîtresse, pleine largeur. */}
-        <div className="rounded-2xl bg-gradient-to-br from-accent/15 via-accent/5 to-transparent p-5">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-accent">
-            Positionnement
-          </p>
-          <p className="mt-2 text-lg font-semibold leading-snug">
-            {generated.positioning}
-          </p>
-          {generated.tagline && (
-            <p className="mt-3 inline-block rounded-full bg-ink px-4 py-1.5 text-sm font-semibold text-white">
-              « {generated.tagline} »
+        {/* Le positionnement porte tout le document : traité comme une
+            couverture, pas comme une carte parmi d'autres. */}
+        <div className="relative overflow-hidden rounded-3xl bg-ink p-6 text-white sm:p-8">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-orange/30 blur-3xl"
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -bottom-20 -left-10 size-44 rounded-full bg-lavender/25 blur-3xl"
+          />
+          <div className="relative">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-soft">
+              Positionnement
             </p>
-          )}
+            <p className="mt-3 text-xl font-bold leading-snug sm:text-2xl">
+              {generated.positioning}
+            </p>
+            {generated.tagline && (
+              <p className="mt-4 inline-block rounded-full bg-orange px-4 py-1.5 text-sm font-semibold">
+                « {generated.tagline} »
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <StrategyCard
+            n="01"
             icon={<Users className="size-4" />}
             title="Ton audience"
-            tone="violet"
+            tone="lavender"
           >
-            <p className="text-sm leading-relaxed">
-              {generated.audience_summary}
-            </p>
+            <p>{generated.audience_summary}</p>
           </StrategyCard>
 
           <StrategyCard
+            n="02"
+            icon={<Target className="size-4" />}
+            title="Ce qui la bloque"
+            tone="orange"
+          >
+            <BulletList items={generated.pain_points ?? []} />
+          </StrategyCard>
+
+          <StrategyCard
+            n="03"
             icon={<MessageCircle className="size-4" />}
             title="Ta voix"
-            tone="teal"
+            tone="lavender"
           >
-            <p className="text-sm leading-relaxed">{generated.voice_summary}</p>
+            <p>{generated.voice_summary}</p>
           </StrategyCard>
 
-          {generated.pain_points?.length > 0 && (
-            <StrategyCard
-              icon={<Target className="size-4" />}
-              title="Ce qui bloque ton audience"
-              tone="amber"
-            >
-              <BulletList items={generated.pain_points} />
-            </StrategyCard>
-          )}
-
-          {generated.key_messages?.length > 0 && (
-            <StrategyCard
-              icon={<Layers className="size-4" />}
-              title="À répéter dans ton contenu"
-              tone="accent"
-            >
-              <BulletList items={generated.key_messages} />
-            </StrategyCard>
-          )}
-        </div>
-
-        {generated.approach && (
           <StrategyCard
+            n="04"
             icon={<Lightbulb className="size-4" />}
             title="Ta méthode"
-            tone="neutral"
+            tone="cream"
           >
-            <p className="text-sm leading-relaxed">{generated.approach}</p>
+            <p>{generated.approach}</p>
+          </StrategyCard>
+        </div>
+
+        {generated.key_messages?.length > 0 && (
+          <StrategyCard
+            n="05"
+            icon={<Layers className="size-4" />}
+            title="À répéter dans ton contenu"
+            tone="orange"
+          >
+            <div className="grid gap-2 sm:grid-cols-3">
+              {generated.key_messages.map((m, i) => (
+                <p
+                  key={i}
+                  className="rounded-xl bg-card px-3 py-2.5 text-sm font-medium"
+                >
+                  {m}
+                </p>
+              ))}
+            </div>
           </StrategyCard>
         )}
 
         {generated.hashtags?.length > 0 && (
           <StrategyCard
+            n="06"
             icon={<Sparkles className="size-4" />}
             title="Tes hashtags récurrents"
-            tone="neutral"
+            tone="cream"
           >
             <ul className="flex flex-wrap gap-1.5">
               {generated.hashtags.map((h, i) => (
                 <li
                   key={i}
-                  className="rounded-lg bg-card px-2.5 py-1 text-xs font-medium"
+                  className="rounded-lg bg-card px-2.5 py-1 text-xs font-semibold"
                 >
                   #{h}
                 </li>
@@ -838,48 +857,70 @@ function ResultsScreen({
 }
 
 /**
- * Carte d'une section de stratégie. Chaque section a sa teinte : sans ça,
- * l'écran n'est qu'un mur de blanc où rien ne se distingue.
+ * Section de la stratégie, façon livrable d'agence : numérotée, avec son
+ * icône dans un carré teinté. Les teintes viennent UNIQUEMENT de la charte
+ * (orange, lavande, crème) — pas de couleur importée d'ailleurs.
  */
 const CARD_TONES = {
-  accent: { bg: "bg-accent/10", fg: "text-accent" },
-  violet: { bg: "bg-violet-500/10", fg: "text-violet-700" },
-  teal: { bg: "bg-teal-500/10", fg: "text-teal-700" },
-  amber: { bg: "bg-amber-400/15", fg: "text-amber-700" },
-  neutral: { bg: "bg-secondary/60", fg: "text-muted-foreground" },
+  orange: {
+    bg: "bg-orange-soft/50",
+    iconBg: "bg-orange/15",
+    fg: "text-orange-strong",
+  },
+  lavender: {
+    bg: "bg-lavender-soft/50",
+    iconBg: "bg-lavender/15",
+    fg: "text-lavender-strong",
+  },
+  cream: { bg: "bg-secondary", iconBg: "bg-ink/10", fg: "text-ink" },
 } as const;
 
 function StrategyCard({
+  n,
   icon,
   title,
   tone,
   children,
 }: {
+  n: string;
   icon: React.ReactNode;
   title: string;
   tone: keyof typeof CARD_TONES;
   children: React.ReactNode;
 }) {
-  const { bg, fg } = CARD_TONES[tone];
+  const t = CARD_TONES[tone];
   return (
-    <div className={cn("rounded-2xl p-4", bg)}>
-      <div className={cn("mb-2 flex items-center gap-1.5", fg)}>
-        {icon}
-        <span className="text-[11px] font-bold uppercase tracking-wider">
-          {title}
+    <div className={cn("rounded-2xl p-5", t.bg)}>
+      <div className="mb-3 flex items-center gap-3">
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-xl",
+            t.iconBg,
+            t.fg,
+          )}
+        >
+          {icon}
         </span>
+        <div className="min-w-0">
+          <span className="block text-[10px] font-bold tracking-[0.16em] text-muted">
+            {n}
+          </span>
+          <h3 className="truncate text-sm font-bold leading-tight">{title}</h3>
+        </div>
       </div>
-      <div className="text-foreground">{children}</div>
+      <div className="text-sm leading-relaxed text-foreground/85">
+        {children}
+      </div>
     </div>
   );
 }
 
 function BulletList({ items }: { items: string[] }) {
   return (
-    <ul className="space-y-1.5 text-sm leading-relaxed">
+    <ul className="space-y-1.5">
       {items.map((m, i) => (
         <li key={i} className="flex gap-2">
-          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-current opacity-40" />
+          <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-current opacity-40" />
           {m}
         </li>
       ))}
