@@ -225,6 +225,45 @@
   word-wrap: break-word;
 }
 
+/* ---- Export de la stratégie de contenu (/print/strategy/[id]) ---- */
+.strategy-lead {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.strategy-tagline {
+  display: inline-block;
+  margin: 10px 0 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #18181b;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+.strategy-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.strategy-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.strategy-list li {
+  margin-bottom: 4px;
+}
+.strategy-hashtags {
+  margin: 0;
+  font-size: 14px;
+  color: #52525b;
+  word-spacing: 4px;
+}
+
 .print-footer {
   margin-top: 48px;
   padding-top: 16px;

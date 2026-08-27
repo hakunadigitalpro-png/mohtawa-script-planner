@@ -1,9 +1,11 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
+  FileDown,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -173,6 +175,7 @@ export function BrandStudio({
     <>
       {generated ? (
         <StrategyHero
+          brandId={brandId}
           generated={generated}
           onAdjust={() => {
             setPhase("results");
@@ -298,9 +301,11 @@ export function BrandStudio({
  * on ne les réaffiche pas ici pour éviter le doublon.
  */
 function StrategyHero({
+  brandId,
   generated,
   onAdjust,
 }: {
+  brandId: string;
   generated: GeneratedStrategy;
   onAdjust: () => void;
 }) {
@@ -326,9 +331,22 @@ function StrategyHero({
             )}
           </div>
         </div>
-        <Button type="button" variant="outline" onClick={onAdjust}>
-          Ajuster ma stratégie
-        </Button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {/* Export : page imprimable + print-to-PDF du navigateur, comme
+              pour les contenus (pas de librairie PDF). */}
+          <Link
+            href={`/print/strategy/${brandId}`}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold hover:bg-secondary"
+          >
+            <FileDown className="size-3.5" />
+            Télécharger
+          </Link>
+          <Button type="button" variant="outline" onClick={onAdjust}>
+            Ajuster ma stratégie
+          </Button>
+        </div>
       </div>
 
       {generated.key_messages?.length > 0 && (

@@ -8,8 +8,8 @@ import {
   STORY_SLOT_LABELS,
 } from "@/lib/constants";
 import { formatDateFr } from "@/lib/utils";
-import { PrintActions } from "./print-actions";
-import "./print.css";
+import { PrintActions } from "../print-actions";
+import "../print.css";
 import type {
   Content,
   ReelDetails,

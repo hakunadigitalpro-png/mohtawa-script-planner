@@ -4,7 +4,15 @@ import { useEffect } from "react";
 import { Printer, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-export function PrintActions({ title }: { title: string }) {
+export function PrintActions({
+  title,
+  backHref = "/dashboard",
+}: {
+  title: string;
+  /** Où revenir en quittant l'export — la fiche d'origine, pas toujours le
+   *  dashboard (une stratégie ramène à sa marque). */
+  backHref?: string;
+}) {
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.title = `${title} — Export Kreatly`;
@@ -13,7 +21,7 @@ export function PrintActions({ title }: { title: string }) {
 
   return (
     <div className="print-actions no-print">
-      <Link href="/dashboard" className="print-back">
+      <Link href={backHref} className="print-back">
         <ArrowLeft className="size-4" />
         Retour à l&apos;app
       </Link>
