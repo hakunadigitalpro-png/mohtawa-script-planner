@@ -265,6 +265,27 @@ html[data-theme="dark"] {
     z-index: 1;
   }
 
+  /* Table lumineuse (storyboard) : même ambiance sombre que `.surface-hero`,
+     mais les halos sont peints en `background` au lieu de pseudo-éléments
+     floutés. Sans pseudo-éléments, pas besoin de la règle `> * { z-index: 1 }`
+     — donc pas de contexte d'empilement, et les fenêtres modales ouvertes
+     depuis l'intérieur passent bien au-dessus de la sidebar. */
+  .surface-board {
+    background:
+      radial-gradient(
+        120% 90% at 88% -10%,
+        rgba(255, 87, 34, 0.38),
+        transparent 62%
+      ),
+      radial-gradient(
+        95% 85% at -6% 112%,
+        rgba(237, 70, 7, 0.24),
+        transparent 62%
+      ),
+      var(--color-ink);
+    color: #fff;
+  }
+
   /* Verre dépoli : laisse transparaître le dégradé du fond sans sacrifier
      la lisibilité (opacité volontairement haute — un verre trop transparent
      rend le texte illisible sur un fond coloré). */

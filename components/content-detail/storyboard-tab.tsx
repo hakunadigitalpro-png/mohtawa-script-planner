@@ -6,8 +6,8 @@ import {
   Plus,
   Trash2,
   GripVertical,
-  Scissors,
   ChevronDown,
+  Scissors,
   Bookmark,
   X,
   ImageIcon,
@@ -18,6 +18,7 @@ import {
   Type,
   Pencil,
   Zap,
+  Check,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,6 @@ import {
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
 import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
-import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import { FilmingLayouts } from "@/components/equipment-layout-diagram";
 import { ScenePresetEditDialog } from "@/components/scene-preset-edit-dialog";
@@ -328,14 +328,18 @@ export function StoryboardTab({
             storyboard (migration 0047), toujours modifiable ensuite. Masqué
             tant qu'il n'y a rien (ni généré, ni saisi à la main). */}
         {hasGuideContent && (
-          <div className="rounded-2xl border border-accent/30 bg-accent/5 p-3">
-            <div className="mb-2 flex items-center gap-1.5">
+          <details
+            open
+            className="group/guide rounded-2xl border border-accent/30 bg-accent/5 p-3 [&[open]_.guide-caret]:rotate-180"
+          >
+            <summary className="flex cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden">
               <Film className="size-3.5 text-accent" />
               <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
                 {g("title")}
               </span>
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <ChevronDown className="guide-caret ms-auto size-4 text-accent/70 transition-transform" />
+            </summary>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <GuideField
                 label={g("lighting")}
                 value={state.guide.lighting}
@@ -375,43 +379,39 @@ export function StoryboardTab({
               onChangePlacement={updatePlacementPosition}
               onChangeCamera={updateCameraPosition}
             />
-          </div>
+          </details>
         )}
 
         {/* Barre de setups réutilisables : clique pour insérer une scène
             pré-remplie. La biblio se remplit en avance (dialog "Nouveau
             setup") ou au vol (bouton "enregistrer" sur une scène). */}
-        <div className="rounded-2xl border border-border/50 bg-secondary/20 p-3">
-          <div className="mb-2 flex items-center gap-1.5">
-            <Bookmark className="size-3.5 text-muted" />
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted">
-              Mes setups
-            </span>
-            <span className="text-[10px] text-muted">
-              · clique pour ajouter une scène pré-remplie
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {scenePresets.map((preset) => (
-              <PresetChip
-                key={preset.id}
-                preset={preset}
-                disabled={pending}
-                onInsert={() => insertFromPreset(preset.id)}
-                onDelete={() => removePreset(preset.id)}
-                onEdit={() => setEditPreset(preset)}
-              />
-            ))}
-            <button
-              type="button"
-              onClick={() => setCreatePresetOpen(true)}
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted"
+            title={t("presetsHint")}
+          >
+            <Bookmark className="size-3.5" />
+            {t("presets")}
+          </span>
+          {scenePresets.map((preset) => (
+            <PresetChip
+              key={preset.id}
+              preset={preset}
               disabled={pending}
-              className="inline-flex items-center gap-1 rounded-full border-2 border-dashed border-border/60 px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-accent/60 hover:text-accent disabled:opacity-50"
-            >
-              <Plus className="size-3.5" />
-              Nouveau setup
-            </button>
-          </div>
+              onInsert={() => insertFromPreset(preset.id)}
+              onDelete={() => removePreset(preset.id)}
+              onEdit={() => setEditPreset(preset)}
+            />
+          ))}
+          <button
+            type="button"
+            onClick={() => setCreatePresetOpen(true)}
+            disabled={pending}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-accent/60 hover:text-accent disabled:opacity-50"
+          >
+            <Plus className="size-3.5" />
+            {t("newPreset")}
+          </button>
         </div>
 
         <CreatePresetDialog
@@ -426,15 +426,19 @@ export function StoryboardTab({
           onOpenChange={(v) => !v && setEditPreset(null)}
         />
 
-        {state.scenes.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-10 text-center">
-            <p className="text-sm font-medium">{t("emptyTitle")}</p>
-            <p className="mt-1 text-xs text-muted">
-              {fullScriptText.trim() ? t("emptySubtitleWithScript") : t("emptySubtitle")}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {/* Table lumineuse : les plans sont posés sur un fond sombre plutôt
+            que blanc sur blanc. Les visuels ressortent, et l'œil compte les
+            cadres au lieu de lire des libellés. */}
+        <div className="surface-board rounded-3xl p-4 sm:p-5">
+          {state.scenes.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-white/25 p-10 text-center">
+              <p className="text-sm font-medium text-white">{t("emptyTitle")}</p>
+              <p className="mt-1 text-xs text-white/60">
+                {fullScriptText.trim() ? t("emptySubtitleWithScript") : t("emptySubtitle")}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {state.scenes.map((sceneForm, idx) => {
               // Pour l'image, on lit toujours le state serveur (image_url
               // n'est pas dans le formulaire — c'est une action atomique).
@@ -475,8 +479,9 @@ export function StoryboardTab({
                 </div>
               );
             })}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </Card>
 
       <SaveFooter
@@ -557,18 +562,20 @@ function SceneCard({
     setOptimisticFilmed(serverFilmed);
   }, [serverFilmed]);
 
-  // Lot 1 — réduction des champs : on ne montre par défaut que Image +
-  // Action/Dialogue. Caméra, Texte affiché et Montage sont repliés derrière
-  // "+ détails". On ouvre automatiquement si un de ces champs a déjà du
-  // contenu (re-édition d'une scène existante → on ne cache jamais du texte).
-  const hasDetailsContent = Boolean(
-    sceneForm.camera_angle.trim() ||
-      sceneForm.on_screen_text.trim() ||
-      sceneForm.editing_notes.trim() ||
-      sceneForm.expression.trim() ||
-      sceneForm.movement.trim(),
-  );
-  const [detailsOpen, setDetailsOpen] = useState(hasDetailsContent);
+  // Les 5 champs secondaires (caméra, expression, mouvement, texte affiché,
+  // montage) ne sont plus dépliés dans la carte : après un découpage IA ils
+  // sont tous remplis, et 5 champs × 8 cartes = le mur de texte. Ils vivent
+  // dans une fenêtre dédiée, et la carte n'en garde que des puces lisibles
+  // d'un coup d'œil.
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const chips = [
+    { icon: Camera, value: sceneForm.camera_angle },
+    { icon: Type, value: sceneForm.on_screen_text },
+    { icon: Smile, value: sceneForm.expression },
+    { icon: Move, value: sceneForm.movement },
+    { icon: Scissors, value: sceneForm.editing_notes },
+  ].filter((c) => c.value.trim());
 
   const onImageChange = (url: string | null) => {
     startTransition(async () => {
@@ -593,48 +600,79 @@ function SceneCard({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border-s-4 border bg-card shadow-sm transition-all",
+        // Une carte = un cadre de film. Pas de boîtes imbriquées, pas de
+        // libellés répétés : l'image porte la carte, le texte est une légende.
+        "group/scene relative flex flex-col overflow-hidden rounded-2xl bg-card text-foreground shadow-soft ring-1 transition",
         optimisticFilmed
-          ? "border-emerald-400 opacity-90"
-          : "border-accent/70 border-e-border/60 border-t-border/60 border-b-border/60",
+          ? "ring-2 ring-emerald-400/80"
+          : "ring-black/5 hover:shadow-lift",
       )}
     >
-      <div
-        className={cn(
-          "flex items-center justify-between border-b px-3 py-2.5",
-          optimisticFilmed
-            ? "border-emerald-300/40 bg-emerald-50/40"
-            : "border-border/60 bg-secondary/50",
-        )}
-      >
-        <div className="flex items-center gap-2">
-          <GripVertical className="size-3.5 cursor-grab text-muted active:cursor-grabbing" />
+      {/* ---------- Le cadre ---------- */}
+      <div className="relative">
+        <ImageUpload
+          contentId={contentId}
+          value={serverImageUrl}
+          aspectRatio="video"
+          onChange={onImageChange}
+          label={t("visual")}
+          hint={null}
+          frameClassName={cn(
+            "rounded-none border-x-0 border-t-0 border-b bg-secondary/50",
+            serverImageUrl
+              ? "border-solid border-border/40"
+              : "border-dashed border-border/70",
+          )}
+        />
+
+        {/* Numéro de plan façon clap — remplace la ligne "1 · PLAN 01". */}
+        <span className="pointer-events-none absolute start-2 top-2 z-10 inline-flex h-6 items-center rounded-md bg-ink/85 px-2 text-[11px] font-bold tabular-nums tracking-wider text-white backdrop-blur-sm">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+
+        {/* Marqueur "filmée" : icône seule, le mot n'apparaît qu'au survol
+            ou une fois cochée. Un plan filmé se repère à sa pastille verte,
+            sans lire quoi que ce soit. */}
+        <button
+          type="button"
+          onClick={onToggleFilmed}
+          disabled={pending}
+          title={optimisticFilmed ? t("filmed") : t("markFilmed")}
+          aria-label={optimisticFilmed ? t("filmed") : t("markFilmed")}
+          aria-pressed={optimisticFilmed}
+          className={cn(
+            "absolute bottom-2 start-2 z-10 inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[11px] font-bold transition backdrop-blur-sm disabled:opacity-50",
+            optimisticFilmed
+              ? "bg-emerald-500 text-white shadow-sm"
+              : "bg-ink/65 text-white/80 hover:bg-ink/85 hover:text-white",
+          )}
+        >
+          <Check className="size-3.5 shrink-0" />
           <span
             className={cn(
-              "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
-              optimisticFilmed
-                ? "bg-emerald-100 text-emerald-700"
-                : "bg-accent/15 text-accent",
+              optimisticFilmed ? "inline" : "hidden group-hover/scene:inline",
             )}
           >
-            {index + 1}
+            {t("filmed")}
           </span>
-          <span className="text-xs font-bold uppercase tracking-wider text-muted">
-            {t("planNumber", { n: String(index + 1).padStart(2, "0") })}
+        </button>
+
+        {/* Actions rares (setup, suppression) : masquées jusqu'au survol.
+            Placées en bas à droite pour ne pas heurter la croix de l'upload. */}
+        <div className="absolute bottom-2 end-2 z-10 flex items-center gap-0.5 rounded-full bg-ink/65 p-0.5 opacity-0 backdrop-blur-sm transition focus-within:opacity-100 group-hover/scene:opacity-100">
+          {/* Poignée : la carte entière est déjà `draggable`, cette icône
+              n'est là que pour dire qu'on peut réordonner. */}
+          <span
+            className="cursor-grab p-1.5 text-white/60 active:cursor-grabbing"
+            title={t("reorderHint")}
+          >
+            <GripVertical className="size-3.5" />
           </span>
-          {optimisticFilmed && (
-            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-              {t("filmedBadge")}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          <CommentButton targetType="scene" targetId={sceneForm.id} size="sm" />
           <button
             type="button"
             onClick={() => setSavePresetOpen(true)}
             disabled={pending}
-            className="rounded-full p-1 text-muted hover:bg-accent/10 hover:text-accent"
+            className="rounded-full p-1.5 text-white/80 transition hover:bg-white/15 hover:text-white"
             aria-label="Enregistrer cette scène comme setup réutilisable"
             title="Enregistrer comme setup réutilisable"
           >
@@ -649,11 +687,79 @@ function SceneCard({
               })
             }
             disabled={pending}
-            className="rounded-full p-1 text-muted hover:bg-destructive/10 hover:text-destructive"
+            className="rounded-full p-1.5 text-white/80 transition hover:bg-red-500/80 hover:text-white"
             aria-label={t("deleteScene")}
+            title={t("deleteScene")}
           >
             <Trash2 className="size-3.5" />
           </button>
+        </div>
+      </div>
+
+      {/* ---------- La légende ---------- */}
+      <div className="flex flex-1 flex-col gap-2 p-3">
+        {/* Pas de label au-dessus : le champ EST la légende du cadre.
+            L'exemple long n'est montré que sur le premier plan — au-delà,
+            c'est le même texte répété autant de fois qu'il y a de cartes. */}
+        <Textarea
+          className="-mx-1.5 max-h-40 min-h-11 w-[calc(100%+0.75rem)] flex-1 resize-none overflow-y-auto rounded-lg border-transparent bg-transparent px-1.5 py-1 text-sm leading-relaxed shadow-none [field-sizing:content] focus-visible:bg-secondary/40"
+          dir="auto"
+          value={sceneForm.description}
+          onChange={(e) => onFieldChange("description", e.target.value)}
+          placeholder={
+            index === 0
+              ? t("fields.actionPlaceholder")
+              : t("fields.actionShortPlaceholder")
+          }
+          aria-label={t("fields.action")}
+        />
+
+        <div className="flex items-end justify-between gap-2 pt-0.5">
+          {chips.length > 0 ? (
+            // Les détails remplis se lisent en puces tronquées ; un clic
+            // ouvre la fenêtre pour les modifier en entier.
+            <button
+              type="button"
+              onClick={() => setDetailsOpen(true)}
+              className="flex min-w-0 flex-1 flex-wrap items-center gap-1 text-start"
+              title={t("details")}
+            >
+              {chips.slice(0, 3).map((chip, i) => {
+                const Icon = chip.icon;
+                return (
+                  <span
+                    key={i}
+                    className="inline-flex max-w-36 items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px] text-muted transition hover:bg-accent/10 hover:text-accent"
+                  >
+                    <Icon className="size-3 shrink-0" />
+                    <span className="truncate" dir="auto">
+                      {chip.value.trim()}
+                    </span>
+                  </span>
+                );
+              })}
+              {chips.length > 3 && (
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold text-muted">
+                  +{chips.length - 3}
+                </span>
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setDetailsOpen(true)}
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-muted transition hover:bg-secondary hover:text-foreground"
+            >
+              <Plus className="size-3" />
+              {t("details")}
+            </button>
+          )}
+          <CommentButton
+            targetType="scene"
+            targetId={sceneForm.id}
+            size="sm"
+            className="shrink-0"
+          />
         </div>
       </div>
 
@@ -669,164 +775,143 @@ function SceneCard({
         }}
       />
 
-      <div className="space-y-2.5 p-3">
-        <ImageUpload
-          contentId={contentId}
-          value={serverImageUrl}
-          aspectRatio="video"
-          onChange={onImageChange}
-          label={t("fields.action")}
-        />
-
-        <div className="space-y-1">
-          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
-            {t("fields.action")}
-          </Label>
-          <Textarea
-            // max-h + scroll : le champ grandit avec le texte jusqu'à un
-            // plafond puis défile → cartes régulières (plus de murs de texte).
-            // dir="auto" : aligne le texte selon la langue (arabe RTL / FR LTR).
-            className="max-h-56 min-h-12 overflow-y-auto text-sm leading-relaxed [field-sizing:content]"
-            dir="auto"
-            value={sceneForm.description}
-            onChange={(e) => onFieldChange("description", e.target.value)}
-            placeholder={t("fields.actionPlaceholder")}
-          />
-        </div>
-
-        {/* Champs avancés repliables (Lot 1). Cachés par défaut pour
-            désencombrer ; bouton "+ détails" pour les révéler. */}
-        {!detailsOpen ? (
-          <button
-            type="button"
-            onClick={() => setDetailsOpen(true)}
-            className="flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-border/60 py-1 text-[11px] font-medium text-muted transition hover:border-foreground/30 hover:text-foreground"
-          >
-            <Plus className="size-3" />
-            Caméra, texte affiché, montage
-          </button>
-        ) : (
-          <div className="space-y-2 rounded-xl border border-border/40 bg-secondary/20 p-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                Détails
-              </span>
-              <button
-                type="button"
-                onClick={() => setDetailsOpen(false)}
-                className="inline-flex items-center gap-0.5 text-[10px] text-muted hover:text-foreground"
-                aria-label="Réduire les détails"
-              >
-                Réduire
-                <ChevronDown className="size-3 rotate-180" />
-              </button>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
-                <Camera className="size-3" />
-                {t("fields.camera")}
-              </Label>
-              <Input
-                className="h-8 text-xs"
-                dir="auto"
-                value={sceneForm.camera_angle}
-                onChange={(e) => onFieldChange("camera_angle", e.target.value)}
-                placeholder={t("fields.cameraPlaceholder")}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
-                  <Smile className="size-3" />
-                  {t("fields.expression")}
-                </Label>
-                <Input
-                  className="h-8 text-xs"
-                  dir="auto"
-                  value={sceneForm.expression}
-                  onChange={(e) => onFieldChange("expression", e.target.value)}
-                  placeholder={t("fields.expressionPlaceholder")}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
-                  <Move className="size-3" />
-                  {t("fields.movement")}
-                </Label>
-                <Input
-                  className="h-8 text-xs"
-                  dir="auto"
-                  value={sceneForm.movement}
-                  onChange={(e) => onFieldChange("movement", e.target.value)}
-                  placeholder={t("fields.movementPlaceholder")}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
-                <Type className="size-3" />
-                {t("fields.onScreenText")}
-              </Label>
-              <Input
-                className="h-8 text-xs"
-                dir="auto"
-                value={sceneForm.on_screen_text}
-                onChange={(e) =>
-                  onFieldChange("on_screen_text", e.target.value)
-                }
-                placeholder={t("fields.onScreenTextPlaceholder")}
-              />
-            </div>
-
-            {/* Remarques de montage (Idée 3) — filtres, effets, transitions,
-                musique, sound design. Champ libre par scène. */}
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
-                <Scissors className="size-3" />
-                Montage / Post-prod
-              </Label>
-              <Textarea
-                className="max-h-32 min-h-10 overflow-y-auto text-sm leading-relaxed [field-sizing:content]"
-                dir="auto"
-                value={sceneForm.editing_notes}
-                onChange={(e) => onFieldChange("editing_notes", e.target.value)}
-                placeholder="Ex : Filtre vintage, cut net vers Plan 04, whoosh-sound."
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Toggle "Filmé" — atomic action (clic = save immédiat). */}
-        <label
-          className={cn(
-            "mt-1 flex cursor-pointer items-center gap-2 rounded-xl border px-2.5 py-1.5 transition",
-            optimisticFilmed
-              ? "border-emerald-300/60 bg-emerald-50/60"
-              : "border-border/60 bg-secondary/30 hover:bg-secondary/60",
-            pending && "opacity-60",
-          )}
-        >
-          <Checkbox
-            checked={optimisticFilmed}
-            onCheckedChange={onToggleFilmed}
-            disabled={pending}
-          />
-          <span
-            className={cn(
-              "text-xs font-semibold",
-              optimisticFilmed ? "text-emerald-700" : "text-foreground",
-            )}
-          >
-            {t("filmed")}
-          </span>
-        </label>
-      </div>
+      <SceneDetailsDialog
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        planLabel={t("detailsTitle", {
+          n: String(index + 1).padStart(2, "0"),
+        })}
+        sceneForm={sceneForm}
+        onFieldChange={onFieldChange}
+      />
     </div>
   );
 }
+
+/**
+ * Les 5 champs secondaires d'un plan, dans une fenêtre dédiée. Ils restent
+ * pilotés par l'état du parent — fermer la fenêtre ne perd rien, c'est le
+ * bouton « Enregistrer » du bas de page qui valide, comme pour le reste.
+ */
+function SceneDetailsDialog({
+  open,
+  onOpenChange,
+  planLabel,
+  sceneForm,
+  onFieldChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  planLabel: string;
+  sceneForm: SceneFormState;
+  onFieldChange: (
+    key:
+      | "description"
+      | "camera_angle"
+      | "on_screen_text"
+      | "editing_notes"
+      | "expression"
+      | "movement",
+    value: string,
+  ) => void;
+}) {
+  const t = useTranslations("storyboard");
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{planLabel}</DialogTitle>
+          <DialogDescription>
+            Tout est optionnel — remplis seulement ce qui t&apos;aide à tourner.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogBody className="space-y-3">
+          <DetailField
+            icon={Camera}
+            label={t("fields.camera")}
+            value={sceneForm.camera_angle}
+            placeholder={t("fields.cameraPlaceholder")}
+            onChange={(v) => onFieldChange("camera_angle", v)}
+          />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <DetailField
+              icon={Smile}
+              label={t("fields.expression")}
+              value={sceneForm.expression}
+              placeholder={t("fields.expressionPlaceholder")}
+              onChange={(v) => onFieldChange("expression", v)}
+            />
+            <DetailField
+              icon={Move}
+              label={t("fields.movement")}
+              value={sceneForm.movement}
+              placeholder={t("fields.movementPlaceholder")}
+              onChange={(v) => onFieldChange("movement", v)}
+            />
+          </div>
+          <DetailField
+            icon={Type}
+            label={t("fields.onScreenText")}
+            value={sceneForm.on_screen_text}
+            placeholder={t("fields.onScreenTextPlaceholder")}
+            onChange={(v) => onFieldChange("on_screen_text", v)}
+          />
+          <div className="space-y-1">
+            <Label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
+              <Scissors className="size-3" />
+              {t("editingNotes")}
+            </Label>
+            <Textarea
+              className="max-h-40 min-h-16 overflow-y-auto text-sm leading-relaxed [field-sizing:content]"
+              dir="auto"
+              value={sceneForm.editing_notes}
+              onChange={(e) => onFieldChange("editing_notes", e.target.value)}
+              placeholder={t("editingNotesPlaceholder")}
+            />
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button type="button" onClick={() => onOpenChange(false)}>
+            OK
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Un champ court de la fenêtre détails (icône + libellé + input). */
+function DetailField({
+  icon: Icon,
+  label,
+  value,
+  placeholder,
+  onChange,
+}: {
+  icon: typeof Camera;
+  label: string;
+  value: string;
+  placeholder: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
+        <Icon className="size-3" />
+        {label}
+      </Label>
+      <Input
+        className="text-sm"
+        dir="auto"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
+  );
+}
+
 
 /* ============================ Setups (Lot 2) ============================ */
 

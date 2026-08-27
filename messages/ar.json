@@ -281,13 +281,23 @@
       "expression": "التعبير",
       "expressionPlaceholder": "مثال: مبتسم، حاجبان مرفوعان",
       "movement": "الحركة",
-      "movementPlaceholder": "مثال: يد على القلب، يهز رأسه"
+      "movementPlaceholder": "مثال: يد على القلب، يهز رأسه",
+      "actionShortPlaceholder": "ما يحدث في هذه اللقطة…"
     },
     "deleteScene": "حذف المشهد",
     "filmed": "تم التصوير",
     "filmedBadge": "✓ مُصوَّر",
     "markFilmed": "تحديد كمُصوَّر",
-    "filmedProgress": "{done} من {total} مُصوَّر"
+    "filmedProgress": "{done} من {total} مُصوَّر",
+    "visual": "صورة",
+    "details": "تفاصيل",
+    "detailsTitle": "اللقطة {n} — التفاصيل",
+    "presets": "الإعدادات",
+    "presetsHint": "اضغط على إعداد لإضافة مشهد جاهز.",
+    "newPreset": "إعداد جديد",
+    "editingNotes": "المونتاج",
+    "editingNotesPlaceholder": "مثال: فلتر قديم، قطع مباشر إلى اللقطة التالية.",
+    "reorderHint": "اسحب لإعادة الترتيب"
   },
   "filmingGuide": {
     "title": "دليل التصوير",

@@ -87,6 +87,8 @@ export function ImageUpload({
   bucket = BUCKET,
   pathMode = false,
   compress = "photo",
+  hint = "JPG, PNG, WebP · compressée auto",
+  frameClassName,
 }: {
   /** Dossier de stockage = un content id (chemin {contentId}/…). */
   contentId?: string;
@@ -109,6 +111,14 @@ export function ImageUpload({
    * (préserve la transparence des logos PNG).
    */
   compress?: CompressMode;
+  /**
+   * Ligne d'aide sous le libellé de la zone vide. `null` pour la masquer —
+   * utile quand la zone est répétée N fois à l'écran (storyboard), où le
+   * rappel du format devient du bruit.
+   */
+  hint?: string | null;
+  /** Classes du cadre lui-même (bordure, fond, arrondis). */
+  frameClassName?: string;
 }) {
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -218,6 +228,7 @@ export function ImageUpload({
         className={cn(
           "relative w-full overflow-hidden rounded-md border-2 border-dashed border-border bg-secondary/40 transition-colors",
           aspectClass,
+          frameClassName,
           dragOver && "border-primary bg-primary/5",
         )}
         onDragOver={(e) => {
@@ -275,9 +286,7 @@ export function ImageUpload({
             <span className="text-xs font-medium">
               {uploading ? "Envoi..." : label}
             </span>
-            <span className="text-[10px] text-muted">
-              JPG, PNG, WebP · compressée auto
-            </span>
+            {hint && <span className="text-[10px] text-muted">{hint}</span>}
           </button>
         )}
       </div>

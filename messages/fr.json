@@ -281,13 +281,23 @@
       "expression": "Expression",
       "expressionPlaceholder": "Ex : Souriant, sourcils levés",
       "movement": "Mouvement",
-      "movementPlaceholder": "Ex : Main sur le cœur, hoche la tête"
+      "movementPlaceholder": "Ex : Main sur le cœur, hoche la tête",
+      "actionShortPlaceholder": "Ce qui se passe dans ce plan…"
     },
     "deleteScene": "Supprimer la scène",
     "filmed": "Filmée",
     "filmedBadge": "✓ Filmée",
     "markFilmed": "Marquer comme filmée",
-    "filmedProgress": "{done} sur {total} filmées"
+    "filmedProgress": "{done} sur {total} filmées",
+    "visual": "Visuel",
+    "details": "Détails",
+    "detailsTitle": "Plan {n} — détails",
+    "presets": "Setups",
+    "presetsHint": "Clique sur un setup pour insérer une scène pré-remplie.",
+    "newPreset": "Nouveau setup",
+    "editingNotes": "Montage",
+    "editingNotesPlaceholder": "Ex : filtre vintage, cut net vers le plan suivant, whoosh.",
+    "reorderHint": "Glisse pour réorganiser"
   },
   "filmingGuide": {
     "title": "Guide de tournage",

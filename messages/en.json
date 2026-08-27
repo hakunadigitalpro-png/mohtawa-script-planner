@@ -281,13 +281,23 @@
       "expression": "Expression",
       "expressionPlaceholder": "Ex: Smiling, eyebrows raised",
       "movement": "Movement",
-      "movementPlaceholder": "Ex: Hand on heart, nodding"
+      "movementPlaceholder": "Ex: Hand on heart, nodding",
+      "actionShortPlaceholder": "What happens in this shot…"
     },
     "deleteScene": "Delete scene",
     "filmed": "Filmed",
     "filmedBadge": "✓ Filmed",
     "markFilmed": "Mark as filmed",
-    "filmedProgress": "{done} of {total} filmed"
+    "filmedProgress": "{done} of {total} filmed",
+    "visual": "Visual",
+    "details": "Details",
+    "detailsTitle": "Shot {n} — details",
+    "presets": "Setups",
+    "presetsHint": "Click a setup to insert a pre-filled scene.",
+    "newPreset": "New setup",
+    "editingNotes": "Editing",
+    "editingNotesPlaceholder": "E.g. vintage filter, hard cut to next shot, whoosh.",
+    "reorderHint": "Drag to reorder"
   },
   "filmingGuide": {
     "title": "Filming guide",
