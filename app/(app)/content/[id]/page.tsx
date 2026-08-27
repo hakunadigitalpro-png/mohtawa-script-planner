@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, FileDown } from "lucide-react";
+import { FileDown } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { getTranslations } from "next-intl/server";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 
@@ -226,51 +227,45 @@ export default async function ContentDetailPage({
       initialLastReadAt={lastReadAt}
     >
       <div className="space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
-          >
-            <ArrowLeft className="size-4 rtl-flip" />
-            {tCommon("back")}
-          </Link>
-          <div className="flex items-center gap-2">
-            <CommentsInboxButton />
-            <ShareButton
-              contentId={c.id}
-              initialToken={c.share_token}
-              initialMode={c.share_mode}
-            />
-            <Link
-              href={`/print/${c.id}`}
-              target="_blank"
-              rel="noopener"
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold hover:bg-secondary"
-            >
-              <FileDown className="size-3.5" />
-              {tContent("exportPdf")}
-            </Link>
-            <DeleteContentButton contentId={c.id} />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            <ColorDot color={typeColor(c.type)} />
-            <span className="font-medium text-muted">
-              {safeT(tType, c.type, typeLabel(c.type))}
-            </span>
-            <Badge
-              className="ms-1 text-white"
-              style={{ background: statusColor(c.status) }}
-            >
-              {safeT(tStatus, c.status, statusLabel(c.status))}
-            </Badge>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {c.title || tContent("untitled")}
-          </h1>
-        </div>
+        <PageHeader
+          backHref="/dashboard"
+          backLabel={tCommon("back")}
+          title={c.title || tContent("untitled")}
+          meta={
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <ColorDot color={typeColor(c.type)} />
+              <span className="font-medium text-white/70">
+                {safeT(tType, c.type, typeLabel(c.type))}
+              </span>
+              <Badge
+                className="ms-1 text-white"
+                style={{ background: statusColor(c.status) }}
+              >
+                {safeT(tStatus, c.status, statusLabel(c.status))}
+              </Badge>
+            </div>
+          }
+          actions={
+            <>
+              <CommentsInboxButton />
+              <ShareButton
+                contentId={c.id}
+                initialToken={c.share_token}
+                initialMode={c.share_mode}
+              />
+              <Link
+                href={`/print/${c.id}`}
+                target="_blank"
+                rel="noopener"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold text-foreground hover:bg-secondary"
+              >
+                <FileDown className="size-3.5" />
+                {tContent("exportPdf")}
+              </Link>
+              <DeleteContentButton contentId={c.id} />
+            </>
+          }
+        />
 
         <DetailTabs
           content={c}

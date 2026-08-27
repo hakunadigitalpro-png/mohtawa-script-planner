@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { LocaleSwitcherFull } from "@/components/locale-switcher";
 import { getThemeFromCookies } from "@/lib/theme";
+import { PageHeader } from "@/components/page-header";
 
 export default async function ProfilePage() {
   const user = await getCachedUser();
@@ -16,10 +17,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="text-sm text-muted">{t("subtitle")}</p>
-      </div>
+      <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
       <Card>
         <CardHeader>

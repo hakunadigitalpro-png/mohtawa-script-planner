@@ -12,6 +12,7 @@ import {
   CornerDownRight,
 } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
+import { PageHeader } from "@/components/page-header";
 import {
   platformLabel,
   typeLabel,
@@ -167,39 +168,36 @@ export function ShareView({
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-8 space-y-6">
-        {/* Title block */}
-        <div className="space-y-2">
-          {bundle.brand_name && (
-            <div className="text-[11px] font-bold uppercase tracking-wider text-muted">
-              {bundle.brand_name}
+        {/* Title block — même en-tête que dans l'app : c'est la page que le
+            client voit, elle doit renvoyer la même image. */}
+        <PageHeader
+          eyebrow={bundle.brand_name ?? undefined}
+          title={c.title || "Sans titre"}
+          meta={
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white"
+              >
+                <ColorDot color={typeColor(c.type)} />
+                {typeLabel(c.type)}
+              </span>
+              <Badge
+                className="text-white"
+                style={{ background: statusColor(c.status) }}
+              >
+                {statusLabel(c.status)}
+              </Badge>
+              {c.platform && (
+                <span className="text-white/70">
+                  · {platformLabel(c.platform)}
+                </span>
+              )}
+              {c.date && (
+                <span className="text-white/70">· {formatDateFr(c.date)}</span>
+              )}
             </div>
-          )}
-          <h1 className="text-3xl font-bold tracking-tight">
-            {c.title || "Sans titre"}
-          </h1>
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide"
-              style={{
-                background: `${typeColor(c.type)}1f`,
-                color: typeColor(c.type),
-              }}
-            >
-              <ColorDot color={typeColor(c.type)} />
-              {typeLabel(c.type)}
-            </span>
-            <Badge
-              className="text-white"
-              style={{ background: statusColor(c.status) }}
-            >
-              {statusLabel(c.status)}
-            </Badge>
-            {c.platform && (
-              <span className="text-muted">· {platformLabel(c.platform)}</span>
-            )}
-            {c.date && <span className="text-muted">· {formatDateFr(c.date)}</span>}
-          </div>
-        </div>
+          }
+        />
 
         {/* Plan — visible uniquement si au moins un champ est rempli.
             Chaque sous-champ (Accroche, CTA) garde son bouton commenter inline

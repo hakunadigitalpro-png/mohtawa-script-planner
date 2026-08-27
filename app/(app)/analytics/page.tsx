@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { BarChart, type BarPoint } from "@/components/charts/bar-chart";
 import { RankedList, type RankedItem } from "@/components/charts/ranked-list";
 import { platformLabel, typeLabel, typeColor, isLiveStatus } from "@/lib/constants";
+import { PageHeader } from "@/components/page-header";
 
 type PerfRow = { views: number | null; likes: number | null } | null;
 type ContentWithPerf = {
@@ -221,12 +222,11 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="text-sm text-muted">
-          {t("subtitle", { brand: active.name })}
-        </p>
-      </div>
+      <PageHeader
+        eyebrow={active.name}
+        title={t("title")}
+        subtitle={t("subtitle", { brand: active.name })}
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

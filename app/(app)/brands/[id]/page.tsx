@@ -3,9 +3,8 @@
 // même fix que content/[id]/page.tsx. On monte à 60s (max autorisé).
 export const maxDuration = 60;
 
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Clapperboard, Layers, Palette, Users } from "lucide-react";
+import { Clapperboard, Layers, Palette, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -16,6 +15,7 @@ import { ScenePresetManager } from "./scene-preset-manager";
 import { BrandKitManager } from "./brand-kit-manager";
 import { BrandStudio } from "./brand-studio";
 import { TeamSection } from "./team-section";
+import { PageHeader } from "@/components/page-header";
 import type { BrandRole } from "../team-actions";
 import type { BrandPillar, ScenePreset, BrandKit, BrandStrategy } from "@/lib/types";
 
@@ -107,21 +107,13 @@ export default async function BrandDetailPage({
 
   return (
     <div className="space-y-6">
-      <Link
-        href="/brands"
-        className="inline-flex items-center gap-1 text-sm text-muted hover:text-foreground"
-      >
-        <ArrowLeft className="size-4 rtl-flip" />
-        {t("backToAll")}
-      </Link>
-
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{brand.name}</h1>
-          <p className="text-sm text-muted">{t("subtitle")}</p>
-        </div>
-        <GuidedTour />
-      </div>
+      <PageHeader
+        backHref="/brands"
+        backLabel={t("backToAll")}
+        title={brand.name}
+        subtitle={t("subtitle")}
+        actions={<GuidedTour />}
+      />
 
       {/* 1. Identité — 2. Équipe — 3. Stratégie, puis ce qui en découle. */}
       <Card>

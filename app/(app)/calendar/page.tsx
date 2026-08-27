@@ -13,6 +13,7 @@ import { CalendarMonth, type CalendarEntry } from "@/components/calendar-month";
 import { CalendarQuickCreate } from "@/components/calendar-quick-create";
 import { CalendarPlatformFilter } from "@/components/calendar-platform-filter";
 import { PlanningTable } from "@/components/planning-table";
+import { PageHeader } from "@/components/page-header";
 import type { Content } from "@/lib/types";
 
 /** Ligne brute renvoyée par la requête publications × contenu (join !inner). */
@@ -151,26 +152,26 @@ export default async function CalendarPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted">{t("subtitle")}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-full border border-border bg-card p-0.5">
-            <Link href={`?m=${ym}&view=calendar`} className={tabCls(view === "calendar")}>
-              <CalendarDays className="size-4" />
-              Calendrier
-            </Link>
-            <Link href={`?m=${ym}&view=planning`} className={tabCls(view === "planning")}>
-              <LayoutList className="size-4" />
-              Planning
-            </Link>
-          </div>
-          {view === "calendar" && <CalendarPlatformFilter />}
-          <CalendarQuickCreate />
-        </div>
-      </div>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={
+          <>
+            <div className="inline-flex rounded-full border border-border bg-card p-0.5">
+              <Link href={`?m=${ym}&view=calendar`} className={tabCls(view === "calendar")}>
+                <CalendarDays className="size-4" />
+                Calendrier
+              </Link>
+              <Link href={`?m=${ym}&view=planning`} className={tabCls(view === "planning")}>
+                <LayoutList className="size-4" />
+                Planning
+              </Link>
+            </div>
+            {view === "calendar" && <CalendarPlatformFilter />}
+            <CalendarQuickCreate />
+          </>
+        }
+      />
 
       {view === "planning" ? (
         <div className="space-y-4">

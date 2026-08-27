@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { Card } from "@/components/ui/card";
 import { KreaBadge } from "@/components/krea-avatar";
+import { PageHeader } from "@/components/page-header";
 import { KreaProgressPanel } from "@/components/krea-progress-panel";
 import { ContentCard } from "@/components/content-card";
 import { NewContentButton } from "@/components/new-content-modal";
@@ -229,26 +230,12 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
-      {/* En-tête sombre à halos : c'est ce contraste fort qui porte le côté
-          "futuriste" — un en-tête clair se fondait dans le fond crème. */}
-      <div className="surface-hero rounded-3xl p-6 shadow-lift sm:p-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-soft">
-              {active.name}
-            </p>
-            <h1 className="mt-1.5 text-3xl font-bold tracking-tight text-white">
-              {t("title")}
-            </h1>
-            <p className="mt-1 text-sm text-white/70">
-              {t("subtitle", { brand: active.name })}
-            </p>
-          </div>
-          {/* Orange plein : le variant par défaut est en ink, donc invisible
-              sur ce fond sombre. */}
-          <NewContentButton variant="accent" />
-        </div>
-      </div>
+      <PageHeader
+        eyebrow={active.name}
+        title={t("title")}
+        subtitle={t("subtitle", { brand: active.name })}
+        actions={<NewContentButton variant="accent" />}
+      />
 
       {!journeyComplete && (
         <KreaProgressPanel

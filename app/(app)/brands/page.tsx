@@ -5,6 +5,7 @@ import { resolveActiveBrand } from "@/lib/brand";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { BrandsList } from "./brands-list";
 import { CreateBrandButton } from "./create-brand-button";
+import { PageHeader } from "@/components/page-header";
 
 type BrandWithRole = {
   id: string;
@@ -49,13 +50,11 @@ export default async function BrandsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted">{t("subtitle")}</p>
-        </div>
-        <CreateBrandButton />
-      </div>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={<CreateBrandButton />}
+      />
 
       <Card>
         <CardHeader>

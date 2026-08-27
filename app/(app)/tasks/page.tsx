@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { TasksBoard } from "@/components/tasks/tasks-board";
+import { PageHeader } from "@/components/page-header";
 import type { Task } from "@/lib/types";
 
 export type BrandMember = {
@@ -38,10 +39,11 @@ export default async function TasksPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="text-sm text-muted">{t("subtitle", { brand: active.name })}</p>
-      </div>
+      <PageHeader
+        eyebrow={active.name}
+        title={t("title")}
+        subtitle={t("subtitle", { brand: active.name })}
+      />
       <TasksBoard
         currentUserId={user.id}
         initialTasks={tasks}
