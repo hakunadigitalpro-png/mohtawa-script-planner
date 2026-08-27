@@ -22,7 +22,7 @@ export function CreateBrandButton() {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
+      <Button variant="accent" onClick={() => setOpen(true)}>
         <Plus className="size-4" />
         Nouvelle marque
       </Button>

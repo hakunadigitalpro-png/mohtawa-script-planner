@@ -32,12 +32,13 @@ export function CalendarPlatformFilter() {
   };
 
   return (
-    <div className="w-44">
+    <div className="w-40 shrink-0">
       <Select
         value={platform}
         onValueChange={setPlatform}
         placeholder="Toutes les plateformes"
         ariaLabel="Filtrer par plateforme"
+        className="h-9 ps-3.5 text-xs"
         options={[
           { value: "", label: "Toutes les plateformes" },
           ...PLATFORMS.map((p) => ({

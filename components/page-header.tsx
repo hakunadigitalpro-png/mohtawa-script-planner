@@ -7,9 +7,13 @@ import { cn } from "@/lib/utils";
  * généralisé. Défini UNE fois ici — retoucher le langage visuel des pages se
  * fait à un seul endroit, pas dans huit fichiers.
  *
- * Attention aux boutons passés en `actions` : sur ce fond sombre, seuls les
- * variants qui imposent leur propre couleur restent lisibles (`accent`,
- * `outline`). Le variant par défaut est en ink — donc invisible ici.
+ * Le conteneur `actions` force `text-foreground` : ce sont des contrôles posés
+ * sur des pastilles claires (`bg-card`), et sans ça ils héritent le blanc du
+ * bandeau — texte blanc sur pastille blanche, donc illisible. Un bouton qui
+ * veut du blanc le déclare lui-même (`accent`, `destructive`…).
+ *
+ * Attention quand même au variant `default` : il est en ink, donc invisible
+ * sur ce fond. Utiliser `accent` ou `outline`.
  *
  * Idem pour `meta` : le contenu est rendu tel quel, donc toute couleur de
  * texte doit être explicitement claire (`text-white/70`, pas `text-muted`).
@@ -20,6 +24,7 @@ export function PageHeader({
   subtitle,
   meta,
   actions,
+  actionsClassName,
   backHref,
   backLabel,
   className,
@@ -31,6 +36,8 @@ export function PageHeader({
   /** Ligne libre sous le titre (badges de statut, format, plateforme…). */
   meta?: React.ReactNode;
   actions?: React.ReactNode;
+  /** Classes du conteneur d'actions — ex. `w-full` pour une barre d'outils. */
+  actionsClassName?: string;
   /** Lien de retour rendu au-dessus du titre, dans l'en-tête. */
   backHref?: string;
   backLabel?: string;
@@ -73,7 +80,14 @@ export function PageHeader({
           {meta && <div className="mt-3">{meta}</div>}
         </div>
         {actions && (
-          <div className="flex flex-wrap items-center gap-2">{actions}</div>
+          <div
+            className={cn(
+              "flex flex-wrap items-center gap-2 text-foreground",
+              actionsClassName,
+            )}
+          >
+            {actions}
+          </div>
         )}
       </div>
     </div>

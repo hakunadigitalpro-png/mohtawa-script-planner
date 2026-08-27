@@ -155,9 +155,13 @@ export default async function CalendarPage({
       <PageHeader
         title={t("title")}
         subtitle={t("subtitle")}
+        actionsClassName="w-full"
         actions={
-          <>
-            <div className="inline-flex rounded-full border border-border bg-card p-0.5">
+          // Tout sur UNE ligne : en `flex-wrap`, les 6 boutons de création
+          // passaient à la ligne sous les onglets. Ici la barre ne se coupe
+          // jamais — sur écran étroit elle défile horizontalement.
+          <div className="-mb-1 flex w-full items-center gap-2 overflow-x-auto pb-1">
+            <div className="inline-flex shrink-0 rounded-full border border-border bg-card p-0.5">
               <Link href={`?m=${ym}&view=calendar`} className={tabCls(view === "calendar")}>
                 <CalendarDays className="size-4" />
                 Calendrier
@@ -169,7 +173,7 @@ export default async function CalendarPage({
             </div>
             {view === "calendar" && <CalendarPlatformFilter />}
             <CalendarQuickCreate />
-          </>
+          </div>
         }
       />
 
