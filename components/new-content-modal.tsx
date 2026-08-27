@@ -19,7 +19,9 @@ export function NewContentButton({
 }: {
   defaultType?: string;
   defaultDate?: string;
-  variant?: "default" | "outline" | "secondary";
+  /** "accent" (orange plein) est le seul lisible sur une surface sombre :
+   *  le variant par défaut est en ink, donc invisible sur un fond ink. */
+  variant?: "default" | "outline" | "secondary" | "accent";
   label?: string;
 }) {
   const t = useTranslations("newContent");

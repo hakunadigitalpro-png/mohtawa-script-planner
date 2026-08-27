@@ -13,8 +13,11 @@ const buttonVariants = cva(
           "bg-accent text-accent-foreground hover:bg-accent/90 shadow-sm",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/70",
+        // `text-foreground` explicite sur outline : sans lui, le variant
+        // hérite la couleur du parent — donc du blanc sur fond blanc dès
+        // qu'il est posé dans une surface sombre (`.surface-hero`).
         outline:
-          "border border-border bg-card hover:bg-secondary",
+          "border border-border bg-card text-foreground hover:bg-secondary",
         ghost:
           "hover:bg-secondary hover:text-foreground",
         destructive:
