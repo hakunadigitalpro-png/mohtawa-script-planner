@@ -34,6 +34,38 @@ export class AiError extends Error {
 }
 
 /**
+ * Vercel coupe la fonction à 60 s (plan Hobby) et rend alors une page 504
+ * brute — l'utilisatrice perd son travail sans comprendre pourquoi. On coupe
+ * donc NOUS-MÊMES avant, pour renvoyer un message lisible dans l'interface.
+ */
+const AI_BUDGET_MS = 52_000;
+/** En dessous, un appel n'a aucune chance d'aboutir : autant le dire tout de suite. */
+const AI_MIN_MS = 6_000;
+const AI_TIMEOUT_MESSAGE =
+  "L'IA a mis trop de temps à répondre (le serveur coupe à 60 s). Réessaie — si ça recommence, raccourcis ton script ou découpe-le en deux vidéos.";
+
+/** Échéance partagée par tous les appels d'une même requête. */
+function aiDeadline(): number {
+  return Date.now() + AI_BUDGET_MS;
+}
+
+/** Signal d'abandon calé sur le temps qu'il reste avant l'échéance. */
+function aiSignal(deadline: number): AbortSignal {
+  const msLeft = deadline - Date.now();
+  if (msLeft < AI_MIN_MS) throw new AiError("timeout", AI_TIMEOUT_MESSAGE);
+  return AbortSignal.timeout(msLeft);
+}
+
+/** Traduit l'échec d'un `fetch` vers l'API en erreur parlante. */
+function aiFetchError(e: unknown): AiError {
+  if (e instanceof AiError) return e;
+  if (e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError")) {
+    return new AiError("timeout", AI_TIMEOUT_MESSAGE);
+  }
+  return new AiError("network", "Impossible de joindre l'IA. Réessaie.");
+}
+
+/**
  * Repères de dialecte tunisien (tounsi), à coller dans tout prompt qui
  * GÉNÈRE du texte neuf en arabe (pas dans les prompts d'ANALYSE qui
  * doivent matcher la langue/dialecte d'un transcript fourni par
@@ -534,9 +566,10 @@ Fais l'autopsie de cette vidéo en suivant exactement le format demandé.`;
         system,
         messages: [{ role: "user", content }],
       }),
+      signal: aiSignal(aiDeadline()),
     });
-  } catch {
-    throw new AiError("network", "Impossible de joindre l'IA. Réessaie.");
+  } catch (e) {
+    throw aiFetchError(e);
   }
 
   if (!res.ok) {
@@ -698,6 +731,7 @@ async function callClaudeRaw(
   system: string,
   userText: string,
   maxTokens: number,
+  deadline: number = aiDeadline(),
 ): Promise<{ text: string; stopReason: string | null }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -722,9 +756,10 @@ async function callClaudeRaw(
         system,
         messages: [{ role: "user", content: userText }],
       }),
+      signal: aiSignal(deadline),
     });
-  } catch {
-    throw new AiError("network", "Impossible de joindre l'IA. Réessaie.");
+  } catch (e) {
+    throw aiFetchError(e);
   }
 
   if (!res.ok) {
@@ -789,13 +824,34 @@ async function callClaudeJSON<T>(
   userText: string,
   maxTokens: number,
 ): Promise<T> {
-  let { text, stopReason } = await callClaudeRaw(system, userText, maxTokens);
+  const deadline = aiDeadline();
+  const startedAt = Date.now();
+  let { text, stopReason } = await callClaudeRaw(
+    system,
+    userText,
+    maxTokens,
+    deadline,
+  );
   if (stopReason === "max_tokens") {
-    ({ text, stopReason } = await callClaudeRaw(
-      system,
-      userText,
-      Math.min(maxTokens * 2, 8000),
-    ));
+    // La relance produit ~2x plus de texte, donc elle dure ~2x plus longtemps.
+    // La lancer sans vérifier le temps restant, c'était la garantie de se
+    // faire tuer par Vercel en plein milieu — et de rendre une page 504 brute
+    // au lieu d'un message. On ne retente que si ça tient dans le budget.
+    const firstCallMs = Date.now() - startedAt;
+    if (firstCallMs * 2 < deadline - Date.now()) {
+      ({ text, stopReason } = await callClaudeRaw(
+        system,
+        userText,
+        Math.min(maxTokens * 2, 8000),
+        deadline,
+      ));
+    }
+    if (stopReason === "max_tokens") {
+      throw new AiError(
+        "too_long",
+        "Ta demande est trop longue pour être traitée d'un coup. Raccourcis ton script (ou fais-en deux vidéos) et relance.",
+      );
+    }
   }
   const raw = extractJsonBlock(text);
   try {
@@ -963,9 +1019,10 @@ Réponds dans la langue de la personne (français par défaut).`;
         system,
         messages,
       }),
+      signal: aiSignal(aiDeadline()),
     });
-  } catch {
-    throw new AiError("network", "Impossible de joindre l'IA. Réessaie.");
+  } catch (e) {
+    throw aiFetchError(e);
   }
 
   if (!res.ok) {
