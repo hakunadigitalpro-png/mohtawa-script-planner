@@ -185,7 +185,6 @@ export default async function ContentDetailPage({
   const c = content as Content;
 
   const tContent = await getTranslations("content");
-  const tCommon = await getTranslations("common");
   const tStoryboard = await getTranslations("storyboard");
   const tStories = await getTranslations("stories");
   const tTabs = await getTranslations("tabs");
@@ -228,8 +227,8 @@ export default async function ContentDetailPage({
     >
       <div className="space-y-6">
         <PageHeader
-          backHref="/dashboard"
-          backLabel={tCommon("back")}
+          backHref="/calendar"
+          backLabel={tContent("backToCalendar")}
           title={c.title || tContent("untitled")}
           meta={
             <div className="flex flex-wrap items-center gap-2 text-sm">

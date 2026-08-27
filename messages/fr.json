@@ -199,7 +199,8 @@
       "changeStatus": "Changer le statut",
       "delete": "Supprimer",
       "confirmDelete": "Supprimer cette vidéo ? Cette action est définitive."
-    }
+    },
+    "backToCalendar": "Retour au calendrier"
   },
   "tabs": {
     "plan": "Plan",

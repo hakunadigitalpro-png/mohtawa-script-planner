@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Check, Plus, Building2 } from "lucide-react";
 import { switchBrand, createBrand } from "@/app/(app)/actions";
@@ -35,6 +35,7 @@ export function BrandSwitcher({
   active: Brand | null;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const t = useTranslations("brands");
   const tCommon = useTranslations("common");
   const [createOpen, setCreateOpen] = useState(false);
@@ -43,6 +44,19 @@ export function BrandSwitcher({
 
   const initial = (active?.name ?? "?").slice(0, 1).toUpperCase();
   const noBrand = t("noBrandLabel");
+
+  /**
+   * Où atterrir après avoir changé de marque.
+   *  - page d'une marque → la MÊME page, mais celle de la nouvelle marque ;
+   *  - fiche d'un contenu → il appartient à l'ancienne marque, donc dashboard ;
+   *  - reste de l'app (dashboard, calendrier, analytics…) → on ne bouge pas,
+   *    la page se recharge simplement avec les données de la nouvelle marque.
+   */
+  const destinationFor = (brandId: string) => {
+    if (pathname.startsWith("/brands/")) return `/brands/${brandId}`;
+    if (pathname.startsWith("/content/")) return "/dashboard";
+    return null;
+  };
 
   return (
     <>
@@ -79,7 +93,9 @@ export function BrandSwitcher({
               onClick={() => {
                 startTransition(async () => {
                   await switchBrand(b.id);
-                  router.refresh();
+                  const dest = destinationFor(b.id);
+                  if (dest) router.push(dest);
+                  else router.refresh();
                 });
               }}
             >

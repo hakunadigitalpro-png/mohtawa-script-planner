@@ -169,5 +169,8 @@ export async function createBrand(formData: FormData) {
 
   await setActiveBrandId(brandId as string);
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  // Une marque neuve est vide : le dashboard n'aurait rien à montrer. On
+  // ouvre directement sa page de configuration (identité, équipe, stratégie),
+  // qui est la suite naturelle de la création.
+  redirect(`/brands/${brandId as string}`);
 }

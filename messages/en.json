@@ -199,7 +199,8 @@
       "changeStatus": "Change status",
       "delete": "Delete",
       "confirmDelete": "Delete this video? This action cannot be undone."
-    }
+    },
+    "backToCalendar": "Back to calendar"
   },
   "tabs": {
     "plan": "Plan",
