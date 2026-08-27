@@ -229,18 +229,19 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
-      {/* En-tête traité comme une pièce maîtresse (surface-hero) : c'est le
-          premier écran vu à chaque connexion. */}
-      <div className="surface-hero rounded-3xl p-6 shadow-lift sm:p-8">
+      {/* En-tête en version CLAIRE : le sombre est réservé aux moments
+          signature (couverture de stratégie), il alourdirait l'écran vu à
+          chaque connexion. */}
+      <div className="surface-warm rounded-3xl p-6 shadow-soft sm:p-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-soft">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent">
               {active.name}
             </p>
             <h1 className="mt-1.5 text-3xl font-bold tracking-tight">
               {t("title")}
             </h1>
-            <p className="mt-1 text-sm text-white/70">
+            <p className="mt-1 text-sm text-muted">
               {t("subtitle", { brand: active.name })}
             </p>
           </div>

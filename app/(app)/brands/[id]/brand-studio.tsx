@@ -706,7 +706,7 @@ function ResultsScreen({
           />
           <span
             aria-hidden
-            className="pointer-events-none absolute -bottom-20 -left-10 size-44 rounded-full bg-lavender/25 blur-3xl"
+            className="pointer-events-none absolute -bottom-20 -left-10 size-44 rounded-full bg-orange-strong/25 blur-3xl"
           />
           <div className="relative">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-soft">
@@ -728,7 +728,7 @@ function ResultsScreen({
             n="01"
             icon={<Users className="size-4" />}
             title="Ton audience"
-            tone="lavender"
+            tone="soft"
           >
             <p>{generated.audience_summary}</p>
           </StrategyCard>
@@ -746,7 +746,7 @@ function ResultsScreen({
             n="03"
             icon={<MessageCircle className="size-4" />}
             title="Ta voix"
-            tone="lavender"
+            tone="soft"
           >
             <p>{generated.voice_summary}</p>
           </StrategyCard>
@@ -867,10 +867,13 @@ const CARD_TONES = {
     iconBg: "bg-orange/15",
     fg: "text-orange-strong",
   },
-  lavender: {
-    bg: "bg-lavender-soft/50",
-    iconBg: "bg-lavender/15",
-    fg: "text-lavender-strong",
+  // Pas de lavande décorative : réservée au sémantique (type "Story"),
+  // elle vire au violet-bleu et sort de la charte. On alterne donc entre
+  // deux intensités de chaud + le crème.
+  soft: {
+    bg: "bg-orange-soft/30",
+    iconBg: "bg-orange/12",
+    fg: "text-orange-strong",
   },
   cream: { bg: "bg-secondary", iconBg: "bg-ink/10", fg: "text-ink" },
 } as const;
