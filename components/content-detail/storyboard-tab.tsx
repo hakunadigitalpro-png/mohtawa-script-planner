@@ -630,9 +630,10 @@ function SceneCard({
           {String(index + 1).padStart(2, "0")}
         </span>
 
-        {/* Marqueur "filmée" : icône seule, le mot n'apparaît qu'au survol
-            ou une fois cochée. Un plan filmé se repère à sa pastille verte,
-            sans lire quoi que ce soit. */}
+        {/* Case "Filmée" — posée sur l'image pour ne pas coûter une ligne de
+            plus, mais TOUJOURS visible, libellé compris : au survol seulement,
+            elle était introuvable, et sur mobile il n'y a pas de survol.
+            Cercle vide = à tourner, pastille verte = fait. */}
         <button
           type="button"
           onClick={onToggleFilmed}
@@ -641,20 +642,18 @@ function SceneCard({
           aria-label={optimisticFilmed ? t("filmed") : t("markFilmed")}
           aria-pressed={optimisticFilmed}
           className={cn(
-            "absolute bottom-2 start-2 z-10 inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-[11px] font-bold transition backdrop-blur-sm disabled:opacity-50",
+            "absolute bottom-2 start-2 z-10 inline-flex h-7 items-center gap-1.5 rounded-full ps-1.5 pe-2.5 text-[11px] font-bold shadow-sm backdrop-blur-sm transition disabled:opacity-50",
             optimisticFilmed
-              ? "bg-emerald-500 text-white shadow-sm"
-              : "bg-ink/65 text-white/80 hover:bg-ink/85 hover:text-white",
+              ? "bg-emerald-500 text-white"
+              : "bg-ink/75 text-white/90 hover:bg-ink/90 hover:text-white",
           )}
         >
-          <Check className="size-3.5 shrink-0" />
-          <span
-            className={cn(
-              optimisticFilmed ? "inline" : "hidden group-hover/scene:inline",
-            )}
-          >
-            {t("filmed")}
-          </span>
+          {optimisticFilmed ? (
+            <Check className="size-4 shrink-0" />
+          ) : (
+            <span className="size-3.5 shrink-0 rounded-full border-[1.5px] border-current" />
+          )}
+          {t("filmed")}
         </button>
 
         {/* Actions rares (setup, suppression) : masquées jusqu'au survol.
