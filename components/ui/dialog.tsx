@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -41,9 +42,17 @@ export function Dialog({
     };
   }, [open, onOpenChange, dismissible]);
 
-  if (!open) return null;
+  // Monté côté client uniquement : `createPortal` a besoin du `document`.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
 
-  return (
+  if (!open || !mounted) return null;
+
+  // La modal est déportée dans <body> plutôt que rendue à l'endroit du code.
+  // Sinon, ouverte depuis un conteneur qui crée un contexte d'empilement
+  // (une section à halos, une carte transformée…), elle passerait SOUS la
+  // sidebar malgré son z-50.
+  return createPortal(
     <DialogContext.Provider value={{ open, setOpen: onOpenChange }}>
       <div
         className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/30 p-4 backdrop-blur-sm"
@@ -51,7 +60,8 @@ export function Dialog({
       >
         {children}
       </div>
-    </DialogContext.Provider>
+    </DialogContext.Provider>,
+    document.body,
   );
 }
 

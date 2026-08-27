@@ -265,25 +265,51 @@ html[data-theme="dark"] {
     z-index: 1;
   }
 
-  /* Table lumineuse (storyboard) : même ambiance sombre que `.surface-hero`,
-     mais les halos sont peints en `background` au lieu de pseudo-éléments
-     floutés. Sans pseudo-éléments, pas besoin de la règle `> * { z-index: 1 }`
-     — donc pas de contexte d'empilement, et les fenêtres modales ouvertes
-     depuis l'intérieur passent bien au-dessus de la sidebar. */
+  /* Table lumineuse (storyboard) : EXACTEMENT les mêmes halos que
+     `.surface-hero` — mêmes rgba, même flou — mais dimensionnés en px et non
+     en % de la hauteur. Sur un bandeau court (le Dashboard) les deux se
+     valent ; sur un panneau haut, les % étireraient les halos hors cadre et
+     le fond virerait au noir. Un voile chaud très léger complète le tout pour
+     que le milieu du panneau ne retombe jamais sur l'encre pure.
+     Les modales sont déportées dans <body> (cf. components/ui/dialog.tsx),
+     donc le contexte d'empilement créé ici ne les enterre plus. */
   .surface-board {
+    position: relative;
+    overflow: hidden;
     background:
-      radial-gradient(
-        120% 90% at 88% -10%,
-        rgba(255, 87, 34, 0.38),
-        transparent 62%
-      ),
-      radial-gradient(
-        95% 85% at -6% 112%,
-        rgba(237, 70, 7, 0.24),
-        transparent 62%
+      linear-gradient(
+        180deg,
+        rgba(255, 87, 34, 0.14),
+        rgba(237, 70, 7, 0.07) 45%,
+        rgba(237, 70, 7, 0.11)
       ),
       var(--color-ink);
     color: #fff;
+  }
+  .surface-board::before,
+  .surface-board::after {
+    content: "";
+    position: absolute;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    filter: blur(64px);
+    pointer-events: none;
+  }
+  .surface-board::before {
+    top: -190px;
+    inset-inline-end: -70px;
+    width: 640px;
+    background: rgba(255, 87, 34, 0.55);
+  }
+  .surface-board::after {
+    bottom: -210px;
+    inset-inline-start: -70px;
+    width: 540px;
+    background: rgba(237, 70, 7, 0.35);
+  }
+  .surface-board > * {
+    position: relative;
+    z-index: 1;
   }
 
   /* Verre dépoli : laisse transparaître le dégradé du fond sans sacrifier
