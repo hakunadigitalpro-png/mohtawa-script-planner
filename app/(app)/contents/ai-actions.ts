@@ -19,6 +19,30 @@ import {
 import type { FilmingGuide } from "@/lib/types";
 
 /**
+ * Voix de marque, issue de la Stratégie de contenu (`brand_kits.voice`).
+ * Récupérée côté SERVEUR et appliquée automatiquement : l'utilisatrice ne la
+ * ressaisit jamais, elle découle de sa stratégie.
+ */
+async function getBrandVoice(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  contentId: string,
+): Promise<string | undefined> {
+  const { data: content } = await supabase
+    .from("contents")
+    .select("brand_id")
+    .eq("id", contentId)
+    .maybeSingle();
+  if (!content) return undefined;
+
+  const { data: kit } = await supabase
+    .from("brand_kits")
+    .select("voice")
+    .eq("brand_id", content.brand_id)
+    .maybeSingle();
+  return kit?.voice?.trim() || undefined;
+}
+
+/**
  * Setups réutisables (Mes setups) de la marque du contenu, avec leur
  * matériel propre (0051 — le matériel vit sur CHAQUE setup, pas sur la
  * marque : deux setups peuvent avoir un matériel complètement différent).
@@ -102,9 +126,12 @@ export async function aiGenerateReel(input: {
 }) {
   try {
     const { supabase } = await guardAiAction("reel");
-    const presets = input.includeStoryboard
-      ? await getBrandScenePresets(supabase, input.contentId)
-      : [];
+    const [presets, voice] = await Promise.all([
+      input.includeStoryboard
+        ? getBrandScenePresets(supabase, input.contentId)
+        : Promise.resolve([] as ScenePresetHint[]),
+      getBrandVoice(supabase, input.contentId),
+    ]);
     const data = await generateReel({
       topic: input.topic,
       audience: input.audience,
@@ -112,6 +139,7 @@ export async function aiGenerateReel(input: {
       includeStoryboard: input.includeStoryboard,
       language: input.language,
       presets,
+      voice,
     });
     return { ok: true as const, data };
   } catch (e) {
@@ -304,11 +332,13 @@ export async function aiGenerateStory(input: {
   language?: GenerationLanguage;
 }) {
   try {
-    await guardAiAction("story");
+    const { supabase } = await guardAiAction("story");
+    const voice = await getBrandVoice(supabase, input.contentId);
     const data = await generateStory({
       topic: input.topic,
       audience: input.audience,
       language: input.language,
+      voice,
     });
     return { ok: true as const, data };
   } catch (e) {

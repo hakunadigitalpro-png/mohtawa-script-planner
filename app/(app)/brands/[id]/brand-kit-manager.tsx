@@ -2,19 +2,21 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Plus, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { upsertBrandKit } from "@/app/(app)/brands/taxonomy-actions";
 import type { BrandKit } from "@/lib/types";
 
 /**
- * Brand Kit : identité de marque personnalisable (migration 0031).
- * Logo (upload atomique), palette de couleurs, slogan, audience, voix,
- * hashtags. L'audience + la voix serviront à personnaliser l'IA.
+ * Identité VISUELLE de la marque (migration 0031) : logo, palette, hashtags.
+ *
+ * Ne demande volontairement PAS l'audience, la voix ni le slogan : ces trois
+ * champs sont produits par la Stratégie de contenu et propagés
+ * automatiquement (applyBrandStrategy). Les redemander ici serait une double
+ * saisie de la même information — ils sont juste affichés en lecture seule.
  */
 export function BrandKitManager({
   brandId,
@@ -30,9 +32,6 @@ export function BrandKitManager({
     kit?.color_secondary ?? "#9C7DD8",
   );
   const [accent, setAccent] = React.useState(kit?.color_accent ?? "#14B8A6");
-  const [tagline, setTagline] = React.useState(kit?.tagline ?? "");
-  const [audience, setAudience] = React.useState(kit?.audience ?? "");
-  const [voice, setVoice] = React.useState(kit?.voice ?? "");
   const [hashtags, setHashtags] = React.useState<string[]>(kit?.hashtags ?? []);
   const [tagInput, setTagInput] = React.useState("");
   const [pending, startTransition] = React.useTransition();
@@ -63,9 +62,6 @@ export function BrandKitManager({
         color_primary: primary,
         color_secondary: secondary,
         color_accent: accent,
-        tagline: tagline.trim() || null,
-        audience: audience.trim() || null,
-        voice: voice.trim() || null,
         hashtags,
       });
       setSaved(true);
@@ -105,50 +101,8 @@ export function BrandKitManager({
         </div>
       </div>
 
-      {/* Slogan */}
-      <div className="space-y-1.5">
-        <Label className="text-sm font-semibold">Slogan / accroche de marque</Label>
-        <Input
-          value={tagline}
-          onChange={(e) => setTagline(e.target.value)}
-          placeholder="Ex : Des pieds en bonne santé, une vie plus légère."
-          dir="auto"
-        />
-      </div>
-
-      {/* Audience — nourrira l'IA */}
-      <div className="space-y-1.5">
-        <Label className="text-sm font-semibold">
-          Audience cible{" "}
-          <span className="text-xs font-normal text-accent">
-            (utilisée par l&apos;IA)
-          </span>
-        </Label>
-        <Textarea
-          value={audience}
-          onChange={(e) => setAudience(e.target.value)}
-          placeholder="Ex : femmes 30-50 ans qui ont mal aux pieds, diabétiques, sportifs du dimanche."
-          dir="auto"
-          className="min-h-16 text-sm [field-sizing:content]"
-        />
-      </div>
-
-      {/* Voix — nourrira l'IA */}
-      <div className="space-y-1.5">
-        <Label className="text-sm font-semibold">
-          Voix de marque (ton){" "}
-          <span className="text-xs font-normal text-accent">
-            (utilisée par l&apos;IA)
-          </span>
-        </Label>
-        <Textarea
-          value={voice}
-          onChange={(e) => setVoice(e.target.value)}
-          placeholder="Ex : chaleureux et rassurant, expert mais accessible, un peu d'humour, on tutoie."
-          dir="auto"
-          className="min-h-16 text-sm [field-sizing:content]"
-        />
-      </div>
+      {/* Issu de la stratégie — jamais ressaisi ici (lecture seule). */}
+      <StrategyDerived kit={kit} />
 
       {/* Hashtags */}
       <div className="space-y-1.5">
@@ -215,6 +169,60 @@ export function BrandKitManager({
           </span>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Slogan / audience / voix, en LECTURE SEULE : ils viennent de la Stratégie
+ * de contenu et s'y modifient (une seule source de vérité). Affichés ici
+ * parce qu'ils font partie de l'identité — mais jamais redemandés.
+ */
+function StrategyDerived({ kit }: { kit: BrandKit | null }) {
+  const rows = [
+    { label: "Slogan", value: kit?.tagline },
+    { label: "Audience cible", value: kit?.audience },
+    { label: "Voix de marque", value: kit?.voice },
+  ].filter((r) => r.value?.trim());
+
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border/70 bg-secondary/20 px-4 py-3">
+        <p className="text-sm text-muted">
+          Ton slogan, ton audience et ta voix de marque apparaîtront ici
+          automatiquement dès que tu auras créé ta{" "}
+          <span className="font-semibold text-foreground">
+            stratégie de contenu
+          </span>{" "}
+          (en haut de la page). Rien à saisir deux fois.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2.5 rounded-2xl border border-accent/25 bg-accent/5 px-4 py-3.5">
+      <div className="flex items-center gap-1.5">
+        <Sparkles className="size-3.5 text-accent" />
+        <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
+          Issu de ta stratégie
+        </span>
+      </div>
+      <dl className="space-y-2">
+        {rows.map((r) => (
+          <div key={r.label}>
+            <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+              {r.label}
+            </dt>
+            <dd className="text-sm leading-relaxed" dir="auto">
+              {r.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="text-xs text-muted">
+        Pour les modifier, ajuste ta stratégie de contenu en haut de la page.
+      </p>
     </div>
   );
 }

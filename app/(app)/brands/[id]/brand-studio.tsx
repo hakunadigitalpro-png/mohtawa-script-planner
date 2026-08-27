@@ -36,7 +36,6 @@ import {
 import {
   saveStrategyAnswers,
   generateBrandStrategyAction,
-  applyBrandStrategy,
 } from "../brand-strategy-actions";
 import type { BrandStrategy, GeneratedStrategy } from "@/lib/types";
 
@@ -58,13 +57,9 @@ type Phase = "intro" | "question" | "review" | "generating" | "results";
  */
 export function BrandStudio({
   brandId,
-  brandName,
-  existingAudience,
   initialStrategy,
 }: {
   brandId: string;
-  brandName: string;
-  existingAudience: string | null;
   initialStrategy: BrandStrategy | null;
 }) {
   const router = useRouter();
@@ -81,24 +76,16 @@ export function BrandStudio({
   const [phase, setPhase] = React.useState<Phase>(
     hasStrategy ? "results" : "intro",
   );
-  const [answers, setAnswers] = React.useState<Record<string, string>>(() => {
-    // Pré-remplit avec ce qu'on connaît déjà — pas de double saisie.
-    const draft: Record<string, string> = { ...(initialStrategy?.answers ?? {}) };
-    if (!draft.brand_name_context && brandName) {
-      draft.brand_name_context = brandName;
-    }
-    if (!draft.ideal_client && existingAudience) {
-      draft.ideal_client = existingAudience;
-    }
-    return draft;
-  });
+  // Le nom de la marque et l'audience ne sont plus demandés : le nom est
+  // déjà connu côté serveur, l'audience est un RÉSULTAT de la stratégie.
+  const [answers, setAnswers] = React.useState<Record<string, string>>(
+    () => ({ ...(initialStrategy?.answers ?? {}) }),
+  );
   const [qIndex, setQIndex] = React.useState(0);
   const [generated, setGenerated] = React.useState<GeneratedStrategy | null>(
     initialStrategy?.generated ?? null,
   );
   const [error, setError] = React.useState<string | null>(null);
-  const [applying, setApplying] = React.useState(false);
-  const [applied, setApplied] = React.useState(false);
 
   // Autosave débouncé (700ms, même pattern que le reste de l'app) — les
   // réponses survivent même si la personne ferme l'onglet en pleine saisie.
@@ -145,6 +132,9 @@ export function BrandStudio({
       }
       setGenerated(res.generated);
       setPhase("results");
+      // La stratégie est déjà propagée au Brand Kit côté serveur — on
+      // rafraîchit pour que l'identité affichée plus bas soit à jour.
+      router.refresh();
     } catch {
       setError("L'IA n'a pas répondu. Réessaie.");
       setPhase("review");
@@ -165,24 +155,6 @@ export function BrandStudio({
   const goBack = () => {
     if (qIndex === 0) setPhase("intro");
     else setQIndex(qIndex - 1);
-  };
-
-  const apply = async () => {
-    if (!generated) return;
-    setError(null);
-    setApplying(true);
-    try {
-      const res = await applyBrandStrategy(brandId, generated);
-      if (!res.ok) setError(res.error);
-      else {
-        setApplied(true);
-        router.refresh();
-      }
-    } catch {
-      setError("Application échouée. Réessaie.");
-    } finally {
-      setApplying(false);
-    }
   };
 
   // Fermeture "sûre" via le bouton X / clic hors modal : autorisée seulement
@@ -309,14 +281,11 @@ export function BrandStudio({
           {phase === "results" && generated && (
             <ResultsScreen
               generated={generated}
-              applying={applying}
-              applied={applied}
               error={error}
-              onApply={apply}
+              onClose={() => setOpen(false)}
               onRedo={() => {
                 setPhase("question");
                 setQIndex(0);
-                setApplied(false);
                 setError(null);
               }}
             />
@@ -430,7 +399,8 @@ function IntroScreen({
           ))}
         </ul>
         <p className="text-xs text-muted">
-          ~3 minutes · 12 questions · tu peux revenir en arrière à tout moment
+          ~3 minutes · {STRATEGY_QUESTIONS.length} questions · tu peux revenir
+          en arrière à tout moment
         </p>
       </DialogBody>
       <DialogFooter>
@@ -828,17 +798,13 @@ function GeneratingScreen() {
 
 function ResultsScreen({
   generated,
-  applying,
-  applied,
   error,
-  onApply,
+  onClose,
   onRedo,
 }: {
   generated: GeneratedStrategy;
-  applying: boolean;
-  applied: boolean;
   error: string | null;
-  onApply: () => void;
+  onClose: () => void;
   onRedo: () => void;
 }) {
   return (
@@ -849,9 +815,9 @@ function ResultsScreen({
           Ta stratégie est prête
         </DialogTitle>
         <DialogDescription>
-          Vérifie, puis applique-la à ta marque — elle remplira ton identité
-          (audience, voix, tagline). Pour tes thèmes de contenu, utilise
-          l&apos;assistant IA dédié plus bas sur la page.
+          Elle est déjà appliquée à ta marque — ton slogan, ton audience et ta
+          voix en découlent, et l&apos;IA s&apos;en sert pour écrire tes
+          contenus. Pour tes thèmes, utilise l&apos;assistant dédié plus bas.
         </DialogDescription>
       </DialogHeader>
       <DialogBody
@@ -933,27 +899,14 @@ function ResultsScreen({
         {error && <ErrorNote>{error}</ErrorNote>}
       </DialogBody>
       <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onRedo}
-          disabled={applying}
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={onRedo}>
           <RefreshCcw className="size-3.5" />
           Refaire le questionnaire
         </Button>
-        {applied ? (
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
-            <Check className="size-4" />
-            Appliquée à ta marque
-          </span>
-        ) : (
-          <Button type="button" onClick={onApply} disabled={applying}>
-            <Check className="size-4" />
-            {applying ? "Application…" : "Appliquer à ma marque"}
-          </Button>
-        )}
+        <Button type="button" onClick={onClose}>
+          <Check className="size-4" />
+          Terminé
+        </Button>
       </DialogFooter>
     </>
   );

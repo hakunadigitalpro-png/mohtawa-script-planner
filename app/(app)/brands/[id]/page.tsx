@@ -123,12 +123,7 @@ export default async function BrandDetailPage({
         <GuidedTour />
       </div>
 
-      <BrandStudio
-        brandId={brand.id}
-        brandName={brand.name}
-        existingAudience={kit?.audience ?? null}
-        initialStrategy={strategy}
-      />
+      <BrandStudio brandId={brand.id} initialStrategy={strategy} />
 
       <Card>
         <CardHeader>
@@ -137,9 +132,8 @@ export default async function BrandDetailPage({
             Identité de marque
           </CardTitle>
           <CardDescription>
-            {strategy?.generated
-              ? "Ton logo et tes couleurs. L'audience et la voix viennent de ta stratégie — modifiables ici à tout moment."
-              : "Ton logo, tes couleurs, ton ton. L'audience et la voix personnalisent aussi ce que l'IA génère pour cette marque."}
+            Ton logo, tes couleurs et tes hashtags. Le slogan, l&apos;audience
+            et la voix viennent de ta stratégie — rien à ressaisir ici.
           </CardDescription>
         </CardHeader>
         <CardContent>

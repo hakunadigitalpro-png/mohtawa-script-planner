@@ -67,6 +67,16 @@ Un bon copywriter tounsi ne bâcle JAMAIS l'argument pour aller vite. Pour un te
 export type GenerationLanguage = "fr" | "en" | "ar_msa" | "ar_tn";
 
 /**
+ * Voix de marque (issue de la Stratégie de contenu) injectée dans les
+ * générations. Bloc conditionnel : rien n'est envoyé au modèle tant que la
+ * marque n'a pas de stratégie, donc aucun token dépensé pour rien.
+ */
+function voiceInstruction(voice?: string): string {
+  const v = voice?.trim();
+  return v ? ` Respecte la VOIX DE MARQUE suivante dans tout ce que tu écris : ${v}.` : "";
+}
+
+/**
  * Consigne de langue explicite choisie par l'utilisatrice dans le générateur
  * IA (remplace l'ancienne auto-détection "langue du sujet, français par
  * défaut", qui laissait Claude deviner). "ar_tn" applique le guide dialecte
@@ -209,6 +219,7 @@ export function generateReel(opts: {
   includeStoryboard?: boolean;
   language?: GenerationLanguage;
   presets?: ScenePresetHint[];
+  voice?: string;
 }): Promise<ReelGeneration> {
   const audience =
     opts.audience?.trim() || "des clients potentiels sur les réseaux";
@@ -232,7 +243,7 @@ Tu découpes AUSSI ce script en un STORYBOARD tournage-prêt, pour quelqu'un qui
 ${storyboardSegmentationRules(opts.presets)}`
     : ""
 }
-${languageInstruction(opts.language)} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
+${voiceInstruction(opts.voice)}${languageInstruction(opts.language)} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
 
   const user = `Sujet de la vidéo : "${opts.topic}".
 Plateforme : ${platform}
@@ -316,10 +327,11 @@ export function generateStory(opts: {
   topic: string;
   audience?: string;
   language?: GenerationLanguage;
+  voice?: string;
 }): Promise<StoryGeneration> {
   const audience = opts.audience?.trim() || "ton audience sur les réseaux";
 
-  const system = `Tu es un expert en Stories Instagram/TikTok, MULTILINGUE : français, anglais et arabe. Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert) : ton simple, authentique, conversationnel, ZÉRO jargon. Tu crées une séquence de 5 stories qui tiennent en haleine jusqu'au CTA. ${languageInstruction(opts.language)} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
+  const system = `Tu es un expert en Stories Instagram/TikTok, MULTILINGUE : français, anglais et arabe. Tu écris pour un PATRON DE PETITE ENTREPRISE (pas un expert) : ton simple, authentique, conversationnel, ZÉRO jargon. Tu crées une séquence de 5 stories qui tiennent en haleine jusqu'au CTA.${voiceInstruction(opts.voice)} ${languageInstruction(opts.language)} Réponds UNIQUEMENT avec un objet JSON valide, rien autour.`;
 
   const user = `Sujet : "${opts.topic}".
 Audience : ${audience}
@@ -1063,10 +1075,13 @@ Décortique le wording et propose un nouveau script en suivant EXACTEMENT le for
    Studio de marque — génération de stratégie (API Claude)
    ========================================================================= */
 
+// Liste blanche : seules ces réponses partent dans le brief. `brand_name_context`
+// et `ideal_client` en sont volontairement absents — le nom arrive déjà par
+// `brandName`, et l'audience est un RÉSULTAT que l'IA déduit de "tu aides qui
+// à faire quoi" + "problème résolu". Les garder ici renverrait au modèle des
+// clés d'anciens brouillons pour rien.
 const STRATEGY_ANSWER_LABELS: Record<string, string> = {
-  brand_name_context: "Nom de la marque",
   domain: "Domaine",
-  ideal_client: "Client idéal",
   problem_solved: "Problème résolu",
   where_online: "Présence en ligne",
   why_started: "Pourquoi elle a commencé",

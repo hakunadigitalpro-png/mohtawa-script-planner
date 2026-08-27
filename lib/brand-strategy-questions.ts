@@ -36,14 +36,11 @@ export const STRATEGY_SECTIONS = [
 ] as const;
 
 export const STRATEGY_QUESTIONS: StrategyQuestion[] = [
-  {
-    id: "brand_name_context",
-    section: "essentials",
-    label: "Comment s'appelle ta marque ?",
-    help: "Le nom sous lequel tes clients te connaissent — déjà pré-rempli, corrige-le si besoin.",
-    example: "Chez Leila · Ahmed Coaching",
-    type: "text",
-  },
+  // Volontairement PAS de question "nom de la marque" : on l'a déjà
+  // (`brands.name`, passé directement à l'IA par generateBrandStrategyAction).
+  // Volontairement PAS de question "client idéal" non plus : l'audience est
+  // un RÉSULTAT de la stratégie, pas une donnée à saisir — l'IA la déduit de
+  // "tu aides qui à faire quoi" + "quel problème tu résous".
   {
     id: "domain",
     section: "essentials",
@@ -69,14 +66,6 @@ export const STRATEGY_QUESTIONS: StrategyQuestion[] = [
         placeholder: "remplir leur salle grâce à Instagram",
       },
     ],
-  },
-  {
-    id: "ideal_client",
-    section: "audience",
-    label: "Qui est ton client idéal ?",
-    help: "La personne type : qui elle est, ce qu'elle veut. Déjà pré-rempli si tu l'as renseigné dans ton Identité de marque.",
-    example: "Cheffes de PME, 30-45 ans, débordées.",
-    type: "textarea",
   },
   {
     id: "problem_solved",
