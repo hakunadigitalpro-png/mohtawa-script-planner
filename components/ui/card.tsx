@@ -1,6 +1,14 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Surface de base de la plateforme : verre dépoli (`surface-glass`) posé sur
+ * le dégradé du fond, plutôt qu'un aplat opaque. C'est LE point d'entrée du
+ * langage visuel — le modifier ici le propage partout, au lieu de retoucher
+ * chaque écran.
+ *
+ * `bg-card` est volontairement absent : il écraserait la transparence.
+ */
 export const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -8,7 +16,7 @@ export const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-3xl border border-border/60 bg-card shadow-[0_2px_12px_-4px_rgba(26,15,37,0.06)]",
+      "surface-glass rounded-3xl shadow-soft transition-shadow duration-300 hover:shadow-lift",
       className,
     )}
     {...props}

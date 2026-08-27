@@ -35,7 +35,7 @@ export function AuthShell({ defaultMode }: { defaultMode: Mode }) {
     <>
       {/* Fond plein écran : crème + formes décoratives (comme la réf) */}
       <div className="fixed inset-0 -z-10 overflow-hidden bg-[#FDF6EF]">
-        <div className="absolute -right-24 -top-24 size-80 rounded-full bg-[#FF6B35]/15 blur-2xl" />
+        <div className="absolute -right-24 -top-24 size-80 rounded-full bg-orange/15 blur-2xl" />
         <div className="absolute -bottom-32 -left-24 size-96 rounded-full bg-[#F7B733]/20 blur-3xl" />
         <div className="absolute bottom-12 right-1/4 size-40 rounded-full bg-[#FF3D6E]/10 blur-2xl" />
       </div>

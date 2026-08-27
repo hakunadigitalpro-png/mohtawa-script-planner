@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 
 // La couleur de la barre de statut (Android/Chrome + TWA) suit la charte.
 export const viewport: Viewport = {
-  themeColor: "#FF6B35",
+  themeColor: "#ff5722",
 };
 
 export default async function RootLayout({
@@ -70,7 +70,7 @@ export default async function RootLayout({
       lang={locale}
       dir={dir}
       data-theme={dataTheme}
-      data-app-version="v41"
+      data-app-version="v42"
       style={styleOverrides}
     >
       <body

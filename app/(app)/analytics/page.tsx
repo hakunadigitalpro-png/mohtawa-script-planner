@@ -424,7 +424,7 @@ function KpiCard({
       className={
         "p-5 " +
         (accent
-          ? "border-0 bg-accent text-accent-foreground shadow-[0_10px_30px_-12px_rgba(255,107,53,0.45)]"
+          ? "border-0 bg-accent text-accent-foreground shadow-glow hover:shadow-glow"
           : "")
       }
     >

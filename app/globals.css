@@ -74,6 +74,17 @@
   --radius-lg: 1.25rem;
   --radius-xl: 1.75rem;
 
+  /* ===== Élévation =====
+     Ombres teintées à l'ink plutôt qu'au gris neutre : sur un fond crème,
+     une ombre grise "salit", une ombre teintée reste chaude. Deux couches
+     (contact courte + diffusion longue) pour une profondeur crédible.
+     Génère les utilitaires shadow-soft / shadow-lift / shadow-glow. */
+  --shadow-soft: 0 1px 2px rgba(8, 4, 15, 0.04),
+    0 8px 24px -12px rgba(8, 4, 15, 0.10);
+  --shadow-lift: 0 2px 4px rgba(8, 4, 15, 0.04),
+    0 18px 40px -16px rgba(8, 4, 15, 0.16);
+  --shadow-glow: 0 18px 40px -16px rgba(255, 87, 34, 0.45);
+
   /* Écran "génération IA" du Studio de marque : des pastilles qui se
      dispersent puis se rassemblent en boucle, façon "pièces qui
      s'assemblent" (inspiration motion design). --tx/--ty (poussée de
@@ -194,6 +205,76 @@ button:disabled {
 
 input, textarea, select {
   font: inherit;
+}
+
+/* =====================================================================
+   Langage visuel partagé — dégradé / ombre / transparence
+   Posé ici plutôt que recopié écran par écran : une seule définition à
+   faire évoluer, et une cohérence garantie sur toute la plateforme.
+   ===================================================================== */
+
+/* Teintes du verre dépoli, déclinées par thème. */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.65);
+}
+html[data-theme="dark"] {
+  --glass-bg: rgba(26, 20, 36, 0.68);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* Bloc sombre à halos colorés — pour les en-têtes et pièces maîtresses.
+   Les halos sont en pseudo-éléments : aucun markup en plus à porter. */
+.surface-hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-ink);
+  color: #fff;
+}
+.surface-hero::before,
+.surface-hero::after {
+  content: "";
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(64px);
+  pointer-events: none;
+}
+.surface-hero::before {
+  top: -35%;
+  inset-inline-end: -8%;
+  width: 55%;
+  background: rgba(255, 87, 34, 0.5);
+}
+.surface-hero::after {
+  bottom: -40%;
+  inset-inline-start: -6%;
+  width: 45%;
+  background: rgba(156, 125, 216, 0.4);
+}
+/* Le contenu repasse au-dessus des halos. */
+.surface-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Verre dépoli : laisse transparaître le dégradé du fond sans sacrifier
+   la lisibilité (opacité volontairement haute — un verre trop transparent
+   rend le texte illisible sur un fond coloré). */
+.surface-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid var(--glass-border);
+}
+
+/* Respecte les utilisateurs qui limitent les animations. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Hover-only tooltip for compact sidebar icons.

@@ -6,7 +6,7 @@ export const THEME_COOKIE = "mohtawa_theme";
 export const ACCENT_COOKIE = "mohtawa_accent";
 export const TINT_COOKIE = "mohtawa_tint";
 
-export const DEFAULT_ACCENT = "#ff6b35";
+export const DEFAULT_ACCENT = "#ff5722";
 export const DEFAULT_TINT = "#fdf6ef";
 
 const HEX_RE = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/;

@@ -10,7 +10,7 @@ import { updateTheme } from "@/app/(app)/actions";
 type Theme = "light" | "dark" | "custom";
 
 const PRESET_ACCENTS = [
-  "#ff6b35", // orange (default)
+  "#ff5722", // orange (charte Kreatly, défaut)
   "#ef4444", // red
   "#f59e0b", // amber
   "#10b981", // emerald
@@ -74,9 +74,9 @@ export function ThemeSwitcher({
 
   const reset = () => {
     setTheme("light");
-    setAccent("#ff6b35");
+    setAccent("#ff5722");
     setTint("#fdf6ef");
-    apply({ theme: "light", accent: "#ff6b35", tint: "#fdf6ef" });
+    apply({ theme: "light", accent: "#ff5722", tint: "#fdf6ef" });
   };
 
   return (

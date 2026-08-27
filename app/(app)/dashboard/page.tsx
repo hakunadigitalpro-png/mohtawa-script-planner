@@ -229,14 +229,23 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted">
-            {t("subtitle", { brand: active.name })}
-          </p>
+      {/* En-tête traité comme une pièce maîtresse (surface-hero) : c'est le
+          premier écran vu à chaque connexion. */}
+      <div className="surface-hero rounded-3xl p-6 shadow-lift sm:p-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-soft">
+              {active.name}
+            </p>
+            <h1 className="mt-1.5 text-3xl font-bold tracking-tight">
+              {t("title")}
+            </h1>
+            <p className="mt-1 text-sm text-white/70">
+              {t("subtitle", { brand: active.name })}
+            </p>
+          </div>
+          <NewContentButton />
         </div>
-        <NewContentButton />
       </div>
 
       {!journeyComplete && (
@@ -467,8 +476,10 @@ function Kpi({
     <Card
       className={
         "p-5 " +
+        // shadow-glow remplace une ombre codée en dur qui utilisait encore
+        // l'ANCIEN orange (#FF6B35) — désormais alignée sur la charte.
         (accent
-          ? "border-0 bg-accent text-accent-foreground shadow-[0_10px_30px_-12px_rgba(255,107,53,0.45)]"
+          ? "border-0 bg-accent text-accent-foreground shadow-glow hover:shadow-glow"
           : "")
       }
     >

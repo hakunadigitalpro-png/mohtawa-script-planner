@@ -64,7 +64,7 @@ export function LandingPersonas() {
                 key={p.key}
                 className={`relative flex flex-col rounded-3xl border p-6 transition hover:-translate-y-1 ${
                   p.accent
-                    ? "border-accent/40 bg-accent/5 shadow-[0_20px_60px_-30px_rgba(255,107,53,0.4)]"
+                    ? "border-accent/40 bg-accent/5 shadow-glow"
                     : "border-border/60 bg-card"
                 }`}
               >
