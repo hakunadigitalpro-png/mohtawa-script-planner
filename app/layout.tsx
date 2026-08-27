@@ -70,7 +70,7 @@ export default async function RootLayout({
       lang={locale}
       dir={dir}
       data-theme={dataTheme}
-      data-app-version="v37"
+      data-app-version="v38"
       style={styleOverrides}
     >
       <body

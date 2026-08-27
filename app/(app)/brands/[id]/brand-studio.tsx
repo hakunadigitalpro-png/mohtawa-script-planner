@@ -114,7 +114,7 @@ export function BrandStudio({
   const canContinue = React.useMemo(() => {
     if (!question) return false;
     if (question.optional) return true;
-    if (question.type === "guided2" && question.guidedParts) {
+    if (question.type === "guided" && question.guidedParts) {
       return question.guidedParts.every(
         (p) => (answers[`${question.id}__${p.key}`] ?? "").trim().length > 0,
       );
@@ -189,9 +189,9 @@ export function BrandStudio({
               <div>
                 <h2 className="text-lg font-bold">Stratégie de contenu</h2>
                 <p className="text-sm text-muted">
-                  Raconte-moi ton activité en quelques phrases, je m&apos;occupe
-                  du reste — ta stratégie guidera ensuite ton identité, tes
-                  thèmes et tout ce que l&apos;IA écrit pour toi.
+                  Une phrase à compléter, et je m&apos;occupe du reste — ta
+                  stratégie guidera ensuite ton identité, tes thèmes et tout
+                  ce que l&apos;IA écrit pour toi.
                 </p>
               </div>
             </div>
@@ -366,9 +366,8 @@ function IntroScreen({
           Créons ta stratégie, ensemble
         </DialogTitle>
         <DialogDescription>
-          Raconte-moi simplement ton activité, avec tes mots — comme tu
-          l&apos;expliquerais à quelqu&apos;un que tu rencontres. Je m&apos;occupe
-          du reste.
+          Une phrase à compléter en trois mots-clés, un clic sur ton objectif,
+          et c&apos;est tout. Je m&apos;occupe du reste.
         </DialogDescription>
       </DialogHeader>
       <DialogBody className="space-y-4">
@@ -440,7 +439,9 @@ function QuestionInput({
   answers: Record<string, string>;
   onChange: (key: string, v: string) => void;
 }) {
-  if (question.type === "guided2" && question.guidedParts) {
+  // Phrase à trous : chaque blanc porte son propre mot de liaison, pour que
+  // l'ensemble se lise comme une vraie phrase et pas comme un formulaire.
+  if (question.type === "guided" && question.guidedParts) {
     return (
       <div className="flex flex-wrap items-center gap-2" dir="auto">
         {question.guidedPrefix && (
@@ -452,9 +453,9 @@ function QuestionInput({
           const key = `${question.id}__${part.key}`;
           return (
             <React.Fragment key={key}>
-              {i > 0 && question.guidedJoiner && (
+              {part.before && (
                 <span className="text-sm font-semibold text-foreground/70">
-                  {question.guidedJoiner}
+                  {part.before}
                 </span>
               )}
               <Input
@@ -464,7 +465,7 @@ function QuestionInput({
                 dir="auto"
                 aria-label={part.label}
                 placeholder={part.placeholder}
-                className="w-auto min-w-[10rem] flex-1"
+                className="w-auto min-w-[12rem] flex-1"
               />
             </React.Fragment>
           );

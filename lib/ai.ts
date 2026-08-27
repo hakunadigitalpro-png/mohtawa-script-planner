@@ -1093,7 +1093,6 @@ Décortique le wording et propose un nouveau script en suivant EXACTEMENT le for
  * changement continuent de nourrir la génération au lieu d'être perdus.
  */
 const STRATEGY_ANSWER_LABELS: Record<string, string> = {
-  story: "Son activité, racontée par elle",
   content_goal: "Objectif n°1 du contenu",
   // Relances facultatives — des FAITS, jamais inventés par l'IA.
   proof_result: "Résultat / preuve",
@@ -1119,12 +1118,15 @@ export function generateBrandStrategy(opts: {
   brandName: string;
   answers: Record<string, string>;
 }): Promise<GeneratedStrategy> {
-  // "Tu aides qui, à faire quoi ?" est une question guidée en 2 blancs (pas
-  // un champ libre) — on la recompose en une ligne de brief lisible.
+  // La 1re question est une phrase à trous (activité / qui / quoi) — on la
+  // recompose en une ligne de brief lisible.
+  const activity = (opts.answers["what_you_do__activity"] ?? "").trim();
   const who = (opts.answers["what_you_do__who"] ?? "").trim();
   const what = (opts.answers["what_you_do__what"] ?? "").trim();
   const whatYouDoLine =
-    who || what ? `Ce qu'elle fait : J'aide ${who || "…"} à ${what || "…"}.` : null;
+    activity || who || what
+      ? `Son activité : ${activity || "…"}. Elle aide ${who || "…"} à ${what || "…"}.`
+      : null;
 
   const brief = [
     whatYouDoLine,
@@ -1138,13 +1140,13 @@ export function generateBrandStrategy(opts: {
 
   const system = `Tu es un stratège de marque qui aide un PATRON DE PETITE ENTREPRISE (pas un expert marketing) à transformer ses réponses en une STRATÉGIE DE CONTENU claire, prête à l'emploi. Multilingue : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Marque : "${opts.brandName || "(sans nom)"}".
 
-Elle ne remplit PAS un formulaire détaillé : elle raconte son activité avec ses mots. Ton premier travail est donc d'EXTRAIRE de son récit ce dont tu as besoin — son domaine, qui elle sert, ce qu'elle leur apporte, le problème qu'elle résout, ce qui la distingue — puis d'en faire une stratégie.
+Elle ne remplit PAS un long formulaire : elle complète une phrase en trois blancs (son activité, qui elle aide, à quoi). C'est VOLONTAIREMENT court. Ton travail est d'en DÉDUIRE le reste — son domaine, le profil précis de son audience, le problème qu'elle résout, ce qui la distingue — puis d'en faire une stratégie complète et concrète.
 
 RÈGLES :
 - Zéro jargon marketing. Écris comme si tu expliquais directement à la personne, avec chaleur et clarté.
-- Base-toi UNIQUEMENT sur ce qu'elle a raconté. Déduis ce qui est raisonnablement déductible de son récit ; ne dis jamais "information manquante", ne repose jamais de question (ce n'est pas un dialogue).
+- Base-toi UNIQUEMENT sur ce qu'elle a indiqué. Déduis largement ce qui l'est raisonnablement (un resto de quartier à La Marsa → clientèle locale, midi en semaine, budget maîtrisé) ; ne dis jamais "information manquante", ne repose jamais de question (ce n'est pas un dialogue).
 - N'INVENTE JAMAIS DE FAITS la concernant : pas de chiffre de résultat, pas d'année d'expérience, pas de nombre de clients, pas de récompense, pas d'anecdote personnelle qu'elle n'a pas donnée. Ce sont des faits vérifiables — les inventer la mettrait en difficulté devant un vrai client. Si elle n'a pas fourni de preuve chiffrée, construis la confiance autrement (son approche, son attention, sa spécialisation) sans jamais chiffrer.
-- Si son récit est court, reste plus général plutôt que de combler les trous par de l'invention.
+- Déduire un CONTEXTE plausible est attendu ; inventer un FAIT vérifiable ne l'est pas. La nuance : "sa clientèle vient surtout le midi" est une déduction ; "elle a 8 ans d'expérience" est une invention.
 - "positioning" : 1-2 phrases qui résument QUI elle aide et EN QUOI elle est différente — la phrase qu'elle pourrait dire pour se présenter.
 - "tagline" : une accroche courte et mémorable (5-8 mots).
 - "audience_summary" : un paragraphe clair décrivant son client idéal (qui, ce qu'il veut, où il traîne en ligne).

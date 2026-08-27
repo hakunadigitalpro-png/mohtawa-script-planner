@@ -17,9 +17,15 @@
  *     bloquantes.
  */
 
-export type StrategyQuestionType = "text" | "textarea" | "chips" | "guided2";
+export type StrategyQuestionType = "text" | "textarea" | "chips" | "guided";
 
-export type GuidedPart = { key: string; label: string; placeholder: string };
+export type GuidedPart = {
+  key: string;
+  label: string;
+  placeholder: string;
+  /** Texte affiché juste AVANT ce blanc (ex : "— j'aide", "à"). */
+  before?: string;
+};
 
 export type StrategyQuestion = {
   id: string;
@@ -28,22 +34,40 @@ export type StrategyQuestion = {
   example: string;
   type: StrategyQuestionType;
   chips?: string[];
-  /** Mot qui précède les 2 blancs (ex : "J'aide"), type "guided2" uniquement. */
+  /** Début de la phrase, avant le 1er blanc. Type "guided" uniquement. */
   guidedPrefix?: string;
-  /** Mot qui relie les 2 blancs (ex : "à"), type "guided2" uniquement. */
-  guidedJoiner?: string;
   guidedParts?: GuidedPart[];
   optional?: boolean;
 };
 
 export const STRATEGY_QUESTIONS: StrategyQuestion[] = [
   {
-    id: "story",
-    label: "Raconte-moi ton activité",
-    help: "Comme tu l'expliquerais à quelqu'un que tu rencontres : ce que tu fais, pour qui, et ce que tu leur apportes. Pas besoin de bien formuler — j'extrais le reste tout seul.",
+    id: "what_you_do",
+    label: "Complète cette phrase",
+    help: "Trois blancs à remplir, avec tes mots. Pas de rédaction, pas de piège — c'est tout ce dont j'ai besoin pour construire ta stratégie.",
     example:
-      "Je tiens un petit resto à La Marsa. Je fais de la cuisine tunisienne maison, avec des produits du marché. Mes clients, c'est surtout des familles du quartier et des employés qui viennent déjeuner. Le problème c'est que la salle est vide en semaine alors que le week-end c'est plein.",
-    type: "textarea",
+      "un petit resto de cuisine tunisienne à La Marsa — les familles du quartier — bien manger le midi sans se ruiner",
+    type: "guided",
+    guidedPrefix: "Mon activité, c'est",
+    guidedParts: [
+      {
+        key: "activity",
+        label: "Ton activité",
+        placeholder: "un petit resto tunisien à La Marsa",
+      },
+      {
+        key: "who",
+        label: "Tu aides qui ?",
+        placeholder: "les familles du quartier",
+        before: "— j'aide",
+      },
+      {
+        key: "what",
+        label: "À faire quoi ?",
+        placeholder: "bien manger le midi sans se ruiner",
+        before: "à",
+      },
+    ],
   },
   {
     id: "content_goal",
