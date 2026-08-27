@@ -1084,21 +1084,27 @@ Décortique le wording et propose un nouveau script en suivant EXACTEMENT le for
    Studio de marque — génération de stratégie (API Claude)
    ========================================================================= */
 
-// Liste blanche : seules ces réponses partent dans le brief. `brand_name_context`
-// et `ideal_client` en sont volontairement absents — le nom arrive déjà par
-// `brandName`, et l'audience est un RÉSULTAT que l'IA déduit de "tu aides qui
-// à faire quoi" + "problème résolu". Les garder ici renverrait au modèle des
-// clés d'anciens brouillons pour rien.
+/**
+ * Liste blanche : seules ces réponses partent dans le brief.
+ *
+ * Le flux actuel ne demande que `story` + `content_goal`, puis 3 relances
+ * facultatives. Les clés plus bas viennent de l'ancien questionnaire en 10
+ * étapes : elles sont conservées pour que les brouillons déjà saisis avant le
+ * changement continuent de nourrir la génération au lieu d'être perdus.
+ */
 const STRATEGY_ANSWER_LABELS: Record<string, string> = {
+  story: "Son activité, racontée par elle",
+  content_goal: "Objectif n°1 du contenu",
+  // Relances facultatives — des FAITS, jamais inventés par l'IA.
+  proof_result: "Résultat / preuve",
+  legitimacy: "Ce qui la rend légitime",
+  why_started: "Pourquoi elle a commencé",
+  // Anciennes clés (rétrocompatibilité des brouillons).
   domain: "Domaine",
   problem_solved: "Problème résolu",
   where_online: "Présence en ligne",
-  why_started: "Pourquoi elle a commencé",
-  legitimacy: "Ce qui la rend légitime",
   why_you: "Pourquoi la choisir",
   signature_method: "Méthode signature",
-  proof_result: "Résultat / preuve",
-  content_goal: "Objectif n°1 du contenu",
 };
 
 /**
@@ -1132,9 +1138,13 @@ export function generateBrandStrategy(opts: {
 
   const system = `Tu es un stratège de marque qui aide un PATRON DE PETITE ENTREPRISE (pas un expert marketing) à transformer ses réponses en une STRATÉGIE DE CONTENU claire, prête à l'emploi. Multilingue : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Marque : "${opts.brandName || "(sans nom)"}".
 
+Elle ne remplit PAS un formulaire détaillé : elle raconte son activité avec ses mots. Ton premier travail est donc d'EXTRAIRE de son récit ce dont tu as besoin — son domaine, qui elle sert, ce qu'elle leur apporte, le problème qu'elle résout, ce qui la distingue — puis d'en faire une stratégie.
+
 RÈGLES :
 - Zéro jargon marketing. Écris comme si tu expliquais directement à la personne, avec chaleur et clarté.
-- Base-toi UNIQUEMENT sur ce qu'elle a répondu. Si une info manque, déduis raisonnablement à partir du reste — ne dis jamais "information manquante", ne repose jamais de question (ce n'est pas un dialogue).
+- Base-toi UNIQUEMENT sur ce qu'elle a raconté. Déduis ce qui est raisonnablement déductible de son récit ; ne dis jamais "information manquante", ne repose jamais de question (ce n'est pas un dialogue).
+- N'INVENTE JAMAIS DE FAITS la concernant : pas de chiffre de résultat, pas d'année d'expérience, pas de nombre de clients, pas de récompense, pas d'anecdote personnelle qu'elle n'a pas donnée. Ce sont des faits vérifiables — les inventer la mettrait en difficulté devant un vrai client. Si elle n'a pas fourni de preuve chiffrée, construis la confiance autrement (son approche, son attention, sa spécialisation) sans jamais chiffrer.
+- Si son récit est court, reste plus général plutôt que de combler les trous par de l'invention.
 - "positioning" : 1-2 phrases qui résument QUI elle aide et EN QUOI elle est différente — la phrase qu'elle pourrait dire pour se présenter.
 - "tagline" : une accroche courte et mémorable (5-8 mots).
 - "audience_summary" : un paragraphe clair décrivant son client idéal (qui, ce qu'il veut, où il traîne en ligne).

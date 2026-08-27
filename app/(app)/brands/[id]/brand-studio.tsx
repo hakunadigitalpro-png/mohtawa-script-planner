@@ -13,7 +13,6 @@ import {
   Users,
   MessageCircle,
   Layers,
-  Pencil,
 } from "lucide-react";
 import {
   Dialog,
@@ -27,10 +26,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
-  STRATEGY_SECTIONS,
   STRATEGY_QUESTIONS,
+  pendingFollowups,
   type StrategyQuestion,
 } from "@/lib/brand-strategy-questions";
 import {
@@ -39,15 +39,21 @@ import {
 } from "../brand-strategy-actions";
 import type { BrandStrategy, GeneratedStrategy } from "@/lib/types";
 
-type Phase = "intro" | "question" | "review" | "generating" | "results";
+type Phase = "intro" | "question" | "generating" | "results";
 
 /**
- * Studio de marque : questionnaire guidé (1 question à la fois, aide +
- * exemple systématiques) qui génère une stratégie de contenu complète et
- * l'applique (sur confirmation) au Brand Kit. Volontairement SANS thèmes de
- * contenu — ça reste le rôle de l'assistant de thèmes existant, pour ne pas
- * dupliquer la même capacité à deux endroits. Complément du Brand Kit / de
- * l'assistant de thèmes existants — ne les remplace pas.
+ * Studio de marque. La personne raconte son activité en UNE fois + un clic
+ * sur son objectif : l'IA extrait le reste et produit la stratégie, appliquée
+ * automatiquement au Brand Kit.
+ *
+ * Les relances (preuve chiffrée, légitimité, histoire) arrivent APRÈS, sur
+ * l'écran de résultats, une fois la valeur démontrée — ce sont des faits que
+ * l'IA ne peut pas inventer honnêtement, mais les demander d'entrée ferait
+ * fuir. Elles restent facultatives et se répondent d'un bloc, pour ne
+ * déclencher qu'UNE régénération.
+ *
+ * Volontairement SANS thèmes de contenu — ça reste le rôle de l'assistant de
+ * thèmes existant, pour ne pas dupliquer la même capacité à deux endroits.
  *
  * L'état (réponses, écran courant) vit ICI, dans le composant qui reste
  * monté tant que la page est ouverte — pas dans la modal elle-même — pour
@@ -122,12 +128,16 @@ export function BrandStudio({
 
   const generate = async (finalAnswers: Record<string, string>) => {
     setError(null);
+    // En cas d'échec on revient à l'écran d'où on venait : la dernière
+    // question si on générait pour la 1re fois, les résultats si on était en
+    // train de renforcer une stratégie déjà produite.
+    const fallback: Phase = generated ? "results" : "question";
     setPhase("generating");
     try {
       const res = await generateBrandStrategyAction(brandId, finalAnswers);
       if (!res.ok) {
         setError(res.error);
-        setPhase("review");
+        setPhase(fallback);
         return;
       }
       setGenerated(res.generated);
@@ -137,19 +147,15 @@ export function BrandStudio({
       router.refresh();
     } catch {
       setError("L'IA n'a pas répondu. Réessaie.");
-      setPhase("review");
+      setPhase(fallback);
     }
   };
 
+  // Avec 2 questions, pas d'écran de récap : la dernière lance directement
+  // la génération — une étape de moins.
   const goNext = () => {
-    if (qIndex + 1 < total) {
-      setQIndex(qIndex + 1);
-    } else {
-      // Dernière question → un récap pour vérifier les réponses avant de
-      // lancer l'IA (évite de générer une stratégie générique sur des
-      // réponses trop courtes ou laissées telles quelles).
-      setPhase("review");
-    }
+    if (qIndex + 1 < total) setQIndex(qIndex + 1);
+    else generate(answers);
   };
 
   const goBack = () => {
@@ -183,9 +189,9 @@ export function BrandStudio({
               <div>
                 <h2 className="text-lg font-bold">Stratégie de contenu</h2>
                 <p className="text-sm text-muted">
-                  Réponds à quelques questions simples pour obtenir ta
-                  stratégie de contenu sur mesure — elle guidera ton
-                  identité et tes thèmes ci-dessous.
+                  Raconte-moi ton activité en quelques phrases, je m&apos;occupe
+                  du reste — ta stratégie guidera ensuite ton identité, tes
+                  thèmes et tout ce que l&apos;IA écrit pour toi.
                 </p>
               </div>
             </div>
@@ -219,11 +225,7 @@ export function BrandStudio({
           {phase === "question" && question && (
             <>
               <DialogHeader>
-                <SectionProgress
-                  currentSection={question.section}
-                  qIndex={qIndex}
-                  total={total}
-                />
+                <SectionProgress qIndex={qIndex} total={total} />
                 <DialogTitle className="mt-2">{question.label}</DialogTitle>
                 <DialogDescription>{question.help}</DialogDescription>
               </DialogHeader>
@@ -252,28 +254,12 @@ export function BrandStudio({
                     onClick={goNext}
                     disabled={!canContinue}
                   >
-                    {qIndex + 1 === total ? "Vérifier mes réponses" : "Suivant"}
+                    {qIndex + 1 === total ? "Créer ma stratégie" : "Suivant"}
                     <ArrowRight className="size-4 rtl-flip" />
                   </Button>
                 </div>
               </DialogFooter>
             </>
-          )}
-
-          {phase === "review" && (
-            <ReviewScreen
-              answers={answers}
-              error={error}
-              onEdit={(idx) => {
-                setQIndex(idx);
-                setPhase("question");
-              }}
-              onBack={() => {
-                setQIndex(total - 1);
-                setPhase("question");
-              }}
-              onConfirm={() => generate(answers)}
-            />
           )}
 
           {phase === "generating" && <GeneratingScreen />}
@@ -282,6 +268,10 @@ export function BrandStudio({
             <ResultsScreen
               generated={generated}
               error={error}
+              followups={pendingFollowups(answers)}
+              answers={answers}
+              onAnswer={setAnswerKey}
+              onStrengthen={() => generate(answers)}
               onClose={() => setOpen(false)}
               onRedo={() => {
                 setPhase("question");
@@ -376,19 +366,19 @@ function IntroScreen({
           Créons ta stratégie, ensemble
         </DialogTitle>
         <DialogDescription>
-          Tu vas répondre à quelques questions simples — avec une explication
-          et un exemple à chaque étape, tu ne peux pas te tromper. Plus tu
-          prends le temps d&apos;être précis(e), plus la stratégie que
-          l&apos;IA construit sera adaptée à TON objectif. Ça, il n&apos;y a
-          que toi qui le sais : c&apos;est ton business.
+          Raconte-moi simplement ton activité, avec tes mots — comme tu
+          l&apos;expliquerais à quelqu&apos;un que tu rencontres. Je m&apos;occupe
+          du reste.
         </DialogDescription>
       </DialogHeader>
       <DialogBody className="space-y-4">
+        <p className="text-sm text-muted">Tu repars avec :</p>
         <ul className="space-y-2.5 text-sm">
           {[
             "Ton positionnement, en une phrase claire",
             "Ton audience, ses galères, et le ton à adopter",
             "Ta méthode expliquée simplement",
+            "Tes hashtags récurrents",
           ].map((item) => (
             <li key={item} className="flex items-center gap-2.5">
               <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
@@ -399,170 +389,23 @@ function IntroScreen({
           ))}
         </ul>
         <p className="text-xs text-muted">
-          ~3 minutes · {STRATEGY_QUESTIONS.length} questions · tu peux revenir
-          en arrière à tout moment
+          ~1 minute · {STRATEGY_QUESTIONS.length} questions
         </p>
       </DialogBody>
       <DialogFooter>
         <Button type="button" onClick={onStart} className="w-full" size="lg">
           <Sparkles className="size-4" />
-          {hasDraft ? "Reprendre le questionnaire" : "Commencer"}
+          {hasDraft ? "Reprendre" : "Commencer"}
         </Button>
       </DialogFooter>
     </>
   );
 }
 
-/**
- * Affiche la réponse d'une question sous une forme lisible pour le récap,
- * et signale si elle semble trop courte pour nourrir une bonne génération
- * (uniquement pour les questions "textarea"/"guided2" — un champ "text"
- * court comme le domaine est normal, pas à signaler).
- */
-function getAnswerDisplay(
-  question: StrategyQuestion,
-  answers: Record<string, string>,
-): { text: string; thin: boolean } {
-  if (question.type === "guided2" && question.guidedParts) {
-    const parts = question.guidedParts.map((p) =>
-      (answers[`${question.id}__${p.key}`] ?? "").trim(),
-    );
-    if (parts.every((p) => !p)) return { text: "", thin: true };
-    const text = [
-      question.guidedPrefix,
-      parts[0] || "…",
-      question.guidedJoiner,
-      parts[1] || "…",
-    ]
-      .filter(Boolean)
-      .join(" ");
-    const thin = parts.some((p) => p.length > 0 && p.length < 3) || parts.some((p) => !p);
-    return { text, thin };
-  }
-  const v = (answers[question.id] ?? "").trim();
-  if (!v) return { text: "", thin: true };
-  const thin = question.type === "textarea" && v.length < 12;
-  return { text: v, thin };
-}
-
-function ReviewScreen({
-  answers,
-  error,
-  onEdit,
-  onBack,
-  onConfirm,
-}: {
-  answers: Record<string, string>;
-  error: string | null;
-  onEdit: (qIndex: number) => void;
-  onBack: () => void;
-  onConfirm: () => void;
-}) {
-  const rows = STRATEGY_QUESTIONS.map((q, i) => ({
-    index: i,
-    question: q,
-    ...getAnswerDisplay(q, answers),
-  }));
-  const thinCount = rows.filter(
-    (r) => r.thin && !r.question.optional,
-  ).length;
-
-  return (
-    <>
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <Sparkles className="size-4 text-accent" />
-          Vérifie tes réponses
-        </DialogTitle>
-        <DialogDescription>
-          {thinCount > 0
-            ? `${thinCount} réponse${thinCount > 1 ? "s" : ""} semble${thinCount > 1 ? "nt" : ""} un peu courte${thinCount > 1 ? "s" : ""} — plus tu donnes de détails, plus ta stratégie sera précise. Tu peux quand même générer si tu préfères.`
-            : "Tout est prêt. Un dernier coup d'œil avant de lancer la génération ?"}
-        </DialogDescription>
-      </DialogHeader>
-      <DialogBody
-        className="max-h-[56vh] space-y-2 overflow-y-auto pr-1"
-        dir="auto"
-      >
-        {rows.map((r) => {
-          const flagged = r.thin && !r.question.optional;
-          return (
-            <button
-              key={r.question.id}
-              type="button"
-              onClick={() => onEdit(r.index)}
-              className={cn(
-                "flex w-full items-start justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-start text-sm transition hover:bg-secondary/40",
-                flagged
-                  ? "border-amber-300/60 bg-amber-50/50"
-                  : "border-border bg-card",
-              )}
-            >
-              <span className="flex-1">
-                <span className="block text-xs font-semibold text-muted">
-                  {r.question.label}
-                </span>
-                <span className="mt-0.5 block text-foreground/90">
-                  {r.text || (
-                    <span className="italic text-muted">Pas de réponse</span>
-                  )}
-                </span>
-                {flagged && (
-                  <span className="mt-1 block text-xs font-medium text-amber-700">
-                    Un peu court — clique pour compléter
-                  </span>
-                )}
-              </span>
-              <Pencil className="mt-0.5 size-3.5 shrink-0 text-muted" />
-            </button>
-          );
-        })}
-
-        {error && <ErrorNote>{error}</ErrorNote>}
-      </DialogBody>
-      <DialogFooter className="justify-between">
-        <Button type="button" variant="ghost" onClick={onBack}>
-          <ArrowLeft className="size-4 rtl-flip" />
-          Retour
-        </Button>
-        <Button type="button" onClick={onConfirm}>
-          <Sparkles className="size-4" />
-          Générer ma stratégie
-        </Button>
-      </DialogFooter>
-    </>
-  );
-}
-
-function SectionProgress({
-  currentSection,
-  qIndex,
-  total,
-}: {
-  currentSection: string;
-  qIndex: number;
-  total: number;
-}) {
+/** Progression : plus de sections, il ne reste que 2 questions. */
+function SectionProgress({ qIndex, total }: { qIndex: number; total: number }) {
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-1.5">
-        {STRATEGY_SECTIONS.map((s) => {
-          const active = s.key === currentSection;
-          return (
-            <span
-              key={s.key}
-              className={cn(
-                "rounded-full px-2.5 py-1 text-xs font-semibold transition",
-                active
-                  ? "bg-accent text-accent-foreground"
-                  : "bg-secondary text-muted",
-              )}
-            >
-              {s.emoji} {s.title}
-            </span>
-          );
-        })}
-      </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
         <div
           className="h-full rounded-full bg-accent transition-all"
@@ -799,11 +642,19 @@ function GeneratingScreen() {
 function ResultsScreen({
   generated,
   error,
+  followups,
+  answers,
+  onAnswer,
+  onStrengthen,
   onClose,
   onRedo,
 }: {
   generated: GeneratedStrategy;
   error: string | null;
+  followups: StrategyQuestion[];
+  answers: Record<string, string>;
+  onAnswer: (key: string, v: string) => void;
+  onStrengthen: () => void;
   onClose: () => void;
   onRedo: () => void;
 }) {
@@ -896,12 +747,51 @@ function ResultsScreen({
           </div>
         )}
 
+        {/* Relances : des faits que l'IA ne peut pas inventer. Groupées et
+            facultatives — une seule régénération quand elle le décide. */}
+        {followups.length > 0 && (
+          <div className="space-y-3 rounded-2xl border border-dashed border-accent/40 bg-accent/5 p-4">
+            <div>
+              <p className="text-sm font-semibold">
+                Renforcer ta stratégie (facultatif)
+              </p>
+              <p className="mt-0.5 text-xs text-muted">
+                Ces informations-là, moi je ne peux pas les deviner — et ce
+                sont elles qui rendent une stratégie vraiment convaincante.
+              </p>
+            </div>
+            {followups.map((q) => (
+              <div key={q.id} className="space-y-1">
+                <Label className="text-sm font-semibold">{q.label}</Label>
+                <p className="text-xs text-muted">{q.help}</p>
+                <Textarea
+                  value={answers[q.id] ?? ""}
+                  onChange={(e) => onAnswer(q.id, e.target.value)}
+                  dir="auto"
+                  placeholder={`Ex : ${q.example}`}
+                  className="min-h-16 text-sm leading-relaxed [field-sizing:content]"
+                />
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onStrengthen}
+              disabled={followups.every((q) => !(answers[q.id] ?? "").trim())}
+              className="w-full"
+            >
+              <Sparkles className="size-4" />
+              Améliorer ma stratégie
+            </Button>
+          </div>
+        )}
+
         {error && <ErrorNote>{error}</ErrorNote>}
       </DialogBody>
       <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
         <Button type="button" variant="ghost" size="sm" onClick={onRedo}>
           <RefreshCcw className="size-3.5" />
-          Refaire le questionnaire
+          Recommencer
         </Button>
         <Button type="button" onClick={onClose}>
           <Check className="size-4" />

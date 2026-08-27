@@ -1,10 +1,20 @@
 /**
- * Contenu du questionnaire du Studio de marque : 5 sections, 1 question à la
- * fois. Chaque question porte une explication ("help") ET un exemple concret
- * ("example") — le public cible (patron de PME, pas marketeur) ne doit
- * JAMAIS se retrouver bloqué face à un champ vide sans savoir quoi mettre.
- * Contenu validé avec l'utilisatrice avant implémentation (puis affiné après
- * un premier essai réel).
+ * Contenu du Studio de marque.
+ *
+ * Principe : on ne demande PAS à un patron de PME de composer 5 textes
+ * marketing sur lui-même — c'est le travail le plus dur qu'on puisse lui
+ * donner. Il raconte son activité en UNE fois, comme à quelqu'un qu'il
+ * rencontre, et l'IA en extrait le domaine, la cible, le problème résolu et
+ * la différenciation.
+ *
+ * Deux temps :
+ *  1. STRATEGY_QUESTIONS — le strict minimum pour produire une vraie
+ *     stratégie : un récit libre + un clic sur l'objectif.
+ *  2. STRATEGY_FOLLOWUPS — posées APRÈS, une fois la stratégie sous les yeux
+ *     et sa valeur démontrée. Ce sont des FAITS que l'IA ne peut pas
+ *     inventer sans mentir (preuve chiffrée, légitimité, histoire perso) :
+ *     elles restent donc des questions, mais facultatives et jamais
+ *     bloquantes.
  */
 
 export type StrategyQuestionType = "text" | "textarea" | "chips" | "guided2";
@@ -13,7 +23,6 @@ export type GuidedPart = { key: string; label: string; placeholder: string };
 
 export type StrategyQuestion = {
   id: string;
-  section: string;
   label: string;
   help: string;
   example: string;
@@ -27,107 +36,17 @@ export type StrategyQuestion = {
   optional?: boolean;
 };
 
-export const STRATEGY_SECTIONS = [
-  { key: "essentials", title: "L'essentiel", emoji: "✨" },
-  { key: "audience", title: "Ton audience", emoji: "🎯" },
-  { key: "story", title: "Ton histoire", emoji: "📖" },
-  { key: "difference", title: "Ta différence", emoji: "💎" },
-  { key: "proof", title: "Preuves & objectif", emoji: "🏆" },
-] as const;
-
 export const STRATEGY_QUESTIONS: StrategyQuestion[] = [
-  // Volontairement PAS de question "nom de la marque" : on l'a déjà
-  // (`brands.name`, passé directement à l'IA par generateBrandStrategyAction).
-  // Volontairement PAS de question "client idéal" non plus : l'audience est
-  // un RÉSULTAT de la stratégie, pas une donnée à saisir — l'IA la déduit de
-  // "tu aides qui à faire quoi" + "quel problème tu résous".
   {
-    id: "domain",
-    section: "essentials",
-    label: "Ton domaine ?",
-    help: "Pour adapter les conseils à ton marché.",
-    example: "Restauration, Coaching, Beauté, E-commerce…",
-    type: "text",
-  },
-  {
-    id: "what_you_do",
-    section: "essentials",
-    label: "Tu aides qui, et à faire quoi ?",
-    help: "Complète juste les deux blancs, comme tu le dirais à un ami — pas besoin de bien formuler.",
-    example: "Les petits restos → remplir leur salle grâce à Instagram.",
-    type: "guided2",
-    guidedPrefix: "J'aide",
-    guidedJoiner: "à",
-    guidedParts: [
-      { key: "who", label: "Tu aides qui ?", placeholder: "les petits restos" },
-      {
-        key: "what",
-        label: "À faire quoi ?",
-        placeholder: "remplir leur salle grâce à Instagram",
-      },
-    ],
-  },
-  {
-    id: "problem_solved",
-    section: "audience",
-    label: "Quel problème tu lui résous ?",
-    help: "La galère principale que tu lui enlèves.",
-    example: "Pas le temps ni les idées pour poster.",
-    type: "textarea",
-  },
-  {
-    id: "where_online",
-    section: "audience",
-    label: "Où passe-t-elle son temps en ligne ?",
-    help: "Pour savoir où publier en priorité.",
-    example: "Instagram, TikTok, LinkedIn…",
-    type: "chips",
-    chips: ["Instagram", "TikTok", "LinkedIn", "Facebook", "YouTube"],
-  },
-  {
-    id: "why_started",
-    section: "story",
-    label: "Pourquoi tu as commencé ?",
-    help: "C'est pour ton storytelling : ton histoire perso, c'est ce qui va te rendre unique et créer une vraie connexion — on achète à des humains, pas à des logos. 2-3 phrases suffisent, pas besoin d'un roman.",
-    example: "J'ai galéré à me faire connaître, puis j'ai trouvé une méthode.",
-    type: "textarea",
-  },
-  {
-    id: "legitimacy",
-    section: "story",
-    label: "Pourquoi on peut te faire confiance ?",
-    help: "Ton expérience, ta formation, tes résultats — ce qui prouve que tu sais de quoi tu parles. Pas besoin de diplômes, l'expérience terrain compte tout autant.",
-    example: "8 ans dans le métier, 50 comptes gérés.",
-    type: "textarea",
-  },
-  {
-    id: "why_you",
-    section: "difference",
-    label: "Pourquoi te choisir toi ?",
-    help: "Ce qui te distingue des concurrents.",
-    example: "Je ne fais QUE la restauration.",
-    type: "textarea",
-  },
-  {
-    id: "signature_method",
-    section: "difference",
-    label: "Ta méthode ou ton angle signature ?",
-    help: "Si tu en as un, donne-lui un nom. Sinon, passe cette question.",
-    example: "Méthode « Assiette qui vend ».",
-    type: "text",
-    optional: true,
-  },
-  {
-    id: "proof_result",
-    section: "proof",
-    label: "Un résultat ou témoignage dont tu es fier ?",
-    help: "Une preuve concrète que ça marche.",
-    example: "+40% de réservations en 2 mois.",
+    id: "story",
+    label: "Raconte-moi ton activité",
+    help: "Comme tu l'expliquerais à quelqu'un que tu rencontres : ce que tu fais, pour qui, et ce que tu leur apportes. Pas besoin de bien formuler — j'extrais le reste tout seul.",
+    example:
+      "Je tiens un petit resto à La Marsa. Je fais de la cuisine tunisienne maison, avec des produits du marché. Mes clients, c'est surtout des familles du quartier et des employés qui viennent déjeuner. Le problème c'est que la salle est vide en semaine alors que le week-end c'est plein.",
     type: "textarea",
   },
   {
     id: "content_goal",
-    section: "proof",
     label: "Ton objectif n°1 avec le contenu ?",
     help: "Ce que le contenu doit t'apporter avant tout.",
     example: "Vendre, te faire connaître, fidéliser, asseoir ton expertise…",
@@ -135,3 +54,41 @@ export const STRATEGY_QUESTIONS: StrategyQuestion[] = [
     chips: ["Vendre", "Me faire connaître", "Fidéliser", "Asseoir mon expertise"],
   },
 ];
+
+/**
+ * Relances proposées sur l'écran de résultats — toutes facultatives. Chacune
+ * apporte une information que l'IA ne peut PAS deviner honnêtement.
+ */
+export const STRATEGY_FOLLOWUPS: StrategyQuestion[] = [
+  {
+    id: "proof_result",
+    label: "Un résultat concret dont tu es fier ?",
+    help: "Un chiffre ou un témoignage rend ta stratégie beaucoup plus convaincante — et c'est la seule chose que je ne peux pas deviner à ta place.",
+    example: "+40% de réservations en 2 mois.",
+    type: "textarea",
+    optional: true,
+  },
+  {
+    id: "legitimacy",
+    label: "Pourquoi on peut te faire confiance ?",
+    help: "Ton expérience, ta formation, tes résultats. Pas besoin de diplômes — l'expérience terrain compte tout autant.",
+    example: "8 ans dans le métier, 50 comptes gérés.",
+    type: "textarea",
+    optional: true,
+  },
+  {
+    id: "why_started",
+    label: "Pourquoi tu as commencé ?",
+    help: "Ton histoire, c'est ce qui te rend unique — on achète à des humains, pas à des logos. 2-3 phrases suffisent.",
+    example: "J'ai galéré à me faire connaître, puis j'ai trouvé une méthode.",
+    type: "textarea",
+    optional: true,
+  },
+];
+
+/** Les relances encore sans réponse — calculé en code, aucun appel IA. */
+export function pendingFollowups(
+  answers: Record<string, string>,
+): StrategyQuestion[] {
+  return STRATEGY_FOLLOWUPS.filter((q) => !(answers[q.id] ?? "").trim());
+}
