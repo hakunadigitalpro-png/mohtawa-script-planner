@@ -214,7 +214,11 @@ export function BrandStudio({
         onOpenChange={setOpen}
         dismissible={dismissible}
       >
-        <DialogContent className="max-w-2xl">
+        {/* Les résultats méritent toute la largeur disponible : c'est un
+            tableau de bord à parcourir, pas une question à lire. */}
+        <DialogContent
+          className={cn(phase === "results" ? "max-w-5xl" : "max-w-2xl")}
+        >
           {phase === "intro" && (
             <IntroScreen
               hasDraft={hasSavedDraft}
@@ -667,91 +671,103 @@ function ResultsScreen({
           Ta stratégie est prête
         </DialogTitle>
         <DialogDescription>
-          Elle est déjà appliquée à ta marque — ton slogan, ton audience et ta
-          voix en découlent, et l&apos;IA s&apos;en sert pour écrire tes
-          contenus. Pour tes thèmes, utilise l&apos;assistant dédié plus bas.
+          Déjà appliquée à ta marque — l&apos;IA s&apos;en sert pour écrire tes
+          contenus.
         </DialogDescription>
       </DialogHeader>
-      <DialogBody
-        className="max-h-[58vh] space-y-4 overflow-y-auto pr-1"
-        dir="auto"
-      >
-        <div className="rounded-2xl border border-accent/25 bg-accent/5 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-accent">
+
+      {/* Pas de hauteur max ici : la modale s'étire et c'est la page qui
+          défile. Un seul scroll au lieu d'un cadre étroit dans un grand
+          écran à moitié vide. */}
+      <DialogBody className="space-y-4" dir="auto">
+        {/* Positionnement : la pièce maîtresse, pleine largeur. */}
+        <div className="rounded-2xl bg-gradient-to-br from-accent/15 via-accent/5 to-transparent p-5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-accent">
             Positionnement
           </p>
-          <p className="mt-1 text-sm font-medium leading-relaxed">
+          <p className="mt-2 text-lg font-semibold leading-snug">
             {generated.positioning}
           </p>
           {generated.tagline && (
-            <p className="mt-2 inline-block rounded-full bg-card px-3 py-1 text-xs font-semibold">
+            <p className="mt-3 inline-block rounded-full bg-ink px-4 py-1.5 text-sm font-semibold text-white">
               « {generated.tagline} »
             </p>
           )}
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-2xl border border-border bg-card p-3.5">
-            <p className="text-xs font-semibold text-muted">Audience</p>
-            <p className="mt-1 text-sm leading-relaxed">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <StrategyCard
+            icon={<Users className="size-4" />}
+            title="Ton audience"
+            tone="violet"
+          >
+            <p className="text-sm leading-relaxed">
               {generated.audience_summary}
             </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-card p-3.5">
-            <p className="text-xs font-semibold text-muted">
-              Voix de marque
-            </p>
-            <p className="mt-1 text-sm leading-relaxed">
-              {generated.voice_summary}
-            </p>
-          </div>
+          </StrategyCard>
+
+          <StrategyCard
+            icon={<MessageCircle className="size-4" />}
+            title="Ta voix"
+            tone="teal"
+          >
+            <p className="text-sm leading-relaxed">{generated.voice_summary}</p>
+          </StrategyCard>
+
+          {generated.pain_points?.length > 0 && (
+            <StrategyCard
+              icon={<Target className="size-4" />}
+              title="Ce qui bloque ton audience"
+              tone="amber"
+            >
+              <BulletList items={generated.pain_points} />
+            </StrategyCard>
+          )}
+
+          {generated.key_messages?.length > 0 && (
+            <StrategyCard
+              icon={<Layers className="size-4" />}
+              title="À répéter dans ton contenu"
+              tone="accent"
+            >
+              <BulletList items={generated.key_messages} />
+            </StrategyCard>
+          )}
         </div>
 
-        {generated.pain_points?.length > 0 && (
-          <div className="rounded-2xl border border-border bg-card p-3.5">
-            <p className="text-xs font-semibold text-muted">
-              Galères de ton audience
-            </p>
-            <ul className="mt-1.5 space-y-1 text-sm">
-              {generated.pain_points.map((m, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="text-accent">•</span>
-                  {m}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
         {generated.approach && (
-          <div className="rounded-2xl border border-border bg-card p-3.5">
-            <p className="text-xs font-semibold text-muted">Ta méthode</p>
-            <p className="mt-1 text-sm leading-relaxed">
-              {generated.approach}
-            </p>
-          </div>
+          <StrategyCard
+            icon={<Lightbulb className="size-4" />}
+            title="Ta méthode"
+            tone="neutral"
+          >
+            <p className="text-sm leading-relaxed">{generated.approach}</p>
+          </StrategyCard>
         )}
 
-        {generated.key_messages?.length > 0 && (
-          <div className="rounded-2xl border border-border bg-card p-3.5">
-            <p className="text-xs font-semibold text-muted">
-              Messages clés à répéter
-            </p>
-            <ul className="mt-1.5 space-y-1 text-sm">
-              {generated.key_messages.map((m, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="text-accent">•</span>
-                  {m}
+        {generated.hashtags?.length > 0 && (
+          <StrategyCard
+            icon={<Sparkles className="size-4" />}
+            title="Tes hashtags récurrents"
+            tone="neutral"
+          >
+            <ul className="flex flex-wrap gap-1.5">
+              {generated.hashtags.map((h, i) => (
+                <li
+                  key={i}
+                  className="rounded-lg bg-card px-2.5 py-1 text-xs font-medium"
+                >
+                  #{h}
                 </li>
               ))}
             </ul>
-          </div>
+          </StrategyCard>
         )}
 
         {/* Relances : des faits que l'IA ne peut pas inventer. Groupées et
             facultatives — une seule régénération quand elle le décide. */}
         {followups.length > 0 && (
-          <div className="space-y-3 rounded-2xl border border-dashed border-accent/40 bg-accent/5 p-4">
+          <div className="space-y-3 rounded-2xl border border-dashed border-accent/40 bg-accent/5 p-5">
             <div>
               <p className="text-sm font-semibold">
                 Renforcer ta stratégie (facultatif)
@@ -761,25 +777,25 @@ function ResultsScreen({
                 sont elles qui rendent une stratégie vraiment convaincante.
               </p>
             </div>
-            {followups.map((q) => (
-              <div key={q.id} className="space-y-1">
-                <Label className="text-sm font-semibold">{q.label}</Label>
-                <p className="text-xs text-muted">{q.help}</p>
-                <Textarea
-                  value={answers[q.id] ?? ""}
-                  onChange={(e) => onAnswer(q.id, e.target.value)}
-                  dir="auto"
-                  placeholder={`Ex : ${q.example}`}
-                  className="min-h-16 text-sm leading-relaxed [field-sizing:content]"
-                />
-              </div>
-            ))}
+            <div className="grid gap-3 lg:grid-cols-3">
+              {followups.map((q) => (
+                <div key={q.id} className="space-y-1">
+                  <Label className="text-sm font-semibold">{q.label}</Label>
+                  <Textarea
+                    value={answers[q.id] ?? ""}
+                    onChange={(e) => onAnswer(q.id, e.target.value)}
+                    dir="auto"
+                    placeholder={`Ex : ${q.example}`}
+                    className="min-h-16 text-sm leading-relaxed [field-sizing:content]"
+                  />
+                </div>
+              ))}
+            </div>
             <Button
               type="button"
               variant="outline"
               onClick={onStrengthen}
               disabled={followups.every((q) => !(answers[q.id] ?? "").trim())}
-              className="w-full"
             >
               <Sparkles className="size-4" />
               Améliorer ma stratégie
@@ -802,6 +818,57 @@ function ResultsScreen({
     </>
   );
 }
+
+/**
+ * Carte d'une section de stratégie. Chaque section a sa teinte : sans ça,
+ * l'écran n'est qu'un mur de blanc où rien ne se distingue.
+ */
+const CARD_TONES = {
+  accent: { bg: "bg-accent/10", fg: "text-accent" },
+  violet: { bg: "bg-violet-500/10", fg: "text-violet-700" },
+  teal: { bg: "bg-teal-500/10", fg: "text-teal-700" },
+  amber: { bg: "bg-amber-400/15", fg: "text-amber-700" },
+  neutral: { bg: "bg-secondary/60", fg: "text-muted-foreground" },
+} as const;
+
+function StrategyCard({
+  icon,
+  title,
+  tone,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  tone: keyof typeof CARD_TONES;
+  children: React.ReactNode;
+}) {
+  const { bg, fg } = CARD_TONES[tone];
+  return (
+    <div className={cn("rounded-2xl p-4", bg)}>
+      <div className={cn("mb-2 flex items-center gap-1.5", fg)}>
+        {icon}
+        <span className="text-[11px] font-bold uppercase tracking-wider">
+          {title}
+        </span>
+      </div>
+      <div className="text-foreground">{children}</div>
+    </div>
+  );
+}
+
+function BulletList({ items }: { items: string[] }) {
+  return (
+    <ul className="space-y-1.5 text-sm leading-relaxed">
+      {items.map((m, i) => (
+        <li key={i} className="flex gap-2">
+          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-current opacity-40" />
+          {m}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 
 function ErrorNote({ children }: { children: React.ReactNode }) {
   return (

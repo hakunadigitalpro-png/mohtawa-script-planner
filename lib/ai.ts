@@ -1149,14 +1149,14 @@ RÈGLES :
 - Déduire un CONTEXTE plausible est attendu ; inventer un FAIT vérifiable ne l'est pas. La nuance : "sa clientèle vient surtout le midi" est une déduction ; "elle a 8 ans d'expérience" est une invention.
 - "positioning" : 1-2 phrases qui résument QUI elle aide et EN QUOI elle est différente — la phrase qu'elle pourrait dire pour se présenter.
 - "tagline" : une accroche courte et mémorable (5-8 mots).
-- "audience_summary" : un paragraphe clair décrivant son client idéal (qui, ce qu'il veut, où il traîne en ligne).
-- "voice_summary" : le ton à adopter dans son contenu, en 2-3 phrases concrètes (ex : "tutoie", "un peu d'humour", "direct et rassurant").
+- "audience_summary" : son client idéal en 2 PHRASES MAXIMUM — qui il est, ce qu'il veut. Pas un portrait détaillé : l'essentiel, lisible d'un coup d'œil.
+- "voice_summary" : le ton à adopter, en 2 phrases MAXIMUM (ex : "tutoie", "un peu d'humour", "direct et rassurant").
 - "pain_points" : exactement 3 galères concrètes de son audience — ce qui la pousse à chercher de l'aide. Phrases courtes, ancrées dans le réel (pas de généralités).
 - "approach" : 2-3 phrases qui expliquent CONCRÈTEMENT comment elle aide — sa méthode, sa façon de faire. Pas une liste de services : une explication simple, comme elle le dirait elle-même.
 - "key_messages" : exactement 3 messages ou preuves à répéter dans son contenu pour construire la confiance.
 - "hashtags" : 5 à 8 hashtags récurrents pour cette marque, déduits de son domaine, son audience et son positionnement. SANS le "#", en minuscules, sans accents ni espaces. Mélange large (son secteur) et précis (sa niche, sa ville si pertinent). Dans la langue de ses réponses.
 - Ne propose PAS de thèmes/piliers de contenu (ce qu'il faut poster) — ce n'est pas le rôle de cette stratégie, une autre fonctionnalité de l'app s'en charge déjà.
-- Reste concis partout — des phrases courtes, jamais de paragraphes à rallonge. Le JSON complet doit rester compact.
+- Reste concis partout — des phrases courtes, JAMAIS de paragraphe à rallonge. Cette stratégie s'affiche sur un écran, elle doit se lire d'un coup d'œil : si une section dépasse 3 phrases, c'est trop long. Le JSON complet doit rester compact.
 
 Réponds UNIQUEMENT avec un objet JSON valide, rien autour, pas de markdown :
 {
