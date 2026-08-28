@@ -18,7 +18,14 @@ type CreateContentInput = {
   pillar?: string;
 };
 
-export async function createContent(input: CreateContentInput) {
+/**
+ * Crée la ligne de contenu et renvoie son id — SANS rediriger. Krea la copilote
+ * appelle cette version : un `redirect()` au milieu de sa boucle d'outils la
+ * ferait échouer avant qu'elle ait pu répondre.
+ */
+export async function createContentRow(
+  input: CreateContentInput,
+): Promise<{ id: string; type: string } | { error: string }> {
   // Marque explicite prioritaire (RLS vérifie l'appartenance) ; sinon marque active.
   const brandId = input.brandId ?? (await getActiveBrandId());
   if (!brandId) return { error: "Aucune marque active." };
@@ -73,7 +80,14 @@ export async function createContent(input: CreateContentInput) {
 
   revalidatePath("/dashboard");
   revalidatePath("/calendar");
-  redirect(`/content/${data.id}`);
+  return { id: data.id as string, type: data.type as string };
+}
+
+/** Version « bouton » : crée puis ouvre la fiche. */
+export async function createContent(input: CreateContentInput) {
+  const res = await createContentRow(input);
+  if ("error" in res) return { error: res.error };
+  redirect(`/content/${res.id}`);
 }
 
 export async function updateContent(

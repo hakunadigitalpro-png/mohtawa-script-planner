@@ -4,6 +4,7 @@ import { resolveActiveBrand } from "@/lib/brand";
 import { Sidebar } from "@/components/sidebar";
 import { MobileTopBar, MobileBottomNav } from "@/components/mobile-nav";
 import { NoBrandWelcome } from "@/components/no-brand";
+import { KreaCopilot } from "@/components/krea/krea-copilot";
 import type { Notification } from "@/components/notifications/types";
 
 export default async function AppLayout({
@@ -60,6 +61,10 @@ export default async function AppLayout({
       </div>
       {/* Barre d'onglets du bas : mobile uniquement (md:hidden). */}
       <MobileBottomNav userEmail={user.email ?? null} role={role} />
+      {/* Krea vit dans le layout : son fil de discussion survit donc aux
+          changements de page (navigation douce = le layout ne remonte pas).
+          Pas pour un "viewer" (client invité) : il n'a rien à configurer. */}
+      {role !== "viewer" && <KreaCopilot />}
     </div>
   );
 }

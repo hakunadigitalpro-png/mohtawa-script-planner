@@ -38,26 +38,26 @@ export class AiError extends Error {
  * brute — l'utilisatrice perd son travail sans comprendre pourquoi. On coupe
  * donc NOUS-MÊMES avant, pour renvoyer un message lisible dans l'interface.
  */
-const AI_BUDGET_MS = 52_000;
+export const AI_BUDGET_MS = 52_000;
 /** En dessous, un appel n'a aucune chance d'aboutir : autant le dire tout de suite. */
 const AI_MIN_MS = 6_000;
 const AI_TIMEOUT_MESSAGE =
   "L'IA a mis trop de temps à répondre (le serveur coupe à 60 s). Réessaie — si ça recommence, raccourcis ton script ou découpe-le en deux vidéos.";
 
 /** Échéance partagée par tous les appels d'une même requête. */
-function aiDeadline(): number {
+export function aiDeadline(): number {
   return Date.now() + AI_BUDGET_MS;
 }
 
 /** Signal d'abandon calé sur le temps qu'il reste avant l'échéance. */
-function aiSignal(deadline: number): AbortSignal {
+export function aiSignal(deadline: number): AbortSignal {
   const msLeft = deadline - Date.now();
   if (msLeft < AI_MIN_MS) throw new AiError("timeout", AI_TIMEOUT_MESSAGE);
   return AbortSignal.timeout(msLeft);
 }
 
 /** Traduit l'échec d'un `fetch` vers l'API en erreur parlante. */
-function aiFetchError(e: unknown): AiError {
+export function aiFetchError(e: unknown): AiError {
   if (e instanceof AiError) return e;
   if (e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError")) {
     return new AiError("timeout", AI_TIMEOUT_MESSAGE);
@@ -887,11 +887,11 @@ async function callClaudeJSON<T>(
    mais tant que la clé n'est pas dans Vercel c'est bien Claude qui répond.
    ========================================================================= */
 
-const GEMINI_URL =
+export const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/interactions";
 /** Révision d'API épinglée : sans elle, le format de réponse peut changer sous nos pieds. */
-const GEMINI_API_REVISION = "2026-05-20";
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.7-flash";
+export const GEMINI_API_REVISION = "2026-05-20";
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.7-flash";
 
 /** Sous-ensemble de JSON Schema accepté par Gemini (ni $ref, ni additionalProperties). */
 export type GeminiSchema = {
@@ -903,7 +903,7 @@ export type GeminiSchema = {
 };
 
 /** Vrai dès que la clé Gemini est configurée côté serveur. */
-function geminiEnabled(): boolean {
+export function geminiEnabled(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
 }
 
