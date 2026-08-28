@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { AiError, aiDeadline } from "@/lib/ai";
 import { guardAiAction } from "@/lib/ai-guard";
+import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import {
   KREA_PERSONA,
@@ -52,7 +53,10 @@ async function buildContext(
   openContentId: string | null,
 ): Promise<KreaContext> {
   const { active } = await resolveActiveBrand();
-  const { supabase } = await guardAiAction("krea");
+  // Lecture en base, pas un appel IA : surtout pas de `guardAiAction` ici,
+  // sinon un seul message de Krea brûlait 3 jetons du quota (contexte +
+  // écriture + générateur) et la limite de 15/minute tombait au 5e message.
+  const supabase = await createClient();
 
   const today = new Date().toISOString().slice(0, 10);
   if (!active) {
@@ -116,7 +120,8 @@ async function writeScript(
   contentId: string,
   sujet: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const { supabase } = await guardAiAction("krea");
+  // Idem : le générateur appelé juste après porte déjà son propre garde-fou.
+  const supabase = await createClient();
   const { data: content } = await supabase
     .from("contents")
     .select("type, platform")
@@ -184,6 +189,8 @@ export async function askKrea(input: {
   openContentId?: string | null;
 }): Promise<KreaAnswer> {
   try {
+    // Un seul jeton de quota par message envoyé à Krea.
+    await guardAiAction("krea");
     const ctx = await buildContext(input.page, input.openContentId ?? null);
     const deadline = aiDeadline();
     const deeds: KreaDeed[] = [];
@@ -276,6 +283,9 @@ export async function askKrea(input: {
         messages,
         tools: KREA_TOOLS,
         deadline,
+        // Un tour d'outils de plus = tout le fil renvoyé une fois de plus.
+        // On pose un point de cache sur sa fin pour ne pas le repayer plein tarif.
+        cacheTail: true,
       });
     }
 

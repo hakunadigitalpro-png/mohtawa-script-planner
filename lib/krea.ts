@@ -19,6 +19,14 @@ import {
    résultat, il rédige sa réponse.
    ========================================================================= */
 
+/**
+ * Modèle de Krea. Par défaut le même que le reste de l'app — mais Krea est
+ * appelée à CHAQUE message du chat, là où un générateur de script tourne
+ * quelques fois par jour. Si le coût devient un sujet, c'est le premier
+ * levier : un modèle plus léger ici ne touche à aucune autre génération.
+ */
+const KREA_MODEL = process.env.KREA_MODEL || ANTHROPIC_MODEL;
+
 export type KreaTool = {
   name: string;
   description: string;
@@ -38,10 +46,18 @@ export type KreaFunctionCall = {
 /** Un tour de conversation tel qu'on le garde côté client, sans la plomberie. */
 export type KreaTurn = { role: "user" | "assistant"; content: string };
 
+/** Un point de cache peut se poser sur n'importe quel bloc de contenu. */
+type Cacheable = { cache_control?: { type: "ephemeral" } };
+
 type ContentBlock =
-  | { type: "text"; text: string }
-  | { type: "tool_use"; id: string; name: string; input: Record<string, unknown> }
-  | { type: "tool_result"; tool_use_id: string; content: string };
+  | ({ type: "text"; text: string } & Cacheable)
+  | ({
+      type: "tool_use";
+      id: string;
+      name: string;
+      input: Record<string, unknown>;
+    } & Cacheable)
+  | ({ type: "tool_result"; tool_use_id: string; content: string } & Cacheable);
 
 export type ClaudeMessage = {
   role: "user" | "assistant";
@@ -56,6 +72,28 @@ export type KreaReply = {
   truncated: boolean;
 };
 
+/**
+ * Marque le dernier bloc du fil comme point de cache. Le prochain appel de la
+ * boucle repart de ce préfixe : il est alors lu depuis le cache (~10 % du
+ * prix) au lieu d'être renvoyé au tarif plein.
+ */
+function withTailBreakpoint(messages: ClaudeMessage[]): ClaudeMessage[] {
+  if (!messages.length) return messages;
+  const out = messages.slice();
+  const last = out[out.length - 1];
+  const blocks: ContentBlock[] =
+    typeof last.content === "string"
+      ? [{ type: "text", text: last.content }]
+      : last.content.slice();
+  if (!blocks.length) return messages;
+  blocks[blocks.length - 1] = {
+    ...blocks[blocks.length - 1],
+    cache_control: { type: "ephemeral" },
+  };
+  out[out.length - 1] = { ...last, content: blocks };
+  return out;
+}
+
 export async function kreaInteract(opts: {
   /** Persona + règles : figé, donc mis en cache. */
   systemStable: string;
@@ -65,6 +103,12 @@ export async function kreaInteract(opts: {
   tools: KreaTool[];
   deadline: number;
   maxTokens?: number;
+  /**
+   * Pose un second point de cache sur la fin du fil. Utile dans la boucle
+   * d'outils : le tour suivant renvoie tout ce qui précède, qui devient alors
+   * un préfixe déjà en cache au lieu d'être refacturé plein tarif.
+   */
+  cacheTail?: boolean;
 }): Promise<KreaReply> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -84,7 +128,7 @@ export async function kreaInteract(opts: {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: ANTHROPIC_MODEL,
+        model: KREA_MODEL,
         max_tokens: opts.maxTokens ?? 1200,
         // Deux blocs système, dans cet ordre : le figé d'abord avec le point
         // de cache, le vivant après. L'API met en cache par PRÉFIXE — mettre
@@ -98,7 +142,9 @@ export async function kreaInteract(opts: {
           { type: "text", text: opts.systemContext },
         ],
         tools: opts.tools,
-        messages: opts.messages,
+        messages: opts.cacheTail
+          ? withTailBreakpoint(opts.messages)
+          : opts.messages,
       }),
       signal: aiSignal(opts.deadline),
     });
