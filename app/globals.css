@@ -5,6 +5,11 @@
      Refresh intensité (revue UI Mariam) : orange plus saturé pour faire
      "pop" les CTAs, ink légèrement plus profond pour le texte. */
   --color-ink: #08040f;
+  /* Fond des bandeaux sombres (en-têtes de page, table du storyboard).
+     Volontairement distinct de `ink`, qui reste la couleur du TEXTE : un
+     brun chaud plutôt qu'un presque-noir violacé, pour que les bandeaux
+     respirent au lieu de faire des trous noirs dans la page. */
+  --color-hero: #3a1c14;
   --color-orange: #ff5722;
   --color-orange-strong: #ed4607;
   --color-orange-soft: #ffe0cf;
@@ -235,7 +240,7 @@ html[data-theme="dark"] {
   .surface-hero {
     position: relative;
     overflow: hidden;
-    background: var(--color-ink);
+    background: var(--color-hero);
     color: #fff;
   }
   .surface-hero::before,
@@ -283,7 +288,7 @@ html[data-theme="dark"] {
         rgba(237, 70, 7, 0.07) 45%,
         rgba(237, 70, 7, 0.11)
       ),
-      var(--color-ink);
+      var(--color-hero);
     color: #fff;
   }
   .surface-board::before,
