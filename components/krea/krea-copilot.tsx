@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -48,6 +54,9 @@ export function KreaCopilot() {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // Vrai dès le premier message : c'est ce qui déclenche le téléchargement de
+  // la vidéo, jamais à la simple ouverture du panneau.
+  const [hasSpoken, setHasSpoken] = useState(false);
   // L'API Claude est sans mémoire : le fil doit repartir à chaque appel. On
   // garde donc le texte des tours ici (le serveur ne renvoie que les 10
   // derniers au modèle) — la plomberie des outils, elle, ne sort pas du tour.
@@ -66,6 +75,7 @@ export function KreaCopilot() {
     if (!clean || pending) return;
     setDraft("");
     setError(null);
+    setHasSpoken(true);
     setMsgs((m) => [...m, { role: "me", text: clean }]);
 
     startTransition(async () => {
@@ -132,21 +142,7 @@ export function KreaCopilot() {
 
       {open && (
         <div className="surface-glass fixed bottom-20 end-5 z-40 flex max-h-[min(34rem,calc(100vh-7rem))] w-[min(24rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-3xl shadow-lift">
-          <div className="surface-board flex items-center gap-2 px-4 py-3">
-            <Image
-              src="/mascot/krea-avatar.png"
-              alt=""
-              width={36}
-              height={36}
-              className="size-9 rounded-full object-cover"
-            />
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-white">Krea</p>
-              <p className="truncate text-[11px] text-white/70">
-                Ta coach — dis-lui quoi faire, elle le fait
-              </p>
-            </div>
-          </div>
+          <KreaStage speaking={pending} loadVideo={hasSpoken} />
 
           <div
             ref={scrollRef}
@@ -186,14 +182,6 @@ export function KreaCopilot() {
                 {m.deeds?.map((d, j) => <DeedCard key={j} deed={d} />)}
               </div>
             ))}
-
-            {pending && (
-              <div className="flex items-center gap-1.5 px-1 text-sm text-muted">
-                <span className="size-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.3s]" />
-                <span className="size-1.5 animate-bounce rounded-full bg-accent [animation-delay:-0.15s]" />
-                <span className="size-1.5 animate-bounce rounded-full bg-accent" />
-              </div>
-            )}
 
             {error && (
               <p
@@ -238,6 +226,87 @@ export function KreaCopilot() {
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Le plateau où Krea vit, en haut du panneau. Elle y est VISIBLE — pas
+ * réduite à une pastille de 36 px — et elle s'anime quand elle parle.
+ *
+ * `object-contain` volontairement : la vidéo est une scène 16/9 complète,
+ * la recadrer en rond ou en bandeau couperait le personnage. Ici rien n'est
+ * coupé, le fond sombre fait le reste.
+ */
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+/** Respecte le réglage système « animations réduites ». */
+function useReducedMotion(): boolean {
+  return useSyncExternalStore(
+    (notify) => {
+      const mq = window.matchMedia(REDUCED_MOTION);
+      mq.addEventListener("change", notify);
+      return () => mq.removeEventListener("change", notify);
+    },
+    () => window.matchMedia(REDUCED_MOTION).matches,
+    () => false,
+  );
+}
+
+function KreaStage({
+  speaking,
+  /** La vidéo pèse ~4,6 Mo : on ne la monte qu'après le premier message,
+   *  jamais à la simple ouverture du panneau. */
+  loadVideo,
+}: {
+  speaking: boolean;
+  loadVideo: boolean;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const reducedMotion = useReducedMotion();
+  const animate = speaking && !reducedMotion;
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (animate) void v.play().catch(() => {});
+    else v.pause();
+  }, [animate]);
+
+  return (
+    <div className="surface-board relative h-32 shrink-0 overflow-hidden">
+      <Image
+        src="/mascot/krea-avatar.png"
+        alt="Krea, ta coach"
+        width={220}
+        height={220}
+        priority
+        className={cn(
+          "absolute inset-0 mx-auto h-full w-auto object-contain py-2 transition-opacity duration-300",
+          animate ? "opacity-0" : "opacity-100",
+        )}
+      />
+      {loadVideo && !reducedMotion && (
+        <video
+          ref={videoRef}
+          src="/mascot/krea-speaking.mp4"
+          muted
+          loop
+          playsInline
+          preload="none"
+          aria-hidden
+          className={cn(
+            "absolute inset-0 mx-auto h-full w-auto object-contain transition-opacity duration-300",
+            animate ? "opacity-100" : "opacity-0",
+          )}
+        />
+      )}
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-ink/80 to-transparent px-3 pb-2 pt-6">
+        <p className="text-sm font-bold text-white">Krea</p>
+        <p className="truncate text-[11px] text-white/70">
+          {speaking ? "elle s'en occupe…" : "dis-lui quoi faire, elle le fait"}
+        </p>
+      </div>
+    </div>
   );
 }
 
