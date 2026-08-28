@@ -301,7 +301,18 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
   const maxTokens = includeStoryboard
     ? 3000 + (hasPresets ? 300 : 0) + presetsWithEquipment.length * 150
     : 2000;
-  return callClaudeJSON<ReelGeneration>(system, user, maxTokens);
+  return geminiEnabled()
+    ? callGeminiJSON<ReelGeneration>(
+        system,
+        user,
+        maxTokens,
+        reelSchema(
+          includeStoryboard,
+          hasPresets,
+          presetsWithEquipment.length > 0,
+        ),
+      )
+    : callClaudeJSON<ReelGeneration>(system, user, maxTokens);
 }
 
 export type StoryboardSegmentation = {
@@ -388,7 +399,9 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
   ]
 }`;
 
-  return callClaudeJSON<StoryGeneration>(system, user, 1500);
+  return geminiEnabled()
+    ? callGeminiJSON<StoryGeneration>(system, user, 1500, STORY_SCHEMA)
+    : callClaudeJSON<StoryGeneration>(system, user, 1500);
 }
 
 /* =========================================================================
@@ -862,6 +875,284 @@ async function callClaudeJSON<T>(
 }
 
 /* =========================================================================
+   Génération de script — Gemini
+   -------------------------------------------------------------------------
+   Les trois générateurs de SCRIPT (Reel, Story, Vlog) passent par Gemini.
+   Le reste des appels IA — découpage storyboard, autopsie, stratégie de
+   marque, assistant de thèmes, analyse de vidéo de référence — reste sur
+   Claude.
+
+   Bascule : dès que GEMINI_API_KEY existe côté serveur, Gemini prend la main.
+   Sans la clé, on retombe sur Claude. Le déploiement ne casse donc jamais,
+   mais tant que la clé n'est pas dans Vercel c'est bien Claude qui répond.
+   ========================================================================= */
+
+const GEMINI_URL =
+  "https://generativelanguage.googleapis.com/v1beta/interactions";
+/** Révision d'API épinglée : sans elle, le format de réponse peut changer sous nos pieds. */
+const GEMINI_API_REVISION = "2026-05-20";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.7-flash";
+
+/** Sous-ensemble de JSON Schema accepté par Gemini (ni $ref, ni additionalProperties). */
+export type GeminiSchema = {
+  type: "object" | "array" | "string" | "integer" | "number" | "boolean";
+  properties?: Record<string, GeminiSchema>;
+  items?: GeminiSchema;
+  required?: string[];
+  enum?: string[];
+};
+
+/** Vrai dès que la clé Gemini est configurée côté serveur. */
+function geminiEnabled(): boolean {
+  return Boolean(process.env.GEMINI_API_KEY);
+}
+
+async function callGeminiJSON<T>(
+  system: string,
+  userText: string,
+  maxTokens: number,
+  schema: GeminiSchema,
+): Promise<T> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new AiError(
+      "no_api_key",
+      "L'IA n'est pas configurée. Ajoute GEMINI_API_KEY dans Vercel et redéploie.",
+    );
+  }
+
+  const deadline = aiDeadline();
+  let res: Response;
+  try {
+    res = await fetch(GEMINI_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+        "Api-Revision": GEMINI_API_REVISION,
+      },
+      body: JSON.stringify({
+        model: GEMINI_MODEL,
+        system_instruction: system,
+        input: userText,
+        generation_config: { max_output_tokens: maxTokens },
+        // Le schéma est OBLIGATOIRE chez Gemini pour obtenir du JSON — et
+        // c'est un gain : la structure est garantie par l'API au lieu d'être
+        // seulement demandée dans le prompt.
+        response_format: {
+          type: "text",
+          mime_type: "application/json",
+          schema,
+        },
+      }),
+      signal: aiSignal(deadline),
+    });
+  } catch (e) {
+    throw aiFetchError(e);
+  }
+
+  if (!res.ok) {
+    const status = res.status;
+    if (status === 401 || status === 403) {
+      throw new AiError(
+        "auth",
+        "Clé Gemini refusée. Vérifie GEMINI_API_KEY dans Vercel.",
+      );
+    }
+    if (status === 429) {
+      throw new AiError(
+        "rate_limit",
+        "Quota Gemini atteint ou trop de requêtes. Réessaie dans une minute.",
+      );
+    }
+    // Le 400 tombe ici volontairement : c'est presque toujours une requête
+    // malformée (schéma refusé), et le message de Google est la seule piste
+    // exploitable — le masquer derrière "clé invalide" ferait perdre du temps.
+    let detail = "";
+    try {
+      const b = (await res.json()) as { error?: { message?: string } };
+      detail = b?.error?.message ? ` : ${b.error.message}` : "";
+    } catch {
+      // ignore
+    }
+    throw new AiError("api", `Erreur Gemini (${status})${detail}.`);
+  }
+
+  const data = (await res.json()) as {
+    status?: string;
+    steps?: { type?: string; content?: { type?: string; text?: string }[] }[];
+  };
+
+  // "incomplete" = coupé sur max_output_tokens. Le JSON est forcément
+  // tronqué : autant le dire plutôt que d'échouer sur un parse.
+  if (data.status === "incomplete") {
+    throw new AiError(
+      "too_long",
+      "Ta demande est trop longue pour être traitée d'un coup. Raccourcis ton sujet et relance.",
+    );
+  }
+
+  const text = (data.steps ?? [])
+    .filter((s) => s.type === "model_output")
+    .flatMap((s) => s.content ?? [])
+    .filter((c) => c.type === "text")
+    .map((c) => c.text ?? "")
+    .join("")
+    .trim();
+
+  if (!text) throw new AiError("parse", "L'IA n'a rien renvoyé. Réessaie.");
+
+  try {
+    return JSON.parse(extractJsonBlock(text)) as T;
+  } catch {
+    throw new AiError("parse", "L'IA a renvoyé un format invalide. Réessaie.");
+  }
+}
+
+/* ----------------------- Schémas de sortie (Gemini) ---------------------- */
+
+const S_TEXT: GeminiSchema = { type: "string" };
+const EQUIPMENT_POSITION_SCHEMA: GeminiSchema = {
+  type: "string",
+  enum: [
+    "face",
+    "avant_droite",
+    "droite",
+    "arriere_droite",
+    "arriere",
+    "arriere_gauche",
+    "gauche",
+    "avant_gauche",
+  ],
+};
+
+/** Le schéma suit le prompt : les placements ne sont demandés que s'il y a
+ *  des setups équipés, sinon Gemini les inventerait pour remplir le champ. */
+function filmingGuideSchema(withPresetLayouts: boolean): GeminiSchema {
+  const properties: Record<string, GeminiSchema> = {
+    lighting: S_TEXT,
+    camera_style: S_TEXT,
+    pacing: S_TEXT,
+    energy: S_TEXT,
+    tip: S_TEXT,
+    camera_position: EQUIPMENT_POSITION_SCHEMA,
+  };
+  if (withPresetLayouts) {
+    properties.preset_layouts = {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          preset_label: S_TEXT,
+          equipment_layout: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                label: S_TEXT,
+                position: EQUIPMENT_POSITION_SCHEMA,
+                note: S_TEXT,
+              },
+              required: ["label", "position", "note"],
+            },
+          },
+        },
+        required: ["preset_label", "equipment_layout"],
+      },
+    };
+  }
+  return {
+    type: "object",
+    properties,
+    required: ["lighting", "camera_style", "pacing", "energy", "tip"],
+  };
+}
+
+function storyboardSchema(
+  hasPresets: boolean,
+  withPresetLayouts: boolean,
+): GeminiSchema {
+  const sceneProps: Record<string, GeminiSchema> = {
+    description: S_TEXT,
+    camera_angle: S_TEXT,
+    expression: S_TEXT,
+    movement: S_TEXT,
+  };
+  if (hasPresets) sceneProps.preset_label = S_TEXT;
+  return {
+    type: "object",
+    properties: {
+      scenes: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: sceneProps,
+          required: ["description", "camera_angle", "expression", "movement"],
+        },
+      },
+      filming_guide: filmingGuideSchema(withPresetLayouts),
+    },
+    required: ["scenes", "filming_guide"],
+  };
+}
+
+function reelSchema(
+  includeStoryboard: boolean,
+  hasPresets: boolean,
+  withPresetLayouts: boolean,
+): GeminiSchema {
+  const properties: Record<string, GeminiSchema> = {
+    accroche: S_TEXT,
+    corps: S_TEXT,
+    outro: S_TEXT,
+  };
+  const required = ["accroche", "corps", "outro"];
+  if (includeStoryboard) {
+    properties.storyboard = storyboardSchema(hasPresets, withPresetLayouts);
+    required.push("storyboard");
+  }
+  return { type: "object", properties, required };
+}
+
+const STORY_SCHEMA: GeminiSchema = {
+  type: "object",
+  properties: {
+    objective: S_TEXT,
+    cta_soft: S_TEXT,
+    slides: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: { slot: { type: "integer" }, body: S_TEXT },
+        required: ["slot", "body"],
+      },
+    },
+  },
+  required: ["objective", "cta_soft", "slides"],
+};
+
+const VLOG_SCHEMA: GeminiSchema = {
+  type: "object",
+  properties: {
+    angle: S_TEXT,
+    hooks: { type: "array", items: S_TEXT },
+    arc: {
+      type: "object",
+      properties: {
+        situation: S_TEXT,
+        development: S_TEXT,
+        payoff: S_TEXT,
+      },
+      required: ["situation", "development", "payoff"],
+    },
+    captureShots: { type: "array", items: S_TEXT },
+    voiceover: S_TEXT,
+    caption: S_TEXT,
+  },
+  required: ["angle", "hooks", "arc", "captureShots", "voiceover", "caption"],
+};
+
+/* =========================================================================
    Génération — Vlog (API Claude)
    ========================================================================= */
 
@@ -932,7 +1223,9 @@ Renvoie UNIQUEMENT ce JSON (sans markdown autour) :
   "caption": "${captionSpec}"
 }`;
 
-  return callClaudeJSON<VlogGeneration>(system, user, 2000);
+  return geminiEnabled()
+    ? callGeminiJSON<VlogGeneration>(system, user, 2000, VLOG_SCHEMA)
+    : callClaudeJSON<VlogGeneration>(system, user, 2000);
 }
 
 /* =========================================================================
