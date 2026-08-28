@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ArrowUp, FileText, PenLine, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { askKrea, type KreaDeed } from "@/app/(app)/krea-actions";
+import type { KreaTurn } from "@/lib/krea";
 
 type Msg = {
   role: "krea" | "me";
@@ -47,9 +48,10 @@ export function KreaCopilot() {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  // Le fil vit chez Google : on ne renvoie que cet identifiant, pas tout
-  // l'historique. C'est ce qui garde le coût d'un tour à peu près constant.
-  const threadRef = useRef<string | null>(null);
+  // L'API Claude est sans mémoire : le fil doit repartir à chaque appel. On
+  // garde donc le texte des tours ici (le serveur ne renvoie que les 10
+  // derniers au modèle) — la plomberie des outils, elle, ne sort pas du tour.
+  const threadRef = useRef<KreaTurn[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -69,7 +71,7 @@ export function KreaCopilot() {
     startTransition(async () => {
       const res = await askKrea({
         message: clean,
-        interactionId: threadRef.current,
+        history: threadRef.current,
         page: pageLabel(pathname),
         openContentId: openContentId(pathname),
       });
@@ -78,7 +80,17 @@ export function KreaCopilot() {
         setError(res.error);
         return;
       }
-      threadRef.current = res.interactionId;
+      // Les identifiants créés sont rappelés dans le fil : sans ça, un
+      // « maintenant écris le script » au tour suivant n'aurait plus de cible.
+      const created = res.deeds
+        .filter((d) => d.kind === "content_created")
+        .map((d) => (d.kind === "content_created" ? ` [contenu créé : ${d.title}, identifiant ${d.id}]` : ""))
+        .join("");
+      threadRef.current = [
+        ...threadRef.current,
+        { role: "user", content: clean },
+        { role: "assistant", content: res.message + created },
+      ];
       setMsgs((m) => [
         ...m,
         { role: "krea", text: res.message, deeds: res.deeds },

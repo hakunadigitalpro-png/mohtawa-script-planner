@@ -10,12 +10,12 @@ import type { GeneratedStrategy, FilmingGuide } from "@/lib/types";
  */
 
 // ===== Anthropic (Claude) — utilisé pour l'autopsie vidéo (feature premium) =====
-const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+export const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 // Modèle configurable via env ANTHROPIC_MODEL. Défaut : Sonnet 4.6
 // (même prix que 4.5 — 3$/15$ par 1M — mais meilleure qualité ; bon
 // équilibre pour l'autopsie ET l'analyse de transcript). Pour Haiku
 // (moins cher) ou Opus (plus puissant), définir ANTHROPIC_MODEL dans Vercel.
-const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
+export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
 
 // ===== Groq — transcription audio (Whisper), gratuit sans carte =====
 // Claude ne transcrit PAS l'audio. On délègue la transcription à Groq

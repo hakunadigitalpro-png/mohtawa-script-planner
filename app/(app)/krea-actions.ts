@@ -5,11 +5,13 @@ import { AiError, aiDeadline } from "@/lib/ai";
 import { guardAiAction } from "@/lib/ai-guard";
 import { resolveActiveBrand } from "@/lib/brand";
 import {
+  KREA_PERSONA,
   KREA_TOOLS,
+  kreaContextPrompt,
   kreaInteract,
-  kreaSystemPrompt,
+  type ClaudeMessage,
   type KreaContext,
-  type KreaFunctionResult,
+  type KreaTurn,
 } from "@/lib/krea";
 import { createContentRow } from "./contents/actions";
 import { aiGenerateReel, applyReelGeneration } from "./contents/ai-actions";
@@ -23,7 +25,7 @@ export type KreaDeed =
   | { kind: "navigate"; href: string };
 
 export type KreaAnswer =
-  | { ok: true; message: string; interactionId: string | null; deeds: KreaDeed[] }
+  | { ok: true; message: string; deeds: KreaDeed[] }
   | { ok: false; error: string };
 
 const PAGE_HREFS: Record<string, string> = {
@@ -37,6 +39,9 @@ const PAGE_HREFS: Record<string, string> = {
 /** Au-delà, on coupe : une copilote qui enchaîne 10 outils part en vrille et
  *  dépasse de toute façon le temps que Vercel nous accorde. */
 const MAX_TOOL_ROUNDS = 3;
+
+/** Nombre de tours de conversation renvoyés à chaque appel. */
+const MAX_HISTORY = 10;
 
 /**
  * Rassemble ce que Krea doit savoir pour ne pas poser de questions dont la
@@ -172,31 +177,44 @@ async function writeScript(
  */
 export async function askKrea(input: {
   message: string;
-  /** Fil de discussion côté Google — évite de repayer l'historique. */
-  interactionId?: string | null;
+  /** Tours précédents. L'API Claude est sans mémoire : le fil voyage à chaque appel. */
+  history?: KreaTurn[];
   /** Page où se trouve l'utilisatrice, en clair (ex : "le calendrier"). */
   page: string;
   openContentId?: string | null;
 }): Promise<KreaAnswer> {
   try {
     const ctx = await buildContext(input.page, input.openContentId ?? null);
-    const system = kreaSystemPrompt(ctx);
     const deadline = aiDeadline();
     const deeds: KreaDeed[] = [];
 
+    // On borne le fil : au-delà, chaque tour coûterait de plus en plus cher
+    // pour un gain de contexte quasi nul dans un chat d'assistance.
+    const messages: ClaudeMessage[] = (input.history ?? [])
+      .slice(-MAX_HISTORY)
+      .map((t) => ({ role: t.role, content: t.content }));
+    messages.push({ role: "user", content: input.message });
+
     let reply = await kreaInteract({
-      system,
-      input: input.message,
-      previousInteractionId: input.interactionId ?? null,
+      systemStable: KREA_PERSONA,
+      systemContext: kreaContextPrompt(ctx),
+      messages,
       tools: KREA_TOOLS,
       deadline,
     });
 
     for (let round = 0; round < MAX_TOOL_ROUNDS && reply.calls.length; round++) {
-      const results: KreaFunctionResult[] = [];
+      // Le tour de l'assistant (texte + demandes d'outils) doit être rejoué
+      // tel quel avant les résultats, sinon l'API rejette la suite.
+      messages.push({ role: "assistant", content: reply.assistantContent });
+      const results: {
+        type: "tool_result";
+        tool_use_id: string;
+        content: string;
+      }[] = [];
 
       for (const call of reply.calls) {
-        const args = call.arguments as Record<string, string | undefined>;
+        const args = call.input as Record<string, string | undefined>;
         let payload: unknown;
 
         if (call.name === "creer_contenu") {
@@ -242,17 +260,20 @@ export async function askKrea(input: {
         }
 
         results.push({
-          type: "function_result",
-          name: call.name,
-          call_id: call.id,
-          result: [{ type: "text", text: JSON.stringify(payload) }],
+          type: "tool_result",
+          tool_use_id: call.id,
+          content: JSON.stringify(payload),
         });
       }
 
+      // TOUS les résultats dans UN SEUL message utilisateur : les répartir sur
+      // plusieurs messages apprend au modèle à ne plus paralléliser ses appels.
+      messages.push({ role: "user", content: results });
+
       reply = await kreaInteract({
-        system,
-        input: results,
-        previousInteractionId: reply.interactionId,
+        systemStable: KREA_PERSONA,
+        systemContext: kreaContextPrompt(ctx),
+        messages,
         tools: KREA_TOOLS,
         deadline,
       });
@@ -268,7 +289,6 @@ export async function askKrea(input: {
       message:
         reply.text ||
         "C'est fait. Dis-moi ce que tu veux faire ensuite et je m'en occupe.",
-      interactionId: reply.interactionId,
       deeds,
     };
   } catch (e) {

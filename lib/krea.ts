@@ -1,8 +1,7 @@
 import {
   AiError,
-  GEMINI_API_REVISION,
-  GEMINI_MODEL,
-  GEMINI_URL,
+  ANTHROPIC_MODEL,
+  ANTHROPIC_URL,
   aiFetchError,
   aiSignal,
 } from "./ai";
@@ -10,21 +9,20 @@ import {
 /* =========================================================================
    Krea copilote — la couche « appel modèle avec outils »
    -------------------------------------------------------------------------
-   Krea ne se contente pas de répondre : elle AGIT (créer un contenu, écrire
-   un script, ouvrir une page). C'est du function calling — le modèle décide
-   quel outil appeler, on l'exécute côté serveur, on lui rend le résultat, il
-   rédige sa réponse.
+   Krea tourne sur CLAUDE, comme le reste de la plateforme. Gemini est
+   réservé à l'écriture des scripts (règle posée par l'utilisatrice) — et
+   quand Krea déclenche l'outil `rediger_script`, c'est bien Gemini qui rédige
+   derrière, via les générateurs existants.
 
-   Économie de tokens : l'historique de la conversation reste chez Google et
-   on ne renvoie que `previous_interaction_id` + le nouveau message. On ne
-   repaie donc jamais tout le fil à chaque tour.
+   Elle ne se contente pas de répondre : elle AGIT. C'est du tool use — le
+   modèle décide quel outil appeler, on l'exécute côté serveur, on lui rend le
+   résultat, il rédige sa réponse.
    ========================================================================= */
 
 export type KreaTool = {
-  type: "function";
   name: string;
   description: string;
-  parameters: {
+  input_schema: {
     type: "object";
     properties: Record<string, unknown>;
     required?: string[];
@@ -32,67 +30,76 @@ export type KreaTool = {
 };
 
 export type KreaFunctionCall = {
-  name: string;
   id: string;
-  arguments: Record<string, unknown>;
+  name: string;
+  input: Record<string, unknown>;
+};
+
+/** Un tour de conversation tel qu'on le garde côté client, sans la plomberie. */
+export type KreaTurn = { role: "user" | "assistant"; content: string };
+
+type ContentBlock =
+  | { type: "text"; text: string }
+  | { type: "tool_use"; id: string; name: string; input: Record<string, unknown> }
+  | { type: "tool_result"; tool_use_id: string; content: string };
+
+export type ClaudeMessage = {
+  role: "user" | "assistant";
+  content: string | ContentBlock[];
 };
 
 export type KreaReply = {
-  /** À renvoyer au tour suivant pour garder le fil sans repayer l'historique. */
-  interactionId: string | null;
   text: string;
   calls: KreaFunctionCall[];
-  /** Vrai si la réponse a été coupée sur la limite de tokens. */
+  /** Le tour de l'assistant tel quel — à réinjecter avant les résultats d'outils. */
+  assistantContent: ContentBlock[];
   truncated: boolean;
 };
 
-export type KreaFunctionResult = {
-  type: "function_result";
-  name: string;
-  call_id: string;
-  result: { type: "text"; text: string }[];
-};
-
-/** Un tour d'appel : soit un message de l'utilisatrice, soit des résultats d'outils. */
-export type KreaInput = string | KreaFunctionResult[];
-
 export async function kreaInteract(opts: {
-  system: string;
-  input: KreaInput;
-  previousInteractionId?: string | null;
+  /** Persona + règles : figé, donc mis en cache. */
+  systemStable: string;
+  /** Contexte vivant (marque, page, thèmes) : change souvent, jamais mis en cache. */
+  systemContext: string;
+  messages: ClaudeMessage[];
   tools: KreaTool[];
   deadline: number;
   maxTokens?: number;
 }): Promise<KreaReply> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new AiError(
       "no_api_key",
-      "Krea n'est pas encore branchée. Ajoute GEMINI_API_KEY dans Vercel et redéploie.",
+      "Krea n'est pas branchée. Ajoute ANTHROPIC_API_KEY dans Vercel et redéploie.",
     );
-  }
-
-  const body: Record<string, unknown> = {
-    model: GEMINI_MODEL,
-    system_instruction: opts.system,
-    input: opts.input,
-    tools: opts.tools,
-    generation_config: { max_output_tokens: opts.maxTokens ?? 1200 },
-  };
-  if (opts.previousInteractionId) {
-    body.previous_interaction_id = opts.previousInteractionId;
   }
 
   let res: Response;
   try {
-    res = await fetch(GEMINI_URL, {
+    res = await fetch(ANTHROPIC_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-        "Api-Revision": GEMINI_API_REVISION,
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        model: ANTHROPIC_MODEL,
+        max_tokens: opts.maxTokens ?? 1200,
+        // Deux blocs système, dans cet ordre : le figé d'abord avec le point
+        // de cache, le vivant après. L'API met en cache par PRÉFIXE — mettre
+        // le contexte avant invaliderait le cache à chaque changement de page.
+        system: [
+          {
+            type: "text",
+            text: opts.systemStable,
+            cache_control: { type: "ephemeral" },
+          },
+          { type: "text", text: opts.systemContext },
+        ],
+        tools: opts.tools,
+        messages: opts.messages,
+      }),
       signal: aiSignal(opts.deadline),
     });
   } catch (e) {
@@ -100,8 +107,8 @@ export async function kreaInteract(opts: {
   }
 
   if (!res.ok) {
-    if (res.status === 401 || res.status === 403) {
-      throw new AiError("auth", "Clé Gemini refusée. Vérifie GEMINI_API_KEY.");
+    if (res.status === 401) {
+      throw new AiError("auth", "Clé Anthropic invalide. Vérifie ANTHROPIC_API_KEY.");
     }
     if (res.status === 429) {
       throw new AiError(
@@ -116,43 +123,33 @@ export async function kreaInteract(opts: {
     } catch {
       // ignore
     }
-    throw new AiError("api", `Erreur Gemini (${res.status})${detail}.`);
+    throw new AiError("api", `Erreur Anthropic (${res.status})${detail}.`);
   }
 
   const data = (await res.json()) as {
-    id?: string;
-    status?: string;
-    steps?: {
-      type?: string;
-      name?: string;
-      id?: string;
-      arguments?: Record<string, unknown>;
-      content?: { type?: string; text?: string }[];
-    }[];
+    content?: ContentBlock[];
+    stop_reason?: string | null;
   };
 
-  const steps = data.steps ?? [];
-  const text = steps
-    .filter((s) => s.type === "model_output")
-    .flatMap((s) => s.content ?? [])
-    .filter((c) => c.type === "text")
-    .map((c) => c.text ?? "")
+  const content = data.content ?? [];
+  const text = content
+    .filter((b): b is { type: "text"; text: string } => b.type === "text")
+    .map((b) => b.text)
     .join("")
     .trim();
 
-  const calls: KreaFunctionCall[] = steps
-    .filter((s) => s.type === "function_call" && s.name && s.id)
-    .map((s) => ({
-      name: s.name as string,
-      id: s.id as string,
-      arguments: s.arguments ?? {},
-    }));
+  const calls = content
+    .filter(
+      (b): b is { type: "tool_use"; id: string; name: string; input: Record<string, unknown> } =>
+        b.type === "tool_use",
+    )
+    .map((b) => ({ id: b.id, name: b.name, input: b.input ?? {} }));
 
   return {
-    interactionId: data.id ?? null,
     text,
     calls,
-    truncated: data.status === "incomplete",
+    assistantContent: content,
+    truncated: data.stop_reason === "max_tokens",
   };
 }
 
@@ -165,11 +162,10 @@ export async function kreaInteract(opts: {
  */
 export const KREA_TOOLS: KreaTool[] = [
   {
-    type: "function",
     name: "creer_contenu",
     description:
       "Crée un nouveau contenu dans le planning de la marque active. N'appelle cet outil QUE si tu connais le type ET un titre concret — sinon pose la question d'abord.",
-    parameters: {
+    input_schema: {
       type: "object",
       properties: {
         type: {
@@ -193,18 +189,17 @@ export const KREA_TOOLS: KreaTool[] = [
         theme: {
           type: "string",
           description:
-            "Nom EXACT d'un thème de contenu de la marque, repris de la liste fournie dans le contexte. N'invente jamais un thème.",
+            "Nom EXACT d'un thème de contenu de la marque, repris de la liste du contexte. N'invente jamais un thème.",
         },
       },
       required: ["type", "titre"],
     },
   },
   {
-    type: "function",
     name: "rediger_script",
     description:
       "Écrit le script d'un contenu reel, story ou vlog déjà créé, et l'enregistre. Utilise l'identifiant renvoyé par creer_contenu, ou celui du contenu ouvert indiqué dans le contexte.",
-    parameters: {
+    input_schema: {
       type: "object",
       properties: {
         content_id: {
@@ -221,11 +216,10 @@ export const KREA_TOOLS: KreaTool[] = [
     },
   },
   {
-    type: "function",
     name: "ouvrir_page",
     description:
       "Emmène l'utilisatrice sur une page de l'application. Utile quand elle cherche où faire quelque chose.",
-    parameters: {
+    input_schema: {
       type: "object",
       properties: {
         page: {
@@ -262,8 +256,8 @@ export type KreaContext = {
   today: string;
 };
 
-export function kreaSystemPrompt(ctx: KreaContext): string {
-  return `Tu es Krea, la coach de Kreatly. Tu accompagnes un PATRON DE PETITE ENTREPRISE qui n'est pas marketeur et qui, souvent, ne sait pas par où commencer.
+/** Figé d'un tour à l'autre → c'est ce bloc qui est mis en cache. */
+export const KREA_PERSONA = `Tu es Krea, la coach de Kreatly. Tu accompagnes un PATRON DE PETITE ENTREPRISE qui n'est pas marketeur et qui, souvent, ne sait pas par où commencer.
 
 TON :
 - Chaleureuse, encourageante, directe. Tu tutoies.
@@ -278,9 +272,11 @@ TA FAÇON DE TRAVAILLER :
 - Après avoir agi, tu dis en une phrase ce que tu as fait et tu proposes la suite la plus utile.
 - Tu ne promets jamais une action que tu n'as pas réellement faite avec un outil.
 
-CE QUE TU NE PEUX PAS FAIRE : supprimer quoi que ce soit, modifier un contenu déjà rempli, publier sur les réseaux. Si on te le demande, dis-le simplement et indique où le faire à la main.
+CE QUE TU NE PEUX PAS FAIRE : supprimer quoi que ce soit, modifier un contenu déjà rempli, publier sur les réseaux. Si on te le demande, dis-le simplement et indique où le faire à la main.`;
 
-CONTEXTE ACTUEL :
+/** Change à chaque page / chaque marque → placé APRÈS le point de cache. */
+export function kreaContextPrompt(ctx: KreaContext): string {
+  return `CONTEXTE ACTUEL :
 - Date du jour : ${ctx.today}
 - Marque active : ${ctx.brandName ?? "aucune"}
 - Page où elle se trouve : ${ctx.page}
