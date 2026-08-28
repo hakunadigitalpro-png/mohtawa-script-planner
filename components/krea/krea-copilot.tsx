@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -8,6 +14,15 @@ import { ArrowUp, FileText, PenLine, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { askKrea, type KreaDeed } from "@/app/(app)/krea-actions";
 import type { KreaTurn } from "@/lib/krea";
+import {
+  guideForPath,
+  isSeen,
+  markSeen,
+  seenServerSnapshot,
+  seenSnapshot,
+  subscribeSeen,
+  type GuidePage,
+} from "@/lib/krea-guide";
 
 type Msg = {
   role: "krea" | "me";
@@ -83,6 +98,18 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
   const threadRef = useRef<KreaTurn[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const [hovered, setHovered] = useState(false);
+  // Accueil : Krea explique CHAQUE page la première fois qu'on y arrive, puis
+  // se tait. Une visite guidée qui raconte tout d'un coup, hors contexte, ne
+  // laisse rien — c'était le reproche fait à la précédente.
+  const guide = guideForPath(pathname);
+  const seen = useSyncExternalStore(
+    subscribeSeen,
+    seenSnapshot,
+    seenServerSnapshot,
+  );
+  const guiding = Boolean(guide) && !open && !isSeen(seen, guide!.id);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -139,11 +166,37 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
 
   return (
     <>
+      {/* Bulle de Krea : deux usages, jamais les deux à la fois — l'accueil
+          de la page (elle explique) et le survol (elle propose son aide). */}
+      {guiding && guide ? (
+        <GuideBubble key={guide.id} guide={guide} />
+      ) : (
+        !open &&
+        hovered && (
+          <KreaBubble>
+            <p className="text-sm leading-relaxed text-foreground">
+              Je peux faire quelque chose pour toi ?
+            </p>
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="mt-2.5 text-xs font-semibold text-accent transition hover:underline"
+            >
+              Dis-moi ce dont tu as besoin →
+            </button>
+          </KreaBubble>
+        )
+      )}
+
       {/* Lanceur : Krea elle-même en lévitation, sans pastille orange autour.
           C'est le personnage qui appelle l'œil, pas un aplat de couleur. */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setHovered(true)}
+        onBlur={() => setHovered(false)}
         aria-label={open ? "Fermer Krea" : "Ouvrir Krea, ta coach"}
         className={cn(
           "fixed bottom-5 end-5 z-40 inline-flex items-center justify-center rounded-full transition hover:scale-105",
@@ -267,6 +320,58 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
         </div>
       )}
     </>
+  );
+}
+
+/** L'habillage commun : une bulle de dialogue posée au-dessus de Krea. */
+function KreaBubble({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="fixed bottom-[5.5rem] end-5 z-40 w-[min(17rem,calc(100vw-2.5rem))] rounded-2xl rounded-br-sm border border-border/70 bg-card p-3.5 shadow-lift"
+      dir="auto"
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * L'accueil d'UNE page. Monté avec `key={guide.id}` : changer de page le
+ * remonte, donc le compteur d'étapes repart de zéro sans effet de
+ * synchronisation.
+ */
+function GuideBubble({ guide }: { guide: GuidePage }) {
+  const [index, setIndex] = useState(0);
+  const step = guide.steps[index];
+  const last = index === guide.steps.length - 1;
+
+  return (
+    <KreaBubble>
+      <p className="text-sm leading-relaxed text-foreground">{step.text}</p>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => markSeen(guide.id)}
+          className="text-xs font-medium text-muted transition hover:text-foreground"
+        >
+          Passer
+        </button>
+        <div className="flex items-center gap-2">
+          {guide.steps.length > 1 && (
+            <span className="text-[11px] tabular-nums text-muted">
+              {index + 1}/{guide.steps.length}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => (last ? markSeen(guide.id) : setIndex(index + 1))}
+            className="rounded-full bg-accent px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-accent/90"
+          >
+            {step.cta ?? "Suivant"}
+          </button>
+        </div>
+      </div>
+    </KreaBubble>
   );
 }
 
