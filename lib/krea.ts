@@ -1,10 +1,4 @@
-import {
-  AiError,
-  ANTHROPIC_MODEL,
-  ANTHROPIC_URL,
-  aiFetchError,
-  aiSignal,
-} from "./ai";
+import { AiError, ANTHROPIC_URL, aiFetchError, aiSignal } from "./ai";
 
 /* =========================================================================
    Krea copilote — la couche « appel modèle avec outils »
@@ -20,12 +14,14 @@ import {
    ========================================================================= */
 
 /**
- * Modèle de Krea. Par défaut le même que le reste de l'app — mais Krea est
- * appelée à CHAQUE message du chat, là où un générateur de script tourne
- * quelques fois par jour. Si le coût devient un sujet, c'est le premier
- * levier : un modèle plus léger ici ne touche à aucune autre génération.
+ * Modèle de Krea : Haiku, volontairement plus léger que le reste de l'app.
+ * Krea répond à CHAQUE message du chat, là où un générateur de script tourne
+ * quelques fois par jour — c'est le seul appel dont le volume justifie un
+ * modèle dédié. Son travail (comprendre une demande courte, choisir un outil,
+ * répondre en deux phrases) n'a pas besoin de plus.
+ * Les générations de fond gardent ANTHROPIC_MODEL, elles n'y touchent pas.
  */
-const KREA_MODEL = process.env.KREA_MODEL || ANTHROPIC_MODEL;
+const KREA_MODEL = process.env.KREA_MODEL || "claude-haiku-4-5";
 
 export type KreaTool = {
   name: string;
