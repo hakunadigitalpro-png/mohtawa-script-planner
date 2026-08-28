@@ -312,6 +312,42 @@ html[data-theme="dark"] {
     z-index: 1;
   }
 
+  /* Krea en 3D flottante : le portrait détouré lévite au-dessus d'une ombre
+     portée douce. L'ombre est un pseudo-élément séparé pour qu'elle reste au
+     sol pendant que le personnage monte et descend — c'est ce décalage qui
+     donne l'impression de volume. */
+  .krea-float {
+    position: relative;
+    display: inline-block;
+    filter: drop-shadow(0 10px 14px rgba(8, 4, 15, 0.28));
+    animation: krea-bob 4.5s ease-in-out infinite;
+  }
+  .krea-float::after {
+    content: "";
+    position: absolute;
+    inset-inline: 18%;
+    bottom: -8%;
+    height: 8%;
+    border-radius: 50%;
+    background: rgba(8, 4, 15, 0.18);
+    filter: blur(6px);
+    animation: krea-bob-shadow 4.5s ease-in-out infinite;
+  }
+  @keyframes krea-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  @keyframes krea-bob-shadow {
+    0%, 100% { opacity: 0.55; transform: scaleX(1); }
+    50% { opacity: 0.3; transform: scaleX(0.86); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .krea-float,
+    .krea-float::after {
+      animation: none;
+    }
+  }
+
   /* Verre dépoli : laisse transparaître le dégradé du fond sans sacrifier
      la lisibilité (opacité volontairement haute — un verre trop transparent
      rend le texte illisible sur un fond coloré). */

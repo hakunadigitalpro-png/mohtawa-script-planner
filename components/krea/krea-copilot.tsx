@@ -1,16 +1,10 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  useTransition,
-} from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowUp, FileText, PenLine, Sparkles, X } from "lucide-react";
+import { ArrowUp, FileText, PenLine, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { askKrea, type KreaDeed } from "@/app/(app)/krea-actions";
 import type { KreaTurn } from "@/lib/krea";
@@ -42,11 +36,40 @@ function openContentId(pathname: string): string | null {
 
 const SUGGESTIONS = [
   "Je veux faire un reel",
-  "Je ne sais pas quoi publier cette semaine",
-  "C'est quoi la prochaine chose à faire ?",
+  "Je ne sais pas quoi publier",
+  "C'est quoi la prochaine étape ?",
 ];
 
-export function KreaCopilot() {
+/**
+ * Krea détourée, en lévitation. Pas de cadre, pas de pastille ronde : le
+ * personnage flotte et son ombre reste au sol. C'est `.krea-float`
+ * (globals.css) qui porte l'animation — et qui la coupe si le système
+ * demande des animations réduites.
+ */
+export function KreaFloatingIcon({
+  size,
+  className,
+  priority,
+}: {
+  size: number;
+  className?: string;
+  priority?: boolean;
+}) {
+  return (
+    <span className={cn("krea-float", className)} style={{ width: size }}>
+      <Image
+        src="/mascot/krea-avatar.png"
+        alt="Krea"
+        width={size}
+        height={size}
+        priority={priority}
+        className="block h-auto w-full"
+      />
+    </span>
+  );
+}
+
+export function KreaCopilot({ firstName }: { firstName?: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -54,9 +77,6 @@ export function KreaCopilot() {
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  // Vrai dès le premier message : c'est ce qui déclenche le téléchargement de
-  // la vidéo, jamais à la simple ouverture du panneau.
-  const [hasSpoken, setHasSpoken] = useState(false);
   // L'API Claude est sans mémoire : le fil doit repartir à chaque appel. On
   // garde donc le texte des tours ici (le serveur ne renvoie que les 10
   // derniers au modèle) — la plomberie des outils, elle, ne sort pas du tour.
@@ -75,7 +95,6 @@ export function KreaCopilot() {
     if (!clean || pending) return;
     setDraft("");
     setError(null);
-    setHasSpoken(true);
     setMsgs((m) => [...m, { role: "me", text: clean }]);
 
     startTransition(async () => {
@@ -94,7 +113,11 @@ export function KreaCopilot() {
       // « maintenant écris le script » au tour suivant n'aurait plus de cible.
       const created = res.deeds
         .filter((d) => d.kind === "content_created")
-        .map((d) => (d.kind === "content_created" ? ` [contenu créé : ${d.title}, identifiant ${d.id}]` : ""))
+        .map((d) =>
+          d.kind === "content_created"
+            ? ` [contenu créé : ${d.title}, identifiant ${d.id}]`
+            : "",
+        )
         .join("");
       threadRef.current = [
         ...threadRef.current,
@@ -116,85 +139,103 @@ export function KreaCopilot() {
 
   return (
     <>
-      {/* Pastille flottante — présente sur toutes les pages de l'app. */}
+      {/* Lanceur : Krea elle-même en lévitation, sans pastille orange autour.
+          C'est le personnage qui appelle l'œil, pas un aplat de couleur. */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Fermer Krea" : "Ouvrir Krea, ta coach"}
         className={cn(
-          "fixed bottom-5 end-5 z-40 inline-flex items-center gap-2 rounded-full py-2 pe-4 ps-2 shadow-lift transition hover:scale-105",
-          open ? "bg-ink text-white" : "bg-accent text-white",
+          "fixed bottom-5 end-5 z-40 inline-flex items-center justify-center rounded-full transition hover:scale-105",
+          open && "size-12 bg-ink text-white shadow-lift",
         )}
       >
-        {open ? (
-          <X className="mx-1 size-5" />
-        ) : (
-          <Image
-            src="/mascot/krea-avatar.png"
-            alt=""
-            width={32}
-            height={32}
-            className="size-8 rounded-full object-cover"
-          />
-        )}
-        <span className="text-sm font-bold">Krea</span>
+        {open ? <X className="size-5" /> : <KreaFloatingIcon size={56} />}
       </button>
 
       {open && (
-        <div className="surface-glass fixed bottom-20 end-5 z-40 flex max-h-[min(34rem,calc(100vh-7rem))] w-[min(24rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-3xl shadow-lift">
-          <KreaStage speaking={pending} loadVideo={hasSpoken} />
+        <div className="fixed bottom-24 end-5 z-40 flex max-h-[min(34rem,calc(100vh-9rem))] w-[min(23rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-3xl border border-border/70 bg-card shadow-lift">
+          <div className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-3">
+            <p className="text-sm font-semibold">Krea</p>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Fermer"
+              className="rounded-full p-1 text-muted transition hover:bg-secondary hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
 
-          <div
-            ref={scrollRef}
-            className="flex-1 space-y-3 overflow-y-auto bg-card/60 p-3"
-          >
-            {msgs.length === 0 && (
-              <div className="space-y-2">
-                <p className="px-1 text-sm text-muted">
-                  Tu ne sais pas par où commencer ? Dis-le-moi avec tes mots.
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
+            {msgs.length === 0 ? (
+              <div className="flex flex-col items-center pt-6 text-center">
+                <KreaFloatingIcon size={92} priority />
+                <p className="mt-7 text-sm text-muted">
+                  Bonjour{firstName ? `, ${firstName}` : ""}
                 </p>
-                {SUGGESTIONS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => send(s)}
-                    className="flex w-full items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2 text-start text-sm text-foreground transition hover:border-accent/50 hover:bg-secondary"
+                <p className="text-base font-bold">
+                  Comment je peux t&apos;aider ?
+                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => send(s)}
+                      className="inline-flex items-center gap-2 rounded-full bg-secondary px-3.5 py-2 text-xs font-medium text-foreground transition hover:bg-secondary/70"
+                    >
+                      <span className="size-1.5 shrink-0 rounded-full bg-accent" />
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {msgs.map((m, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
+                      m.role === "me"
+                        ? "ms-auto bg-secondary text-foreground"
+                        : "border border-border/60 bg-background text-foreground",
+                    )}
+                    dir="auto"
                   >
-                    <Sparkles className="size-3.5 shrink-0 text-accent" />
-                    {s}
-                  </button>
+                    <p className="whitespace-pre-wrap leading-relaxed">
+                      {m.text}
+                    </p>
+                    {m.deeds?.map((d, j) => <DeedCard key={j} deed={d} />)}
+                  </div>
                 ))}
-              </div>
-            )}
 
-            {msgs.map((m, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
-                  m.role === "me"
-                    ? "ms-auto bg-accent text-white"
-                    : "bg-card text-foreground shadow-soft",
+                {pending && (
+                  <div className="flex items-center gap-2 text-sm text-muted">
+                    <KreaFloatingIcon size={26} />
+                    <span className="flex items-center gap-1">
+                      <span className="size-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.3s]" />
+                      <span className="size-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.15s]" />
+                      <span className="size-1.5 animate-bounce rounded-full bg-muted" />
+                    </span>
+                  </div>
                 )}
-                dir="auto"
-              >
-                <p className="whitespace-pre-wrap leading-relaxed">{m.text}</p>
-                {m.deeds?.map((d, j) => <DeedCard key={j} deed={d} />)}
-              </div>
-            ))}
 
-            {error && (
-              <p
-                className="rounded-2xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-                role="alert"
-              >
-                {error}
-              </p>
+                {error && (
+                  <p
+                    className="rounded-2xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                    role="alert"
+                  >
+                    {error}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
           <form
-            className="flex items-end gap-2 border-t border-border/60 bg-card p-2"
+            className="flex items-end gap-2 border-t border-border/60 p-2.5"
             onSubmit={(e) => {
               e.preventDefault();
               send(draft);
@@ -211,8 +252,8 @@ export function KreaCopilot() {
               }}
               rows={1}
               dir="auto"
-              placeholder="Dis-moi ce que tu veux faire…"
-              className="max-h-24 min-h-9 flex-1 resize-none rounded-2xl border border-border bg-background px-3 py-2 text-sm text-foreground [field-sizing:content] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Demande à Krea…"
+              className="max-h-24 min-h-9 flex-1 resize-none rounded-2xl border border-border bg-background px-3.5 py-2 text-sm text-foreground [field-sizing:content] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <button
               type="submit"
@@ -226,87 +267,6 @@ export function KreaCopilot() {
         </div>
       )}
     </>
-  );
-}
-
-/**
- * Le plateau où Krea vit, en haut du panneau. Elle y est VISIBLE — pas
- * réduite à une pastille de 36 px — et elle s'anime quand elle parle.
- *
- * `object-contain` volontairement : la vidéo est une scène 16/9 complète,
- * la recadrer en rond ou en bandeau couperait le personnage. Ici rien n'est
- * coupé, le fond sombre fait le reste.
- */
-const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
-
-/** Respecte le réglage système « animations réduites ». */
-function useReducedMotion(): boolean {
-  return useSyncExternalStore(
-    (notify) => {
-      const mq = window.matchMedia(REDUCED_MOTION);
-      mq.addEventListener("change", notify);
-      return () => mq.removeEventListener("change", notify);
-    },
-    () => window.matchMedia(REDUCED_MOTION).matches,
-    () => false,
-  );
-}
-
-function KreaStage({
-  speaking,
-  /** La vidéo pèse ~4,6 Mo : on ne la monte qu'après le premier message,
-   *  jamais à la simple ouverture du panneau. */
-  loadVideo,
-}: {
-  speaking: boolean;
-  loadVideo: boolean;
-}) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const reducedMotion = useReducedMotion();
-  const animate = speaking && !reducedMotion;
-
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (animate) void v.play().catch(() => {});
-    else v.pause();
-  }, [animate]);
-
-  return (
-    <div className="surface-board relative h-32 shrink-0 overflow-hidden">
-      <Image
-        src="/mascot/krea-avatar.png"
-        alt="Krea, ta coach"
-        width={220}
-        height={220}
-        priority
-        className={cn(
-          "absolute inset-0 mx-auto h-full w-auto object-contain py-2 transition-opacity duration-300",
-          animate ? "opacity-0" : "opacity-100",
-        )}
-      />
-      {loadVideo && !reducedMotion && (
-        <video
-          ref={videoRef}
-          src="/mascot/krea-speaking.mp4"
-          muted
-          loop
-          playsInline
-          preload="none"
-          aria-hidden
-          className={cn(
-            "absolute inset-0 mx-auto h-full w-auto object-contain transition-opacity duration-300",
-            animate ? "opacity-100" : "opacity-0",
-          )}
-        />
-      )}
-      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-ink/80 to-transparent px-3 pb-2 pt-6">
-        <p className="text-sm font-bold text-white">Krea</p>
-        <p className="truncate text-[11px] text-white/70">
-          {speaking ? "elle s'en occupe…" : "dis-lui quoi faire, elle le fait"}
-        </p>
-      </div>
-    </div>
   );
 }
 

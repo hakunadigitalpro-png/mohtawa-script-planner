@@ -19,6 +19,15 @@ export default async function AppLayout({
 
   const { brands, active, role } = await resolveActiveBrand();
 
+  // Prénom pour le « Bonjour, … » de Krea : le nom complet du profil, sinon
+  // le début de l'email. Jamais l'email entier — on se dit bonjour, on ne
+  // s'identifie pas.
+  const meta = (user.user_metadata ?? {}) as Record<string, string>;
+  const firstName =
+    meta.full_name?.trim().split(/\s+/)[0] ||
+    user.email?.split("@")[0] ||
+    null;
+
   if (brands.length === 0) {
     return <NoBrandWelcome email={user.email ?? null} />;
   }
@@ -64,7 +73,7 @@ export default async function AppLayout({
       {/* Krea vit dans le layout : son fil de discussion survit donc aux
           changements de page (navigation douce = le layout ne remonte pas).
           Pas pour un "viewer" (client invité) : il n'a rien à configurer. */}
-      {role !== "viewer" && <KreaCopilot />}
+      {role !== "viewer" && <KreaCopilot firstName={firstName} />}
     </div>
   );
 }
