@@ -7,11 +7,11 @@ import {
   useSyncExternalStore,
   useTransition,
 } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowUp, FileText, PenLine, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { KreaFloatingIcon } from "./krea-floating-icon";
 import { askKrea, type KreaDeed } from "@/app/(app)/krea-actions";
 import type { KreaTurn } from "@/lib/krea";
 import {
@@ -54,35 +54,6 @@ const SUGGESTIONS = [
   "Je ne sais pas quoi publier",
   "C'est quoi la prochaine étape ?",
 ];
-
-/**
- * Krea détourée, en lévitation. Pas de cadre, pas de pastille ronde : le
- * personnage flotte et son ombre reste au sol. C'est `.krea-float`
- * (globals.css) qui porte l'animation — et qui la coupe si le système
- * demande des animations réduites.
- */
-export function KreaFloatingIcon({
-  size,
-  className,
-  priority,
-}: {
-  size: number;
-  className?: string;
-  priority?: boolean;
-}) {
-  return (
-    <span className={cn("krea-float", className)} style={{ width: size }}>
-      <Image
-        src="/mascot/krea-avatar.png"
-        alt="Krea"
-        width={size}
-        height={size}
-        priority={priority}
-        className="block h-auto w-full"
-      />
-    </span>
-  );
-}
 
 export function KreaCopilot({ firstName }: { firstName?: string | null }) {
   const pathname = usePathname();

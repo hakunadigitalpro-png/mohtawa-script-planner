@@ -9,6 +9,8 @@ import { BarChart, type BarPoint } from "@/components/charts/bar-chart";
 import { RankedList, type RankedItem } from "@/components/charts/ranked-list";
 import { platformLabel, typeLabel, typeColor, isLiveStatus } from "@/lib/constants";
 import { PageHeader } from "@/components/page-header";
+import { KreaNoteCard } from "@/components/krea/krea-note-card";
+import { analyticsNote } from "@/lib/krea-notes";
 
 type PerfRow = { views: number | null; likes: number | null } | null;
 type ContentWithPerf = {
@@ -130,6 +132,9 @@ export default async function AnalyticsPage() {
     t("rankItemSecondary", { count, avg: fmtCompact(avg) });
 
   const pillarItems = toRankedItems(byPillar, (k) => k, secondaryFn);
+  // Le thème le plus vu — même source que le classement affiché plus bas,
+  // pour que le conseil de Krea et le graphique ne se contredisent jamais.
+  const topPillar = [...pillarItems].sort((a, b) => b.value - a.value)[0] ?? null;
   const platformItems = toRankedItems(
     byPlatform,
     (k) => safeT(tPlatform, k, platformLabel(k)),
@@ -229,6 +234,18 @@ export default async function AnalyticsPage() {
       />
 
       {/* KPIs */}
+      {/* Le conseil de Krea : quel thème refaire, ou quels chiffres saisir
+          pour qu'un conseil devienne possible. */}
+      <KreaNoteCard
+        note={analyticsNote({
+          topTheme: topPillar
+            ? { name: topPillar.label, views: topPillar.value }
+            : null,
+          measured: withStats,
+          published: totalPublished,
+        })}
+      />
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <KpiCard
           icon={<BarChart3 className="size-4" />}

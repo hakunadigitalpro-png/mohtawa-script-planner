@@ -11,7 +11,8 @@ import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { Card } from "@/components/ui/card";
-import { KreaBadge } from "@/components/krea-avatar";
+import { KreaNoteCard } from "@/components/krea/krea-note-card";
+import { dashboardNote } from "@/lib/krea-notes";
 import { PageHeader } from "@/components/page-header";
 import { ContentCard } from "@/components/content-card";
 import { NewContentButton } from "@/components/new-content-modal";
@@ -236,17 +237,17 @@ export default async function DashboardPage({
         <Kpi label={t("kpi.thisMonth")} value={thisMonth} />
       </div>
 
-      {thisMonth > MONTHLY_GOAL_THRESHOLD && (
-        <div className="flex items-center gap-3 rounded-3xl bg-accent/10 px-5 py-3.5 text-sm text-foreground">
-          <KreaBadge />
-          <span>
-            {t("coach.aboveThreshold", {
-              count: thisMonth,
-              threshold: MONTHLY_GOAL_THRESHOLD,
-            })}
-          </span>
-        </div>
-      )}
+      {/* Krea commente les chiffres du moment : un cap franchi, l'objectif
+          tenu, ou ce qui manque. Une seule note, choisie par
+          `dashboardNote` — jamais un empilement d'encouragements. */}
+      <KreaNoteCard
+        note={dashboardNote({
+          total,
+          published,
+          thisMonth,
+          goal: MONTHLY_GOAL_THRESHOLD,
+        })}
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.7fr_1fr]">
         <Card className="p-5">
