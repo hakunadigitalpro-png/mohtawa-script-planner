@@ -31,7 +31,12 @@ export function KreaNoteCard({
         className,
       )}
     >
-      <KreaFloatingIcon size={44} className="shrink-0" />
+      <KreaFloatingIcon
+        size={44}
+        // Elle félicite ou elle relance : son mouvement le dit avant le texte.
+        mood={note.tone === "win" ? "win" : note.tone === "push" ? "push" : "idle"}
+        className="shrink-0"
+      />
       <p className="text-sm leading-relaxed text-foreground" dir="auto">
         {note.text}
       </p>

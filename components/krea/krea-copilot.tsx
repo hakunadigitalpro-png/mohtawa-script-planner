@@ -174,7 +174,11 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
           open && "size-12 bg-ink text-white shadow-lift",
         )}
       >
-        {open ? <X className="size-5" /> : <KreaFloatingIcon size={56} />}
+        {open ? (
+          <X className="size-5" />
+        ) : (
+          <KreaFloatingIcon size={56} mood={pending ? "thinking" : "idle"} />
+        )}
       </button>
 
       {open && (
@@ -237,7 +241,7 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
 
                 {pending && (
                   <div className="flex items-center gap-2 text-sm text-muted">
-                    <KreaFloatingIcon size={26} />
+                    <KreaFloatingIcon size={26} mood="thinking" />
                     <span className="flex items-center gap-1">
                       <span className="size-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.3s]" />
                       <span className="size-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.15s]" />
