@@ -1,13 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { Copy, Check, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Select } from "@/components/ui/select";
+import { KreaBadge } from "@/components/krea-avatar";
 import { updateContent } from "@/app/(app)/contents/actions";
+import { aiGenerateCaption } from "@/app/(app)/contents/ai-actions";
+import type { GenerationLanguage } from "@/lib/ai";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
 
@@ -41,6 +45,27 @@ export function CaptionTab({
     );
 
   const [copied, setCopied] = useState(false);
+
+  // Génération : la langue est choisie ici, pas devinée. Une marque tunisienne
+  // publie en français, en dialecte ou en anglais selon le contenu.
+  const [language, setLanguage] = useState<GenerationLanguage>("fr");
+  const [genError, setGenError] = useState<string | null>(null);
+  const [generating, startGenerating] = useTransition();
+
+  const onGenerate = () => {
+    setGenError(null);
+    startGenerating(async () => {
+      const res = await aiGenerateCaption({ contentId, language });
+      if (!res.ok) {
+        setGenError(res.error);
+        return;
+      }
+      // On écrit dans le formulaire, pas en base : rien n'est enregistré tant
+      // qu'elle n'a pas cliqué sur Enregistrer, et « Annuler » restaure son
+      // texte précédent.
+      setState(() => ({ caption: res.caption }));
+    });
+  };
 
   const onCopy = async () => {
     try {
@@ -94,6 +119,49 @@ export function CaptionTab({
               </>
             )}
           </Button>
+        </div>
+
+        <div className="space-y-3 rounded-2xl border border-border/60 bg-secondary/30 p-4">
+          <KreaBadge />
+          <p className="text-sm text-foreground">
+            J&apos;écris la légende à partir de ce qui existe déjà : le thème du
+            contenu, son objectif, son script, ta voix de marque et tes
+            hashtags. Choisis juste la langue.
+          </p>
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="w-48">
+              <Label htmlFor="caption-language" className="text-xs">
+                Langue
+              </Label>
+              <Select
+                id="caption-language"
+                value={language}
+                onValueChange={(v) => setLanguage(v as GenerationLanguage)}
+                className="h-9 text-sm"
+                options={[
+                  { value: "fr", label: "Français" },
+                  { value: "ar_tn", label: "Arabe tunisien" },
+                  { value: "ar_msa", label: "Arabe standard" },
+                  { value: "en", label: "Anglais" },
+                ]}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="accent"
+              onClick={onGenerate}
+              disabled={generating}
+              className="h-9"
+            >
+              <Sparkles className="size-4" />
+              {generating ? "J'écris…" : "Générer la légende"}
+            </Button>
+          </div>
+          {genError && (
+            <p className="text-sm text-destructive" role="alert">
+              {genError}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">

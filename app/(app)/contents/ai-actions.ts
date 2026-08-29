@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { guardAiAction } from "@/lib/ai-guard";
 import {
+  generateCaption,
   generateReel,
   generateStory,
   generateAutopsy,
@@ -661,6 +662,124 @@ export async function analyzeReferenceVideoAction(input: {
     });
 
     return { ok: true as const, analysis, transcript };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false as const, error: e.message };
+    return { ok: false as const, error: "Erreur inattendue. Réessaie." };
+  }
+}
+
+/**
+ * Rassemble le TEXTE du contenu, quel que soit son format — c'est la matière
+ * première de la légende. Un reel a un script, un vlog une voix-off, une story
+ * des slides ; un post ou un carrousel n'ont que leur titre, et on l'assume
+ * plutôt que d'inventer.
+ */
+async function getContentSource(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  contentId: string,
+  type: string,
+): Promise<string | undefined> {
+  if (type === "reel") {
+    const { data } = await supabase
+      .from("reel_details")
+      .select("intro, script_full, outro")
+      .eq("content_id", contentId)
+      .maybeSingle();
+    const r = data as {
+      intro: string | null;
+      script_full: string | null;
+      outro: string | null;
+    } | null;
+    const text = [r?.intro, r?.script_full, r?.outro]
+      .filter((v): v is string => Boolean(v?.trim()))
+      .join("\n\n");
+    return text || undefined;
+  }
+
+  if (type === "vlog") {
+    const { data } = await supabase
+      .from("vlog_details")
+      .select("angle, hook, voiceover")
+      .eq("content_id", contentId)
+      .maybeSingle();
+    const v = data as {
+      angle: string | null;
+      hook: string | null;
+      voiceover: string | null;
+    } | null;
+    const text = [v?.hook, v?.angle, v?.voiceover]
+      .filter((s): s is string => Boolean(s?.trim()))
+      .join("\n\n");
+    return text || undefined;
+  }
+
+  if (type === "story") {
+    const { data } = await supabase
+      .from("story_slides")
+      .select("slot_number, body")
+      .eq("content_id", contentId)
+      .order("slot_number", { ascending: true });
+    const text = ((data ?? []) as { slot_number: number; body: string | null }[])
+      .filter((s) => s.body?.trim())
+      .map((s) => `Story ${s.slot_number} : ${s.body!.trim()}`)
+      .join("\n");
+    return text || undefined;
+  }
+
+  // Post, carrousel, infographie : pas de script. Le titre et le thème
+  // suffiront — c'est dit explicitement au modèle pour qu'il n'invente rien.
+  return undefined;
+}
+
+/**
+ * Écrit la légende de publication d'un contenu, à partir de ce qui existe
+ * déjà : son thème, son objectif, son script, et le contexte de la marque
+ * (voix, cible principale, hashtags). Reste sur Claude — Gemini est réservé
+ * à l'écriture des scripts.
+ */
+export async function aiGenerateCaption(input: {
+  contentId: string;
+  language?: GenerationLanguage;
+}) {
+  try {
+    const { supabase } = await guardAiAction("caption");
+
+    const { data: content } = await supabase
+      .from("contents")
+      .select("type, title, pillar, objective, platform")
+      .eq("id", input.contentId)
+      .maybeSingle();
+    if (!content) return { ok: false as const, error: "Contenu introuvable." };
+
+    const c = content as {
+      type: string;
+      title: string | null;
+      pillar: string | null;
+      objective: string | null;
+      platform: string | null;
+    };
+
+    const [ctx, script] = await Promise.all([
+      getBrandKitContext(supabase, input.contentId),
+      getContentSource(supabase, input.contentId, c.type),
+    ]);
+
+    const caption = await generateCaption({
+      type: c.type,
+      title: c.title ?? undefined,
+      theme: c.pillar ?? undefined,
+      objective: c.objective ?? undefined,
+      script,
+      platform: c.platform ?? undefined,
+      audience: ctx.audiences[0]
+        ? `${ctx.audiences[0].name} — ${ctx.audiences[0].who} ${ctx.audiences[0].wants}`
+        : undefined,
+      voice: ctx.voice,
+      hashtags: ctx.hashtags,
+      language: input.language,
+    });
+
+    return { ok: true as const, caption: caption.trim() };
   } catch (e) {
     if (e instanceof AiError) return { ok: false as const, error: e.message };
     return { ok: false as const, error: "Erreur inattendue. Réessaie." };

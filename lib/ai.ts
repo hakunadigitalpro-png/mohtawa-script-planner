@@ -1256,6 +1256,96 @@ Renvoie UNIQUEMENT ce JSON (sans markdown autour) :
 }
 
 /* =========================================================================
+   Génération de légende (API Claude)
+   -------------------------------------------------------------------------
+   Reste sur Claude : Gemini est réservé à l'écriture des SCRIPTS. Une
+   légende n'est pas un script — c'est le texte de publication.
+   ========================================================================= */
+
+export type CaptionInput = {
+  /** reel, story, vlog, post, carousel, infographic. */
+  type: string;
+  title?: string;
+  /** Thème de contenu de la fiche — la « thématique » demandée. */
+  theme?: string;
+  objective?: string;
+  /** Le texte source : script du reel, voix-off du vlog, slides d'une story.
+   *  Absent pour un post/carrousel/infographie, qui n'ont pas de script. */
+  script?: string;
+  platform?: string;
+  audience?: string;
+  voice?: string;
+  /** Hashtags récurrents de la marque, déduits de sa stratégie. */
+  hashtags?: string[];
+  language?: GenerationLanguage;
+};
+
+const CAPTION_FORMAT_HINT: Record<string, string> = {
+  reel: "un Reel (vidéo courte verticale)",
+  story: "une séquence de Stories",
+  vlog: "un vlog",
+  post: "un post image",
+  carousel: "un carrousel de plusieurs visuels",
+  infographic: "une infographie",
+};
+
+/**
+ * Écrit la légende de publication d'un contenu. Elle s'appuie sur ce qui
+ * existe déjà — thème, objectif, script — plutôt que de repartir du titre :
+ * une légende qui ne reprend pas le contenu ne sert à rien.
+ */
+export function generateCaption(input: CaptionInput): Promise<string> {
+  const format = CAPTION_FORMAT_HINT[input.type] ?? "un contenu";
+
+  const system = `Tu écris la LÉGENDE de publication d'un contenu sur les réseaux sociaux, pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing). ${languageInstruction(input.language)}${voiceInstruction(input.voice)}
+
+CE QU'EST UNE BONNE LÉGENDE :
+- La PREMIÈRE ligne est la plus importante : c'est la seule visible avant « voir plus ». Elle doit donner envie d'ouvrir. Jamais « Nouvelle vidéo ! » ni « Regardez ça ».
+- Ensuite 2 à 4 phrases courtes, aérées, qui apportent quelque chose même à quelqu'un qui ne regarde pas le contenu.
+- Puis UNE question ou un appel à l'action simple, qui donne une raison concrète de commenter.
+- Enfin les hashtags, tous ensemble sur la DERNIÈRE ligne, séparés par des espaces.
+
+RÈGLES :
+- Tu t'appuies sur le contenu fourni. Tu n'inventes AUCUN fait, chiffre, promotion ou témoignage qui n'y figure pas.
+- Zéro jargon marketing. On parle comme à un client, pas comme dans un rapport.
+- Les emojis : 2 ou 3 maximum, et seulement s'ils servent. Jamais un par ligne.
+- Longueur totale : 400 à 900 caractères. Une légende trop longue n'est pas lue.
+- 8 à 12 hashtags : reprends d'abord ceux de la marque, puis ajoute-en de plus précis, liés au sujet.
+
+Réponds UNIQUEMENT avec le texte de la légende, prêt à coller. Pas de titre, pas de guillemets, pas d'explication, pas de markdown.`;
+
+  const parts: string[] = [`Format : ${format}.`];
+  if (input.title?.trim()) parts.push(`Titre interne : "${input.title.trim()}"`);
+  if (input.theme?.trim()) parts.push(`Thème de contenu : ${input.theme.trim()}`);
+  if (input.objective?.trim())
+    parts.push(`Objectif de ce contenu : ${input.objective.trim()}`);
+  if (input.platform?.trim())
+    parts.push(`Plateforme de publication : ${input.platform.trim()}`);
+  if (input.audience?.trim()) parts.push(`Audience visée : ${input.audience.trim()}`);
+  if (input.hashtags?.length)
+    parts.push(
+      `Hashtags récurrents de la marque : ${input.hashtags.map((h) => `#${h}`).join(" ")}`,
+    );
+
+  const source = input.script?.trim()
+    ? [
+        "Contenu du support (à reprendre fidèlement) :",
+        '"""',
+        input.script.trim(),
+        '"""',
+      ].join("\n")
+    : "Ce format n'a pas de script écrit : appuie-toi sur le titre, le thème et l'objectif ci-dessus, sans rien inventer d'autre.";
+
+  const user = `${parts.join("\n")}
+
+${source}
+
+Écris la légende.`;
+
+  return callClaudeText(system, user, 900);
+}
+
+/* =========================================================================
    Assistant de thèmes de contenu — conversationnel (API Claude)
    ========================================================================= */
 
