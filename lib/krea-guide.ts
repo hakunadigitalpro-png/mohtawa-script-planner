@@ -76,7 +76,7 @@ export const GUIDE_PAGES: GuidePage[] = [
     match: (p) => p.startsWith("/content/"),
     steps: [
       {
-        text: "Une fiche, un contenu. Les onglets suivent l'ordre du travail : le plan, le script, le storyboard, la préparation, puis les résultats.",
+        text: "Une fiche, un contenu. Les onglets suivent l'ordre du travail : le plan, le script, le storyboard, la légende, puis les résultats.",
       },
       {
         text: "Le script, tu peux l'écrire toi-même ou me demander de le faire à partir de ton sujet.",

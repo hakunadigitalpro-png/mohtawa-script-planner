@@ -71,8 +71,6 @@ export default async function ContentDetailPage({
     commentsRes,
     readRes,
     checklistItemsRes,
-    suggEquipmentRes,
-    suggPreparationRes,
     publicationsRes,
     scenePresetsRes,
     mediaRes,
@@ -115,18 +113,6 @@ export default async function ContentDetailPage({
       .eq("content_id", id)
       .order("category", { ascending: true })
       .order("position", { ascending: true }),
-    // Suggestions pour les items récurrents (matériel + préparation), basées
-    // sur les 3 dernières vidéos de la marque — voir migration 0011.
-    supabase.rpc("recent_brand_checklist_labels", {
-      p_brand_id: content.brand_id,
-      p_category: "equipment",
-      p_limit: 12,
-    }),
-    supabase.rpc("recent_brand_checklist_labels", {
-      p_brand_id: content.brand_id,
-      p_category: "preparation",
-      p_limit: 12,
-    }),
     supabase
       .from("content_publications")
       .select("*")
@@ -169,14 +155,6 @@ export default async function ContentDetailPage({
   const comments = (commentsRes.data ?? []) as Comment[];
   const lastReadAt = readRes.data?.last_comment_read_at ?? "1970-01-01T00:00:00Z";
   const checklistItems = (checklistItemsRes.data ?? []) as ChecklistItem[];
-  const equipmentSuggestions = (suggEquipmentRes.data ?? []) as {
-    label: string;
-    usage_count: number;
-  }[];
-  const preparationSuggestions = (suggPreparationRes.data ?? []) as {
-    label: string;
-    usage_count: number;
-  }[];
   const publications = (publicationsRes.data ?? []) as ContentPublication[];
   const scenePresets = (scenePresetsRes.data ?? []) as ScenePreset[];
   const brandAudience = (brandKitRes.data as { audience: string | null } | null)
@@ -278,8 +256,6 @@ export default async function ContentDetailPage({
           brandPillars={pillars}
           brandObjectives={objectives}
           checklistItems={checklistItems}
-          equipmentSuggestions={equipmentSuggestions}
-          preparationSuggestions={preparationSuggestions}
           publications={publications}
           scenePresets={scenePresets}
           brandId={content.brand_id}

@@ -6,7 +6,6 @@ import { PlanTab } from "./plan-tab";
 import { ScriptTab } from "./script-tab";
 import { VlogTab } from "./vlog-tab";
 import { StoryboardTab } from "./storyboard-tab";
-import { ChecklistTab } from "./checklist-tab";
 import { CaptionTab } from "./caption-tab";
 import { ContentTab } from "./content-tab";
 import { PerformanceTab } from "./performance-tab";
@@ -37,8 +36,6 @@ export function DetailTabs({
   brandPillars,
   brandObjectives,
   checklistItems,
-  equipmentSuggestions,
-  preparationSuggestions,
   publications,
   scenePresets,
   brandId,
@@ -54,9 +51,8 @@ export function DetailTabs({
   visuals: ContentMedia[];
   brandPillars: { id: string; name: string; objective?: string | null }[];
   brandObjectives: { id: string; name: string }[];
+  /** Toujours nécessaires : le Vlog en tire sa liste de plans à capturer. */
   checklistItems: ChecklistItem[];
-  equipmentSuggestions: { label: string; usage_count: number }[];
-  preparationSuggestions: { label: string; usage_count: number }[];
   publications: ContentPublication[];
   scenePresets: ScenePreset[];
   brandId: string;
@@ -92,7 +88,10 @@ export function DetailTabs({
             {!isStory && !isVlog && (
               <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>
             )}
-            <TabsTrigger value="checklist">{t("checklist")}</TabsTrigger>
+            {/* Onglet Checklist retiré de l'affichage (reel, story, vlog) :
+                la préparation se gère ailleurs. Le composant reste dans le
+                repo (checklist-tab.tsx) et les données en base ne sont pas
+                touchées — remettre ce déclencheur et son contenu suffit. */}
             {/* Caption pour Reel + Vlog — les Stories ont du texte par slide,
                 pas une caption globale au moment de la publication. */}
             {!isStory && <TabsTrigger value="caption">Caption</TabsTrigger>}
@@ -146,17 +145,6 @@ export function DetailTabs({
               />
             </TabsContent>
           )}
-          <TabsContent value="checklist">
-            <ChecklistTab
-              contentId={content.id}
-              reel={reel}
-              scenes={isStory || isVlog ? undefined : scenes}
-              slides={isStory ? slides : undefined}
-              checklistItems={checklistItems}
-              equipmentSuggestions={equipmentSuggestions}
-              preparationSuggestions={preparationSuggestions}
-            />
-          </TabsContent>
           {!isStory && (
             <TabsContent value="caption">
               <CaptionTab contentId={content.id} caption={content.caption} />
