@@ -244,10 +244,37 @@ export type ReelGeneration = {
  * Un seul appel Claude dans les deux cas (pas de 2e appel séparé) : la
  * cible n'a pas besoin de savoir ce qu'est un storyboard pour en avoir un.
  */
+/**
+ * Rappel du cadre du contenu : son thème et son objectif. Ces deux champs
+ * sont remplis par l'utilisatrice dans l'onglet Plan et étaient jusqu'ici
+ * ignorés par les générateurs — on pouvait ranger un contenu dans
+ * « Coulisses » et récupérer un script qui n'avait rien de coulisses.
+ * Bloc conditionnel : rien n'est ajouté au prompt si rien n'est renseigné.
+ */
+function briefBlock(theme?: string, objective?: string): string {
+  const lines: string[] = [];
+  if (theme?.trim()) {
+    lines.push(
+      `Thème de contenu : "${theme.trim()}". Le script doit visiblement appartenir à ce thème.`,
+    );
+  }
+  if (objective?.trim()) {
+    lines.push(`Objectif de ce contenu : ${objective.trim()}.`);
+  }
+  if (!lines.length) return "";
+  // Une ligne vide devant, pour que le bloc se détache du reste du prompt.
+  return lines.map((line) => `
+${line}`).join("");
+}
+
 export function generateReel(opts: {
   topic: string;
   audience?: string;
   platform?: string;
+  /** Thème de contenu choisi dans l'onglet Plan. */
+  theme?: string;
+  /** Objectif du contenu, choisi dans l'onglet Plan. */
+  objective?: string;
   includeStoryboard?: boolean;
   language?: GenerationLanguage;
   presets?: ScenePresetHint[];
@@ -279,7 +306,7 @@ ${voiceInstruction(opts.voice)}${languageInstruction(opts.language)} Réponds UN
 
   const user = `Sujet de la vidéo : "${opts.topic}".
 Plateforme : ${platform}
-Audience : ${audience}${includeStoryboard ? presetsPromptBlock(opts.presets) : ""}
+Audience : ${audience}${briefBlock(opts.theme, opts.objective)}${includeStoryboard ? presetsPromptBlock(opts.presets) : ""}
 
 Renvoie UNIQUEMENT ce JSON (sans markdown) :
 {
@@ -1464,7 +1491,7 @@ const STRATEGY_ANSWER_LABELS: Record<string, string> = {
  * capacité à deux endroits. Pensé pour un PATRON DE PETITE ENTREPRISE : zéro
  * jargon, tout est directement réutilisable.
  */
-export function generateBrandStrategy(opts: {
+export async function generateBrandStrategy(opts: {
   brandName: string;
   answers: Record<string, string>;
 }): Promise<GeneratedStrategy> {
@@ -1499,9 +1526,8 @@ RÈGLES :
 - Déduire un CONTEXTE plausible est attendu ; inventer un FAIT vérifiable ne l'est pas. La nuance : "sa clientèle vient surtout le midi" est une déduction ; "elle a 8 ans d'expérience" est une invention.
 - "positioning" : 1-2 phrases qui résument QUI elle aide et EN QUOI elle est différente — la phrase qu'elle pourrait dire pour se présenter.
 - "tagline" : une accroche courte et mémorable (5-8 mots).
-- "audience_summary" : son client idéal en 2 PHRASES MAXIMUM — qui il est, ce qu'il veut. Pas un portrait détaillé : l'essentiel, lisible d'un coup d'œil.
+- "audiences" : de 1 à 3 CIBLES distinctes. Beaucoup d'activités en ont plusieurs qui n'ont rien à voir (un restaurant : les familles le midi ET les entreprises pour leurs événements). N'en invente pas pour faire nombre : s'il n'y en a qu'une, tu n'en mets qu'une. Mets la principale EN PREMIER. Pour chacune : "name" (nom court et parlant, ex : « Les familles du quartier »), "who" (qui c'est, 1 phrase), "wants" (ce qu'elle cherche, 1 phrase), "pain_points" (exactement 3 galères concrètes DE CETTE CIBLE — ancrées dans le réel, pas des généralités).
 - "voice_summary" : le ton à adopter, en 2 phrases MAXIMUM (ex : "tutoie", "un peu d'humour", "direct et rassurant").
-- "pain_points" : exactement 3 galères concrètes de son audience — ce qui la pousse à chercher de l'aide. Phrases courtes, ancrées dans le réel (pas de généralités).
 - "approach" : 2-3 phrases qui expliquent CONCRÈTEMENT comment elle aide — sa méthode, sa façon de faire. Pas une liste de services : une explication simple, comme elle le dirait elle-même.
 - "key_messages" : exactement 3 messages ou preuves à répéter dans son contenu pour construire la confiance.
 - "hashtags" : 5 à 8 hashtags récurrents pour cette marque, déduits de son domaine, son audience et son positionnement. SANS le "#", en minuscules, sans accents ni espaces. Mélange large (son secteur) et précis (sa niche, sa ville si pertinent). Dans la langue de ses réponses.
@@ -1512,9 +1538,10 @@ Réponds UNIQUEMENT avec un objet JSON valide, rien autour, pas de markdown :
 {
   "positioning": "...",
   "tagline": "...",
-  "audience_summary": "...",
+  "audiences": [
+    { "name": "...", "who": "...", "wants": "...", "pain_points": ["...", "...", "..."] }
+  ],
   "voice_summary": "...",
-  "pain_points": ["...", "...", "..."],
   "approach": "...",
   "key_messages": ["...", "...", "..."],
   "hashtags": ["...", "...", "...", "...", "..."]
@@ -1527,5 +1554,19 @@ ${brief || "(aucune réponse fournie — propose une stratégie générique mais
 
 Génère sa stratégie de contenu en suivant exactement le format demandé.`;
 
-  return callClaudeJSON<GeneratedStrategy>(system, user, 3200);
+  const generated = await callClaudeJSON<GeneratedStrategy>(system, user, 3200);
+
+  // `audience_summary` et `pain_points` ne sont plus demandés au modèle — on
+  // les dérive de la cible principale. Tout ce qui les affiche déjà (écran de
+  // stratégie, PDF, kit de marque) continue de fonctionner sans modification,
+  // y compris sur les stratégies générées avant les cibles multiples.
+  const main = generated.audiences?.[0];
+  return {
+    ...generated,
+    audience_summary:
+      generated.audience_summary?.trim() ||
+      (main ? `${main.who} ${main.wants}`.trim() : ""),
+    pain_points:
+      generated.pain_points?.length ? generated.pain_points : (main?.pain_points ?? []),
+  };
 }

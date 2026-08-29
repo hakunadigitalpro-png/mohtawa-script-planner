@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import type { StrategyAudience } from "@/lib/types";
 import { Sparkles, RefreshCcw, Wand2, Film } from "lucide-react";
 import {
   Dialog,
@@ -23,6 +24,7 @@ import { KreaBadge } from "@/components/krea-avatar";
 import { FilmingLayouts } from "@/components/equipment-layout-diagram";
 import {
   aiGenerateReel,
+  listBrandAudiences,
   applyReelGeneration,
   aiGenerateStory,
   applyStoryGeneration,
@@ -53,14 +55,18 @@ export function AiGeneratorButton({
 }) {
   const t = useTranslations("ai");
   const [open, setOpen] = useState(false);
+  const [audiences, setAudiences] = useState<StrategyAudience[]>([]);
+
+  // Les cibles de la stratégie sont lues à l'ouverture — dans le gestionnaire
+  // de clic, donc jamais tant que la fenêtre reste fermée.
+  const openDialog = () => {
+    setOpen(true);
+    void listBrandAudiences(contentId).then(setAudiences);
+  };
+
   return (
     <>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        onClick={() => setOpen(true)}
-      >
+      <Button type="button" size="sm" variant="outline" onClick={openDialog}>
         <Sparkles className="size-3.5 text-amber-500" />
         {t("buttonLabel")}
       </Button>
@@ -70,6 +76,7 @@ export function AiGeneratorButton({
           type={type}
           defaultTopic={defaultTopic}
           defaultAudience={defaultAudience}
+          audiences={audiences}
           platform={platform}
           onClose={() => setOpen(false)}
         />
@@ -83,6 +90,7 @@ function AiGeneratorModal({
   type,
   defaultTopic,
   defaultAudience,
+  audiences,
   platform,
   onClose,
 }: {
@@ -90,6 +98,8 @@ function AiGeneratorModal({
   type: Mode;
   defaultTopic?: string;
   defaultAudience?: string;
+  /** Cibles issues de la stratégie de marque — proposées en boutons. */
+  audiences?: StrategyAudience[];
   platform?: string;
   onClose: () => void;
 }) {
@@ -217,12 +227,39 @@ function AiGeneratorModal({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ai-audience">{t("audience")}</Label>
-                  <Input
-                    id="ai-audience"
-                    value={audience}
-                    onChange={(e) => setAudience(e.target.value)}
-                    placeholder={t("audiencePlaceholder")}
-                  />
+                  {audiences && audiences.length > 0 ? (
+                    // La stratégie a détecté les cibles : on choisit, on ne
+                    // tape pas. Le libellé de la cible sert d'étiquette, sa
+                    // description part dans le prompt.
+                    <div className="flex flex-wrap gap-2">
+                      {audiences.map((a) => {
+                        const value = `${a.name} — ${a.who} ${a.wants}`.trim();
+                        const active = audience === value;
+                        return (
+                          <button
+                            key={a.name}
+                            type="button"
+                            onClick={() => setAudience(value)}
+                            className={
+                              "rounded-full border px-3.5 py-2 text-xs font-semibold transition " +
+                              (active
+                                ? "border-accent bg-accent text-white"
+                                : "border-border bg-card text-foreground hover:border-accent/50")
+                            }
+                          >
+                            {a.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <Input
+                      id="ai-audience"
+                      value={audience}
+                      onChange={(e) => setAudience(e.target.value)}
+                      placeholder={t("audiencePlaceholder")}
+                    />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ai-language">{t("language")}</Label>

@@ -724,23 +724,52 @@ function ResultsScreen({
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <StrategyCard
-            n="01"
-            icon={<Users className="size-4" />}
-            title="Ton audience"
-            tone="soft"
-          >
-            <p>{generated.audience_summary}</p>
-          </StrategyCard>
+          {/* Une carte par cible : chacune avec ses galères à elle. Les
+              stratégies d'avant les cibles multiples n'en ont pas — on
+              retombe alors sur l'ancien couple résumé + blocages. */}
+          {generated.audiences?.length ? (
+            generated.audiences.map((a, i) => (
+              <StrategyCard
+                key={i}
+                n={String(i + 1).padStart(2, "0")}
+                icon={<Users className="size-4" />}
+                title={a.name}
+                tone={i === 0 ? "orange" : "soft"}
+              >
+                <p>
+                  {a.who} {a.wants}
+                </p>
+                {a.pain_points?.length > 0 && (
+                  <>
+                    <p className="mt-3 text-xs font-bold uppercase tracking-wider text-muted">
+                      Ce qui la bloque
+                    </p>
+                    <BulletList items={a.pain_points} />
+                  </>
+                )}
+              </StrategyCard>
+            ))
+          ) : (
+            <>
+              <StrategyCard
+                n="01"
+                icon={<Users className="size-4" />}
+                title="Ton audience"
+                tone="soft"
+              >
+                <p>{generated.audience_summary}</p>
+              </StrategyCard>
 
-          <StrategyCard
-            n="02"
-            icon={<Target className="size-4" />}
-            title="Ce qui la bloque"
-            tone="orange"
-          >
-            <BulletList items={generated.pain_points ?? []} />
-          </StrategyCard>
+              <StrategyCard
+                n="02"
+                icon={<Target className="size-4" />}
+                title="Ce qui la bloque"
+                tone="orange"
+              >
+                <BulletList items={generated.pain_points ?? []} />
+              </StrategyCard>
+            </>
+          )}
 
           <StrategyCard
             n="03"

@@ -68,18 +68,43 @@ export default async function StrategyPrintPage({
       </div>
 
       <div className="strategy-grid">
-        <Block n="01" title="Ton audience" tone="lavender">
-          <p className="strategy-text">{s.audience_summary}</p>
-        </Block>
+        {/* Une cible = un bloc. C'est ce découpage qu'une agence facture. */}
+        {s.audiences?.length ? (
+          s.audiences.map((a, i) => (
+            <Block
+              key={i}
+              n={String(i + 1).padStart(2, "0")}
+              title={a.name}
+              tone={i % 2 === 0 ? "lavender" : "orange"}
+            >
+              <p className="strategy-text">
+                {a.who} {a.wants}
+              </p>
+              {a.pain_points?.length > 0 && (
+                <ul className="strategy-list">
+                  {a.pain_points.map((pt, j) => (
+                    <li key={j}>{pt}</li>
+                  ))}
+                </ul>
+              )}
+            </Block>
+          ))
+        ) : (
+          <>
+            <Block n="01" title="Ton audience" tone="lavender">
+              <p className="strategy-text">{s.audience_summary}</p>
+            </Block>
 
-        {s.pain_points?.length > 0 && (
-          <Block n="02" title="Ce qui la bloque" tone="orange">
-            <ul className="strategy-list">
-              {s.pain_points.map((p, i) => (
-                <li key={i}>{p}</li>
-              ))}
-            </ul>
-          </Block>
+            {s.pain_points?.length > 0 && (
+              <Block n="02" title="Ce qui la bloque" tone="orange">
+                <ul className="strategy-list">
+                  {s.pain_points.map((p, i) => (
+                    <li key={i}>{p}</li>
+                  ))}
+                </ul>
+              </Block>
+            )}
+          </>
         )}
 
         <Block n="03" title="Ta voix de marque" tone="lavender">

@@ -38,9 +38,30 @@ export type BrandKit = {
  * existant (PillarManager / ThemeAssistant), pour ne pas dupliquer la même
  * capacité à deux endroits.
  */
+/**
+ * Une cible de la marque. Beaucoup d'activités en ont deux ou trois qui n'ont
+ * rien à voir — un restaurant vise les familles le midi ET les entreprises
+ * pour leurs événements. Les écraser en un seul portrait produit une
+ * stratégie tiède qui ne parle bien à personne.
+ */
+export type StrategyAudience = {
+  /** Nom court et parlant : « Les familles du quartier ». */
+  name: string;
+  /** Qui c'est, en une phrase. */
+  who: string;
+  /** Ce qu'elle cherche, en une phrase. */
+  wants: string;
+  /** Ses galères à ELLE — c'est là que la séparation compte vraiment. */
+  pain_points: string[];
+};
+
 export type GeneratedStrategy = {
   positioning: string;
   tagline: string;
+  /** 1 à 3 cibles détectées. Absent sur les stratégies générées avant 08/2026. */
+  audiences?: StrategyAudience[];
+  /** Résumé de la cible PRINCIPALE — dérivé de `audiences[0]`, conservé pour
+   *  que les stratégies déjà générées continuent de s'afficher. */
   audience_summary: string;
   voice_summary: string;
   pain_points: string[];
