@@ -1,21 +1,19 @@
-import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { KreaFloatingIcon } from "@/components/krea/krea-floating-icon";
 
 /**
- * Identité visuelle de Krea, la coach IA de Kreatly — réutilisée partout où
- * elle "parle" : visite guidée, assistants IA, note du dashboard. Portrait
- * détouré (public/mascot/krea-avatar.png) plutôt qu'une icône générique.
+ * Signature de Krea, posée partout où elle « parle » : générateurs IA, visite
+ * guidée, assistant de thèmes, écran sans marque.
+ *
+ * Elle réutilise l'icône flottante, la MÊME que le copilote. L'ancienne
+ * version recadrait le portrait en cercle (`rounded-full object-cover`), ce
+ * qui coupait ses oreilles — d'où l'impression de deux Krea différentes selon
+ * l'écran. Une seule source, plus de divergence possible.
  */
 export function KreaBadge({ className }: { className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5", className)}>
-      <Image
-        src="/mascot/krea-avatar.png"
-        alt="Krea"
-        width={28}
-        height={28}
-        className="size-6 shrink-0 rounded-full object-cover"
-      />
+    <span className={cn("inline-flex items-center gap-2", className)}>
+      <KreaFloatingIcon size={30} className="shrink-0" />
       <span className="text-xs font-bold uppercase tracking-wider text-accent">
         Krea
       </span>
