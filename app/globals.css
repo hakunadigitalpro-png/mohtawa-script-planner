@@ -346,45 +346,9 @@ html[data-theme="dark"] {
     0%, 100% { opacity: 0.55; transform: scaleX(1); }
     50% { opacity: 0.3; transform: scaleX(0.86); }
   }
-  /* Les humeurs de Krea. Chacune a son mouvement — c'est ce qui se lit en
-     premier, avant même la pose. Elles restent lisibles tant qu'aucun visuel
-     dédié n'existe encore. */
-
-  /* Félicitation : un rebond franc et bref, pas une lévitation tranquille. */
-  .krea-float--win {
-    animation: krea-cheer 1.6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
-    filter: drop-shadow(0 10px 16px rgba(16, 185, 129, 0.35));
-  }
-  /* Relance : elle se penche, insiste doucement. */
-  .krea-float--push {
-    animation: krea-nudge 3s ease-in-out infinite;
-  }
-  /* Travail en cours : oscillation courte et rapide. */
-  .krea-float--thinking {
-    animation: krea-bob 1.4s ease-in-out infinite;
-  }
-  .krea-float--win::after,
-  .krea-float--thinking::after {
-    animation-duration: inherit;
-  }
-
-  @keyframes krea-cheer {
-    0%, 100% { transform: translateY(0) scale(1); }
-    30% { transform: translateY(-12px) scale(1.06); }
-    55% { transform: translateY(0) scale(0.98); }
-    70% { transform: translateY(-4px) scale(1.02); }
-  }
-  @keyframes krea-nudge {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-3px) rotate(-4deg); }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .krea-float,
-    .krea-float::after,
-    .krea-float--win,
-    .krea-float--push,
-    .krea-float--thinking {
+    .krea-float::after {
       animation: none;
     }
   }

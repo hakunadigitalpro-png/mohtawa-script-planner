@@ -13,7 +13,7 @@ import { KreaFloatingIcon } from "@/components/krea/krea-floating-icon";
 export function KreaBadge({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
-      <KreaFloatingIcon size={36} className="shrink-0" />
+      <KreaFloatingIcon size={30} className="shrink-0" />
       <span className="text-xs font-bold uppercase tracking-wider text-accent">
         Krea
       </span>
