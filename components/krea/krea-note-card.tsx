@@ -32,7 +32,7 @@ export function KreaNoteCard({
       )}
     >
       <KreaFloatingIcon
-        size={44}
+        size={58}
         // Elle félicite ou elle relance : son mouvement le dit avant le texte.
         mood={note.tone === "win" ? "win" : note.tone === "push" ? "push" : "idle"}
         className="shrink-0"

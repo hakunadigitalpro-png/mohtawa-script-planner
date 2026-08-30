@@ -177,7 +177,7 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
         {open ? (
           <X className="size-5" />
         ) : (
-          <KreaFloatingIcon size={56} mood={pending ? "thinking" : "idle"} />
+          <KreaFloatingIcon size={62} mood={pending ? "thinking" : "idle"} />
         )}
       </button>
 
@@ -198,7 +198,7 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
             {msgs.length === 0 ? (
               <div className="flex flex-col items-center pt-6 text-center">
-                <KreaFloatingIcon size={92} priority />
+                <KreaFloatingIcon size={120} priority />
                 <p className="mt-7 text-sm text-muted">
                   Bonjour{firstName ? `, ${firstName}` : ""}
                 </p>
@@ -241,7 +241,7 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
 
                 {pending && (
                   <div className="flex items-center gap-2 text-sm text-muted">
-                    <KreaFloatingIcon size={26} mood="thinking" />
+                    <KreaFloatingIcon size={40} mood="thinking" />
                     <span className="flex items-center gap-1">
                       <span className="size-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.3s]" />
                       <span className="size-1.5 animate-bounce rounded-full bg-muted [animation-delay:-0.15s]" />

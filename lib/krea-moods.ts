@@ -32,13 +32,36 @@ const DEFAULT_SRC = "/mascot/krea-avatar.png";
  * identique au portrait actuel) puis décommenter sa ligne.
  */
 const POSES: Partial<Record<KreaMood, string>> = {
-  // win: "/mascot/krea-win.png",
-  // push: "/mascot/krea-push.png",
-  // thinking: "/mascot/krea-thinking.png",
+  win: "/mascot/krea-win.png",
+  push: "/mascot/krea-push.png",
+  thinking: "/mascot/krea-thinking.png",
+};
+
+/**
+ * Dimensions intrinsèques de chaque visuel. Le portrait est presque carré,
+ * les poses corps entier ne le sont pas du tout : sans ça, Krea rétrécirait
+ * brutalement en passant de « repos » à « félicitation », puisqu'une image
+ * large calée sur une largeur fixe devient toute plate.
+ *
+ * On dimensionne donc par la HAUTEUR, constante d'une humeur à l'autre, et on
+ * en déduit la largeur. Codé en dur plutôt que mesuré au chargement : ça évite
+ * un décalage de mise en page pendant que l'image arrive.
+ */
+const POSE_SIZE: Record<KreaMood, { w: number; h: number }> = {
+  idle: { w: 500, h: 480 },
+  win: { w: 700, h: 456 },
+  push: { w: 700, h: 574 },
+  thinking: { w: 664, h: 700 },
 };
 
 export function moodSrc(mood: KreaMood): string {
   return POSES[mood] ?? DEFAULT_SRC;
+}
+
+/** Largeur à donner pour obtenir la hauteur demandée, ratio respecté. */
+export function moodWidth(mood: KreaMood, height: number): number {
+  const { w, h } = POSES[mood] ? POSE_SIZE[mood] : POSE_SIZE.idle;
+  return Math.round((height * w) / h);
 }
 
 /** Classe d'animation — active même sans pose dédiée. */
