@@ -266,23 +266,28 @@ export function CalendarMonth({
                               )}
                             </div>
                           )}
-                          {/* Nom */}
-                          <div className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                          {/* Nom — en entier. Le titre EST l'information :
+                              quand il s'agit d'une question, la couper à deux
+                              lignes oblige à ouvrir la fiche pour savoir de
+                              quoi parle la vidéo. `break-words` protège la
+                              grille d'une URL ou d'un mot à rallonge. */}
+                          <div className="break-words text-sm font-semibold leading-snug text-foreground">
                             {entry.title || tContent("untitled")}
                           </div>
-                          {/* Pilier */}
-                          {entry.pillar && (
-                            <div className="mt-1">
-                              <span className="inline-block max-w-full truncate rounded-md bg-secondary px-1.5 py-0.5 align-middle text-xs font-medium text-foreground/70">
+                          {/* Pilier + statut sur une seule ligne : ce que le
+                              titre prend en hauteur, les métadonnées le
+                              rendent. */}
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                            {entry.pillar && (
+                              <span className="max-w-full truncate rounded-md bg-secondary px-1.5 py-0.5 text-xs font-medium text-foreground/70">
                                 {entry.pillar}
                               </span>
-                            </div>
-                          )}
-                          {/* Statut */}
-                          <div className="mt-1 flex items-center gap-1.5">
-                            <ColorDot color={statusColor(entry.status)} />
-                            <span className="text-xs font-medium text-muted">
-                              {statusLabel(entry.status)}
+                            )}
+                            <span className="flex items-center gap-1.5">
+                              <ColorDot color={statusColor(entry.status)} />
+                              <span className="text-xs font-medium text-muted">
+                                {statusLabel(entry.status)}
+                              </span>
                             </span>
                           </div>
                         </Link>
