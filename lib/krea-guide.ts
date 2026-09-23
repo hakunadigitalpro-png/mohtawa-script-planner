@@ -54,6 +54,9 @@ export const GUIDE_PAGES: GuidePage[] = [
       },
       {
         text: "Pour créer un contenu, le bouton en haut à droite. Ou dis-le-moi simplement, je m'en occupe.",
+      },
+      {
+        text: "Tu as déjà une liste de sujets écrite quelque part ? « Importer une série » les transforme en contenus datés, d'un coup.",
         cta: "Compris",
       },
     ],

@@ -6,6 +6,7 @@ import {
   MessageSquare,
   Check,
   Clock3,
+  ListPlus,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
@@ -221,7 +222,18 @@ export default async function DashboardPage({
         eyebrow={active.name}
         title={t("title")}
         subtitle={t("subtitle", { brand: active.name })}
-        actions={<NewContentButton variant="accent" />}
+        actions={
+          <>
+            <Link
+              href="/import"
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:bg-secondary"
+            >
+              <ListPlus className="size-4" />
+              Importer une série
+            </Link>
+            <NewContentButton variant="accent" />
+          </>
+        }
       />
 
       {/* Le panneau de progression de Krea est retiré de l'affichage : la
