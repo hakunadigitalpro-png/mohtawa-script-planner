@@ -11,8 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { KreaBadge } from "@/components/krea-avatar";
-import { parseSeries, spreadDates } from "@/lib/series-import";
-import { importSeries, type ImportableType } from "./actions";
+import {
+  parseSeries,
+  spreadDates,
+  type ImportableType,
+} from "@/lib/series-import";
+import { importSeries } from "./actions";
 
 const TYPE_OPTIONS: { value: ImportableType; label: string }[] = [
   { value: "reel", label: "Reel" },

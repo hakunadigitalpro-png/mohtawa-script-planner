@@ -4,26 +4,18 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveBrandId } from "@/lib/brand";
 import { isSimpleType } from "@/lib/constants";
-import { MAX_SERIES_ITEMS, spreadDates } from "@/lib/series-import";
+import {
+  MAX_SERIES_ITEMS,
+  spreadDates,
+  type ImportableType,
+} from "@/lib/series-import";
 
 /**
- * Formats acceptés à l'import. La Story est volontairement absente : son
- * contenu vit en 5 diapositives numérotées, un bloc de texte long n'aurait
- * nulle part où aller sans être découpé arbitrairement.
+ * Ce fichier ne doit exporter QUE des fonctions asynchrones : c'est la règle
+ * des fichiers `"use server"`. Les constantes et les types vivent dans
+ * lib/series-import.ts.
  */
-export const IMPORTABLE_TYPES = [
-  "reel",
-  "vlog",
-  "post",
-  "carousel",
-  "infographic",
-] as const;
-
-export type ImportableType = (typeof IMPORTABLE_TYPES)[number];
-
-export type ImportResult =
-  | { ok: true; created: number }
-  | { ok: false; error: string };
+type ImportResult = { ok: true; created: number } | { ok: false; error: string };
 
 /**
  * Crée une série de contenus d'un coup.

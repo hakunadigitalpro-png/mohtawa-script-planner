@@ -99,3 +99,23 @@ export function spreadDates(
 
 /** Au-delà, ce n'est plus une série : c'est un accident de copier-coller. */
 export const MAX_SERIES_ITEMS = 50;
+
+/**
+ * Formats acceptés à l'import. La Story est volontairement absente : son
+ * contenu vit en 5 diapositives numérotées, un bloc de texte long n'aurait
+ * nulle part où aller sans être découpé arbitrairement.
+ *
+ * Défini ICI et pas à côté de l'action : un fichier `"use server"` ne peut
+ * exporter que des fonctions asynchrones. Y exporter ce tableau faisait
+ * planter la route au chargement du module — d'où l'erreur 500 au moment de
+ * valider, alors que la page s'affichait normalement.
+ */
+export const IMPORTABLE_TYPES = [
+  "reel",
+  "vlog",
+  "post",
+  "carousel",
+  "infographic",
+] as const;
+
+export type ImportableType = (typeof IMPORTABLE_TYPES)[number];
