@@ -31,7 +31,12 @@ import { fr, ar } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/badge";
-import { typeColor, statusColor, statusLabel } from "@/lib/constants";
+import {
+  typeColor,
+  statusColor,
+  statusLabel,
+  platformLabel,
+} from "@/lib/constants";
 import { NewContentModal } from "@/components/new-content-modal";
 import { ContentCommentsButton } from "@/components/comments";
 import { updateContent, updatePublication } from "@/app/(app)/contents/actions";
@@ -58,6 +63,33 @@ export type CalendarEntry = {
   pillar: string | null;
   status: string;
 };
+
+/**
+ * Ce qui s'affiche réellement : UN contenu sur UNE journée, toutes ses
+ * plateformes réunies. Le même post prévu le 10 sur Instagram et Facebook
+ * faisait deux cartes identiques empilées — on ne voyait plus que c'était le
+ * même contenu, et la journée paraissait deux fois plus chargée. Les icônes
+ * portent maintenant l'information « où ça part ».
+ *
+ * Un contenu réparti sur PLUSIEURS jours reste, lui, sur plusieurs cartes :
+ * ce sont bien deux moments différents du planning.
+ */
+type DayCard = {
+  key: string;
+  contentId: string;
+  /** Les publications de ce jour-là — le glisser-déposer les déplace toutes. */
+  publicationIds: string[];
+  slots: { platform: string | null; time: string | null }[];
+  title: string | null;
+  type: string;
+  pillar: string | null;
+  status: string;
+};
+
+/** L'heure la plus tôt du groupe, pour ordonner les cartes d'une journée. */
+function earliestTime(card: DayCard): string {
+  return card.slots[0]?.time ?? "99:99";
+}
 
 const PLATFORM_ICONS: Record<string, LucideIcon> = {
   instagram: Instagram,
@@ -111,18 +143,47 @@ export function CalendarMonth({
   };
 
   const byDay = useMemo(() => {
-    const map = new Map<string, CalendarEntry[]>();
+    // Deux niveaux : la journée, puis le contenu dans cette journée.
+    const grouped = new Map<string, Map<string, DayCard>>();
     for (const e of entries) {
-      const key = e.scheduledDate.slice(0, 10);
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(e);
+      const day = e.scheduledDate.slice(0, 10);
+      let cards = grouped.get(day);
+      if (!cards) {
+        cards = new Map();
+        grouped.set(day, cards);
+      }
+      let card = cards.get(e.contentId);
+      if (!card) {
+        card = {
+          key: `${e.contentId}:${day}`,
+          contentId: e.contentId,
+          publicationIds: [],
+          slots: [],
+          title: e.title,
+          type: e.type,
+          pillar: e.pillar,
+          status: e.status,
+        };
+        cards.set(e.contentId, card);
+      }
+      if (e.publicationId) card.publicationIds.push(e.publicationId);
+      card.slots.push({ platform: e.platform, time: e.scheduledTime });
     }
-    // Dans une même journée, les entrées avec heure passent avant, triées ;
-    // celles sans heure restent à la fin.
-    for (const list of map.values()) {
-      list.sort((a, b) => (a.scheduledTime ?? "99:99").localeCompare(b.scheduledTime ?? "99:99"));
+
+    const out = new Map<string, DayCard[]>();
+    for (const [day, cards] of grouped) {
+      const list = [...cards.values()];
+      for (const card of list) {
+        // Les plateformes avec heure d'abord, dans l'ordre de la journée ;
+        // celles sans heure à la fin.
+        card.slots.sort((a, b) =>
+          (a.time ?? "99:99").localeCompare(b.time ?? "99:99"),
+        );
+      }
+      list.sort((a, b) => earliestTime(a).localeCompare(earliestTime(b)));
+      out.set(day, list);
     }
-    return map;
+    return out;
   }, [entries]);
 
   const onDrop = (e: React.DragEvent, targetDate: string) => {
@@ -130,19 +191,24 @@ export function CalendarMonth({
     setDragOverKey(null);
     const raw = e.dataTransfer.getData(DRAG_MIME);
     if (!raw) return;
-    let payload: { contentId: string; publicationId: string | null };
+    let payload: { contentId: string; publicationIds: string[] };
     try {
       payload = JSON.parse(raw);
     } catch {
       return;
     }
     startTransition(async () => {
-      if (payload.publicationId) {
-        await updatePublication(
-          payload.publicationId,
-          { scheduled_date: targetDate },
-          payload.contentId,
-        );
+      // Une carte regroupe toutes les plateformes du jour : la déplacer les
+      // replanifie ensemble, sinon on casserait en deux ce qui s'affiche
+      // comme un seul bloc.
+      if (payload.publicationIds?.length) {
+        for (const id of payload.publicationIds) {
+          await updatePublication(
+            id,
+            { scheduled_date: targetDate },
+            payload.contentId,
+          );
+        }
       } else {
         await updateContent(payload.contentId, { date: targetDate });
       }
@@ -231,10 +297,17 @@ export function CalendarMonth({
                 </div>
                 <ul className="mt-1.5 space-y-1.5">
                   {items.slice(0, 3).map((entry) => {
-                    const PlatformIcon = entry.platform
-                      ? PLATFORM_ICONS[entry.platform]
-                      : null;
-                    const timeLabel = formatTimeFr(entry.scheduledTime);
+                    // Une seule heure pour tout le groupe : on l'affiche une
+                    // fois après les icônes. Des heures différentes selon la
+                    // plateforme : chacune porte la sienne, plutôt qu'un
+                    // libellé unique qui en trahirait deux sur trois.
+                    const times = entry.slots
+                      .map((s) => s.time)
+                      .filter((t): t is string => Boolean(t));
+                    const oneTime = new Set(times).size <= 1;
+                    const sharedTime = oneTime ? formatTimeFr(times[0] ?? null) : null;
+                    const hasHeader =
+                      entry.slots.some((s) => s.platform) || times.length > 0;
                     return (
                       <li key={entry.key} className="relative">
                         <Link
@@ -246,7 +319,7 @@ export function CalendarMonth({
                               DRAG_MIME,
                               JSON.stringify({
                                 contentId: entry.contentId,
-                                publicationId: entry.publicationId,
+                                publicationIds: entry.publicationIds,
                               }),
                             );
                             e.dataTransfer.setData("text/plain", entry.title ?? "");
@@ -255,13 +328,39 @@ export function CalendarMonth({
                           style={{ borderInlineStartColor: typeColor(entry.type) }}
                           className="block cursor-grab rounded-lg border-s-[3px] bg-secondary/40 p-2 pe-6 transition-colors hover:bg-secondary active:cursor-grabbing"
                         >
-                          {/* Plateforme + heure */}
-                          {(PlatformIcon || timeLabel) && (
-                            <div className="flex items-center gap-1 text-muted">
-                              {PlatformIcon && <PlatformIcon className="size-3" />}
-                              {timeLabel && (
-                                <span className="text-[10px] font-semibold">
-                                  {timeLabel}
+                          {/* Plateformes + heure(s) */}
+                          {hasHeader && (
+                            <div className="mb-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-foreground/70">
+                              {entry.slots.map((slot, si) => {
+                                const Icon = slot.platform
+                                  ? PLATFORM_ICONS[slot.platform]
+                                  : null;
+                                const own = oneTime
+                                  ? null
+                                  : formatTimeFr(slot.time);
+                                if (!Icon && !own) return null;
+                                return (
+                                  <span
+                                    key={`${slot.platform ?? "none"}-${si}`}
+                                    className="inline-flex items-center gap-0.5"
+                                    title={
+                                      slot.platform
+                                        ? platformLabel(slot.platform)
+                                        : undefined
+                                    }
+                                  >
+                                    {Icon && <Icon className="size-3.5" />}
+                                    {own && (
+                                      <span className="text-[10px] font-semibold">
+                                        {own}
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                              })}
+                              {sharedTime && (
+                                <span className="text-[10px] font-semibold text-muted">
+                                  {sharedTime}
                                 </span>
                               )}
                             </div>
