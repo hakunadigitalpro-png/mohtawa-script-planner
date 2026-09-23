@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createContentRow } from "../contents/actions";
+import { getActiveBrandId } from "@/lib/brand";
+import { isSimpleType } from "@/lib/constants";
 import { MAX_SERIES_ITEMS, spreadDates } from "@/lib/series-import";
 
 /**
@@ -21,13 +22,21 @@ export const IMPORTABLE_TYPES = [
 export type ImportableType = (typeof IMPORTABLE_TYPES)[number];
 
 export type ImportResult =
-  | { ok: true; created: number; firstId: string | null }
+  | { ok: true; created: number }
   | { ok: false; error: string };
 
 /**
- * Crée une série de contenus d'un coup. Chaque fiche passe par la MÊME action
- * que le bouton « Nouveau contenu » : la sécurité multi-marques s'applique
- * donc à l'identique, sans code de contrôle supplémentaire ici.
+ * Crée une série de contenus d'un coup.
+ *
+ * Tout part en TROIS insertions groupées, pas une boucle. La première version
+ * réutilisait l'action du bouton « Nouveau contenu » pour chaque sujet : à
+ * 4 allers-retours en base par contenu, 15 sujets faisaient 60 requêtes en
+ * série et la fonction Vercel était coupée avant la fin. Une insertion par
+ * table suffit, et le tout devient atomique par table plutôt que laissé à
+ * moitié fait.
+ *
+ * Les identifiants sont tirés ici plutôt que par la base : on sait alors quel
+ * script appartient à quelle fiche sans dépendre de l'ordre de retour.
  */
 export async function importSeries(input: {
   items: { title: string; script: string }[];
@@ -48,60 +57,73 @@ export async function importSeries(input: {
     };
   }
 
+  const brandId = await getActiveBrandId();
+  if (!brandId) return { ok: false, error: "Aucune marque active." };
+
+  const supabase = await createClient();
   const dates = input.startDate
     ? spreadDates(input.startDate, items.length, input.perWeek)
     : [];
+  const theme = input.theme?.trim();
+  const platform = input.platform?.trim() || null;
+  const simple = isSimpleType(input.type);
 
-  const supabase = await createClient();
-  let created = 0;
-  let firstId: string | null = null;
+  const prepared = items.map((item, i) => ({
+    id: crypto.randomUUID(),
+    title: item.title.trim(),
+    script: item.script.trim(),
+    date: dates[i] ?? null,
+  }));
 
-  for (const [i, item] of items.entries()) {
-    const row = await createContentRow({
+  // 1. Les fiches. `user_id` est rempli par le trigger BEFORE INSERT (0002).
+  const { error: contentsError } = await supabase.from("contents").insert(
+    prepared.map((p) => ({
+      id: p.id,
+      brand_id: brandId,
       type: input.type,
-      title: item.title.trim(),
-      date: dates[i] ?? null,
-      platform: input.platform || null,
-      pillar: input.theme,
-    });
-    // On s'arrête à la première erreur plutôt que de continuer en silence :
-    // mieux vaut 4 fiches créées et un message clair que 15 fiches dont on ne
-    // sait pas lesquelles ont abouti.
-    if ("error" in row) {
-      return {
-        ok: false,
-        error:
-          created > 0
-            ? `${created} contenus créés, puis une erreur : ${row.error}`
-            : row.error,
-      };
-    }
+      title: p.title,
+      date: p.date,
+      platform,
+      status: "idea",
+      // Le trigger 0018 synchronise la colonne singulière depuis pillars[0].
+      ...(theme ? { pillars: [theme], pillar: theme } : {}),
+      // Un post ou un carrousel n'a pas de script : son texte EST sa légende.
+      ...(simple && p.script ? { caption: p.script } : {}),
+    })),
+  );
+  if (contentsError) return { ok: false, error: contentsError.message };
 
-    if (!firstId) firstId = row.id;
-    created++;
+  // 2. Les publications — sans elles, le calendrier multi-plateformes ne
+  //    verrait pas ces contenus (il se base sur cette table, pas sur
+  //    `contents.date` qui n'est qu'une colonne de compatibilité).
+  if (platform) {
+    await supabase.from("content_publications").insert(
+      prepared.map((p) => ({
+        content_id: p.id,
+        platform,
+        scheduled_date: p.date,
+      })),
+    );
+  }
 
-    const script = item.script.trim();
-    if (!script) continue;
-
-    // Le texte va dans le champ naturel du format : le script pour un reel,
-    // la voix-off pour un vlog, la légende pour les formats sans script.
-    if (input.type === "reel") {
-      await supabase
-        .from("reel_details")
-        .upsert({ content_id: row.id, script_full: script });
-    } else if (input.type === "vlog") {
-      await supabase
-        .from("vlog_details")
-        .upsert({ content_id: row.id, voiceover: script });
-    } else {
-      await supabase
-        .from("contents")
-        .update({ caption: script })
-        .eq("id", row.id);
-    }
+  // 3. Le détail du format, script inclus dès l'insertion.
+  if (input.type === "reel") {
+    await supabase.from("reel_details").insert(
+      prepared.map((p) => ({
+        content_id: p.id,
+        ...(p.script ? { script_full: p.script } : {}),
+      })),
+    );
+  } else if (input.type === "vlog") {
+    await supabase.from("vlog_details").insert(
+      prepared.map((p) => ({
+        content_id: p.id,
+        ...(p.script ? { voiceover: p.script } : {}),
+      })),
+    );
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/calendar");
-  return { ok: true, created, firstId };
+  return { ok: true, created: prepared.length };
 }

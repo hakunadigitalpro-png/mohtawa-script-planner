@@ -1,4 +1,11 @@
 import { redirect } from "next/navigation";
+
+// Un import de 30 sujets écrit dans trois tables. Le défaut Vercel (10 s)
+// suffirait aujourd'hui, mais une série longue sur une connexion lente ne
+// doit pas se faire couper au milieu — les Server Actions de cette page
+// héritent de cette durée.
+export const maxDuration = 60;
+
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { PageHeader } from "@/components/page-header";
