@@ -198,13 +198,18 @@ export function ReviewDeck({
                     aria-pressed={picked}
                     aria-label={`Diapo ${i + 1}`}
                   >
+                    {/* `h-auto w-full` laisse le navigateur appliquer le
+                        vrai ratio une fois l'image chargée : les dimensions
+                        déclarées ne servent qu'à réserver la place et à
+                        calculer les tailles servies. Un carrousel 4:5 et une
+                        infographie carrée s'affichent donc chacun correctement. */}
                     <Image
                       src={v.url}
                       alt={`Diapo ${i + 1}`}
-                      width={720}
-                      height={900}
-                      className="h-auto w-full object-contain"
-                      unoptimized
+                      width={1080}
+                      height={1350}
+                      sizes="(max-width: 640px) 100vw, 480px"
+                      className="h-auto w-full"
                     />
                     <span
                       className={cn(

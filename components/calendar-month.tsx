@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -64,6 +65,8 @@ export type CalendarEntry = {
   type: string;
   pillar: string | null;
   status: string;
+  /** Première image du contenu, toutes sources confondues (lib/thumbnails). */
+  thumbUrl?: string | null;
 };
 
 /**
@@ -86,6 +89,7 @@ type DayCard = {
   type: string;
   pillar: string | null;
   status: string;
+  thumbUrl: string | null;
 };
 
 /** L'heure la plus tôt du groupe, pour ordonner les cartes d'une journée. */
@@ -173,6 +177,7 @@ export function CalendarMonth({
           type: e.type,
           pillar: e.pillar,
           status: e.status,
+          thumbUrl: e.thumbUrl ?? null,
         };
         cards.set(e.contentId, card);
       }
@@ -248,7 +253,9 @@ export function CalendarMonth({
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_2px_12px_-4px_rgba(26,15,37,0.06)]">
+      {/* Vue grille — desktop. Sur un téléphone, sept colonnes font 50 px
+          chacune : ni le visuel ni le titre n'y sont lisibles. */}
+      <div className="hidden overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_2px_12px_-4px_rgba(26,15,37,0.06)] md:block">
         <div className="grid grid-cols-7 border-b border-border/60 bg-secondary/50 text-[11px] font-bold uppercase tracking-wider text-muted">
           {(["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const).map((d) => (
             <div key={d} className="px-2 py-2.5 text-center">{t(`weekdays.${d}`)}</div>
@@ -308,124 +315,15 @@ export function CalendarMonth({
                   )}
                 </div>
                 <ul className="mt-1.5 space-y-1.5">
-                  {items.slice(0, 3).map((entry) => {
-                    // Une seule heure pour tout le groupe : on l'affiche une
-                    // fois après les icônes. Des heures différentes selon la
-                    // plateforme : chacune porte la sienne, plutôt qu'un
-                    // libellé unique qui en trahirait deux sur trois.
-                    const times = entry.slots
-                      .map((s) => s.time)
-                      .filter((t): t is string => Boolean(t));
-                    const oneTime = new Set(times).size <= 1;
-                    const sharedTime = oneTime ? formatTimeFr(times[0] ?? null) : null;
-                    const hasHeader =
-                      entry.slots.some((s) => s.platform) || times.length > 0;
-                    return (
-                      <li key={entry.key} className="relative">
-                        <Link
-                          href={`/content/${entry.contentId}`}
-                          draggable={canEdit}
-                          onDragStart={(e) => {
-                            if (!canEdit) return;
-                            e.dataTransfer.effectAllowed = "move";
-                            e.dataTransfer.setData(
-                              DRAG_MIME,
-                              JSON.stringify({
-                                contentId: entry.contentId,
-                                publicationIds: entry.publicationIds,
-                              }),
-                            );
-                            e.dataTransfer.setData("text/plain", entry.title ?? "");
-                          }}
-                          dir="auto"
-                          style={{ borderInlineStartColor: typeColor(entry.type) }}
-                          className={cn(
-                            "block rounded-lg border-s-[3px] bg-secondary/40 p-2 pe-6 transition-colors hover:bg-secondary",
-                            canEdit && "cursor-grab active:cursor-grabbing",
-                          )}
-                        >
-                          {/* Plateformes + heure(s) */}
-                          {hasHeader && (
-                            <div className="mb-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-foreground/70">
-                              {entry.slots.map((slot, si) => {
-                                const Icon = slot.platform
-                                  ? PLATFORM_ICONS[slot.platform]
-                                  : null;
-                                const own = oneTime
-                                  ? null
-                                  : formatTimeFr(slot.time);
-                                if (!Icon && !own) return null;
-                                return (
-                                  <span
-                                    key={`${slot.platform ?? "none"}-${si}`}
-                                    className="inline-flex items-center gap-0.5"
-                                    title={
-                                      slot.platform
-                                        ? platformLabel(slot.platform)
-                                        : undefined
-                                    }
-                                  >
-                                    {Icon && <Icon className="size-3.5" />}
-                                    {own && (
-                                      <span className="text-[10px] font-semibold">
-                                        {own}
-                                      </span>
-                                    )}
-                                  </span>
-                                );
-                              })}
-                              {sharedTime && (
-                                <span className="text-[10px] font-semibold text-muted">
-                                  {sharedTime}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          {/* Nom — en entier. Le titre EST l'information :
-                              quand il s'agit d'une question, la couper à deux
-                              lignes oblige à ouvrir la fiche pour savoir de
-                              quoi parle la vidéo. `break-words` protège la
-                              grille d'une URL ou d'un mot à rallonge. */}
-                          <div className="break-words text-sm font-semibold leading-snug text-foreground">
-                            {entry.title || tContent("untitled")}
-                          </div>
-                          {/* Pilier + statut sur une seule ligne : ce que le
-                              titre prend en hauteur, les métadonnées le
-                              rendent. */}
-                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                            {entry.pillar && (
-                              <span className="max-w-full truncate rounded-md bg-secondary px-1.5 py-0.5 text-xs font-medium text-foreground/70">
-                                {entry.pillar}
-                              </span>
-                            )}
-                            <span className="flex items-center gap-1.5">
-                              <ColorDot
-                                color={
-                                  canEdit
-                                    ? statusColor(entry.status)
-                                    : clientStatusColor(entry.status)
-                                }
-                              />
-                              <span className="text-xs font-medium text-muted">
-                                {canEdit
-                                  ? statusLabel(entry.status)
-                                  : clientStatusLabel(entry.status)}
-                              </span>
-                            </span>
-                          </div>
-                        </Link>
-                        {/* Bouton "sibling" (pas nesté dans le <Link>) pour
-                            commenter sans quitter le calendrier. */}
-                        <div className="absolute end-1 top-1">
-                          <ContentCommentsButton
-                            contentId={entry.contentId}
-                            unreadCount={commentCounts[entry.contentId] ?? 0}
-                            className="bg-card/80"
-                          />
-                        </div>
-                      </li>
-                    );
-                  })}
+                  {items.slice(0, 3).map((entry) => (
+                    <EntryCard
+                      key={entry.key}
+                      entry={entry}
+                      canEdit={canEdit}
+                      unreadCount={commentCounts[entry.contentId] ?? 0}
+                      untitled={tContent("untitled")}
+                    />
+                  ))}
                   {items.length > 3 && (
                     <li className="px-1 text-xs font-medium text-muted">
                       {t("moreItems", { count: items.length - 3 })}
@@ -438,6 +336,65 @@ export function CalendarMonth({
         </div>
       </div>
 
+      {/* Vue agenda — mobile. On ne liste que les jours du mois qui portent
+          quelque chose : faire défiler 31 cases vides n'apprend rien. */}
+      <div className="space-y-3 md:hidden">
+        {days
+          .filter((d) => isSameMonth(d, cursor))
+          .map((d) => ({ d, key: format(d, "yyyy-MM-dd") }))
+          .filter(({ key }) => (byDay.get(key) ?? []).length > 0)
+          .map(({ d, key }) => {
+            const items = byDay.get(key) ?? [];
+            const today = isSameDay(d, new Date());
+            return (
+              <div key={key} className="space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <h3
+                    className={cn(
+                      "text-sm font-bold capitalize",
+                      today ? "text-accent" : "text-foreground",
+                    )}
+                  >
+                    {format(d, "EEEE d", { locale: dateLocale })}
+                  </h3>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPickedDate(key);
+                        setModalOpen(true);
+                      }}
+                      className="flex size-7 items-center justify-center rounded-full text-muted transition hover:bg-accent hover:text-accent-foreground"
+                      aria-label={t("addOnDay")}
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                  )}
+                </div>
+                <ul className="space-y-2 rounded-2xl border border-border/60 bg-card p-2">
+                  {items.map((entry) => (
+                    <EntryCard
+                      key={entry.key}
+                      entry={entry}
+                      canEdit={canEdit}
+                      unreadCount={commentCounts[entry.contentId] ?? 0}
+                      untitled={tContent("untitled")}
+                      agenda
+                    />
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        {days
+          .filter((d) => isSameMonth(d, cursor))
+          .every((d) => (byDay.get(format(d, "yyyy-MM-dd")) ?? []).length === 0) && (
+          <p className="rounded-2xl border border-border/60 bg-card p-6 text-center text-sm text-muted">
+            Rien de prévu ce mois-ci.
+          </p>
+        )}
+      </div>
+
       {canEdit && (
         <NewContentModal
           open={modalOpen}
@@ -446,5 +403,172 @@ export function CalendarMonth({
         />
       )}
     </div>
+  );
+}
+
+/**
+ * Une carte de contenu, partagée par les deux vues du calendrier.
+ *
+ * `agenda` bascule la mise en page : en grille (desktop) le visuel est en
+ * haut, pleine largeur ; en agenda (mobile) il passe à gauche, en vignette
+ * carrée, et le titre récupère toute la largeur restante — sur un téléphone,
+ * une colonne de 50 px ne montrerait ni l'image ni le texte.
+ */
+function EntryCard({
+  entry,
+  canEdit,
+  unreadCount,
+  untitled,
+  agenda = false,
+}: {
+  entry: DayCard;
+  canEdit: boolean;
+  unreadCount: number;
+  untitled: string;
+  agenda?: boolean;
+}) {
+  // Une seule heure pour tout le groupe : on l'affiche une fois après les
+  // icônes. Des heures différentes selon la plateforme : chacune porte la
+  // sienne, plutôt qu'un libellé unique qui en trahirait deux sur trois.
+  const times = entry.slots
+    .map((s) => s.time)
+    .filter((t): t is string => Boolean(t));
+  const oneTime = new Set(times).size <= 1;
+  const sharedTime = oneTime ? formatTimeFr(times[0] ?? null) : null;
+  const hasHeader = entry.slots.some((s) => s.platform) || times.length > 0;
+
+  const header = hasHeader && (
+    <div className="mb-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-foreground/70">
+      {entry.slots.map((slot, si) => {
+        const Icon = slot.platform ? PLATFORM_ICONS[slot.platform] : null;
+        const own = oneTime ? null : formatTimeFr(slot.time);
+        if (!Icon && !own) return null;
+        return (
+          <span
+            key={`${slot.platform ?? "none"}-${si}`}
+            className="inline-flex items-center gap-0.5"
+            title={slot.platform ? platformLabel(slot.platform) : undefined}
+          >
+            {Icon && <Icon className="size-3.5" />}
+            {own && <span className="text-[10px] font-semibold">{own}</span>}
+          </span>
+        );
+      })}
+      {sharedTime && (
+        <span className="text-[10px] font-semibold text-muted">
+          {sharedTime}
+        </span>
+      )}
+    </div>
+  );
+
+  const thumb = entry.thumbUrl && (
+    <div
+      className={cn(
+        "relative shrink-0 overflow-hidden rounded-md bg-secondary",
+        agenda ? "size-20" : "mb-1.5 aspect-square w-full",
+      )}
+    >
+      <Image
+        src={entry.thumbUrl}
+        alt=""
+        fill
+        sizes={agenda ? "80px" : "(max-width: 768px) 45vw, 180px"}
+        className="object-cover object-top"
+      />
+    </div>
+  );
+
+  const body = (
+    <>
+      {/* Nom. Sans visuel, le titre est la SEULE information : il s'affiche
+          en entier. Avec un visuel, l'image identifie déjà le contenu — deux
+          lignes suffisent et la grille reste lisible. En agenda la place ne
+          manque pas, donc le titre reste toujours entier. */}
+      <div
+        className={cn(
+          "text-sm font-semibold leading-snug text-foreground",
+          entry.thumbUrl && !agenda ? "line-clamp-2" : "break-words",
+        )}
+      >
+        {entry.title || untitled}
+      </div>
+      {/* Pilier + statut sur une seule ligne : ce que le titre prend en
+          hauteur, les métadonnées le rendent. */}
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+        {entry.pillar && (
+          <span className="max-w-full truncate rounded-md bg-secondary px-1.5 py-0.5 text-xs font-medium text-foreground/70">
+            {entry.pillar}
+          </span>
+        )}
+        <span className="flex items-center gap-1.5">
+          <ColorDot
+            color={
+              canEdit
+                ? statusColor(entry.status)
+                : clientStatusColor(entry.status)
+            }
+          />
+          <span className="text-xs font-medium text-muted">
+            {canEdit ? statusLabel(entry.status) : clientStatusLabel(entry.status)}
+          </span>
+        </span>
+      </div>
+    </>
+  );
+
+  return (
+    <li className="relative">
+      <Link
+        href={`/content/${entry.contentId}`}
+        // Le glisser-déposer n'a pas de sens au doigt : en agenda la carte
+        // n'est jamais draggable, quel que soit le rôle.
+        draggable={canEdit && !agenda}
+        onDragStart={(e) => {
+          if (!canEdit || agenda) return;
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData(
+            DRAG_MIME,
+            JSON.stringify({
+              contentId: entry.contentId,
+              publicationIds: entry.publicationIds,
+            }),
+          );
+          e.dataTransfer.setData("text/plain", entry.title ?? "");
+        }}
+        dir="auto"
+        style={{ borderInlineStartColor: typeColor(entry.type) }}
+        className={cn(
+          "block rounded-lg border-s-[3px] bg-secondary/40 p-2 pe-8 transition-colors hover:bg-secondary",
+          canEdit && !agenda && "cursor-grab active:cursor-grabbing",
+          agenda && "flex items-start gap-3",
+        )}
+      >
+        {agenda ? (
+          <>
+            {thumb}
+            <div className="min-w-0 flex-1">
+              {header}
+              {body}
+            </div>
+          </>
+        ) : (
+          <>
+            {header}
+            {thumb}
+            {body}
+          </>
+        )}
+      </Link>
+      {/* Bouton "sibling" (pas nesté dans le <Link>) pour commenter sans
+          quitter le calendrier. */}
+      <div className="absolute end-1 top-1">
+        <ContentCommentsButton
+          contentId={entry.contentId}
+          unreadCount={unreadCount}
+          className="bg-card/80"
+        />
+      </div>
+    </li>
   );
 }

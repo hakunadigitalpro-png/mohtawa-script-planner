@@ -15,6 +15,7 @@ import { CalendarQuickCreate } from "@/components/calendar-quick-create";
 import { CalendarPlatformFilter } from "@/components/calendar-platform-filter";
 import { PlanningTable } from "@/components/planning-table";
 import { PageHeader } from "@/components/page-header";
+import { fetchThumbnails } from "@/lib/thumbnails";
 import type { Content } from "@/lib/types";
 
 /** Ligne brute renvoyée par la requête publications × contenu (join !inner). */
@@ -154,6 +155,17 @@ export default async function CalendarPage({
               status: c.status,
             }))),
     ];
+
+    // Les vignettes en dernier : on ne les cherche QUE pour les contenus
+    // réellement affichés ce mois-ci, filtre plateforme compris.
+    const thumbs = await fetchThumbnails(
+      supabase,
+      [...new Set(entries.map((e) => e.contentId))],
+    );
+    entries = entries.map((e) => ({
+      ...e,
+      thumbUrl: thumbs.get(e.contentId) ?? null,
+    }));
   }
 
   const tabCls = (on: boolean) =>
