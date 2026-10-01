@@ -134,6 +134,47 @@ export function statusLabel(status: string | null | undefined) {
 }
 
 /**
+ * Les 12 statuts internes, projetés en 5 mots qu'un client comprend.
+ *
+ * C'est une PROJECTION D'AFFICHAGE, pas un second jeu de valeurs : rien de
+ * nouveau n'est stocké. Inventer des valeurs ici les ferait rejeter par la
+ * contrainte `contents_status_check` (migration 0042), exactement le bug
+ * qui empêchait l'onglet Plan d'enregistrer.
+ *
+ * Un client n'a pas à savoir si on en est au tournage ou au montage : de
+ * son point de vue c'est « en préparation » tant qu'on ne lui demande rien.
+ * Il distingue en revanche ce qu'il a validé de ce qui est déjà sorti.
+ */
+const CLIENT_STATUS: Record<string, string> = {
+  pending_review: "À valider",
+  needs_revision: "Modifications demandées",
+  approved: "Validé",
+  scheduled: "Validé",
+  programmed: "Validé",
+  live: "Publié",
+  published: "Publié",
+};
+
+export function clientStatusLabel(status: string | null | undefined) {
+  return CLIENT_STATUS[status ?? ""] ?? "En préparation";
+}
+
+/** Couleur de la pastille côté client — alignée sur la projection ci-dessus. */
+export function clientStatusColor(status: string | null | undefined) {
+  if (status === "pending_review" || status === "needs_revision") {
+    return statusColor(status);
+  }
+  if (status === "live" || status === "published") return statusColor("live");
+  if (CLIENT_STATUS[status ?? ""]) return statusColor("approved");
+  return statusColor("idea");
+}
+
+/** Le contenu attend une décision du client. */
+export function isAwaitingClient(status: string | null | undefined) {
+  return status === "pending_review";
+}
+
+/**
  * "C'est sorti" pour n'importe quel type de contenu. "live" est la valeur
  * courante (vidéo comme post/carrousel/infographie) ; "published" reste
  * accepté en legacy pour la fenêtre entre un déploiement de code et

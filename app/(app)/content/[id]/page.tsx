@@ -4,6 +4,8 @@ import { FileDown } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { getTranslations } from "next-intl/server";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
+import { resolveActiveBrand } from "@/lib/brand";
+import { SubmitReviewButton } from "@/components/content-detail/submit-review-button";
 
 // L'autopsie IA (appel Claude) peut prendre 15-30s. Le défaut Vercel est
 // de 10s sur le plan Hobby → la fonction était tuée avant de répondre.
@@ -50,6 +52,13 @@ export default async function ContentDetailPage({
 
   const user = await getCachedUser();
   if (!user) redirect("/login");
+
+  // Un "viewer" (client invité) n'a rien à faire dans l'éditeur : il y
+  // trouvait l'autosave, les boutons IA, le partage et la suppression.
+  // C'était la SEULE page de l'app sans garde de rôle. On l'envoie sur sa
+  // vue de validation, positionnée sur le contenu qu'il vient d'ouvrir.
+  const { role } = await resolveActiveBrand();
+  if (role === "viewer") redirect(`/review?c=${id}`);
 
   const { data: content } = await supabase
     .from("contents")
@@ -224,6 +233,7 @@ export default async function ContentDetailPage({
           }
           actions={
             <>
+              <SubmitReviewButton contentId={c.id} status={c.status} />
               <CommentsInboxButton />
               <ShareButton
                 contentId={c.id}

@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   CalendarDays,
+  CheckCircle2,
   BarChart3,
   BookOpen,
   KanbanSquare,
@@ -37,11 +38,12 @@ import type { BrandRole } from "@/lib/brand";
 
 const PRIMARY_NAV: {
   href: string;
-  key: "dashboard" | "calendar" | "tasks" | "analytics" | "hooks";
+  key: "dashboard" | "calendar" | "review" | "tasks" | "analytics" | "hooks";
   icon: LucideIcon;
 }[] = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
+  { href: "/review", key: "review", icon: CheckCircle2 },
   { href: "/tasks", key: "tasks", icon: KanbanSquare },
   { href: "/analytics", key: "analytics", icon: BarChart3 },
   { href: "/hooks", key: "hooks", icon: BookOpen },
@@ -88,8 +90,10 @@ export function MobileBottomNav({
   const [menuOpen, setMenuOpen] = useState(false);
   const isClientOnly = role === "viewer";
   const nav = isClientOnly
-    ? PRIMARY_NAV.filter((item) => item.key === "calendar")
-    : PRIMARY_NAV;
+    ? PRIMARY_NAV.filter(
+        (item) => item.key === "calendar" || item.key === "review",
+      )
+    : PRIMARY_NAV.filter((item) => item.key !== "review");
 
   return (
     <>

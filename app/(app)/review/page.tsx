@@ -1,0 +1,140 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { resolveActiveBrand } from "@/lib/brand";
+import { PageHeader } from "@/components/page-header";
+import { ReviewDeck, type ReviewItem } from "./review-deck";
+import type { ContentMedia } from "@/lib/types";
+
+type ContentRow = {
+  id: string;
+  title: string | null;
+  type: string;
+  date: string | null;
+  platform: string | null;
+  status: string;
+  caption: string | null;
+};
+
+export default async function ReviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ c?: string }>;
+}) {
+  const { active } = await resolveActiveBrand();
+  if (!active) redirect("/dashboard");
+
+  const params = await searchParams;
+  const supabase = await createClient();
+
+  // Même recalcul paresseux que sur le Calendrier et le Dashboard : l'app
+  // n'a aucune tâche planifiée, les statuts se mettent à jour à la lecture.
+  // Sans cet appel, un client qui vit sur cette page ne verrait jamais un
+  // contenu passer en "Publié".
+  await supabase.rpc("recompute_live_statuses", { p_brand_id: active.id });
+
+  // La file d'attente : ce qui lui a été explicitement soumis. On y ajoute
+  // le contenu ouvert depuis le calendrier (?c=) même s'il n'attend rien —
+  // le client a le droit de regarder sans qu'on lui demande son avis.
+  const { data: queueData } = await supabase
+    .from("contents")
+    .select("id, title, type, date, platform, status, caption")
+    .eq("brand_id", active.id)
+    .eq("status", "pending_review")
+    .order("date", { ascending: true, nullsFirst: false });
+
+  const queue = (queueData ?? []) as ContentRow[];
+  const ids = queue.map((c) => c.id);
+
+  let extra: ContentRow | null = null;
+  if (params.c && !ids.includes(params.c)) {
+    const { data } = await supabase
+      .from("contents")
+      .select("id, title, type, date, platform, status, caption")
+      .eq("brand_id", active.id)
+      .eq("id", params.c)
+      .maybeSingle();
+    extra = (data as ContentRow | null) ?? null;
+    if (extra) ids.push(extra.id);
+  }
+
+  // Les visuels et les scripts en DEUX requêtes groupées pour toute la file,
+  // pas une par contenu : un client avec 10 carrousels en attente chargerait
+  // sinon 20 allers-retours.
+  const [mediaRes, reelRes, vlogRes] = ids.length
+    ? await Promise.all([
+        supabase
+          .from("content_media")
+          .select("id, content_id, position, image_url, created_at")
+          .in("content_id", ids)
+          .order("position", { ascending: true }),
+        supabase
+          .from("reel_details")
+          .select("content_id, script_full")
+          .in("content_id", ids),
+        supabase
+          .from("vlog_details")
+          .select("content_id, voiceover")
+          .in("content_id", ids),
+      ])
+    : [{ data: [] }, { data: [] }, { data: [] }];
+
+  const mediaByContent = new Map<string, ContentMedia[]>();
+  for (const m of (mediaRes.data ?? []) as ContentMedia[]) {
+    const list = mediaByContent.get(m.content_id) ?? [];
+    list.push(m);
+    mediaByContent.set(m.content_id, list);
+  }
+
+  const scriptByContent = new Map<string, string>();
+  for (const r of (reelRes.data ?? []) as {
+    content_id: string;
+    script_full: string | null;
+  }[]) {
+    if (r.script_full) scriptByContent.set(r.content_id, r.script_full);
+  }
+  for (const v of (vlogRes.data ?? []) as {
+    content_id: string;
+    voiceover: string | null;
+  }[]) {
+    if (v.voiceover) scriptByContent.set(v.content_id, v.voiceover);
+  }
+
+  const toItem = (c: ContentRow): ReviewItem => ({
+    id: c.id,
+    title: c.title,
+    type: c.type,
+    date: c.date,
+    platform: c.platform,
+    status: c.status,
+    caption: c.caption,
+    visuals: (mediaByContent.get(c.id) ?? [])
+      .filter((m) => m.image_url)
+      .map((m) => ({ id: m.id, url: m.image_url as string })),
+    script: scriptByContent.get(c.id) ?? null,
+  });
+
+  const items = queue.map(toItem);
+  if (extra) items.unshift(toItem(extra));
+
+  // On démarre sur le contenu demandé depuis le calendrier, sinon au début.
+  const startIndex = params.c
+    ? Math.max(0, items.findIndex((i) => i.id === params.c))
+    : 0;
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        backHref="/calendar"
+        backLabel="Retour au calendrier"
+        eyebrow={active.name}
+        title="À valider"
+        subtitle={
+          items.length === 0
+            ? "Rien ne t'attend pour le moment."
+            : "Regarde, puis dis-nous si c'est bon ou ce qu'il faut changer."
+        }
+      />
+      <ReviewDeck items={items} startIndex={startIndex} />
+    </div>
+  );
+}

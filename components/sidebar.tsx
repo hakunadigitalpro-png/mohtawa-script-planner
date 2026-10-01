@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import {
   LayoutDashboard,
   CalendarDays,
+  CheckCircle2,
   LogOut,
   Building2,
   User,
@@ -26,13 +27,14 @@ import type { BrandRole } from "@/lib/brand";
 type NavItem = {
   href: string;
   /** Clé i18n dans `nav.*` */
-  key: "dashboard" | "calendar" | "analytics" | "hooks" | "tasks" | "brands" | "profile";
+  key: "dashboard" | "calendar" | "review" | "analytics" | "hooks" | "tasks" | "brands" | "profile";
   icon: LucideIcon;
 };
 
 const PRIMARY_NAV: NavItem[] = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
+  { href: "/review", key: "review", icon: CheckCircle2 },
   { href: "/tasks", key: "tasks", icon: KanbanSquare },
   { href: "/analytics", key: "analytics", icon: BarChart3 },
   { href: "/hooks", key: "hooks", icon: BookOpen },
@@ -63,8 +65,10 @@ export function Sidebar({
   const t = useTranslations("nav");
   const isClientOnly = role === "viewer";
   const primaryNav = isClientOnly
-    ? PRIMARY_NAV.filter((item) => item.key === "calendar")
-    : PRIMARY_NAV;
+    ? PRIMARY_NAV.filter(
+        (item) => item.key === "calendar" || item.key === "review",
+      )
+    : PRIMARY_NAV.filter((item) => item.key !== "review");
   const secondaryNav = isClientOnly
     ? SECONDARY_NAV.filter((item) => item.key === "profile")
     : SECONDARY_NAV;
@@ -72,7 +76,10 @@ export function Sidebar({
   return (
     <aside className="sticky top-0 z-30 hidden h-screen w-20 shrink-0 flex-col items-center gap-3 py-5 md:flex">
       {/* Logo */}
-      <Link href="/dashboard" className="tooltip-trigger">
+      <Link
+        href={isClientOnly ? "/calendar" : "/dashboard"}
+        className="tooltip-trigger"
+      >
         <LogoMark className="size-12 rounded-2xl shadow-sm" iconClassName="size-6" />
         <span className="tooltip-content">{t("mohtawa")}</span>
       </Link>

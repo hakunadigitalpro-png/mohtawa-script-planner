@@ -4,6 +4,7 @@ import {
   LayoutList,
   ChevronLeft,
   ChevronRight,
+  Eye,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
@@ -37,8 +38,11 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<{ m?: string; view?: string; platform?: string }>;
 }) {
-  const { active } = await resolveActiveBrand();
+  const { active, role } = await resolveActiveBrand();
   if (!active) return null;
+
+  // Un "viewer" (client invité) regarde le planning, il ne le fabrique pas.
+  const isClient = role === "viewer";
 
   const t = await getTranslations("calendar");
   const params = await searchParams;
@@ -79,6 +83,16 @@ export default async function CalendarPage({
   }[]) {
     commentCounts[row.content_id] = row.unread_count;
   }
+
+  // Ce qui attend le client, tous mois confondus : une validation en retard
+  // d'un mois ne doit pas disparaître parce qu'il a changé de page.
+  const { count: awaitingCount } = isClient
+    ? await supabase
+        .from("contents")
+        .select("id", { count: "exact", head: true })
+        .eq("brand_id", active.id)
+        .eq("status", "pending_review")
+    : { count: 0 };
 
   const { data } = await supabase
     .from("contents")
@@ -172,10 +186,28 @@ export default async function CalendarPage({
               </Link>
             </div>
             {view === "calendar" && <CalendarPlatformFilter />}
-            <CalendarQuickCreate />
+            {!isClient && <CalendarQuickCreate />}
           </div>
         }
       />
+
+      {isClient && (awaitingCount ?? 0) > 0 && (
+        <Link
+          href="/review"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-accent/30 bg-accent/10 px-5 py-4 transition-colors hover:bg-accent/15"
+        >
+          <span className="flex items-center gap-2.5 text-sm font-semibold text-foreground">
+            <Eye className="size-4 shrink-0 text-accent" />
+            {awaitingCount === 1
+              ? "Un contenu attend ton avis."
+              : `${awaitingCount} contenus attendent ton avis.`}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-foreground">
+            Les voir
+            <ChevronRight className="size-3.5 rtl-flip" />
+          </span>
+        </Link>
+      )}
 
       {view === "planning" ? (
         <div className="space-y-4">
@@ -205,6 +237,7 @@ export default async function CalendarPage({
           initialMonth={monthStart}
           entries={entries}
           commentCounts={commentCounts}
+          canEdit={!isClient}
         />
       )}
     </div>

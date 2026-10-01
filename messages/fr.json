@@ -29,6 +29,7 @@
   "nav": {
     "dashboard": "Tableau de bord",
     "calendar": "Calendrier",
+    "review": "À valider",
     "tasks": "Tâches",
     "analytics": "Analytics",
     "hooks": "Accroches",

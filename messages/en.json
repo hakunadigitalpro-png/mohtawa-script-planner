@@ -29,6 +29,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "calendar": "Calendar",
+    "review": "To review",
     "tasks": "Tasks",
     "analytics": "Analytics",
     "hooks": "Hooks",

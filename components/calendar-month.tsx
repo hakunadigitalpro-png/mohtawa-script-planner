@@ -36,6 +36,8 @@ import {
   statusColor,
   statusLabel,
   platformLabel,
+  clientStatusColor,
+  clientStatusLabel,
 } from "@/lib/constants";
 import { NewContentModal } from "@/components/new-content-modal";
 import { ContentCommentsButton } from "@/components/comments";
@@ -112,11 +114,19 @@ export function CalendarMonth({
   initialMonth,
   entries,
   commentCounts = {},
+  canEdit = true,
 }: {
   initialMonth: string; // YYYY-MM-01
   entries: CalendarEntry[];
   /** contentId → nombre de commentaires non lus (badge). */
   commentCounts?: Record<string, number>;
+  /**
+   * Faux pour un "viewer" (client invité) : pas de création, pas de
+   * replanification, et le vocabulaire des statuts passe en 3 mots. Sans
+   * ce drapeau le client voyait « Tournage » et « Montage » sur son
+   * calendrier et pouvait déplacer les contenus de l'équipe.
+   */
+  canEdit?: boolean;
 }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -261,7 +271,7 @@ export function CalendarMonth({
                   isDragOver && "bg-accent/10 ring-2 ring-accent ring-inset",
                 )}
                 onDragOver={(e) => {
-                  if (e.dataTransfer.types.includes(DRAG_MIME)) {
+                  if (canEdit && e.dataTransfer.types.includes(DRAG_MIME)) {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = "move";
                     if (dragOverKey !== key) setDragOverKey(key);
@@ -270,7 +280,7 @@ export function CalendarMonth({
                 onDragLeave={() => {
                   if (dragOverKey === key) setDragOverKey(null);
                 }}
-                onDrop={(e) => onDrop(e, key)}
+                onDrop={(e) => canEdit && onDrop(e, key)}
               >
                 <div className="flex items-center justify-between">
                   <span
@@ -283,6 +293,7 @@ export function CalendarMonth({
                   >
                     {format(d, "d")}
                   </span>
+                  {canEdit && (
                   <button
                     type="button"
                     onClick={() => {
@@ -294,6 +305,7 @@ export function CalendarMonth({
                   >
                     <Plus className="size-3.5" />
                   </button>
+                  )}
                 </div>
                 <ul className="mt-1.5 space-y-1.5">
                   {items.slice(0, 3).map((entry) => {
@@ -312,8 +324,9 @@ export function CalendarMonth({
                       <li key={entry.key} className="relative">
                         <Link
                           href={`/content/${entry.contentId}`}
-                          draggable
+                          draggable={canEdit}
                           onDragStart={(e) => {
+                            if (!canEdit) return;
                             e.dataTransfer.effectAllowed = "move";
                             e.dataTransfer.setData(
                               DRAG_MIME,
@@ -326,7 +339,10 @@ export function CalendarMonth({
                           }}
                           dir="auto"
                           style={{ borderInlineStartColor: typeColor(entry.type) }}
-                          className="block cursor-grab rounded-lg border-s-[3px] bg-secondary/40 p-2 pe-6 transition-colors hover:bg-secondary active:cursor-grabbing"
+                          className={cn(
+                            "block rounded-lg border-s-[3px] bg-secondary/40 p-2 pe-6 transition-colors hover:bg-secondary",
+                            canEdit && "cursor-grab active:cursor-grabbing",
+                          )}
                         >
                           {/* Plateformes + heure(s) */}
                           {hasHeader && (
@@ -383,9 +399,17 @@ export function CalendarMonth({
                               </span>
                             )}
                             <span className="flex items-center gap-1.5">
-                              <ColorDot color={statusColor(entry.status)} />
+                              <ColorDot
+                                color={
+                                  canEdit
+                                    ? statusColor(entry.status)
+                                    : clientStatusColor(entry.status)
+                                }
+                              />
                               <span className="text-xs font-medium text-muted">
-                                {statusLabel(entry.status)}
+                                {canEdit
+                                  ? statusLabel(entry.status)
+                                  : clientStatusLabel(entry.status)}
                               </span>
                             </span>
                           </div>
@@ -414,11 +438,13 @@ export function CalendarMonth({
         </div>
       </div>
 
-      <NewContentModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        defaultDate={pickedDate}
-      />
+      {canEdit && (
+        <NewContentModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          defaultDate={pickedDate}
+        />
+      )}
     </div>
   );
 }
