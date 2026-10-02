@@ -51,25 +51,45 @@ async function contentCard(
 ) {
   const { data } = await supabase
     .from("contents")
-    .select("id, brand_id, title, type, date")
+    .select("id, brand_id, title, type, date, brands(name)")
     .eq("id", contentId)
     .maybeSingle();
   if (!data) return null;
-  const c = data as {
+  const c = data as unknown as {
     id: string;
     brand_id: string;
     title: string | null;
     type: string;
     date: string | null;
+    brands?: { name: string } | { name: string }[] | null;
   };
+  // PostgREST renvoie l'objet lié tantôt seul, tantôt dans un tableau selon
+  // la façon dont il infère la relation — on accepte les deux.
+  const rel = c.brands;
+  const brandName =
+    (Array.isArray(rel) ? rel[0]?.name : rel?.name)?.trim() || null;
+
   const meta = [typeLabel(c.type), c.date ? formatDateFr(c.date) : null]
     .filter(Boolean)
     .join(" · ");
   return {
     brandId: c.brand_id,
+    brandName,
     title: c.title || "Sans titre",
     meta,
   };
+}
+
+/**
+ * Le nom affiché de l'expéditeur.
+ *
+ * Une consultante gère plusieurs marques, et chaque marque a SON client. Le
+ * client d'Adala ne connaît pas « Kreatly » : il doit voir arriver un e-mail
+ * d'Adala. L'adresse, elle, reste celle du domaine vérifié — c'est elle qui
+ * porte la preuve DNS, on ne peut pas la changer par marque.
+ */
+function senderName(brandName: string | null): string | undefined {
+  return brandName ? `${brandName} via Kreatly` : undefined;
 }
 
 /**
@@ -125,6 +145,7 @@ export async function reviewContent(input: {
     await sendEmail({
       to,
       replyTo,
+      fromName: senderName(card.brandName),
       subject: approved
         ? `Validé : ${card.title}`
         : `Modification demandée : ${card.title}`,
@@ -135,7 +156,10 @@ export async function reviewContent(input: {
         intro: approved
           ? "C'est bon de son côté, tu peux le programmer."
           : "Voici ce qu'il a écrit — sa remarque est aussi dans les commentaires du contenu.",
-        card: { title: card.title, meta: card.meta },
+        card: {
+          title: card.title,
+          meta: [card.brandName, card.meta].filter(Boolean).join(" · "),
+        },
         quote: approved ? undefined : comment,
         ctaLabel: "Ouvrir le contenu",
         ctaPath: `/content/${input.contentId}`,
@@ -174,16 +198,23 @@ export async function submitForReview(contentId: string): Promise<ReviewResult> 
     await sendEmail({
       to,
       replyTo,
-      subject: `À valider : ${card.title}`,
+      fromName: senderName(card.brandName),
+      subject: card.brandName
+        ? `${card.brandName} — à valider : ${card.title}`
+        : `À valider : ${card.title}`,
       html: renderEmail({
         title: "Un contenu attend ton avis",
         intro:
           "Regarde-le, puis dis si c'est bon ou ce qu'il faut changer. Tu peux cliquer une diapo pour que ta remarque porte dessus.",
-        card: { title: card.title, meta: card.meta },
+        card: {
+          title: card.title,
+          meta: [card.brandName, card.meta].filter(Boolean).join(" · "),
+        },
         ctaLabel: "Voir et valider",
         ctaPath: `/review?c=${contentId}`,
-        footer:
-          "Tu reçois cet e-mail parce qu'on t'a invité à valider les contenus de cette marque.",
+        footer: card.brandName
+          ? `Tu reçois cet e-mail parce qu'on t'a invité à valider les contenus de ${card.brandName}.`
+          : "Tu reçois cet e-mail parce qu'on t'a invité à valider les contenus de cette marque.",
       }),
     });
   }

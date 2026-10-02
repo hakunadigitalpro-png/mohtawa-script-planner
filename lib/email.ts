@@ -32,12 +32,36 @@ function siteUrl(): string {
 }
 
 /**
+ * Le nom affiché ne peut pas contenir n'importe quoi : il part dans un
+ * en-tête SMTP. Un nom de marque est saisi par l'utilisatrice, donc on retire
+ * tout ce qui pourrait couper l'en-tête ou y injecter autre chose.
+ */
+export function safeDisplayName(name: string): string {
+  return name
+    .replace(/[\r\n<>"\\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 60);
+}
+
+/**
  * Tant qu'aucun domaine n'est vérifié chez Resend, `onboarding@resend.dev`
  * fonctionne mais n'atteint QUE l'adresse du propriétaire du compte. Pour
  * écrire à un client, il faut renseigner RESEND_FROM avec un domaine vérifié.
+ *
+ * `displayName` permet d'écrire « Adala via Kreatly » tout en gardant
+ * l'adresse du domaine vérifié : une consultante gère plusieurs marques, et
+ * le client d'une marque ne connaît pas le nom de l'outil. L'adresse, elle,
+ * ne peut pas changer — c'est elle qui porte la preuve DNS.
  */
-function fromAddress(): string {
-  return process.env.RESEND_FROM || "Kreatly <onboarding@resend.dev>";
+function fromAddress(displayName?: string): string {
+  const raw = process.env.RESEND_FROM || "Kreatly <onboarding@resend.dev>";
+  if (!displayName) return raw;
+  const match = raw.match(/<([^>]+)>/);
+  const address = (match ? match[1] : raw).trim();
+  const name = safeDisplayName(displayName);
+  if (!name) return raw;
+  return `"${name}" <${address}>`;
 }
 
 function escapeHtml(s: string): string {
@@ -116,6 +140,8 @@ export async function sendEmail(input: {
   subject: string;
   html: string;
   replyTo?: string;
+  /** Nom affiché de l'expéditeur — typiquement « <Marque> via Kreatly ». */
+  fromName?: string;
 }): Promise<number> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return 0;
@@ -139,7 +165,7 @@ export async function sendEmail(input: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: fromAddress(),
+            from: fromAddress(input.fromName),
             to: [to],
             subject: input.subject,
             html: input.html,
