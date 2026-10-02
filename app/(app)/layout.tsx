@@ -12,12 +12,23 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCachedUser();
+  // Ce layout est reconstruit à CHAQUE navigation : chaque aller-retour qu'il
+  // enchaîne s'ajoute au temps d'attente de toutes les pages. La session, la
+  // marque active et les notifications sont indépendantes — elles partent
+  // ensemble. (`resolveActiveBrand` est mémorisée par `cache()`, la page qui
+  // suit la réutilise sans re-interroger la base.)
+  const supabase = await createClient();
+  const [user, brandCtx, notificationsRes] = await Promise.all([
+    getCachedUser(),
+    resolveActiveBrand(),
+    // Tolérant aux échecs : si la RPC n'existe pas encore (migration pas
+    // appliquée), on rend 0 notif et la cloche affiche un état vide.
+    supabase.rpc("list_my_notifications", { p_limit: 20 }),
+  ]);
+
   if (!user) redirect("/login");
 
-  const supabase = await createClient();
-
-  const { brands, active, role } = await resolveActiveBrand();
+  const { brands, active, role } = brandCtx;
 
   // Prénom pour le « Bonjour, … » de Krea : le nom complet du profil, sinon
   // le début de l'email. Jamais l'email entier — on se dit bonjour, on ne
@@ -32,14 +43,10 @@ export default async function AppLayout({
     return <NoBrandWelcome email={user.email ?? null} />;
   }
 
-  // Fetch initial notifications côté serveur pour éviter le flash sur la cloche.
-  // Tolérant aux échecs : si la RPC n'existe pas encore (migration pas appliquée),
-  // on rend juste 0 notifs et le bell affiche un état vide.
-  const { data: notificationsData } = await supabase.rpc(
-    "list_my_notifications",
-    { p_limit: 20 },
-  );
-  const initialNotifications = (notificationsData as Notification[] | null) ?? [];
+  // Chargées plus haut, en même temps que le reste : la cloche s'affiche
+  // remplie dès le premier rendu, sans sauter.
+  const initialNotifications =
+    (notificationsRes.data as Notification[] | null) ?? [];
 
   return (
     <div className="flex min-h-screen">

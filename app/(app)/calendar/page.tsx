@@ -69,40 +69,50 @@ export default async function CalendarPage({
 
   const supabase = await createClient();
 
-  // Bascule en masse "programmed" → "live" (post/carrousel/infographie) dès
-  // que leur date+heure de publication est dépassée — pas de tâche planifiée
-  // dans cette app, donc on recalcule à chaque chargement de page (0041).
-  await supabase.rpc("recompute_live_statuses", { p_brand_id: active.id });
+  // Ces quatre requêtes ne dépendent pas les unes des autres : les enchaîner
+  // coûtait quatre allers-retours là où un seul suffit. Sur une base hébergée
+  // loin du serveur, c'est l'essentiel du temps d'attente.
+  //
+  // `recompute_live_statuses` fait exception à une règle : il ÉCRIT (bascule
+  // en "live" ce dont la date est passée) pendant qu'on lit. Au pire, un
+  // contenu qui vient de passer live s'affiche encore "Programmé" jusqu'au
+  // prochain affichage — bien moins gênant qu'une seconde d'attente, et il
+  // n'existe pas de tâche planifiée pour le faire ailleurs (0041).
+  const [, unreadRes, awaitingRes, contentsRes] = await Promise.all([
+    supabase.rpc("recompute_live_statuses", { p_brand_id: active.id }),
 
-  // Compteurs de non-lus pour le badge des commentaires (Calendrier +
-  // Planning) — 1 seul appel groupé, pas une requête par contenu affiché.
-  const { data: unreadRows } = await supabase.rpc("count_unread_comments");
+    // Compteurs de non-lus pour le badge des commentaires (Calendrier +
+    // Planning) — 1 seul appel groupé, pas une requête par contenu affiché.
+    supabase.rpc("count_unread_comments"),
+
+    // Ce qui attend le client, tous mois confondus : une validation en retard
+    // d'un mois ne doit pas disparaître parce qu'il a changé de page.
+    isClient
+      ? supabase
+          .from("contents")
+          .select("id", { count: "exact", head: true })
+          .eq("brand_id", active.id)
+          .eq("status", "pending_review")
+      : Promise.resolve({ count: 0 }),
+
+    supabase
+      .from("contents")
+      .select("*")
+      .eq("brand_id", active.id)
+      .gte("date", monthStart)
+      .lt("date", monthEnd),
+  ]);
+
   const commentCounts: Record<string, number> = {};
-  for (const row of (unreadRows ?? []) as {
+  for (const row of (unreadRes.data ?? []) as {
     content_id: string;
     unread_count: number;
   }[]) {
     commentCounts[row.content_id] = row.unread_count;
   }
 
-  // Ce qui attend le client, tous mois confondus : une validation en retard
-  // d'un mois ne doit pas disparaître parce qu'il a changé de page.
-  const { count: awaitingCount } = isClient
-    ? await supabase
-        .from("contents")
-        .select("id", { count: "exact", head: true })
-        .eq("brand_id", active.id)
-        .eq("status", "pending_review")
-    : { count: 0 };
-
-  const { data } = await supabase
-    .from("contents")
-    .select("*")
-    .eq("brand_id", active.id)
-    .gte("date", monthStart)
-    .lt("date", monthEnd);
-
-  const contents = (data ?? []) as Content[];
+  const awaitingCount = awaitingRes.count ?? 0;
+  const contents = (contentsRes.data ?? []) as Content[];
 
   // Vue calendrier uniquement : une carte par (contenu × plateforme), sur SA
   // propre date — pas juste la date "primaire" legacy de contents.date.

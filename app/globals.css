@@ -399,3 +399,28 @@ html[data-theme="dark"] {
 .tooltip-trigger:hover > .tooltip-content {
   opacity: 1;
 }
+
+/* =========================================================================
+   Squelette de chargement
+   -------------------------------------------------------------------------
+   Utilisé par app/(app)/loading.tsx. Un battement très doux : il doit dire
+   « ça arrive » sans attirer l'œil, puisqu'on le regarde moins d'une seconde.
+   ========================================================================= */
+@layer components {
+  .skeleton {
+    animation: skeleton-breathe 1.4s ease-in-out infinite;
+    opacity: 0.5;
+  }
+}
+
+@keyframes skeleton-breathe {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.65; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    opacity: 0.5;
+  }
+}
