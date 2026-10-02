@@ -46,7 +46,7 @@ export function PerformancePublications({
         <Globe className="size-4 text-muted" />
         <Label className="text-sm font-semibold">Liens des publications</Label>
         <span className="text-[10px] text-muted">
-          · Une URL par plateforme. Sert à retrouver tes vidéos en ligne et à
+          · Une URL par plateforme. Sert à retrouver tes contenus en ligne et à
           matcher les insights plus tard.
         </span>
       </div>
@@ -119,7 +119,7 @@ function PublicationUrlRow({
           onBlur={() => saveUrl(url)}
           placeholder={`https://www.${publication.platform.toLowerCase()}.com/…`}
           className="h-9 flex-1 text-sm"
-          aria-label={`URL de la vidéo sur ${publication.platform}`}
+          aria-label={`URL du contenu sur ${publication.platform}`}
         />
 
         {browsableUrl && (
@@ -128,7 +128,7 @@ function PublicationUrlRow({
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex shrink-0 items-center gap-1.5 rounded-2xl border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/15"
-            title={`Ouvrir la vidéo ${publication.platform} dans un nouvel onglet`}
+            title={`Ouvrir le contenu ${publication.platform} dans un nouvel onglet`}
           >
             <ExternalLink className="size-3.5" />
             Voir en ligne

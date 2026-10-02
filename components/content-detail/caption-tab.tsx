@@ -96,7 +96,7 @@ export function CaptionTab({
           <div>
             <h2 className="text-base font-semibold">Caption</h2>
             <p className="text-xs text-muted">
-              Le texte qui sera publié avec la vidéo. Prépare-le ici, copie-le
+              Le texte qui sera publié avec le contenu. Prépare-le ici, copie-le
               au moment de poster.
             </p>
           </div>

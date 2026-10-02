@@ -78,7 +78,7 @@
     },
     "panel": {
       "signinTitle": "Content de te revoir !",
-      "signinText": "Connecte-toi pour retrouver ton espace, tes marques et tes vidéos.",
+      "signinText": "Connecte-toi pour retrouver ton espace, tes marques et tes contenus.",
       "signinCta": "Se connecter",
       "signupTitle": "Nouveau sur Kreatly ?",
       "signupText": "Crée ton compte et pilote ta production vidéo de A à Z.",
@@ -159,8 +159,8 @@
     "today": "Aujourd'hui",
     "prevMonth": "Mois précédent",
     "nextMonth": "Mois suivant",
-    "dragHint": "💡 Glisse une vidéo d'un jour à l'autre pour la replanifier.",
-    "addOnDay": "Ajouter une vidéo ce jour",
+    "dragHint": "💡 Glisse un contenu d'un jour à l'autre pour le replanifier.",
+    "addOnDay": "Ajouter un contenu ce jour",
     "moreItems": "+{count} autres",
     "weekdays": {
       "mon": "Lun",
@@ -187,7 +187,7 @@
   },
   "content": {
     "untitled": "Sans titre",
-    "deleteTitle": "Supprimer cette vidéo ?",
+    "deleteTitle": "Supprimer ce contenu ?",
     "deleteDescription": "Cette action est définitive.",
     "deleteConfirm": "Confirmer",
     "deleting": "Suppression...",
@@ -199,7 +199,7 @@
       "duplicate": "Dupliquer",
       "changeStatus": "Changer le statut",
       "delete": "Supprimer",
-      "confirmDelete": "Supprimer cette vidéo ? Cette action est définitive."
+      "confirmDelete": "Supprimer ce contenu ? Cette action est définitive."
     },
     "backToCalendar": "Retour au calendrier"
   },
@@ -213,7 +213,7 @@
   },
   "plan": {
     "sectionTitle": "Informations générales",
-    "videoTitle": "Titre de la vidéo",
+    "videoTitle": "Titre du contenu",
     "videoTitlePlaceholder": "Ex : 3 erreurs que font les créateurs débutants",
     "format": "Format",
     "platform": "Plateforme",
@@ -383,7 +383,7 @@
     "noResults": "Aucune accroche trouvée. Essaye d'autres mots-clés.",
     "use": "Utiliser",
     "pickerTitle": "Bibliothèque d'accroches",
-    "pickerSubtitle": "Clique sur « Utiliser » pour remplacer l'accroche de ta vidéo.",
+    "pickerSubtitle": "Clique sur « Utiliser » pour remplacer l'accroche de ton contenu.",
     "categories": {
       "curiosity": "Curiosité",
       "mistake": "Erreurs",
@@ -399,16 +399,16 @@
     "subtitle": "{brand} · ce que tu mesures, tu peux l'améliorer.",
     "kpi": {
       "totalViews": "Total vues",
-      "publishedVideos": "Vidéos publiées",
-      "videosWithStats": "Vidéos avec stats"
+      "publishedVideos": "Contenus publiés",
+      "videosWithStats": "Contenus avec stats"
     },
     "noDataTitle": "Pas encore de données de performance",
-    "noDataSubtitle": "Pour voir tes analytics se remplir, va sur une vidéo publiée et renseigne les Performances (vues, likes, partages...).",
+    "noDataSubtitle": "Pour voir tes analytics se remplir, va sur un contenu publié et renseigne les Performances (vues, likes, partages...).",
     "pillarRanking": {
       "title": "Quels sujets performent le mieux ?",
       "subtitle": "Classement par pilier de contenu — pour savoir de quoi reparler.",
       "trendingBadge": "↗ {pillar} en progression (+{delta} vues ce mois)",
-      "emptyLabel": "Renseigne le pilier de contenu sur tes vidéos pour voir le classement."
+      "emptyLabel": "Renseigne le pilier de contenu sur tes contenus pour voir le classement."
     },
     "platformRanking": {
       "title": "Par plateforme",
@@ -421,19 +421,19 @@
       "emptyLabel": "—"
     },
     "topVideos": {
-      "title": "Top 5 vidéos",
-      "subtitle": "Les vidéos qui ont le plus marché.",
-      "emptyLabel": "Pas encore de vidéo avec des vues renseignées.",
+      "title": "Top 5 contenus",
+      "subtitle": "Les contenus qui ont le plus marché.",
+      "emptyLabel": "Pas encore de contenu avec des vues renseignées.",
       "viewsLabel": "{count} vues"
     },
     "charts": {
       "viewsByMonth": "Vues par mois",
       "viewsByMonthSub": "Cumul sur les 6 derniers mois",
-      "publishedByMonth": "Vidéos publiées par mois",
+      "publishedByMonth": "Contenus publiés par mois",
       "publishedByMonthSub": "Évolution de ta cadence",
       "noData": "Pas encore de données."
     },
-    "rankItemSecondary": "{count, plural, one {# vidéo} other {# vidéos}} · moy. {avg} vues"
+    "rankItemSecondary": "{count, plural, one {# contenu} other {# contenus}} · moy. {avg} vues"
   },
   "profile": {
     "title": "Mon profil",
@@ -458,10 +458,10 @@
     "newBrand": "Nouvelle marque",
     "countTitle": "{count, plural, =0 {Aucune marque} one {# marque} other {# marques}}",
     "countSubtitle": "Clique sur une marque pour gérer son équipe, ses piliers et objectifs. Tu peux aussi la renommer ou la supprimer.",
-    "videosCount": "{count, plural, =0 {Aucune vidéo} one {# vidéo} other {# vidéos}}",
+    "videosCount": "{count, plural, =0 {Aucun contenu} one {# contenu} other {# contenus}}",
     "emptyList": "Aucune marque pour le moment.",
     "deleteConfirmTitle": "Supprimer « {name} » ?",
-    "deleteConfirmText": "Toutes les vidéos, scripts, storyboards et statistiques liés à cette marque seront définitivement perdus. Cette action est irréversible.",
+    "deleteConfirmText": "Tous les contenus, scripts, storyboards et statistiques liés à cette marque seront définitivement perdus. Cette action est irréversible.",
     "deleteTypePrompt": "Pour confirmer, tape {name} :",
     "deleteConfirm": "Confirmer la suppression",
     "deleting": "Suppression...",
@@ -479,24 +479,24 @@
     "subtitle": "Configure les piliers, les objectifs et gère ton équipe pour cette marque.",
     "team": {
       "title": "Équipe",
-      "subtitle": "Les personnes qui peuvent voir et modifier les vidéos de cette marque."
+      "subtitle": "Les personnes qui peuvent voir et modifier les contenus de cette marque."
     },
     "pillars": {
       "title": "Piliers de contenu",
-      "subtitle": "Les thématiques récurrentes de la marque. Tu les retrouveras dans le menu « Pilier » lors de la création d'une vidéo.",
+      "subtitle": "Les thématiques récurrentes de la marque. Tu les retrouveras dans le menu « Pilier » lors de la création d'un contenu.",
       "empty": "Aucun pilier pour le moment. Ex : Marketing digital, Productivité, Personal branding…",
       "placeholder": "Ex : Marketing digital",
       "add": "Ajouter un pilier"
     },
     "objectives": {
       "title": "Objectifs",
-      "subtitle": "Les objectifs business possibles pour les vidéos. Ajoute ceux qui correspondent à cette marque.",
+      "subtitle": "Les objectifs business possibles pour les contenus. Ajoute ceux qui correspondent à cette marque.",
       "empty": "Aucun objectif. Ex : Éducation, Vente, Notoriété…",
       "placeholder": "Ex : Lead generation",
       "add": "Ajouter un objectif"
     },
     "taxonomy": {
-      "deleteConfirm": "Supprimer « {name} » ?\n\nLes vidéos qui l'utilisaient garderont la valeur en texte libre."
+      "deleteConfirm": "Supprimer « {name} » ?\n\nLes contenus qui l'utilisaient garderont la valeur en texte libre."
     }
   },
   "team": {
@@ -508,7 +508,7 @@
     "selfSuffix": "(toi)",
     "leave": "Quitter",
     "remove": "Retirer",
-    "leaveConfirm": "Quitter cette marque ?\n\nTu perdras l'accès à toutes les vidéos.",
+    "leaveConfirm": "Quitter cette marque ?\n\nTu perdras l'accès à tous les contenus.",
     "removeConfirm": "Retirer {email} de la marque ?",
     "pendingTitle": "Invitations en attente ({count})",
     "expiresOn": "expire le {date}",
@@ -538,7 +538,7 @@
     "roleDescriptions": {
       "owner": "Tout faire, y compris supprimer la marque",
       "admin": "Tout faire sauf supprimer la marque",
-      "editor": "Créer et modifier les vidéos",
+      "editor": "Créer et modifier les contenus",
       "viewer": "Consulter uniquement (lecture seule)"
     }
   },
@@ -546,7 +546,7 @@
     "header": "Commentaires",
     "headerButton": "Commentaires",
     "headerSubtitleThread": "{count, plural, =0 {Aucun commentaire} one {# commentaire} other {# commentaires}}",
-    "headerSubtitleInbox": "Toute la discussion sur cette vidéo",
+    "headerSubtitleInbox": "Toute la discussion sur ce contenu",
     "filters": {
       "all": "Tous",
       "unread": "Non lus",
@@ -643,7 +643,7 @@
     "regenerate": "Régénérer le lien",
     "copy": "Copier",
     "copied": "Copié",
-    "dialogTitle": "Partager cette vidéo",
+    "dialogTitle": "Partager ce contenu",
     "dialogDescription": "Donne le lien à qui tu veux. Pas de connexion requise — c'est en lecture seule.",
     "linkLabel": "Lien public",
     "warning": "Ce lien est public et utilisable par toute personne qui le reçoit. Tu peux le désactiver à tout moment.",
@@ -656,7 +656,7 @@
   },
   "deleteContent": {
     "button": "Supprimer",
-    "confirmTitle": "Supprimer cette vidéo ?",
+    "confirmTitle": "Supprimer ce contenu ?",
     "confirmDescription": "Cette action est définitive et ne peut pas être annulée.",
     "deleting": "Suppression…",
     "confirm": "Confirmer la suppression"
@@ -701,7 +701,7 @@
     "pillar": {
       "description": "Les thématiques phares de ta marque. Bien choisis, ils transforment un compte qui poste au hasard en vraie stratégie.",
       "whatIs": "C'est quoi, concrètement ?",
-      "whatIsP1": "Un pilier de contenu est une grande thématique que tu vas couvrir régulièrement. Considère-le comme une colonne de ta stratégie : chaque vidéo que tu produis doit pouvoir être rangée dans un pilier.",
+      "whatIsP1": "Un pilier de contenu est une grande thématique que tu vas couvrir régulièrement. Considère-le comme une colonne de ta stratégie : chaque contenu que tu produis doit pouvoir être rangée dans un pilier.",
       "whatIsP2": "La règle d'or : entre 3 et 5 piliers maximum. Moins, tu vas vite tourner en rond. Plus, ton audience ne comprendra plus de quoi tu parles.",
       "methodTitle": "La méthode en 5 étapes",
       "step1": "Pose ton objectif et ta cible. Pourquoi tu communiques (notoriété, communauté, ventes) ? À qui tu parles ?",
@@ -714,14 +714,14 @@
       "step4d": "Promotionnel — tes offres, tes résultats, tes témoignages clients",
       "step5": "Crée ta banque d'idées. Dans Kreatly, chaque pilier devient un filtre : tu pourras y rattacher tes Reels et Stories à mesure que les idées arrivent.",
       "testTitle": "Le test de validation",
-      "test": "Pour chaque pilier, demande-toi : « Est-ce que je peux générer au moins 30 idées de vidéos sans transpirer ? » Si oui → c'est un vrai pilier. Si non → fusionne-le ou abandonne-le.",
+      "test": "Pour chaque pilier, demande-toi : « Est-ce que je peux générer au moins 30 idées de contenus sans transpirer ? » Si oui → c'est un vrai pilier. Si non → fusionne-le ou abandonne-le.",
       "examplesTitle": "3 exemples concrets",
       "example1": "Coach business — Astuces marketing (éducatif), Routine entrepreneur (coulisses), Mindset & discipline (inspirant), Témoignages clients (promo)",
       "example2": "Marque de cosmétiques naturels — Conseils beauté (éducatif), Fabrication en atelier (coulisses), Zéro déchet & valeurs (inspirant), Présentation produits (promo)",
       "example3": "Restaurant local — Recettes & techniques (éducatif), Une journée en cuisine (coulisses), Producteurs locaux (inspirant), Plat du jour & événements (promo)",
       "mohtawaTitle": "Comment Kreatly utilise tes piliers",
-      "mohtawa1": "Tu retrouves la liste dans le menu déroulant « Pilier de contenu » de chaque vidéo (juste au-dessus).",
-      "mohtawa2": "Le bouton orange + à droite du menu te permet d'en ajouter un nouveau à la volée, sans quitter la fiche vidéo.",
+      "mohtawa1": "Tu retrouves la liste dans le menu déroulant « Pilier de contenu » de chaque contenu (juste au-dessus).",
+      "mohtawa2": "Le bouton orange + à droite du menu te permet d'en ajouter un nouveau à la volée, sans quitter la fiche contenu.",
       "mohtawa3": "Dans l'onglet Analytics, tes piliers sont classés par performance : tu vois lequel ramène le plus de vues.",
       "mohtawa4": "Tu peux gérer toute ta taxonomie (ajouter, renommer, supprimer) depuis la page Marques → [ta marque].",
       "tip": "Conseil : commence avec 3 piliers seulement. Tu pourras toujours en ajouter un 4ᵉ ou 5ᵉ plus tard, une fois que tu maîtrises les premiers."
@@ -732,7 +732,7 @@
     "reelTitle": "Générer le script de ton Reel avec Krea",
     "storyTitle": "Générer ta séquence Story avec Krea",
     "subtitle": "Donne-moi un sujet, je m'occupe du reste. Tu pourras tout éditer après.",
-    "topic": "Sujet de la vidéo",
+    "topic": "Sujet du contenu",
     "topicPlaceholder": "Ex : Les 3 erreurs que font les créateurs débutants sur Instagram",
     "audience": "Audience cible (optionnel)",
     "audiencePlaceholder": "Ex : entrepreneurs solo, marketeurs B2B, étudiants...",

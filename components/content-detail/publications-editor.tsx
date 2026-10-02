@@ -68,7 +68,7 @@ export function PublicationsEditor({
         <Globe className="size-4 text-muted" />
         <Label className="text-sm font-semibold">Publications</Label>
         <span className="text-[10px] text-muted">
-          · Une vidéo peut sortir sur plusieurs plateformes à des dates différentes
+          · Un contenu peut sortir sur plusieurs plateformes à des dates différentes
         </span>
       </div>
 
@@ -203,7 +203,7 @@ function PublicationRow({
         />
 
         <span className="flex-1 text-[10px] text-muted sm:text-right">
-          L&apos;URL de la vidéo se renseigne après publication, dans l&apos;onglet
+          L&apos;URL du contenu se renseigne après publication, dans l&apos;onglet
           Performance.
         </span>
 

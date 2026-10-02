@@ -78,7 +78,7 @@
     },
     "panel": {
       "signinTitle": "Welcome back!",
-      "signinText": "Sign in to find your workspace, your brands and your videos.",
+      "signinText": "Sign in to find your workspace, your brands and your content.",
       "signinCta": "Sign in",
       "signupTitle": "New to Kreatly?",
       "signupText": "Create your account and run your video production end to end.",
@@ -159,8 +159,8 @@
     "today": "Today",
     "prevMonth": "Previous month",
     "nextMonth": "Next month",
-    "dragHint": "💡 Drag a video from one day to another to reschedule it.",
-    "addOnDay": "Add a video on this day",
+    "dragHint": "💡 Drag a content from one day to another to reschedule it.",
+    "addOnDay": "Add a content on this day",
     "moreItems": "+{count} more",
     "weekdays": {
       "mon": "Mon",
@@ -187,7 +187,7 @@
   },
   "content": {
     "untitled": "Untitled",
-    "deleteTitle": "Delete this video?",
+    "deleteTitle": "Delete this content?",
     "deleteDescription": "This action cannot be undone.",
     "deleteConfirm": "Confirm",
     "deleting": "Deleting...",
@@ -199,7 +199,7 @@
       "duplicate": "Duplicate",
       "changeStatus": "Change status",
       "delete": "Delete",
-      "confirmDelete": "Delete this video? This action cannot be undone."
+      "confirmDelete": "Delete this content? This action cannot be undone."
     },
     "backToCalendar": "Back to calendar"
   },
@@ -213,7 +213,7 @@
   },
   "plan": {
     "sectionTitle": "General information",
-    "videoTitle": "Video title",
+    "videoTitle": "Content title",
     "videoTitlePlaceholder": "e.g. 3 mistakes new creators make",
     "format": "Format",
     "platform": "Platform",
@@ -383,7 +383,7 @@
     "noResults": "No hook found. Try different keywords.",
     "use": "Use",
     "pickerTitle": "Hooks library",
-    "pickerSubtitle": "Click \"Use\" to replace your video's hook.",
+    "pickerSubtitle": "Click \"Use\" to replace your content's hook.",
     "categories": {
       "curiosity": "Curiosity",
       "mistake": "Mistakes",
@@ -399,16 +399,16 @@
     "subtitle": "{brand} · what you measure, you can improve.",
     "kpi": {
       "totalViews": "Total views",
-      "publishedVideos": "Published videos",
-      "videosWithStats": "Videos with stats"
+      "publishedVideos": "Published content",
+      "videosWithStats": "Content with stats"
     },
     "noDataTitle": "No performance data yet",
-    "noDataSubtitle": "To see your analytics fill up, open a published video and enter the Performance numbers (views, likes, shares...).",
+    "noDataSubtitle": "To see your analytics fill up, open a published content and enter the Performance numbers (views, likes, shares...).",
     "pillarRanking": {
       "title": "Which topics perform best?",
       "subtitle": "Ranking by content pillar — so you know what to talk about next.",
       "trendingBadge": "↗ {pillar} trending up (+{delta} views this month)",
-      "emptyLabel": "Set the content pillar on your videos to see the ranking."
+      "emptyLabel": "Set the content pillar on your content to see the ranking."
     },
     "platformRanking": {
       "title": "By platform",
@@ -421,19 +421,19 @@
       "emptyLabel": "—"
     },
     "topVideos": {
-      "title": "Top 5 videos",
+      "title": "Top 5 content",
       "subtitle": "Your best performers.",
-      "emptyLabel": "No video with views yet.",
+      "emptyLabel": "No content with views yet.",
       "viewsLabel": "{count} views"
     },
     "charts": {
       "viewsByMonth": "Views per month",
       "viewsByMonthSub": "Last 6 months",
-      "publishedByMonth": "Videos published per month",
+      "publishedByMonth": "Content published per month",
       "publishedByMonthSub": "Your output trend",
       "noData": "No data yet."
     },
-    "rankItemSecondary": "{count, plural, one {# video} other {# videos}} · avg. {avg} views"
+    "rankItemSecondary": "{count, plural, one {# item} other {# items}} · avg. {avg} views"
   },
   "profile": {
     "title": "My profile",
@@ -458,10 +458,10 @@
     "newBrand": "New brand",
     "countTitle": "{count, plural, =0 {No brands} one {# brand} other {# brands}}",
     "countSubtitle": "Click on a brand to manage its team, pillars and goals. You can also rename or delete it.",
-    "videosCount": "{count, plural, =0 {No videos} one {# video} other {# videos}}",
+    "videosCount": "{count, plural, =0 {No content} one {# item} other {# items}}",
     "emptyList": "No brands yet.",
     "deleteConfirmTitle": "Delete \"{name}\"?",
-    "deleteConfirmText": "All videos, scripts, storyboards and stats tied to this brand will be permanently lost. This cannot be undone.",
+    "deleteConfirmText": "All content, scripts, storyboards and stats tied to this brand will be permanently lost. This cannot be undone.",
     "deleteTypePrompt": "To confirm, type {name}:",
     "deleteConfirm": "Confirm deletion",
     "deleting": "Deleting...",
@@ -479,24 +479,24 @@
     "subtitle": "Set up pillars, goals and manage the team for this brand.",
     "team": {
       "title": "Team",
-      "subtitle": "People who can view and edit videos for this brand."
+      "subtitle": "People who can view and edit content for this brand."
     },
     "pillars": {
       "title": "Content pillars",
-      "subtitle": "The recurring themes for this brand. You'll find them in the \"Pillar\" menu when creating a video.",
+      "subtitle": "The recurring themes for this brand. You'll find them in the \"Pillar\" menu when creating a content.",
       "empty": "No pillars yet. E.g. Digital marketing, Productivity, Personal branding…",
       "placeholder": "e.g. Digital marketing",
       "add": "Add a pillar"
     },
     "objectives": {
       "title": "Goals",
-      "subtitle": "The business goals possible for this brand's videos. Add the ones that fit.",
+      "subtitle": "The business goals possible for this brand's content. Add the ones that fit.",
       "empty": "No goals yet. E.g. Education, Sales, Awareness…",
       "placeholder": "e.g. Lead generation",
       "add": "Add a goal"
     },
     "taxonomy": {
-      "deleteConfirm": "Delete \"{name}\"?\n\nVideos using it will keep the value as plain text."
+      "deleteConfirm": "Delete \"{name}\"?\n\nContent using it will keep the value as plain text."
     }
   },
   "team": {
@@ -508,7 +508,7 @@
     "selfSuffix": "(you)",
     "leave": "Leave",
     "remove": "Remove",
-    "leaveConfirm": "Leave this brand?\n\nYou'll lose access to all its videos.",
+    "leaveConfirm": "Leave this brand?\n\nYou'll lose access to all its content.",
     "removeConfirm": "Remove {email} from the brand?",
     "pendingTitle": "Pending invitations ({count})",
     "expiresOn": "expires on {date}",
@@ -538,7 +538,7 @@
     "roleDescriptions": {
       "owner": "Full access, including brand deletion",
       "admin": "Full access except brand deletion",
-      "editor": "Create and edit videos",
+      "editor": "Create and edit content",
       "viewer": "View only (read-only)"
     }
   },
@@ -546,7 +546,7 @@
     "header": "Comments",
     "headerButton": "Comments",
     "headerSubtitleThread": "{count, plural, =0 {No comments} one {# comment} other {# comments}}",
-    "headerSubtitleInbox": "All discussion on this video",
+    "headerSubtitleInbox": "All discussion on this content",
     "filters": {
       "all": "All",
       "unread": "Unread",
@@ -643,7 +643,7 @@
     "regenerate": "Regenerate link",
     "copy": "Copy",
     "copied": "Copied",
-    "dialogTitle": "Share this video",
+    "dialogTitle": "Share this content",
     "dialogDescription": "Give the link to anyone. No sign-in needed — it's read-only.",
     "linkLabel": "Public link",
     "warning": "This link is public and can be used by anyone who receives it. You can disable it any time.",
@@ -656,7 +656,7 @@
   },
   "deleteContent": {
     "button": "Delete",
-    "confirmTitle": "Delete this video?",
+    "confirmTitle": "Delete this content?",
     "confirmDescription": "This action is final and cannot be undone.",
     "deleting": "Deleting…",
     "confirm": "Confirm deletion"
@@ -701,7 +701,7 @@
     "pillar": {
       "description": "The flagship themes of your brand. Picked well, they turn a random-posting account into a real strategy.",
       "whatIs": "What is it, concretely?",
-      "whatIsP1": "A content pillar is a broad theme you'll cover regularly. Think of it as a column of your strategy: every video you produce should fit under one pillar.",
+      "whatIsP1": "A content pillar is a broad theme you'll cover regularly. Think of it as a column of your strategy: every content you produce should fit under one pillar.",
       "whatIsP2": "The golden rule: between 3 and 5 pillars max. Fewer, and you'll repeat yourself. More, and your audience will lose the plot.",
       "methodTitle": "The 5-step method",
       "step1": "Set your goal and target. Why are you posting (awareness, community, sales)? Who are you talking to?",
@@ -714,14 +714,14 @@
       "step4d": "Promotional — your offers, your results, customer testimonials",
       "step5": "Build your idea bank. In Kreatly, each pillar becomes a filter: you'll attach Reels and Stories to it as ideas come.",
       "testTitle": "The validation test",
-      "test": "For each pillar, ask yourself: \"Can I come up with at least 30 video ideas without breaking a sweat?\" If yes → it's a real pillar. If not → merge it or drop it.",
+      "test": "For each pillar, ask yourself: \"Can I come up with at least 30 content ideas without breaking a sweat?\" If yes → it's a real pillar. If not → merge it or drop it.",
       "examplesTitle": "3 concrete examples",
       "example1": "Business coach — Marketing tips (educational), Entrepreneur routine (behind-the-scenes), Mindset & discipline (inspirational), Client testimonials (promo)",
       "example2": "Natural cosmetics brand — Beauty tips (educational), Workshop production (behind-the-scenes), Zero waste & values (inspirational), Product showcases (promo)",
       "example3": "Local restaurant — Recipes & techniques (educational), A day in the kitchen (behind-the-scenes), Local producers (inspirational), Dish of the day & events (promo)",
       "mohtawaTitle": "How Kreatly uses your pillars",
-      "mohtawa1": "You'll find the list in the \"Content pillar\" dropdown of each video (just above).",
-      "mohtawa2": "The orange + button to the right of the menu lets you add a new pillar on the fly, without leaving the video.",
+      "mohtawa1": "You'll find the list in the \"Content pillar\" dropdown of each content (just above).",
+      "mohtawa2": "The orange + button to the right of the menu lets you add a new pillar on the fly, without leaving the content.",
       "mohtawa3": "In the Analytics tab, your pillars are ranked by performance: you can see which one brings in the most views.",
       "mohtawa4": "You can manage your full taxonomy (add, rename, delete) from Brands → [your brand].",
       "tip": "Tip: start with 3 pillars only. You can always add a 4th or 5th later, once you've mastered the first ones."
@@ -732,7 +732,7 @@
     "reelTitle": "Generate your Reel script with Krea",
     "storyTitle": "Generate your Story sequence with Krea",
     "subtitle": "Give me a topic, I handle the rest. You can edit everything after.",
-    "topic": "Video topic",
+    "topic": "Content topic",
     "topicPlaceholder": "e.g. The 3 mistakes new creators make on Instagram",
     "audience": "Target audience (optional)",
     "audiencePlaceholder": "e.g. solo founders, B2B marketers, students...",

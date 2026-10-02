@@ -166,7 +166,7 @@ export function PlanTab({
               inputLabel="Nom du thème"
               inputPlaceholder="Ex : Prévention & Conseils"
               createDialogTitle="Nouveau thème"
-              createDialogDescription="Cette étiquette pourra être réutilisée sur d'autres vidéos de la marque."
+              createDialogDescription="Cette étiquette pourra être réutilisée sur d'autres contenus de la marque."
               createLabel="Créer un thème"
               onCreate={async (name) =>
                 createTaxonomy("pillar", content.brand_id, name)
