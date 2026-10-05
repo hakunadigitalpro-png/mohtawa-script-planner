@@ -1,5 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "_comment": "dub1 = Dublin. Le projet Supabase est en eu-west-1 (Irlande) : la fonction tourne donc dans le même centre de données que la base. Avant, elle s'exécutait à Washington (iad1, le défaut de Vercel) et chaque requête traversait l'Atlantique — une dizaine d'allers-retours par page.",
   "regions": ["dub1"]
 }
