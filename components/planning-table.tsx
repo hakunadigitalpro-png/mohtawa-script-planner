@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   typeColor,
   typeLabel,
@@ -18,10 +19,13 @@ import type { Content } from "@/lib/types";
 export function PlanningTable({
   contents,
   commentCounts = {},
+  thumbs = {},
 }: {
   contents: Content[];
   /** contentId → nombre de commentaires non lus (badge). */
   commentCounts?: Record<string, number>;
+  /** contentId → première image du contenu (lib/thumbnails). */
+  thumbs?: Record<string, string>;
 }) {
   const sorted = [...contents].sort((a, b) =>
     (a.date ?? "9999-99-99").localeCompare(b.date ?? "9999-99-99"),
@@ -57,7 +61,7 @@ export function PlanningTable({
     <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
       <div className="min-w-[760px]">
         <div
-          className={`grid ${cols} gap-3 border-b border-border/60 bg-secondary/40 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted`}
+          className={`grid ${cols} gap-3 border-b border-border/60 bg-secondary/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted`}
         >
           <div>Date</div>
           <div>Type</div>
@@ -69,7 +73,7 @@ export function PlanningTable({
 
         {groups.map((g) => (
           <div key={g.label}>
-            <div className="bg-secondary/20 px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
+            <div className="bg-secondary/20 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted">
               {g.label}
             </div>
             {g.items.map((c) => (
@@ -107,8 +111,26 @@ export function PlanningTable({
                       <span className="text-muted">—</span>
                     )}
                   </span>
-                  <span className="truncate font-medium text-foreground" dir="auto">
-                    {c.title || "Sans titre"}
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    {thumbs[c.id] ? (
+                      <Image
+                        src={thumbs[c.id]}
+                        alt=""
+                        width={72}
+                        height={72}
+                        className="size-9 shrink-0 rounded-md object-cover object-top"
+                      />
+                    ) : (
+                      /* Réserve la place : sans ce carré, les titres des lignes
+                         sans visuel ne seraient plus alignés avec les autres. */
+                      <span className="size-9 shrink-0 rounded-md bg-secondary" />
+                    )}
+                    <span
+                      className="truncate font-medium text-foreground"
+                      dir="auto"
+                    >
+                      {c.title || "Sans titre"}
+                    </span>
                   </span>
                 </Link>
                 {/* Sibling du Link (pas nesté dedans) pour commenter sans

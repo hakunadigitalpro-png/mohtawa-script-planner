@@ -178,6 +178,16 @@ export default async function CalendarPage({
     }));
   }
 
+  // Le Planning montre les mêmes contenus, en tableau : il a besoin des
+  // mêmes vignettes. Elles n'étaient chargées que dans la branche ci-dessus,
+  // donc la colonne restait vide dès qu'on changeait d'onglet.
+  const planningThumbs =
+    view === "planning"
+      ? Object.fromEntries(
+          await fetchThumbnails(supabase, contents.map((c) => c.id)),
+        )
+      : {};
+
   const tabCls = (on: boolean) =>
     cn(
       "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition",
@@ -252,7 +262,11 @@ export default async function CalendarPage({
               <ChevronRight className="size-4 rtl-flip" />
             </Link>
           </div>
-          <PlanningTable contents={contents} commentCounts={commentCounts} />
+          <PlanningTable
+            contents={contents}
+            commentCounts={commentCounts}
+            thumbs={planningThumbs}
+          />
         </div>
       ) : (
         <CalendarMonth
