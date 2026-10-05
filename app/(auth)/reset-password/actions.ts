@@ -13,8 +13,12 @@ export async function resetPassword(formData: FormData) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
 
   const supabase = await createClient();
+  // Vers /auth/callback et pas /login : le lien porte un code à échanger
+  // contre une session. La page de connexion l'ignorait, donc le mot de passe
+  // oublié était cassé de la même façon que la confirmation d'inscription.
+  // Le callback renvoie ensuite sur /reset-password pour choisir le nouveau.
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: siteUrl ? `${siteUrl}/login` : undefined,
+    redirectTo: siteUrl ? `${siteUrl}/auth/callback` : undefined,
   });
 
   if (error) return { error: error.message };

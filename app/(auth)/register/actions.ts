@@ -22,11 +22,23 @@ export async function register(formData: FormData) {
     return { error: "passwordTooShort" as const };
   }
 
+  // Même prudence que pour la réinitialisation : une adresse de confiance
+  // issue de la variable d'environnement, jamais un en-tête de requête.
+  // Sans elle, Supabase retombe sur sa Site URL, qui convient aussi.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      data: { full_name: fullName },
+      // Viser la route qui échange le code contre une session, plutôt que de
+      // dépendre du chemin par défaut de la Site URL.
+      ...(siteUrl
+        ? { emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(next)}` }
+        : {}),
+    },
   });
 
   if (error) return { error: error.message };
