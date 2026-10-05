@@ -1,10 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { FileDown } from "lucide-react";
+import { CalendarDays, FileDown } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { getTranslations } from "next-intl/server";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
+import { formatDateLongFr, formatTimeFr } from "@/lib/utils";
 import { SubmitReviewButton } from "@/components/content-detail/submit-review-button";
 
 // L'autopsie IA (appel Claude) peut prendre 15-30s. Le défaut Vercel est
@@ -205,6 +206,24 @@ export default async function ContentDetailPage({
     targetLabels[`slide:${i}`] = `${tTabs("stories")} · ${slotLabel}`;
   }
 
+  // Depuis que la date a quitté l'onglet Plan pour vivre dans les
+  // publications (« Idée 10 »), un contenu sans plateforme programmée
+  // n'affichait sa date NULLE PART — alors que le calendrier, lui, la
+  // connaît via `contents.date`. On la remonte dans l'en-tête : c'est elle
+  // qui dit « où je suis » quand on arrive depuis le planning.
+  const datedPubs = publications
+    .filter((p) => p.scheduled_date)
+    .sort((a, b) =>
+      `${a.scheduled_date}${a.scheduled_time ?? "99"}`.localeCompare(
+        `${b.scheduled_date}${b.scheduled_time ?? "99"}`,
+      ),
+    );
+  const whenDate = datedPubs[0]?.scheduled_date ?? c.date ?? null;
+  const whenTime = formatTimeFr(datedPubs[0]?.scheduled_time);
+  // Plusieurs plateformes à des dates différentes : l'en-tête annonce la
+  // première et signale qu'il y en a d'autres, le détail reste en dessous.
+  const otherDates = new Set(datedPubs.map((p) => p.scheduled_date)).size - 1;
+
   return (
     <CommentsProvider
       contentId={c.id}
@@ -229,6 +248,25 @@ export default async function ContentDetailPage({
               >
                 {safeT(tStatus, c.status, statusLabel(c.status))}
               </Badge>
+              <span className="ms-1 inline-flex items-center gap-1.5 font-medium text-white/70">
+                <CalendarDays className="size-3.5 shrink-0" />
+                {whenDate ? (
+                  <>
+                    <span className="first-letter:uppercase">
+                      {formatDateLongFr(whenDate)}
+                    </span>
+                    {whenTime && <span>· {whenTime}</span>}
+                    {otherDates > 0 && (
+                      <span>
+                        · +{otherDates} autre{otherDates > 1 ? "s" : ""} date
+                        {otherDates > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-white/60">Pas encore placé</span>
+                )}
+              </span>
             </div>
           }
           actions={

@@ -66,10 +66,7 @@ export function useExplicitSave<T>(
   }, []);
 
   // Warning navigateur quand l'user a des modifs en cours et tente de fermer
-  // l'onglet, refresh, ou cliquer un lien <a> classique.
-  // NB : ne couvre PAS les navigations soft Next.js (router.push). Pour celles-ci
-  // il faudrait un système d'interception au niveau du router (complexe en App
-  // Router 16 — pas d'API publique). Acceptable pour le scope actuel.
+  // l'onglet ou de recharger la page.
   useEffect(() => {
     if (!isDirty) return;
     const handler = (e: BeforeUnloadEvent) => {
@@ -79,6 +76,58 @@ export function useExplicitSave<T>(
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  // Les navigations INTERNES (« Retour au calendrier », la barre latérale…)
+  // ne déclenchent pas `beforeunload` : Next.js change de page sans recharger.
+  // C'était le vrai trou — on cliquait, et le travail disparaissait sans un mot.
+  //
+  // Faute d'API de garde dans l'App Router, on intercepte le clic sur le lien
+  // avant qu'il n'agisse. Volontairement conservateur : on ne se mêle que d'un
+  // clic gauche simple, sur un lien du site qui mène ailleurs. Un clic au
+  // milieu, un Ctrl+clic, un lien externe, un téléchargement ou une ancre
+  // passent intacts — ils n'ont jamais fait perdre de travail.
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+      const anchor = (e.target as HTMLElement | null)?.closest?.("a");
+      if (!anchor) return;
+      if (anchor.hasAttribute("download")) return;
+      if (anchor.target && anchor.target !== "_self") return;
+
+      const href = anchor.getAttribute("href");
+      if (!href || href.startsWith("#")) return;
+
+      let url: URL;
+      try {
+        url = new URL(anchor.href, window.location.href);
+      } catch {
+        return;
+      }
+      // Un autre site : `beforeunload` s'en charge déjà. La même page non plus
+      // ne fait rien perdre.
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname === window.location.pathname) return;
+
+      const leave = window.confirm(
+        "Tu as des modifications non enregistrées.\n\n" +
+          "Si tu quittes maintenant, elles seront perdues.\n" +
+          "Quitter quand même ?",
+      );
+      if (!leave) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    // En phase de capture : on passe avant le routeur de Next.js, sinon la
+    // navigation serait déjà lancée quand on poserait la question.
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
   }, [isDirty]);
 
   return { state, setState, isDirty, isSaving, error, handleSave, handleReset };

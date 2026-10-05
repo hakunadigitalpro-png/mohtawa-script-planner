@@ -77,3 +77,29 @@ export function isFarFuture(isoDate: string, thresholdYears = 5): boolean {
     (new Date(isoDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 365);
   return years > thresholdYears;
 }
+
+/**
+ * « mardi 13 octobre 2026 » — pour les en-têtes, où la date sert à situer
+ * l'utilisateur plutôt qu'à être lue en diagonale dans un tableau.
+ *
+ * Midi et pas minuit : une date seule (AAAA-MM-JJ) est interprétée en UTC,
+ * et reculerait d'un jour à l'affichage dans un fuseau négatif.
+ */
+export function formatDateLongFr(date: string): string {
+  const d = new Date(date.length <= 10 ? `${date}T12:00:00` : date);
+  if (Number.isNaN(d.getTime())) return date;
+  return d.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/** « 09h00 » depuis un HH:MM:SS. Renvoie null si l'heure est absente. */
+export function formatTimeFr(time: string | null | undefined): string | null {
+  if (!time) return null;
+  const [h, m] = time.split(":");
+  if (!h || !m) return null;
+  return `${h}h${m}`;
+}
