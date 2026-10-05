@@ -29,7 +29,7 @@ export async function listUserBrands(): Promise<Brand[]> {
   // l'initiale dans le switcher.
   const { data, error } = await supabase
     .from("brands")
-    .select("id, name, created_by, created_at, brand_kits(logo_url)")
+    .select("id, name, created_by, created_at, ai_enabled, brand_kits(logo_url)")
     .order("created_at", { ascending: true });
   if (error) return [];
 

@@ -6,6 +6,13 @@ export type Brand = {
   /** Logo de la marque (brand_kits.logo_url), embarqué par listUserBrands —
    *  affiché à la place de l'initiale. Null tant qu'aucun logo n'est posé. */
   logo_url?: string | null;
+  /**
+   * Interrupteur IA de la marque (migration 0054). Porté jusqu'ici par
+   * `listUserBrands` pour qu'une seule requête serve à la fois le layout
+   * (Krea) et les pages, au lieu d'en semer une par écran portant un bouton.
+   * Optionnel : la colonne n'existe qu'après la migration.
+   */
+  ai_enabled?: boolean;
 };
 
 export type BrandMember = {

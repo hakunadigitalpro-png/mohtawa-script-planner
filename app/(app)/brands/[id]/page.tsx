@@ -11,6 +11,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { PillarManager } from "./pillar-manager";
 import { ThemeAssistant } from "./theme-assistant";
 import { GuidedTour } from "./guided-tour";
+import { BrandAiSwitch } from "./ai-switch";
 import { ScenePresetManager } from "./scene-preset-manager";
 import { BrandKitManager } from "./brand-kit-manager";
 import { BrandStudio } from "./brand-studio";
@@ -48,7 +49,7 @@ export default async function BrandDetailPage({
 
   const { data: brand } = await supabase
     .from("brands")
-    .select("id, name")
+    .select("id, name, ai_enabled")
     .eq("id", id)
     .maybeSingle();
   if (!brand) notFound();
@@ -130,6 +131,11 @@ export default async function BrandDetailPage({
           <BrandKitManager brandId={brand.id} kit={kit} />
         </CardContent>
       </Card>
+
+      <BrandAiSwitch
+        brandId={brand.id}
+        initialEnabled={(brand as { ai_enabled?: boolean }).ai_enabled !== false}
+      />
 
       <Card>
         <CardHeader>

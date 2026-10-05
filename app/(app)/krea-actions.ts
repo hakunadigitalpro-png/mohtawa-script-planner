@@ -302,6 +302,20 @@ export async function askKrea(input: {
       deeds,
     };
   } catch (e) {
+    // L'interrupteur de la marque (0054) n'est pas une panne : Krea répond
+    // dans sa voix plutôt que de rendre une erreur rouge. Sans ça elle
+    // aurait simplement l'air cassée sur une marque qui écrit à la main.
+    if (e instanceof AiError && e.code === "ai_disabled") {
+      return {
+        ok: true,
+        message:
+          "Sur cette marque, vous écrivez à la main — je te laisse la plume. " +
+          "Je reste là pour le reste : retrouver un contenu, t'ouvrir la bonne page, " +
+          "faire le point sur ton mois. Et si tu changes d'avis, l'écriture assistée " +
+          "se rallume depuis la page de la marque.",
+        deeds: [],
+      };
+    }
     if (e instanceof AiError) return { ok: false, error: e.message };
     return { ok: false, error: "Krea a eu un souci. Réessaie." };
   }

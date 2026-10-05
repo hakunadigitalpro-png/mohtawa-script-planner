@@ -35,12 +35,19 @@ export function ScriptTab({
   story,
   slides,
   brandAudience,
+  aiEnabled = true,
 }: {
   content: Content;
   reel: ReelDetails | null;
   story: StoryDetails | null;
   slides: StorySlide[];
   brandAudience: string | null;
+  /**
+   * Interrupteur IA de la marque (0054). Faux : les boutons de génération
+   * disparaîssent. Le garde serveur refuse déjà l'appel — masquer évite
+   * seulement de proposer un bouton qui ne peut qu'échouer.
+   */
+  aiEnabled?: boolean;
 }) {
   if (content.type === "story") {
     return (
@@ -50,6 +57,7 @@ export function ScriptTab({
         slides={slides}
         title={content.title}
         brandAudience={brandAudience}
+        aiEnabled={aiEnabled}
       />
     );
   }
@@ -59,6 +67,7 @@ export function ScriptTab({
       content={content}
       reel={reel}
       brandAudience={brandAudience}
+      aiEnabled={aiEnabled}
     />
   );
 }
@@ -131,11 +140,13 @@ function ReelScript({
   content,
   reel,
   brandAudience,
+  aiEnabled,
 }: {
   contentId: string;
   content: Content;
   reel: ReelDetails | null;
   brandAudience: string | null;
+  aiEnabled: boolean;
 }) {
   const t = useTranslations("script");
 
@@ -212,13 +223,15 @@ function ReelScript({
               </span>
             </p>
           </div>
-          <AiGeneratorButton
-            contentId={contentId}
-            type="reel"
-            defaultTopic={content.title ?? undefined}
-            defaultAudience={brandAudience ?? undefined}
-            platform={content.platform ?? undefined}
-          />
+          {aiEnabled && (
+            <AiGeneratorButton
+              contentId={contentId}
+              type="reel"
+              defaultTopic={content.title ?? undefined}
+              defaultAudience={brandAudience ?? undefined}
+              platform={content.platform ?? undefined}
+            />
+          )}
         </div>
 
         {/* Switch Guidé / Libre */}
@@ -418,12 +431,14 @@ function StoryScript({
   slides: initialSlides,
   title,
   brandAudience,
+  aiEnabled,
 }: {
   contentId: string;
   story: StoryDetails | null;
   slides: StorySlide[];
   title: string | null;
   brandAudience: string | null;
+  aiEnabled: boolean;
 }) {
   const router = useRouter();
   const t = useTranslations("stories");
@@ -500,12 +515,14 @@ function StoryScript({
               {...computeFilmedStatus(undefined, initialSlides)}
               variant="stories"
             />
-            <AiGeneratorButton
-              contentId={contentId}
-              type="story"
-              defaultTopic={title ?? undefined}
-              defaultAudience={brandAudience ?? undefined}
-            />
+            {aiEnabled && (
+              <AiGeneratorButton
+                contentId={contentId}
+                type="story"
+                defaultTopic={title ?? undefined}
+                defaultAudience={brandAudience ?? undefined}
+              />
+            )}
           </div>
         </div>
 

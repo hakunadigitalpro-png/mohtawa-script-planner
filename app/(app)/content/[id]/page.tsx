@@ -7,6 +7,7 @@ import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { formatDateLongFr, formatTimeFr } from "@/lib/utils";
 import { SubmitReviewButton } from "@/components/content-detail/submit-review-button";
+import { ContentTitleField } from "@/components/content-detail/content-title-field";
 
 // L'autopsie IA (appel Claude) peut prendre 15-30s. Le défaut Vercel est
 // de 10s sur le plan Hobby → la fonction était tuée avant de répondre.
@@ -58,7 +59,7 @@ export default async function ContentDetailPage({
   // trouvait l'autosave, les boutons IA, le partage et la suppression.
   // C'était la SEULE page de l'app sans garde de rôle. On l'envoie sur sa
   // vue de validation, positionnée sur le contenu qu'il vient d'ouvrir.
-  const { role } = await resolveActiveBrand();
+  const { role, active: activeBrand } = await resolveActiveBrand();
   if (role === "viewer") redirect(`/review?c=${id}`);
 
   const { data: content } = await supabase
@@ -235,7 +236,13 @@ export default async function ContentDetailPage({
         <PageHeader
           backHref="/calendar"
           backLabel={tContent("backToCalendar")}
-          title={c.title || tContent("untitled")}
+          title={
+            <ContentTitleField
+              contentId={c.id}
+              initialTitle={c.title ?? ""}
+              placeholder={tContent("untitled")}
+            />
+          }
           meta={
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <ColorDot color={typeColor(c.type)} />
@@ -308,6 +315,7 @@ export default async function ContentDetailPage({
           scenePresets={scenePresets}
           brandId={content.brand_id}
           brandAudience={brandAudience}
+          aiEnabled={activeBrand?.ai_enabled !== false}
         />
       </div>
 

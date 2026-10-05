@@ -40,6 +40,7 @@ export function DetailTabs({
   scenePresets,
   brandId,
   brandAudience,
+  aiEnabled = true,
 }: {
   content: Content;
   reel: ReelDetails | null;
@@ -57,6 +58,12 @@ export function DetailTabs({
   scenePresets: ScenePreset[];
   brandId: string;
   brandAudience: string | null;
+  /**
+   * Interrupteur IA de la marque (0054), porté jusqu'ici par
+   * `resolveActiveBrand()` plutôt que par une requête de plus à chaque
+   * écran qui affiche un bouton.
+   */
+  aiEnabled?: boolean;
 }) {
   const t = useTranslations("tabs");
   const isStory = content.type === "story";
@@ -112,6 +119,7 @@ export function DetailTabs({
       {isSimple ? (
         <TabsContent value="content">
           <ContentTab
+            aiEnabled={aiEnabled}
             contentId={content.id}
             caption={content.caption}
             visuals={visuals}
@@ -125,6 +133,7 @@ export function DetailTabs({
               <VlogTab content={content} vlog={vlog} captureItems={captureItems} />
             ) : (
               <ScriptTab
+                aiEnabled={aiEnabled}
                 content={content}
                 reel={reel}
                 story={story}
@@ -147,7 +156,11 @@ export function DetailTabs({
           )}
           {!isStory && (
             <TabsContent value="caption">
-              <CaptionTab contentId={content.id} caption={content.caption} />
+              <CaptionTab
+                contentId={content.id}
+                caption={content.caption}
+                aiEnabled={aiEnabled}
+              />
             </TabsContent>
           )}
         </>

@@ -26,10 +26,17 @@ export function VlogTab({
   content,
   vlog,
   captureItems,
+  aiEnabled = true,
 }: {
   content: Content;
   vlog: VlogDetails | null;
   captureItems: ChecklistItem[];
+  /**
+   * Interrupteur IA de la marque (0054). Faux : le bloc de génération
+   * disparaît. Le garde serveur refuse déjà l'appel — masquer évite
+   * seulement de proposer un bouton qui ne peut qu'échouer.
+   */
+  aiEnabled?: boolean;
 }) {
   const initial = useMemo(
     () => ({
@@ -82,10 +89,12 @@ export function VlogTab({
               Angle · Hook · Arc · Capture · Voix-off
             </p>
           </div>
-          <VlogGeneratorButton
-            contentId={content.id}
-            platform={content.platform ?? undefined}
-          />
+          {aiEnabled && (
+            <VlogGeneratorButton
+              contentId={content.id}
+              platform={content.platform ?? undefined}
+            />
+          )}
         </div>
 
         <Field

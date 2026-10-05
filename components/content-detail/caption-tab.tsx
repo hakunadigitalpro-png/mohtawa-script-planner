@@ -28,9 +28,16 @@ import { SaveFooter } from "./save-footer";
 export function CaptionTab({
   contentId,
   caption,
+  aiEnabled = true,
 }: {
   contentId: string;
   caption: string | null;
+  /**
+   * Interrupteur IA de la marque (0054). Faux : le bloc de génération
+   * disparaît. Le garde serveur refuse déjà l'appel — masquer évite
+   * seulement de proposer un bouton qui ne peut qu'échouer.
+   */
+  aiEnabled?: boolean;
 }) {
   const initial = useMemo(
     () => ({ caption: caption ?? "" }),
@@ -121,6 +128,7 @@ export function CaptionTab({
           </Button>
         </div>
 
+        {aiEnabled && (
         <div className="space-y-3 rounded-2xl border border-border/60 bg-secondary/30 p-4">
           <KreaBadge />
           <p className="text-sm text-foreground">
@@ -163,6 +171,7 @@ export function CaptionTab({
             </p>
           )}
         </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="caption">Texte de la caption</Label>

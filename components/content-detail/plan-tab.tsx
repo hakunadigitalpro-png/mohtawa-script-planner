@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MultiSelectWithCreate } from "@/components/ui/multi-select-with-create";
@@ -51,7 +50,14 @@ export function PlanTab({
 
   const initial = useMemo(
     () => ({
-      title: content.title ?? "",
+      // Le titre ne vit PLUS ici : il s'édite dans l'en-tête de la fiche,
+      // par action atomique. Même geste que pour platform/date à l'Étape 10.
+      //
+      // Ce n'est pas qu'une question de doublon : `useExplicitSave` resynchro-
+      // nise son état dès que `initial` change. Laisser `title` ici ferait
+      // qu'un titre enregistré depuis l'en-tête (suivi d'un rafraîchissement)
+      // effacerait SILENCIEUSEMENT les piliers, objectifs et statut non
+      // encore enregistrés de cet onglet.
       type: content.type,
       // Idée 10 : platform et date ne vivent plus dans le form du Plan.
       // Ils sont gérés par le PublicationsEditor (actions atomiques sur
@@ -64,7 +70,6 @@ export function PlanTab({
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      content.title,
       content.type,
       pillarsKey,
       objectivesKey,
@@ -75,7 +80,6 @@ export function PlanTab({
   const { state, setState, isDirty, isSaving, error, handleSave, handleReset } =
     useExplicitSave(initial, async (v) =>
       updateContent(content.id, {
-        title: v.title || undefined,
         // Les colonnes singulières pillar/objective seront auto-synchronisées
         // côté DB via trigger sur le 1er élément de l'array (migration 0018).
         pillars: v.pillars,
@@ -98,16 +102,6 @@ export function PlanTab({
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold">{t("sectionTitle")}</h2>
           <CommentButton targetType="plan" targetId="general" />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="title">{t("videoTitle")}</Label>
-          <Input
-            id="title"
-            value={state.title}
-            onChange={(e) => setState((s) => ({ ...s, title: e.target.value }))}
-            placeholder={t("videoTitlePlaceholder")}
-          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

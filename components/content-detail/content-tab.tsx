@@ -24,11 +24,14 @@ export function ContentTab({
   caption,
   visuals,
   isCarousel,
+  aiEnabled = true,
 }: {
   contentId: string;
   caption: string | null;
   visuals: ContentMedia[];
   isCarousel: boolean;
+  /** Interrupteur IA de la marque (0054). */
+  aiEnabled?: boolean;
 }) {
   const router = useRouter();
   const [items, setItems] = React.useState(visuals);
@@ -160,7 +163,7 @@ export function ContentTab({
         {pending && <p className="text-xs text-muted">Enregistrement…</p>}
       </Card>
 
-      <CaptionTab contentId={contentId} caption={caption} />
+      <CaptionTab contentId={contentId} caption={caption} aiEnabled={aiEnabled} />
 
       {preview && (
         <div
