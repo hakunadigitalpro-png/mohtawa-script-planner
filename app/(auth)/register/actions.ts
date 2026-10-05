@@ -43,6 +43,20 @@ export async function register(formData: FormData) {
 
   if (error) return { error: error.message };
 
+  // Adresse DÉJÀ inscrite : Supabase ne renvoie ni erreur ni session, et
+  // surtout n'envoie AUCUN e-mail — il refuse de révéler quelles adresses
+  // ont un compte. Le seul signal est `identities` vide.
+  //
+  // Sans ce test, l'écran affichait « vérifie ta boîte mail » pour un message
+  // qui ne partirait jamais : on attend une confirmation qui n'existe pas, et
+  // on soupçonne l'envoi d'e-mails alors que tout fonctionne.
+  if (data.user && (data.user.identities?.length ?? 0) === 0) {
+    return {
+      error:
+        "Cette adresse a déjà un compte. Connecte-toi, ou passe par « mot de passe oublié ».",
+    };
+  }
+
   // Email confirmations désactivées : on a déjà la session → on file à `next`.
   if (data.session) {
     revalidatePath("/", "layout");
