@@ -33,7 +33,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  // Les e-mails de Supabase pointent sur le « Site URL » du projet, c'est-à-dire
+  // la racine, en accrochant le code de confirmation à l'adresse. Sans ce
+  // renvoi, le code arrivait ici et la landing l'ignorait : l'inscription ne
+  // se terminait jamais. On le fait suivre à la route qui sait l'échanger
+  // contre une session.
+  const sp = await searchParams;
+  const authCode =
+    typeof sp.code === "string"
+      ? `code=${encodeURIComponent(sp.code)}`
+      : typeof sp.token_hash === "string" && typeof sp.type === "string"
+        ? `token_hash=${encodeURIComponent(sp.token_hash)}&type=${encodeURIComponent(sp.type)}`
+        : null;
+  if (authCode) redirect(`/auth/callback?${authCode}`);
+
   const supabase = await createClient();
   const {
     data: { user },
