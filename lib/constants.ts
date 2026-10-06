@@ -52,6 +52,11 @@ export function platformsForType(type: string | null | undefined) {
  */
 export const STATUSES = [
   { value: "idea", label: "Idée", color: "var(--color-status-idea)" },
+  {
+    value: "selected",
+    label: "Retenue",
+    color: "var(--color-status-selected)",
+  },
   { value: "script", label: "Script", color: "var(--color-status-script)" },
   { value: "filming", label: "Tournage", color: "var(--color-status-filming)" },
   { value: "editing", label: "Montage", color: "var(--color-status-editing)" },
@@ -69,6 +74,11 @@ export const STATUSES = [
  */
 export const SIMPLE_STATUSES = [
   { value: "idea", label: "Idée", color: "var(--color-status-idea)" },
+  {
+    value: "selected",
+    label: "Retenue",
+    color: "var(--color-status-selected)",
+  },
   { value: "design", label: "Design", color: "var(--color-status-design)" },
   {
     value: "pending_review",
@@ -85,10 +95,28 @@ export const SIMPLE_STATUSES = [
   { value: "live", label: "Live", color: "var(--color-status-live)" },
 ] as const;
 
-/** Liste de statuts adaptée au type de contenu (vidéo vs simple). */
+/**
+ * Liste de statuts adaptée au type de contenu (vidéo vs simple).
+ *
+ * Sans format — une idée pas encore traitée — on ne propose QUE les deux
+ * étapes communes aux deux parcours. Proposer « Tournage » ou « Montage »
+ * à quelque chose dont on ignore encore si ce sera une vidéo n'aurait aucun
+ * sens : c'est le choix du format qui ouvre la suite.
+ */
 export function statusesForType(type: string | null | undefined) {
+  if (!type) return IDEA_STATUSES;
   return isSimpleType(type) ? SIMPLE_STATUSES : STATUSES;
 }
+
+/** Les seuls statuts qu'un contenu sans format peut porter. */
+export const IDEA_STATUSES = [
+  { value: "idea", label: "Idée", color: "var(--color-status-idea)" },
+  {
+    value: "selected",
+    label: "Retenue",
+    color: "var(--color-status-selected)",
+  },
+] as const;
 
 /** Union dédupliquée des deux listes — pour un filtre global (dashboard). */
 export const ALL_STATUSES = [...STATUSES, ...SIMPLE_STATUSES].filter(

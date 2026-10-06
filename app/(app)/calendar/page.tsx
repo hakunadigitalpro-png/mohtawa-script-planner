@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Lightbulb,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
@@ -14,6 +15,7 @@ import { CalendarMonth, type CalendarEntry } from "@/components/calendar-month";
 import { CalendarQuickCreate } from "@/components/calendar-quick-create";
 import { CalendarPlatformFilter } from "@/components/calendar-platform-filter";
 import { PlanningTable } from "@/components/planning-table";
+import { IdeasBoard, type IdeaCard } from "@/components/ideas-board";
 import { PageHeader } from "@/components/page-header";
 import { fetchThumbnails } from "@/lib/thumbnails";
 import type { Content } from "@/lib/types";
@@ -52,7 +54,15 @@ export default async function CalendarPage({
     params.m && /^\d{4}-\d{2}$/.test(params.m)
       ? params.m
       : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const view = params.view === "planning" ? "planning" : "calendar";
+  // L'onglet Idées n'existe pas pour un client invité : c'est le brouillon
+  // interne. Le garde est ici ET à l'affichage de l'onglet — une URL se tape.
+  const requestedView = params.view ?? "calendar";
+  const view =
+    requestedView === "planning"
+      ? "planning"
+      : requestedView === "ideas" && role !== "viewer"
+        ? "ideas"
+        : "calendar";
   const platformFilter = params.platform || "";
 
   const monthStart = `${ym}-01`;
@@ -116,8 +126,24 @@ export default async function CalendarPage({
 
   // Vue calendrier uniquement : une carte par (contenu × plateforme), sur SA
   // propre date — pas juste la date "primaire" legacy de contents.date.
+  // Les idées : tout ce qui n'a pas encore de date, quel que soit le mois
+  // affiché. Une idée n'appartient à aucun mois — c'est justement ce qui la
+  // distingue d'un contenu placé.
+  const { data: ideasData } =
+    view === "ideas"
+      ? await supabase
+          .from("contents")
+          .select("id, title, type, pillar, status, notes")
+          .eq("brand_id", active.id)
+          .is("date", null)
+          .order("created_at", { ascending: false })
+      : { data: [] };
+  const ideas = (ideasData ?? []) as IdeaCard[];
+
   let entries: CalendarEntry[] = [];
-  if (view !== "planning") {
+  // `=== "calendar"` et non `!== "planning"` : sans ça, l'onglet Idées paierait
+  // les requêtes de publications et de vignettes dont il ne se sert pas.
+  if (view === "calendar") {
     let pubsQuery = supabase
       .from("content_publications")
       .select(
@@ -216,6 +242,12 @@ export default async function CalendarPage({
                 <LayoutList className="size-4" />
                 Planning
               </Link>
+              {!isClient && (
+                <Link href={`?m=${ym}&view=ideas`} className={tabCls(view === "ideas")}>
+                  <Lightbulb className="size-4" />
+                  Idées
+                </Link>
+              )}
             </div>
             {view === "calendar" && <CalendarPlatformFilter />}
             {!isClient && <CalendarQuickCreate />}
@@ -241,7 +273,9 @@ export default async function CalendarPage({
         </Link>
       )}
 
-      {view === "planning" ? (
+      {view === "ideas" ? (
+        <IdeasBoard ideas={ideas} />
+      ) : view === "planning" ? (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <Link

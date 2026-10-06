@@ -35,9 +35,11 @@ export function PlanningTable({
   const groups: { label: string; items: Content[] }[] = [];
   const idxByLabel = new Map<string, number>();
   for (const c of sorted) {
-    const label = c.date
-      ? `Semaine ${Math.ceil(Number(c.date.slice(8, 10)) / 7)}`
-      : "Sans date";
+    // Plus de groupe « Sans date » : la requête parente filtre déjà sur le
+    // mois, donc il était mort — et depuis l'onglet Idées, les contenus sans
+    // date ont leur propre endroit. Deux listes pour la même chose, c'est
+    // exactement ce qu'on cherche à éviter.
+    const label = `Semaine ${Math.ceil(Number((c.date ?? "").slice(8, 10)) / 7)}`;
     let gi = idxByLabel.get(label);
     if (gi === undefined) {
       gi = groups.length;

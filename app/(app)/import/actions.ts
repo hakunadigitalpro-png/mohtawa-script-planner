@@ -32,7 +32,8 @@ type ImportResult = { ok: true; created: number } | { ok: false; error: string }
  */
 export async function importSeries(input: {
   items: { title: string; script: string }[];
-  type: ImportableType;
+  /** Absent : les contenus arrivent dans les Idées, sans format (0055). */
+  type?: ImportableType;
   platform?: string;
   /** Thème appliqué à toute la série — une série traite un sujet. */
   theme?: string;
@@ -58,7 +59,7 @@ export async function importSeries(input: {
     : [];
   const theme = input.theme?.trim();
   const platform = input.platform?.trim() || null;
-  const simple = isSimpleType(input.type);
+  const simple = isSimpleType(input.type ?? null);
 
   const prepared = items.map((item, i) => ({
     id: crypto.randomUUID(),
@@ -72,7 +73,7 @@ export async function importSeries(input: {
     prepared.map((p) => ({
       id: p.id,
       brand_id: brandId,
-      type: input.type,
+      type: input.type ?? null,
       title: p.title,
       date: p.date,
       platform,
@@ -81,6 +82,10 @@ export async function importSeries(input: {
       ...(theme ? { pillars: [theme], pillar: theme } : {}),
       // Un post ou un carrousel n'a pas de script : son texte EST sa légende.
       ...(simple && p.script ? { caption: p.script } : {}),
+      // Sans format choisi, aucune table de détail ne peut accueillir le
+      // texte : il vit dans `notes` (0055) et sera recopié au bon endroit
+      // le jour où le format sera tranché.
+      ...(!input.type && p.script ? { notes: p.script } : {}),
     })),
   );
   if (contentsError) return { ok: false, error: contentsError.message };

@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { MultiSelectWithCreate } from "@/components/ui/multi-select-with-create";
 import { Card } from "@/components/ui/card";
 import { statusesForType, CONTENT_TYPES } from "@/lib/constants";
-import { updateContent } from "@/app/(app)/contents/actions";
+import { updateContent, setContentFormat } from "@/app/(app)/contents/actions";
 import { createTaxonomy } from "@/app/(app)/brands/taxonomy-actions";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
@@ -48,6 +50,12 @@ export function PlanTab({
   const pillarsKey = (content.pillars ?? []).join("|");
   const objectivesKey = (content.objectives ?? []).join("|");
 
+  const router = useRouter();
+  // Le choix du format est atomique et hors du formulaire : il change quels
+  // onglets existent, donc la page doit se reconstruire immédiatement.
+  const [settingFormat, startFormat] = useTransition();
+  const [formatError, setFormatError] = useState<string | null>(null);
+
   const initial = useMemo(
     () => ({
       // Le titre ne vit PLUS ici : il s'édite dans l'en-tête de la fiche,
@@ -67,6 +75,7 @@ export function PlanTab({
       pillars: content.pillars ?? [],
       objectives: content.objectives ?? [],
       status: content.status,
+      notes: content.notes ?? "",
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -74,6 +83,7 @@ export function PlanTab({
       pillarsKey,
       objectivesKey,
       content.status,
+      content.notes,
     ],
   );
 
@@ -85,6 +95,7 @@ export function PlanTab({
         pillars: v.pillars,
         objectives: v.objectives,
         status: v.status,
+        notes: v.notes || null,
       }),
     );
 
@@ -107,16 +118,45 @@ export function PlanTab({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="type">{t("format")}</Label>
+            {/* Verrouillé UNE FOIS le format posé : le changer après coup
+                laisserait un script sans éditeur. Mais une idée naît sans
+                format (0055), il faut donc pouvoir le choisir une première
+                fois. L'enregistrement est atomique, pas dans le formulaire :
+                le format décide quels onglets existent, la page doit se
+                reconstruire tout de suite. */}
             <Select
               id="type"
-              value={state.type}
-              disabled
-              onValueChange={(v) => setState((s) => ({ ...s, type: v }))}
+              value={state.type ?? ""}
+              disabled={Boolean(content.type) || settingFormat}
+              placeholder="À choisir"
+              onValueChange={(v) => {
+                setState((s) => ({ ...s, type: v }));
+                setFormatError(null);
+                startFormat(async () => {
+                  const res = await setContentFormat(content.id, v);
+                  if (res && "error" in res && res.error) {
+                    setFormatError(res.error);
+                    setState((s) => ({ ...s, type: content.type }));
+                    return;
+                  }
+                  router.refresh();
+                });
+              }}
               options={CONTENT_TYPES.map((ct) => ({
                 value: ct.value,
                 label: safeT(tType, ct.value, ct.label),
               }))}
             />
+            {!content.type && !formatError && (
+              <p className="text-xs text-muted">
+                Une fois choisi, le format ne change plus.
+              </p>
+            )}
+            {formatError && (
+              <p className="text-xs font-medium text-destructive" role="alert">
+                {formatError}
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
@@ -202,6 +242,30 @@ export function PlanTab({
             )}
           </div>
         </div>
+
+        {/* L'angle de l'idée. Affiché tant qu'il n'y a pas de format — à ce
+            stade, aucune table de détail ne peut accueillir ce texte (0055).
+            Une fois le format choisi, il est recopié dans le script ou la
+            légende, et ce bloc disparaît pour ne pas faire doublon. */}
+        {!content.type && (
+          <div className="space-y-2">
+            <Label htmlFor="notes">L&apos;idée en détail</Label>
+            <Textarea
+              id="notes"
+              value={state.notes}
+              onChange={(e) =>
+                setState((s) => ({ ...s, notes: e.target.value }))
+              }
+              dir="auto"
+              className="min-h-32 text-sm [field-sizing:content]"
+              placeholder="L'angle, les points à couvrir, l'exemple à donner…"
+            />
+            <p className="text-xs text-muted">
+              Dès que tu choisiras un format, ce texte partira au bon endroit —
+              le script pour une vidéo, la légende pour un post.
+            </p>
+          </div>
+        )}
 
         {/* Multi-plateformes (Idée 10) : remplace l'ancien couple Platform +
             Date par un éditeur de N publications avec chacune sa propre

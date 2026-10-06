@@ -64,7 +64,9 @@ export function ContentCard({ content }: { content: Content }) {
           }}
         >
           <ColorDot color={typeColor(content.type)} />
-          {safeT(tType, content.type, typeLabel(content.type))}
+          {content.type
+            ? safeT(tType, content.type, typeLabel(content.type))
+            : "Sans format"}
         </span>
 
         <div className="pointer-events-auto">

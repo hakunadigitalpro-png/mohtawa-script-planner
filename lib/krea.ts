@@ -206,14 +206,15 @@ export const KREA_TOOLS: KreaTool[] = [
   {
     name: "creer_contenu",
     description:
-      "Crée un nouveau contenu dans le planning de la marque active. N'appelle cet outil QUE si tu connais le type ET un titre concret — sinon pose la question d'abord.",
+      "Crée un nouveau contenu dans le planning de la marque active. Un titre concret suffit : si l'utilisatrice ne dit pas le format, crée l'idée SANS format plutôt que de l'interroger — elle le choisira en développant. Elle retrouvera l'idée dans l'onglet Idées du calendrier.",
     input_schema: {
       type: "object",
       properties: {
         type: {
           type: "string",
           enum: ["reel", "story", "vlog", "post", "carousel", "infographic"],
-          description: "Le format du contenu.",
+          description:
+            "Le format du contenu. À omettre si elle ne l'a pas dit : une idée peut naître sans format.",
         },
         titre: {
           type: "string",
@@ -234,7 +235,7 @@ export const KREA_TOOLS: KreaTool[] = [
             "Nom EXACT d'un thème de contenu de la marque, repris de la liste du contexte. N'invente jamais un thème.",
         },
       },
-      required: ["type", "titre"],
+      required: ["titre"],
     },
   },
   {

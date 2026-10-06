@@ -43,7 +43,9 @@ export function PublicationsEditor({
   publications,
 }: {
   contentId: string;
-  contentType: string;
+  /** Null pour une idée : aucune plateforme n'est proposable tant que le
+   *  format n'est pas choisi (0055). */
+  contentType: string | null;
   publications: ContentPublication[];
 }) {
   const router = useRouter();

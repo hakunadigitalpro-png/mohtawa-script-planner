@@ -21,7 +21,7 @@ import { aiGenerateVlog, applyVlogGeneration } from "./contents/ai-actions";
 
 /** Une action visible que Krea a réellement effectuée — affichée dans le fil. */
 export type KreaDeed =
-  | { kind: "content_created"; id: string; title: string; type: string }
+  | { kind: "content_created"; id: string; title: string; type: string | null }
   | { kind: "script_written"; id: string }
   | { kind: "navigate"; href: string };
 
@@ -226,7 +226,10 @@ export async function askKrea(input: {
 
         if (call.name === "creer_contenu") {
           const created = await createContentRow({
-            type: String(args.type ?? "reel"),
+            // Pas de repli sur « reel » : inventer un format à la place de
+            // l'utilisatrice la forcerait à le corriger après coup. Sans
+            // format, l'idée attend dans l'onglet Idées (0055).
+            type: args.type ? String(args.type) : null,
             title: args.titre,
             date: args.date ?? null,
             platform: args.plateforme ?? null,

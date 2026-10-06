@@ -3,12 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { CONTENT_TYPES, isSimpleType } from "@/lib/constants";
 import { getActiveBrandId } from "@/lib/brand";
 import { pick } from "@/lib/utils";
 import { removeContentFiles, removeOwnedFile } from "@/lib/storage-cleanup";
 
 type CreateContentInput = {
-  type: string;
+  /** Null : une idée sans format encore choisi (0055). */
+  type: string | null;
   title?: string;
   date?: string | null;
   platform?: string | null;
@@ -25,7 +27,7 @@ type CreateContentInput = {
  */
 export async function createContentRow(
   input: CreateContentInput,
-): Promise<{ id: string; type: string } | { error: string }> {
+): Promise<{ id: string; type: string | null } | { error: string }> {
   // Marque explicite prioritaire (RLS vérifie l'appartenance) ; sinon marque active.
   const brandId = input.brandId ?? (await getActiveBrandId());
   if (!brandId) return { error: "Aucune marque active." };
@@ -39,7 +41,7 @@ export async function createContentRow(
   // user_id est rempli par le trigger BEFORE INSERT (migration 0002).
   const insertRow: Record<string, unknown> = {
     brand_id: brandId,
-    type: input.type,
+    type: input.type || null,
     title: input.title || null,
     date: input.date || null,
     platform: input.platform || null,
@@ -106,6 +108,8 @@ export async function updateContent(
     tags: string[];
     video_url: string | null;
     caption: string | null;
+    /** L'angle d'une idée, avant qu'un format dise où l'écrire (0055). */
+    notes: string | null;
   }>,
 ) {
   const supabase = await createClient();
@@ -127,6 +131,7 @@ export async function updateContent(
     "tags",
     "video_url",
     "caption",
+    "notes",
   ]);
   const patchWithFlag =
     patch.status !== undefined ? { ...clean, auto_status: false } : clean;
@@ -1057,5 +1062,81 @@ export async function addSceneFromPreset(input: {
   if (e2) return { error: e2.message };
 
   revalidatePath(`/content/${input.contentId}`);
+  return { ok: true as const };
+}
+
+/**
+ * Pose le format d'un contenu qui n'en a pas encore (migration 0055).
+ *
+ * Volontairement une action à part, et non un champ de plus dans
+ * `updateContent` : le format reste immuable une fois choisi. En ouvrir
+ * l'écriture dans la mutation générique permettrait de transformer un reel
+ * déjà scripté en carrousel, et son script n'aurait plus d'éditeur.
+ *
+ * La condition « seulement si vide » est portée par la REQUÊTE (`is type
+ * null`), pas par une vérification préalable : deux personnes qui tranchent
+ * le format en même temps, et c'est la première qui gagne proprement.
+ */
+export async function setContentFormat(contentId: string, type: string) {
+  if (!CONTENT_TYPES.some((t) => t.value === type)) {
+    return { error: "Format inconnu." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("contents")
+    .update({ type })
+    .eq("id", contentId)
+    .is("type", null)
+    .select("id, notes, caption")
+    .limit(1);
+
+  if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "Ce contenu a déjà un format." };
+  }
+
+  // L'angle écrit au stade « idée » rejoint le champ qui lui correspond
+  // maintenant qu'on sait lequel c'est. Sans ça, le texte resterait dans
+  // `notes` et il faudrait le recopier à la main.
+  //
+  // Jamais d'écrasement : on n'écrit que dans un champ vide. Un contenu
+  // peut avoir reçu un script entre-temps, et des notes de travail ne
+  // valent pas mieux que du texte déjà rédigé.
+  const row = data[0] as { notes: string | null; caption: string | null };
+  const notes = row.notes?.trim();
+  if (notes) {
+    if (type === "reel") {
+      const { data: existing } = await supabase
+        .from("reel_details")
+        .select("script_full")
+        .eq("content_id", contentId)
+        .maybeSingle();
+      if (!existing?.script_full?.trim()) {
+        await supabase
+          .from("reel_details")
+          .upsert({ content_id: contentId, script_full: notes });
+      }
+    } else if (type === "vlog") {
+      const { data: existing } = await supabase
+        .from("vlog_details")
+        .select("voiceover")
+        .eq("content_id", contentId)
+        .maybeSingle();
+      if (!existing?.voiceover?.trim()) {
+        await supabase
+          .from("vlog_details")
+          .upsert({ content_id: contentId, voiceover: notes });
+      }
+    } else if (isSimpleType(type) && !row.caption?.trim()) {
+      await supabase
+        .from("contents")
+        .update({ caption: notes })
+        .eq("id", contentId);
+    }
+  }
+
+  revalidatePath(`/content/${contentId}`);
+  revalidatePath("/calendar");
   return { ok: true as const };
 }

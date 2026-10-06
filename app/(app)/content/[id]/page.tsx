@@ -245,9 +245,13 @@ export default async function ContentDetailPage({
           }
           meta={
             <div className="flex flex-wrap items-center gap-2 text-sm">
+              {/* Une idée n'a pas encore de format : on le dit, plutôt que
+                  d'afficher un tiret qui ressemble à une donnée manquante. */}
               <ColorDot color={typeColor(c.type)} />
               <span className="font-medium text-white/70">
-                {safeT(tType, c.type, typeLabel(c.type))}
+                {c.type
+                  ? safeT(tType, c.type, typeLabel(c.type))
+                  : "Format à choisir"}
               </span>
               <Badge
                 className="ms-1 text-white"

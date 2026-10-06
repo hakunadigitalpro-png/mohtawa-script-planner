@@ -18,7 +18,13 @@ import {
 } from "@/lib/series-import";
 import { importSeries } from "./actions";
 
-const TYPE_OPTIONS: { value: ImportableType; label: string }[] = [
+/**
+ * Le format est FACULTATIF depuis les Idées (0055) : une liste sortie d'un
+ * atelier arrive souvent avant qu'on ait tranché reel ou carrousel. Sans
+ * format, tout atterrit dans « À trier » plutôt qu'au calendrier.
+ */
+const TYPE_OPTIONS: { value: ImportableType | ""; label: string }[] = [
+  { value: "", label: "À décider plus tard" },
   { value: "reel", label: "Reel" },
   { value: "vlog", label: "Vlog" },
   { value: "post", label: "Post" },
@@ -47,7 +53,7 @@ export function ImportForm({
 }) {
   const router = useRouter();
   const [raw, setRaw] = useState("");
-  const [type, setType] = useState<ImportableType>("reel");
+  const [type, setType] = useState<ImportableType | "">("");
   const [platform, setPlatform] = useState("");
   const [theme, setTheme] = useState("");
   const [startDate, setStartDate] = useState(today());
@@ -81,7 +87,7 @@ export function ImportForm({
           title: (titles[p.number] ?? p.title).trim(),
           script: p.script,
         })),
-        type,
+        type: type || undefined,
         platform: platform || undefined,
         theme: theme || undefined,
         startDate: startDate || undefined,
@@ -123,7 +129,7 @@ export function ImportForm({
               <Select
                 id="imp-type"
                 value={type}
-                onValueChange={(v) => setType(v as ImportableType)}
+                onValueChange={(v) => setType(v as ImportableType | "")}
                 options={TYPE_OPTIONS}
               />
             </div>

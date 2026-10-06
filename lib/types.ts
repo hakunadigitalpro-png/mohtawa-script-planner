@@ -111,7 +111,10 @@ export type Content = {
   id: string;
   brand_id: string;
   user_id: string;
-  type: string;
+  /** Null tant que le format n'est pas choisi — une idée (migration 0055). */
+  type: string | null;
+  /** L'angle d'une idée, avant qu'un format dise où l'écrire (0055). */
+  notes?: string | null;
   title: string | null;
   date: string | null;
   platform: string | null;

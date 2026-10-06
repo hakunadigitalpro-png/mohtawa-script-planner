@@ -71,6 +71,11 @@ export function DetailTabs({
   // Formats "simples" (post/carrousel/infographie) : éditeur allégé
   // (Plan + Contenu), sans Script ni Storyboard.
   const isSimple = isSimpleType(content.type);
+  // Une idée n'a pas encore de format (0055) : aucun éditeur ne lui
+  // correspond. Sans ce cas, `isSimpleType(null)` valant false, on lui
+  // proposerait Script, Storyboard et Caption — des onglets vides pour
+  // quelque chose dont on ignore encore si ce sera une vidéo.
+  const hasFormat = Boolean(content.type);
   // Moments à filmer (catégorie 'capture') — affichés dans l'onglet Vlog,
   // pas dans la Checklist matériel/préparation.
   const captureItems = checklistItems.filter((it) => it.category === "capture");
@@ -82,7 +87,7 @@ export function DetailTabs({
     <Tabs defaultValue="plan">
       <TabsList>
         <TabsTrigger value="plan">{t("plan")}</TabsTrigger>
-        {isSimple ? (
+        {!hasFormat ? null : isSimple ? (
           /* Post / Carrousel / Infographie : un seul onglet "Contenu"
              (légende + visuels), pas de Script/Storyboard. */
           <TabsTrigger value="content">Contenu</TabsTrigger>
@@ -116,7 +121,7 @@ export function DetailTabs({
         />
       </TabsContent>
 
-      {isSimple ? (
+      {!hasFormat ? null : isSimple ? (
         <TabsContent value="content">
           <ContentTab
             aiEnabled={aiEnabled}

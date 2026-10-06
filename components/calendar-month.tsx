@@ -62,7 +62,8 @@ export type CalendarEntry = {
   scheduledDate: string; // YYYY-MM-DD
   scheduledTime: string | null; // HH:MM:SS
   title: string | null;
-  type: string;
+  /** Null pour une idée sans format encore choisi (0055). */
+  type: string | null;
   pillar: string | null;
   status: string;
   /** Première image du contenu, toutes sources confondues (lib/thumbnails). */
@@ -86,7 +87,8 @@ type DayCard = {
   publicationIds: string[];
   slots: { platform: string | null; time: string | null }[];
   title: string | null;
-  type: string;
+  /** Null pour une idée sans format encore choisi (0055). */
+  type: string | null;
   pillar: string | null;
   status: string;
   thumbUrl: string | null;
