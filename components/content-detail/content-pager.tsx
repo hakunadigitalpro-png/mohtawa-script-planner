@@ -26,7 +26,7 @@ export function ContentPager({ nav }: { nav: Neighbours }) {
     <div className="flex shrink-0 items-center gap-1.5">
       {nav.prevId ? (
         <Link
-          href={`/content/${nav.prevId}`}
+          href={`/content/${nav.prevId}${nav.query}`}
           className={cn(base, on)}
           aria-label="Contenu précédent dans le planning"
         >
@@ -43,7 +43,7 @@ export function ContentPager({ nav }: { nav: Neighbours }) {
           ni le filtre affichés. Autant l'écrire que laisser deviner. */}
       <span
         className="min-w-14 text-center text-sm font-semibold tabular-nums text-white/70"
-        title="Dans l'ordre du planning, tous mois confondus"
+        title="Dans l'ordre de la liste d'où tu viens"
       >
         <span className="sr-only">Contenu </span>
         {nav.position} / {nav.total}
@@ -51,7 +51,7 @@ export function ContentPager({ nav }: { nav: Neighbours }) {
 
       {nav.nextId ? (
         <Link
-          href={`/content/${nav.nextId}`}
+          href={`/content/${nav.nextId}${nav.query}`}
           className={cn(base, on)}
           aria-label="Contenu suivant dans le planning"
         >

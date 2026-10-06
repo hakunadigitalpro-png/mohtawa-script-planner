@@ -215,6 +215,10 @@ export default async function CalendarPage({
   // calendrier partait dans les Idées — absent de la page où on venait de le
   // créer. On propose le jour même si on est sur le mois courant, sinon le
   // premier du mois consulté.
+  // Ce que les listes transmettent à la fiche : le mois consulté et le filtre
+  // plateforme actif. Sans ça, « suivant » sortait du mois et du filtre.
+  const scopeQuery = `?m=${ym}${platformFilter ? `&platform=${encodeURIComponent(platformFilter)}` : ""}`;
+
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const defaultCreateDate =
     ym === thisMonth ? now.toISOString().slice(0, 10) : monthStart;
@@ -292,6 +296,7 @@ export default async function CalendarPage({
             contents={contents}
             commentCounts={commentCounts}
             thumbs={planningThumbs}
+            scopeQuery={scopeQuery}
           />
         </div>
       ) : (
@@ -300,6 +305,7 @@ export default async function CalendarPage({
           entries={entries}
           commentCounts={commentCounts}
           canEdit={!isClient}
+          scopeQuery={scopeQuery}
         />
       )}
     </div>

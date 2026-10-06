@@ -40,9 +40,6 @@ const CADENCE_OPTIONS = [
   { value: "1", label: "1 par semaine" },
 ];
 
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export function ImportForm({
   themes,
@@ -56,7 +53,10 @@ export function ImportForm({
   const [type, setType] = useState<ImportableType | "">("");
   const [platform, setPlatform] = useState("");
   const [theme, setTheme] = useState("");
-  const [startDate, setStartDate] = useState(today());
+  // Vide par défaut : sans date, la liste atterrit dans les Idées, ce qui
+  // est le cas le plus courant — on colle ce qu'on a écrit, on range ensuite.
+  // Renseigner une date envoie directement au calendrier.
+  const [startDate, setStartDate] = useState("");
   const [perWeek, setPerWeek] = useState("3");
   const [skipped, setSkipped] = useState<Set<number>>(new Set());
   const [titles, setTitles] = useState<Record<number, string>>({});
@@ -144,7 +144,7 @@ export function ImportForm({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="imp-start">Première publication</Label>
+              <Label htmlFor="imp-start">Première publication (optionnel)</Label>
               <Input
                 id="imp-start"
                 type="date"

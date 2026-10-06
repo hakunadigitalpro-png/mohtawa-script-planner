@@ -121,6 +121,7 @@ export function CalendarMonth({
   entries,
   commentCounts = {},
   canEdit = true,
+  scopeQuery = "",
 }: {
   initialMonth: string; // YYYY-MM-01
   entries: CalendarEntry[];
@@ -133,6 +134,12 @@ export function CalendarMonth({
    * calendrier et pouvait déplacer les contenus de l'équipe.
    */
   canEdit?: boolean;
+  /**
+   * Suffixe d'URL décrivant la liste affichée (mois, filtre plateforme).
+   * Transporté vers la fiche pour que son « 4 / 17 » et ses flèches restent
+   * dans CE périmètre, au lieu de parcourir toute la marque.
+   */
+  scopeQuery?: string;
 }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -324,6 +331,7 @@ export function CalendarMonth({
                       canEdit={canEdit}
                       unreadCount={commentCounts[entry.contentId] ?? 0}
                       untitled={tContent("untitled")}
+                      scopeQuery={scopeQuery}
                     />
                   ))}
                   {items.length > 3 && (
@@ -381,6 +389,7 @@ export function CalendarMonth({
                       canEdit={canEdit}
                       unreadCount={commentCounts[entry.contentId] ?? 0}
                       untitled={tContent("untitled")}
+                      scopeQuery={scopeQuery}
                       agenda
                     />
                   ))}
@@ -421,12 +430,14 @@ function EntryCard({
   canEdit,
   unreadCount,
   untitled,
+  scopeQuery,
   agenda = false,
 }: {
   entry: DayCard;
   canEdit: boolean;
   unreadCount: number;
   untitled: string;
+  scopeQuery: string;
   agenda?: boolean;
 }) {
   // Une seule heure pour tout le groupe : on l'affiche une fois après les
@@ -522,7 +533,7 @@ function EntryCard({
   return (
     <li className="relative">
       <Link
-        href={`/content/${entry.contentId}`}
+        href={`/content/${entry.contentId}${scopeQuery}`}
         // Le glisser-déposer n'a pas de sens au doigt : en agenda la carte
         // n'est jamais draggable, quel que soit le rôle.
         draggable={canEdit && !agenda}

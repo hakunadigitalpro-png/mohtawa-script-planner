@@ -36,7 +36,9 @@ export function CalendarQuickCreate({ defaultDate }: { defaultDate?: string }) {
         <Plus className="size-4" />
         {/* Le mot complet dès qu'il y a la place : sur téléphone il
             poussait le bouton sur une troisième rangée. */}
-        Nouveau<span className="max-sm:hidden">&nbsp;contenu</span>
+        <span>
+          Nouveau<span className="max-sm:hidden"> contenu</span>
+        </span>
       </button>
 
       <NewContentModal

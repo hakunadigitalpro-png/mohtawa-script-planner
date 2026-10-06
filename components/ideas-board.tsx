@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarPlus, Lightbulb, Plus } from "lucide-react";
+import { CalendarPlus, Lightbulb, ListPlus, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -136,6 +136,16 @@ export function IdeasBoard({ ideas }: { ideas: IdeaCard[] }) {
           <Plus className="size-4" />
           Ajouter
         </Button>
+        {/* L'import existait déjà, mais n'était atteignable que depuis le
+            Tableau de bord — personne ne l'aurait trouvé depuis ici, qui est
+            pourtant l'endroit où l'on arrive avec une liste déjà écrite. */}
+        <Link
+          href="/import"
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-secondary"
+        >
+          <ListPlus className="size-4" />
+          Coller une liste
+        </Link>
       </div>
 
       {error && (
@@ -203,7 +213,7 @@ export function IdeasBoard({ ideas }: { ideas: IdeaCard[] }) {
                       className="group cursor-grab rounded-2xl border border-border/60 bg-card p-3 transition-colors hover:border-border active:cursor-grabbing"
                     >
                       <Link
-                        href={`/content/${card.id}`}
+                        href={`/content/${card.id}?scope=ideas`}
                         dir="auto"
                         className="block break-words text-sm font-semibold leading-snug text-foreground hover:underline"
                       >

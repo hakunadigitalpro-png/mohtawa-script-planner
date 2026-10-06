@@ -6,7 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { formatDateLongFr, formatTimeFr } from "@/lib/utils";
-import { fetchNeighbours } from "@/lib/content-neighbours";
+import { fetchNeighbours, scopeFromParams } from "@/lib/content-neighbours";
 import { ContentPager } from "@/components/content-detail/content-pager";
 import { SubmitReviewButton } from "@/components/content-detail/submit-review-button";
 import { ContentTitleField } from "@/components/content-detail/content-title-field";
@@ -48,10 +48,16 @@ import type {
 
 export default async function ContentDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
+  // D'où l'on vient : le mois, le filtre plateforme, ou l'onglet Idées. Le
+  // compte « 4 / 17 » et les flèches s'y tiennent, au lieu de parcourir
+  // toute la marque.
+  const scope = scopeFromParams(await searchParams);
   const supabase = await createClient();
 
   const user = await getCachedUser();
@@ -215,7 +221,7 @@ export default async function ContentDetailPage({
   // connaît via `contents.date`. On la remonte dans l'en-tête : c'est elle
   // qui dit « où je suis » quand on arrive depuis le planning.
   // Les voisins au planning : enchaaîner sans repasser par le calendrier.
-  const nav = await fetchNeighbours(supabase, content.brand_id, c.id);
+  const nav = await fetchNeighbours(supabase, content.brand_id, c.id, scope);
 
   const datedPubs = publications
     .filter((p) => p.scheduled_date)

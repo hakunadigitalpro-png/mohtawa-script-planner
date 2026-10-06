@@ -77,6 +77,10 @@ export function PlanTab({
       status: content.status,
       notes: content.notes ?? "",
     }),
+    // `pillarsKey` / `objectivesKey` sont des clés sérialisées : le
+    // compilateur infère `content.pillars` et refuse la mémoïsation sans
+    // cette dérogation. Elle n'est PAS superflue, même si la règle
+    // `exhaustive-deps` n'a plus rien à y redire.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       content.type,

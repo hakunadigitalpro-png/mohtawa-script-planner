@@ -20,12 +20,15 @@ export function PlanningTable({
   contents,
   commentCounts = {},
   thumbs = {},
+  scopeQuery = "",
 }: {
   contents: Content[];
   /** contentId → nombre de commentaires non lus (badge). */
   commentCounts?: Record<string, number>;
   /** contentId → première image du contenu (lib/thumbnails). */
   thumbs?: Record<string, string>;
+  /** Périmètre transporté vers la fiche (mois affiché). */
+  scopeQuery?: string;
 }) {
   const sorted = [...contents].sort((a, b) =>
     (a.date ?? "9999-99-99").localeCompare(b.date ?? "9999-99-99"),
@@ -81,7 +84,7 @@ export function PlanningTable({
             {g.items.map((c) => (
               <div key={c.id} className="relative">
                 <Link
-                  href={`/content/${c.id}`}
+                  href={`/content/${c.id}${scopeQuery}`}
                   className={`grid ${cols} items-center gap-3 border-b border-border/40 px-4 py-3 pe-10 text-sm transition last:border-b-0 hover:bg-secondary/40`}
                 >
                   <span className="text-muted">
