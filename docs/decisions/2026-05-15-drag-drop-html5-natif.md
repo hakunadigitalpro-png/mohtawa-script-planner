@@ -44,7 +44,7 @@ Pour 3 use cases simples (drag d'un élément vers un autre), la lib est overkil
 Pattern utilisé partout :
 
 ```ts
-const DRAG_MIME = "application/x-mohtawa-{type}-id";
+const DRAG_MIME = "application/x-kreatly-{type}-id";
 
 // Sur l'élément draggable
 <div
@@ -73,7 +73,7 @@ const DRAG_MIME = "application/x-mohtawa-{type}-id";
 
 ### MIME types custom
 
-`application/x-mohtawa-content-id` (calendrier), `application/x-mohtawa-scene-id` (storyboard), `application/x-mohtawa-slot-number` (stories).
+`application/x-kreatly-calendar-entry` (calendrier), `application/x-kreatly-scene-id` (storyboard), `application/x-kreatly-slot-number` (stories).
 
 Avantage : une zone qui attend des scènes ne réagira pas si on traîne une vidéo (et vice-versa).
 

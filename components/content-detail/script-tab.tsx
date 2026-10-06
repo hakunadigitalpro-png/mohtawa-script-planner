@@ -27,7 +27,7 @@ import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Content, ReelDetails, StoryDetails, StorySlide } from "@/lib/types";
 
-const SLIDE_DRAG_MIME = "application/x-mohtawa-slot-number";
+const SLIDE_DRAG_MIME = "application/x-kreatly-slot-number";
 
 export function ScriptTab({
   content,

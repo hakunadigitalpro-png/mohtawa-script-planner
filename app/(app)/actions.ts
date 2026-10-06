@@ -5,7 +5,20 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { setActiveBrandId } from "@/lib/brand";
 import { removeContentFiles, removeStorageFolder } from "@/lib/storage-cleanup";
-import { LOCALES, LOCALE_COOKIE, type Locale } from "@/i18n/config";
+import {
+  LEGACY_LOCALE_COOKIE,
+  LOCALES,
+  LOCALE_COOKIE,
+  type Locale,
+} from "@/i18n/config";
+import {
+  ACCENT_COOKIE,
+  LEGACY_ACCENT_COOKIE,
+  LEGACY_THEME_COOKIE,
+  LEGACY_TINT_COOKIE,
+  THEME_COOKIE,
+  TINT_COOKIE,
+} from "@/lib/theme";
 
 export async function switchBrand(brandId: string) {
   await setActiveBrandId(brandId);
@@ -75,26 +88,31 @@ export async function updateTheme(opts: {
   const store = await cookies();
   const oneYear = 60 * 60 * 24 * 365;
 
-  store.set("mohtawa_theme", opts.theme, {
+  // Chaque ancien cookie (pré-rebranding) n'est supprimé que quand son
+  // remplaçant est écrit, sinon un accent/teinte non renvoyé serait perdu.
+  store.set(THEME_COOKIE, opts.theme, {
     path: "/",
     sameSite: "lax",
     maxAge: oneYear,
   });
+  store.delete(LEGACY_THEME_COOKIE);
 
   if (opts.accent && HEX_RE.test(opts.accent)) {
-    store.set("mohtawa_accent", opts.accent, {
+    store.set(ACCENT_COOKIE, opts.accent, {
       path: "/",
       sameSite: "lax",
       maxAge: oneYear,
     });
+    store.delete(LEGACY_ACCENT_COOKIE);
   }
 
   if (opts.tint && HEX_RE.test(opts.tint)) {
-    store.set("mohtawa_tint", opts.tint, {
+    store.set(TINT_COOKIE, opts.tint, {
       path: "/",
       sameSite: "lax",
       maxAge: oneYear,
     });
+    store.delete(LEGACY_TINT_COOKIE);
   }
 
   revalidatePath("/", "layout");
@@ -102,7 +120,7 @@ export async function updateTheme(opts: {
 }
 
 /**
- * Bascule la locale UI de l'utilisateur (cookie `mohtawa_locale`, 1 an).
+ * Bascule la locale UI de l'utilisateur (cookie `kreatly_locale`, 1 an).
  * Lu en SSR par i18n/request.ts → pas de flash, le HTML arrive avec
  * le bon `lang` et `dir`.
  */
@@ -118,6 +136,7 @@ export async function setLocale(locale: Locale) {
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 365,
   });
+  store.delete(LEGACY_LOCALE_COOKIE);
 
   // Synchronise aussi en metadata Supabase (pour cross-device).
   // Best-effort : si on n'est pas authentifié, on passe.

@@ -51,9 +51,9 @@ html[data-theme="dark"] {
 
 | Cookie | Valeur possible | Défaut |
 |---|---|---|
-| `mohtawa_theme` | `light` \| `dark` \| `custom` | `light` |
-| `mohtawa_accent` | HEX color `#rrggbb` | `#ff6b35` |
-| `mohtawa_tint` | HEX color `#rrggbb` | `#fdf6ef` |
+| `kreatly_theme` | `light` \| `dark` \| `custom` | `light` |
+| `kreatly_accent` | HEX color `#rrggbb` | `#ff6b35` |
+| `kreatly_tint` | HEX color `#rrggbb` | `#fdf6ef` |
 
 Helpers dans `lib/theme.ts` :
 

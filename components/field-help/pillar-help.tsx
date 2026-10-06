@@ -62,13 +62,13 @@ export function PillarHelp() {
         />
       </HelpSection>
 
-      <HelpSection title={t("mohtawaTitle")}>
+      <HelpSection title={t("kreatlyTitle")}>
         <HelpList
           items={[
-            t("mohtawa1"),
-            t("mohtawa2"),
-            t("mohtawa3"),
-            t("mohtawa4"),
+            t("kreatly1"),
+            t("kreatly2"),
+            t("kreatly3"),
+            t("kreatly4"),
           ]}
         />
       </HelpSection>

@@ -256,7 +256,7 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 
 - Vue mois (grid 7×N)
 - Items affichés sous forme de pills colorées par type
-- **Drag & drop natif HTML5** pour replanifier (MIME custom `application/x-mohtawa-content-id`)
+- **Drag & drop natif HTML5** pour replanifier (MIME custom `application/x-kreatly-calendar-entry`)
 - Click "+" au survol d'une case → ouvre la modal Nouvelle vidéo pré-remplie avec la date
 
 ### 5. Éditeur de contenu (5 onglets)
@@ -358,7 +358,7 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
   - 8 presets de couleur d'accent + picker HEX libre
   - 6 presets de teinte de fond + picker HEX libre
   - Reset par défaut
-- Préférences stockées en cookies (`mohtawa_theme`, `mohtawa_accent`, `mohtawa_tint`) — durée 1 an, lus en SSR pour éviter le flash
+- Préférences stockées en cookies (`kreatly_theme`, `kreatly_accent`, `kreatly_tint`) — durée 1 an, lus en SSR pour éviter le flash. Les anciens noms `mohtawa_*` (et `mohtawa_locale`) sont encore lus en secours pour ne pas réinitialiser les préférences d'avant le rebranding — voir `LEGACY_*` dans `lib/theme.ts` et `i18n/config.ts`
 
 ---
 

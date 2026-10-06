@@ -81,7 +81,7 @@ export function Sidebar({
         className="tooltip-trigger"
       >
         <LogoMark className="size-12 rounded-2xl shadow-sm" iconClassName="size-6" />
-        <span className="tooltip-content">{t("mohtawa")}</span>
+        <span className="tooltip-content">{t("appName")}</span>
       </Link>
 
       <div className="h-px w-8 bg-border/80" />

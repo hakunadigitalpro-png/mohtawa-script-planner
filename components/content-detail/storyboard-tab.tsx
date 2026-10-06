@@ -63,7 +63,7 @@ import type {
   EquipmentPosition,
 } from "@/lib/types";
 
-const DRAG_MIME = "application/x-mohtawa-scene-id";
+const DRAG_MIME = "application/x-kreatly-scene-id";
 
 type SceneFormState = {
   id: string;

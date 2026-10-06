@@ -6,7 +6,7 @@
 // hashés de Next (qui changent à chaque build), juste un fallback
 // réseau-d'abord pour les navigations.
 
-const CACHE = "mohtawa-v1";
+const CACHE = "kreatly-v1";
 
 self.addEventListener("install", (event) => {
   // Active immédiatement la nouvelle version sans attendre.

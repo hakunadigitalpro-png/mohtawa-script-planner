@@ -38,8 +38,12 @@ import type {
   Performance,
 } from "@/lib/types";
 
-const GUEST_NAME_KEY = "mohtawa_guest_name";
-const GUEST_EMAIL_KEY = "mohtawa_guest_email";
+const GUEST_NAME_KEY = "kreatly_guest_name";
+const GUEST_EMAIL_KEY = "kreatly_guest_email";
+// Anciennes clés (avant le rebranding) : lues en secours pour que les invités
+// déjà passés n'aient pas à ressaisir leur identité. Supprimées à la réécriture.
+const LEGACY_GUEST_NAME_KEY = "mohtawa_guest_name";
+const LEGACY_GUEST_EMAIL_KEY = "mohtawa_guest_email";
 
 type SharedComment = {
   id: string;
@@ -86,8 +90,16 @@ export function ShareView({
   const [guestEmail, setGuestEmail] = React.useState("");
   React.useEffect(() => {
     try {
-      setGuestName(localStorage.getItem(GUEST_NAME_KEY) ?? "");
-      setGuestEmail(localStorage.getItem(GUEST_EMAIL_KEY) ?? "");
+      setGuestName(
+        localStorage.getItem(GUEST_NAME_KEY) ??
+          localStorage.getItem(LEGACY_GUEST_NAME_KEY) ??
+          "",
+      );
+      setGuestEmail(
+        localStorage.getItem(GUEST_EMAIL_KEY) ??
+          localStorage.getItem(LEGACY_GUEST_EMAIL_KEY) ??
+          "",
+      );
     } catch {
       // localStorage indisponible → on travaille sans
     }
@@ -120,9 +132,15 @@ export function ShareView({
     setGuestName(name);
     setGuestEmail(email);
     try {
-      if (name) localStorage.setItem(GUEST_NAME_KEY, name);
+      if (name) {
+        localStorage.setItem(GUEST_NAME_KEY, name);
+        localStorage.removeItem(LEGACY_GUEST_NAME_KEY);
+      }
       if (email) localStorage.setItem(GUEST_EMAIL_KEY, email);
       else localStorage.removeItem(GUEST_EMAIL_KEY);
+      // L'e-mail est soit réécrit, soit effacé : l'ancienne clé ne doit plus
+      // jamais ressurgir en secours.
+      localStorage.removeItem(LEGACY_GUEST_EMAIL_KEY);
     } catch {
       // ignore
     }

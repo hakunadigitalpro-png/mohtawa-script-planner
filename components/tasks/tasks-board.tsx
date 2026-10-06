@@ -17,7 +17,7 @@ import {
 import type { Task, TaskStatus } from "@/lib/types";
 import type { BrandMember } from "@/app/(app)/tasks/page";
 
-const DRAG_MIME = "application/x-mohtawa-task-id";
+const DRAG_MIME = "application/x-kreatly-task-id";
 
 const COLUMNS: { key: TaskStatus; labelKey: "columnTodo" | "columnInProgress" | "columnDone" }[] = [
   { key: "todo", labelKey: "columnTodo" },

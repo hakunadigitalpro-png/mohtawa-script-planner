@@ -44,7 +44,7 @@ import { NewContentModal } from "@/components/new-content-modal";
 import { ContentCommentsButton } from "@/components/comments";
 import { updateContent, updatePublication } from "@/app/(app)/contents/actions";
 
-const DRAG_MIME = "application/x-mohtawa-calendar-entry";
+const DRAG_MIME = "application/x-kreatly-calendar-entry";
 
 /**
  * Une carte du calendrier = une (contenu × plateforme), pas un contenu. Un

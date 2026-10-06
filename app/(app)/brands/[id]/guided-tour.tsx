@@ -20,7 +20,10 @@ import { KreaBadge } from "@/components/krea-avatar";
 
 // v3 : passage à la voix de Krea — on rebump la clé pour que les users
 // déjà passés par la v2 revoient l'intro une fois et découvrent qui elle est.
-const KEY = "mohtawa_tour_brand_v3";
+const KEY = "kreatly_tour_brand_v3";
+// Ancienne clé (avant le rebranding) : lue en secours pour ne pas rejouer le
+// tour à ceux qui l'ont déjà vu. À retirer quand on rebumpera la clé (v4).
+const LEGACY_KEY = "mohtawa_tour_brand_v3";
 
 type Step = { selector?: string; title: string; body: string };
 
@@ -73,7 +76,9 @@ export function GuidedTour() {
   // Ouverture auto une seule fois par navigateur.
   React.useEffect(() => {
     try {
-      if (!localStorage.getItem(KEY)) setOpen(true);
+      if (!localStorage.getItem(KEY) && !localStorage.getItem(LEGACY_KEY)) {
+        setOpen(true);
+      }
     } catch {
       // localStorage indisponible → on ne force rien.
     }

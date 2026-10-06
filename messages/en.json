@@ -36,7 +36,7 @@
     "brands": "My brands",
     "profile": "Profile",
     "logout": "Sign out",
-    "mohtawa": "Kreatly"
+    "appName": "Kreatly"
   },
   "auth": {
     "login": {
@@ -719,11 +719,11 @@
       "example1": "Business coach — Marketing tips (educational), Entrepreneur routine (behind-the-scenes), Mindset & discipline (inspirational), Client testimonials (promo)",
       "example2": "Natural cosmetics brand — Beauty tips (educational), Workshop production (behind-the-scenes), Zero waste & values (inspirational), Product showcases (promo)",
       "example3": "Local restaurant — Recipes & techniques (educational), A day in the kitchen (behind-the-scenes), Local producers (inspirational), Dish of the day & events (promo)",
-      "mohtawaTitle": "How Kreatly uses your pillars",
-      "mohtawa1": "You'll find the list in the \"Content pillar\" dropdown of each content (just above).",
-      "mohtawa2": "The orange + button to the right of the menu lets you add a new pillar on the fly, without leaving the content.",
-      "mohtawa3": "In the Analytics tab, your pillars are ranked by performance: you can see which one brings in the most views.",
-      "mohtawa4": "You can manage your full taxonomy (add, rename, delete) from Brands → [your brand].",
+      "kreatlyTitle": "How Kreatly uses your pillars",
+      "kreatly1": "You'll find the list in the \"Content pillar\" dropdown of each content (just above).",
+      "kreatly2": "The orange + button to the right of the menu lets you add a new pillar on the fly, without leaving the content.",
+      "kreatly3": "In the Analytics tab, your pillars are ranked by performance: you can see which one brings in the most views.",
+      "kreatly4": "You can manage your full taxonomy (add, rename, delete) from Brands → [your brand].",
       "tip": "Tip: start with 3 pillars only. You can always add a 4th or 5th later, once you've mastered the first ones."
     }
   },

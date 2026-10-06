@@ -36,7 +36,7 @@
     "brands": "Mes marques",
     "profile": "Mon profil",
     "logout": "Se déconnecter",
-    "mohtawa": "Kreatly"
+    "appName": "Kreatly"
   },
   "auth": {
     "login": {
@@ -719,11 +719,11 @@
       "example1": "Coach business — Astuces marketing (éducatif), Routine entrepreneur (coulisses), Mindset & discipline (inspirant), Témoignages clients (promo)",
       "example2": "Marque de cosmétiques naturels — Conseils beauté (éducatif), Fabrication en atelier (coulisses), Zéro déchet & valeurs (inspirant), Présentation produits (promo)",
       "example3": "Restaurant local — Recettes & techniques (éducatif), Une journée en cuisine (coulisses), Producteurs locaux (inspirant), Plat du jour & événements (promo)",
-      "mohtawaTitle": "Comment Kreatly utilise tes piliers",
-      "mohtawa1": "Tu retrouves la liste dans le menu déroulant « Pilier de contenu » de chaque contenu (juste au-dessus).",
-      "mohtawa2": "Le bouton orange + à droite du menu te permet d'en ajouter un nouveau à la volée, sans quitter la fiche contenu.",
-      "mohtawa3": "Dans l'onglet Analytics, tes piliers sont classés par performance : tu vois lequel ramène le plus de vues.",
-      "mohtawa4": "Tu peux gérer toute ta taxonomie (ajouter, renommer, supprimer) depuis la page Marques → [ta marque].",
+      "kreatlyTitle": "Comment Kreatly utilise tes piliers",
+      "kreatly1": "Tu retrouves la liste dans le menu déroulant « Pilier de contenu » de chaque contenu (juste au-dessus).",
+      "kreatly2": "Le bouton orange + à droite du menu te permet d'en ajouter un nouveau à la volée, sans quitter la fiche contenu.",
+      "kreatly3": "Dans l'onglet Analytics, tes piliers sont classés par performance : tu vois lequel ramène le plus de vues.",
+      "kreatly4": "Tu peux gérer toute ta taxonomie (ajouter, renommer, supprimer) depuis la page Marques → [ta marque].",
       "tip": "Conseil : commence avec 3 piliers seulement. Tu pourras toujours en ajouter un 4ᵉ ou 5ᵉ plus tard, une fois que tu maîtrises les premiers."
     }
   },
