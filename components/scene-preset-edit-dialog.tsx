@@ -110,7 +110,7 @@ function EditForm({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted">
             Cadrage par défaut (optionnel)
           </Label>
           <Input
@@ -121,7 +121,7 @@ function EditForm({
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+          <Label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
             <Zap className="size-3" />
             Matériel à ce lieu (optionnel)
           </Label>

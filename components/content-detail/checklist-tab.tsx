@@ -161,7 +161,7 @@ export function ChecklistTab({
                       })}
                     </span>
                     <span
-                      className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-accent"
+                      className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-accent"
                       title={t("filmedAutoHint")}
                     >
                       <Sparkles className="size-3" />

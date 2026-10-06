@@ -164,7 +164,7 @@ export function NotificationsBell({
       >
         <Bell className="size-4.5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold leading-none text-accent-foreground">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-xs font-bold leading-none text-accent-foreground">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -262,7 +262,7 @@ function NotificationRow({
             ) : (
               <CommentContent notification={notification} t={t} />
             )}
-            <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground/70">
+            <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground/70">
               {relative}
             </p>
           </div>

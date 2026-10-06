@@ -215,7 +215,7 @@ function AddItemForm({
 
       {open && filteredSuggestions.length > 0 && (
         <div className="absolute start-0 end-0 top-full z-30 mt-1 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_40px_-10px_rgba(10,6,18,0.18)]">
-          <div className="flex items-center gap-1.5 border-b border-border/60 bg-secondary/40 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted">
+          <div className="flex items-center gap-1.5 border-b border-border/60 bg-secondary/40 px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted">
             <Sparkles className="size-3" />
             {t("recentItems")}
           </div>
@@ -228,7 +228,7 @@ function AddItemForm({
                   className="flex w-full items-center justify-between gap-2 px-3 py-2 text-sm transition-colors hover:bg-secondary"
                 >
                   <span className="truncate">{s.label}</span>
-                  <span className="shrink-0 text-[10px] font-semibold tabular-nums text-muted">
+                  <span className="shrink-0 text-xs font-semibold tabular-nums text-muted">
                     ×{s.usage_count}
                   </span>
                 </button>

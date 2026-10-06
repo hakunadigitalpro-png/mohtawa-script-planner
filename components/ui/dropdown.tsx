@@ -153,7 +153,12 @@ export function DropdownContent({
       role="menu"
       style={style}
       className={cn(
-        "z-[60] max-h-[70vh] min-w-48 overflow-y-auto rounded-2xl border border-border/60 bg-card py-1.5 shadow-[0_12px_40px_-10px_rgba(26,15,37,0.18)]",
+        // `text-foreground` explicite, comme le fait `Select` sur son propre
+        // portal : le menu hérite aujourd'hui de la bonne couleur par chance,
+        // parce qu'il est porté dans `document.body`. Ouvert depuis un bandeau
+        // sombre sans portal, il hériterait du blanc — c'est exactement le
+        // motif qui a déjà produit du blanc sur blanc.
+        "z-[60] max-h-[70vh] min-w-48 overflow-y-auto rounded-2xl border border-border/60 bg-card py-1.5 text-foreground shadow-[0_12px_40px_-10px_rgba(26,15,37,0.18)]",
         className,
       )}
     >
@@ -207,7 +212,7 @@ export function DropdownSeparator() {
 
 export function DropdownLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+    <div className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted">
       {children}
     </div>
   );

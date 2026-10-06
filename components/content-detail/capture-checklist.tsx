@@ -77,7 +77,7 @@ export function CaptureChecklist({
           </div>
           <div>
             <h3 className="text-sm font-bold">Checklist de capture</h3>
-            <p className="text-[11px] text-muted">
+            <p className="text-xs text-muted">
               Les moments à filmer. Coche-les au fur et à mesure pendant ta
               journée.
             </p>

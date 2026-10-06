@@ -142,7 +142,7 @@ export function TasksBoard({
                 <span className="text-xs font-bold uppercase tracking-wider text-muted">
                   {t(col.labelKey)}
                 </span>
-                <span className="rounded-full bg-card px-2 py-0.5 text-[10px] font-bold text-muted">
+                <span className="rounded-full bg-card px-2 py-0.5 text-xs font-bold text-muted">
                   {colTasks.length}
                 </span>
               </div>
@@ -217,7 +217,7 @@ export function TasksBoard({
                         value={task.assignee_id ?? ""}
                         onValueChange={(v) => reassign(task.id, v)}
                         options={assigneeOptions}
-                        className="h-7 rounded-full px-2.5 text-[11px]"
+                        className="h-7 rounded-full px-2.5 text-xs"
                         contentClassName="text-xs"
                       />
                     </div>

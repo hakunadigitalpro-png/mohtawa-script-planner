@@ -163,7 +163,7 @@ export function PlanTab({
               <Label htmlFor="status">{t("status")}</Label>
               {content.auto_status && (
                 <span
-                  className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent"
+                  className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent"
                   title="Le statut avance automatiquement selon ton avancement (script, tournage, montage…). Change-le manuellement pour désactiver."
                 >
                   ✨ Auto

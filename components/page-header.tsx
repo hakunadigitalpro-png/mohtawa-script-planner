@@ -27,6 +27,7 @@ export function PageHeader({
   actionsClassName,
   backHref,
   backLabel,
+  aside,
   className,
 }: {
   /** Petite ligne au-dessus du titre (nom de la marque, contexte…). */
@@ -41,6 +42,13 @@ export function PageHeader({
   /** Lien de retour rendu au-dessus du titre, dans l'en-tête. */
   backHref?: string;
   backLabel?: string;
+  /**
+   * Rendu à l'opposé du lien de retour, sur la même ligne : la navigation
+   * entre pages voisines. Elle appartient à cette ligne-là et pas à celle
+   * des actions — se déplacer n'est pas agir sur le contenu affiché.
+   * Rendu tel quel sur fond sombre : la couleur du texte doit être explicite.
+   */
+  aside?: React.ReactNode;
   className?: string;
 }) {
   return (
@@ -50,20 +58,30 @@ export function PageHeader({
         className,
       )}
     >
-      {backHref && (
-        <Link
-          href={backHref}
-          className="mb-4 inline-flex items-center gap-1 text-sm text-white/70 transition hover:text-white"
-        >
-          <ArrowLeft className="size-4 rtl-flip" />
-          {backLabel}
-        </Link>
+      {(backHref || aside) && (
+        <div className="mb-4 flex items-center justify-between gap-3">
+          {backHref ? (
+            <Link
+              href={backHref}
+              className="inline-flex min-w-0 items-center gap-1 text-sm text-white/70 transition hover:text-white"
+            >
+              <ArrowLeft className="size-4 shrink-0 rtl-flip" />
+              {/* Tronqué plutôt que replié : à côté du pager, « Retour au
+                  calendrier » se cassait en deux lignes sur un téléphone et
+                  déséquilibrait tout le haut du bandeau. */}
+              <span className="truncate">{backLabel}</span>
+            </Link>
+          ) : (
+            <span />
+          )}
+          {aside}
+        </div>
       )}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           {eyebrow && (
             <p
-              className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-orange-soft"
+              className="truncate text-xs font-bold uppercase tracking-[0.18em] text-orange-soft"
               dir="auto"
             >
               {eyebrow}

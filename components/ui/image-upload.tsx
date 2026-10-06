@@ -286,7 +286,7 @@ export function ImageUpload({
             <span className="text-xs font-medium">
               {uploading ? "Envoi..." : label}
             </span>
-            {hint && <span className="text-[10px] text-muted">{hint}</span>}
+            {hint && <span className="text-xs text-muted">{hint}</span>}
           </button>
         )}
       </div>

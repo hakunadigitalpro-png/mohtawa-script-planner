@@ -184,7 +184,7 @@ export function CaptionTab({
             }
             placeholder={`Ex :\n\nLes 3 outils qui ont changé ma productivité en 2026 — celui en #2 m'a fait gagner 5h par semaine.\n\nLequel tu utilises déjà ? 👇\n\n#productivité #marketingdigital #coworking #freelance`}
           />
-          <div className="flex items-center justify-between text-[10px]">
+          <div className="flex items-center justify-between text-xs">
             <span className={cn("font-medium", charLimitColor)}>
               {charCount} / 2200 caractères
             </span>

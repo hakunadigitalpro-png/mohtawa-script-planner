@@ -338,7 +338,7 @@ function InboxView({
                 </span>
                 <div className="flex items-center gap-2 text-xs text-muted">
                   {root.resolved && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100/70 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100/70 px-2 py-0.5 text-xs font-semibold text-emerald-700">
                       <Check className="size-3" /> {t("resolvedBadge")}
                     </span>
                   )}
@@ -524,7 +524,7 @@ function CommentItem({
       <div className="flex items-start gap-2">
         <div
           className={cn(
-            "flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold uppercase",
+            "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold uppercase",
             comment.is_guest
               ? "bg-orange-soft/80 text-orange-strong"
               : "bg-secondary",
@@ -557,7 +557,7 @@ function CommentItem({
               onClick={onToggleResolve}
               disabled={pending}
               className={cn(
-                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium transition",
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition",
                 comment.resolved
                   ? "text-muted hover:bg-secondary hover:text-foreground"
                   : "text-emerald-700 hover:bg-emerald-50",
@@ -579,7 +579,7 @@ function CommentItem({
               type="button"
               onClick={onDelete}
               disabled={pending}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-muted hover:bg-destructive/10 hover:text-destructive"
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-muted hover:bg-destructive/10 hover:text-destructive"
             >
               <Trash2 className="size-3" /> {tCommon("delete")}
             </button>

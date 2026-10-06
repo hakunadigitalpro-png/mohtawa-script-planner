@@ -95,17 +95,22 @@ export function EquipmentLayoutDiagram({
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
+        <span className="text-xs font-bold uppercase tracking-wider text-accent">
           {g("equipmentLayoutTitle")}
         </span>
         {label && (
-          <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold text-accent" dir="auto">
+          <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent" dir="auto">
             {label}
           </span>
         )}
       </div>
 
-      <div className="relative mx-auto aspect-square w-full max-w-64">
+      {/* Le chevauchement des étiquettes n'est pas une affaire de police : à
+          256 px, deux positions voisines (45°) sont distantes de 74 px alors
+          que chaque étiquette peut en faire 80. C'est structurel. On élargit
+          donc le cercle dès qu'il y a la place — à 384 px l'écart passe à
+          112 px — et sur téléphone on sort les noms du cercle (voir plus bas). */}
+      <div className="relative mx-auto aspect-square w-full max-w-64 sm:max-w-sm">
         <div className="absolute inset-[6%] rounded-full border border-dashed border-border" />
 
         {cameraAngle !== null && <Spoke angleDeg={cameraAngle} />}
@@ -114,7 +119,7 @@ export function EquipmentLayoutDiagram({
         ))}
 
         <div
-          className="absolute flex size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground"
+          className="absolute flex size-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground"
           style={{ top: "50%", left: "50%" }}
         >
           {g("equipmentLayoutSelf")}
@@ -125,7 +130,7 @@ export function EquipmentLayoutDiagram({
             <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-ink text-white">
               <Camera className="size-3.5" />
             </span>
-            <span className="max-w-20 text-center text-[10px] font-semibold leading-tight text-foreground">
+            <span className="max-w-20 text-center text-xs font-semibold leading-tight text-foreground">
               {g("camera")}
             </span>
           </Marker>
@@ -138,19 +143,24 @@ export function EquipmentLayoutDiagram({
           );
           return (
             <Marker key={i} angleDeg={ANGLES[it.position] ?? 0}>
+              {/* Numéroté : sur téléphone, aucune géométrie ne fera tenir huit
+                  noms autour d'un cercle de 256 px. Le numéro renvoie à la
+                  légende juste en dessous, qui les nomme déjà tous. */}
               <span
                 className={
-                  "size-3.5 shrink-0 rounded-full border-2 " +
+                  "flex size-5 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold tabular-nums " +
                   (flagged
-                    ? "border-destructive bg-destructive/20"
+                    ? "border-destructive bg-destructive/20 text-destructive"
                     : isLight
-                      ? "border-amber-400 bg-amber-100"
-                      : "border-accent bg-secondary")
+                      ? "border-amber-400 bg-amber-100 text-foreground"
+                      : "border-accent bg-secondary text-foreground")
                 }
-              />
+              >
+                {i + 1}
+              </span>
               <span
                 className={
-                  "max-w-20 text-center text-[10px] font-semibold leading-tight " +
+                  "max-w-20 text-center text-xs font-semibold leading-tight max-sm:hidden " +
                   (flagged ? "text-destructive" : "text-foreground")
                 }
                 dir="auto"
@@ -191,6 +201,11 @@ export function EquipmentLayoutDiagram({
               className="flex items-start justify-between gap-2 text-xs text-muted"
             >
               <span dir="auto">
+                {/* Le même numéro que sur le cercle : sur téléphone, c'est
+                    cette liste qui porte les noms. */}
+                <span className="me-1.5 font-bold tabular-nums text-muted">
+                  {i + 1}.
+                </span>
                 <span className="font-semibold text-foreground">{it.label}</span>
                 {it.note ? ` — ${it.note}` : ""}
               </span>
@@ -230,7 +245,7 @@ function PositionSelect({
       value={value}
       onChange={(e) => onChange(e.target.value as EquipmentPosition)}
       aria-label={ariaLabel}
-      className="shrink-0 rounded-lg border border-border bg-card px-1.5 py-0.5 text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="shrink-0 rounded-lg border border-border bg-card px-1.5 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       {(Object.keys(ANGLES) as EquipmentPosition[]).map((p) => (
         <option key={p} value={p}>

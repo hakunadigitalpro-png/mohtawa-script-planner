@@ -391,7 +391,7 @@ export default async function DashboardPage({
                       href={`/content/${c.content_id}`}
                       className="flex items-start gap-2 text-xs hover:opacity-80"
                     >
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-bold uppercase">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-bold uppercase">
                         {authorLabel(c).charAt(0)}
                       </span>
                       <span className="min-w-0 flex-1 truncate" dir="auto">

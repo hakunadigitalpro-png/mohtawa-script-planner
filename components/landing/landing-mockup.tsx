@@ -27,7 +27,7 @@ export function LandingMockup() {
           <span className="inline-block size-2.5 rounded-full bg-[#febc2e]" />
           <span className="inline-block size-2.5 rounded-full bg-[#28c840]" />
           <div className="ms-3 hidden flex-1 sm:block">
-            <div className="mx-auto h-5 max-w-xs rounded-full bg-card/80 text-[10px] flex items-center justify-center text-muted">
+            <div className="mx-auto h-5 max-w-xs rounded-full bg-card/80 text-xs flex items-center justify-center text-muted">
               kreatly.io / dashboard
             </div>
           </div>

@@ -57,7 +57,7 @@ export function ContentCard({ content }: { content: Content }) {
           on réactive pointer-events-auto sur le menu ⋮ uniquement. */}
       <div className="pointer-events-none relative z-10 mb-3 flex items-center justify-between gap-2">
         <span
-          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide"
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide"
           style={{
             background: `${typeColor(content.type)}1f`,
             color: typeColor(content.type),

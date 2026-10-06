@@ -1,19 +1,16 @@
 import Link from "next/link";
 import {
-  CalendarDays,
-  LayoutList,
   ChevronLeft,
   ChevronRight,
   Eye,
-  Lightbulb,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
-import { cn } from "@/lib/utils";
 import { CalendarMonth, type CalendarEntry } from "@/components/calendar-month";
 import { CalendarQuickCreate } from "@/components/calendar-quick-create";
 import { CalendarPlatformFilter } from "@/components/calendar-platform-filter";
+import { CalendarViewTabs } from "@/components/calendar-view-tabs";
 import { PlanningTable } from "@/components/planning-table";
 import { IdeasBoard, type IdeaCard } from "@/components/ideas-board";
 import { PageHeader } from "@/components/page-header";
@@ -47,7 +44,6 @@ export default async function CalendarPage({
   // Un "viewer" (client invité) regarde le planning, il ne le fabrique pas.
   const isClient = role === "viewer";
 
-  const t = await getTranslations("calendar");
   const params = await searchParams;
   const now = new Date();
   const ym =
@@ -77,6 +73,7 @@ export default async function CalendarPage({
     year: "numeric",
   });
 
+  const t = await getTranslations("calendar");
   const supabase = await createClient();
 
   // Ces quatre requêtes ne dépendent pas les unes des autres : les enchaîner
@@ -214,43 +211,38 @@ export default async function CalendarPage({
         )
       : {};
 
-  const tabCls = (on: boolean) =>
-    cn(
-      "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition",
-      on
-        ? "bg-accent text-accent-foreground"
-        : "text-muted hover:text-foreground",
-    );
+  // La modale héritait d'une date VIDE, donc le contenu créé depuis le
+  // calendrier partait dans les Idées — absent de la page où on venait de le
+  // créer. On propose le jour même si on est sur le mois courant, sinon le
+  // premier du mois consulté.
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const defaultCreateDate =
+    ym === thisMonth ? now.toISOString().slice(0, 10) : monthStart;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t("title")}
-        subtitle={t("subtitle")}
+        title={t("sectionTitle")}
+        subtitle={t(`subtitles.${view}`)}
         actionsClassName="w-full"
         actions={
-          // Tout sur UNE ligne : en `flex-wrap`, les 6 boutons de création
-          // passaient à la ligne sous les onglets. Ici la barre ne se coupe
-          // jamais — sur écran étroit elle défile horizontalement.
-          <div className="-mb-1 flex w-full items-center gap-2 overflow-x-auto pb-1">
-            <div className="inline-flex shrink-0 rounded-full border border-border bg-card p-0.5">
-              <Link href={`?m=${ym}&view=calendar`} className={tabCls(view === "calendar")}>
-                <CalendarDays className="size-4" />
-                Calendrier
-              </Link>
-              <Link href={`?m=${ym}&view=planning`} className={tabCls(view === "planning")}>
-                <LayoutList className="size-4" />
-                Planning
-              </Link>
-              {!isClient && (
-                <Link href={`?m=${ym}&view=ideas`} className={tabCls(view === "ideas")}>
-                  <Lightbulb className="size-4" />
-                  Idées
-                </Link>
-              )}
-            </div>
+          // Plus de défilement horizontal : les six boutons de création sont
+          // devenus un seul menu « Nouveau », donc la rangée tient. Elle passe
+          // à la ligne si l'écran est vraiment étroit, ce qui vaut mieux
+          // qu'une barre grise en travers du bandeau.
+          <div className="flex w-full flex-wrap items-center gap-2">
+            <CalendarViewTabs
+              view={view}
+              month={ym}
+              platform={platformFilter || undefined}
+              showIdeas={!isClient}
+            />
             {view === "calendar" && <CalendarPlatformFilter />}
-            {!isClient && <CalendarQuickCreate />}
+            {!isClient && (
+              <div className="ms-auto">
+                <CalendarQuickCreate defaultDate={defaultCreateDate} />
+              </div>
+            )}
           </div>
         }
       />

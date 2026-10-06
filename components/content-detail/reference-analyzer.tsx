@@ -87,7 +87,7 @@ export function ReferenceAnalyzer({ contentId }: { contentId: string }) {
         </div>
         <div>
           <h3 className="text-sm font-bold">T&apos;inspirer d&apos;une vidéo qui marche</h3>
-          <p className="text-[11px] text-muted">
+          <p className="text-xs text-muted">
             Choisis une vidéo (la tienne ou une virale enregistrée) → Kreatly
             la transcrit, analyse le wording et te propose un script.
           </p>
@@ -134,7 +134,7 @@ export function ReferenceAnalyzer({ contentId }: { contentId: string }) {
 
       {hasResult && (
         <div className="space-y-2 rounded-2xl border border-border/60 bg-card p-4">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-accent">
+          <span className="text-xs font-bold uppercase tracking-wider text-accent">
             Analyse + script proposé
           </span>
           <div

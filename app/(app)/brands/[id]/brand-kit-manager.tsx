@@ -87,7 +87,7 @@ function StrategyDerived({ kit }: { kit: BrandKit | null }) {
     <div className="space-y-3 rounded-2xl border border-accent/25 bg-accent/5 px-4 py-3.5">
       <div className="flex items-center gap-1.5">
         <Sparkles className="size-3.5 text-accent" />
-        <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
+        <span className="text-xs font-bold uppercase tracking-wider text-accent">
           Issu de ta stratégie
         </span>
       </div>
@@ -95,7 +95,7 @@ function StrategyDerived({ kit }: { kit: BrandKit | null }) {
       <dl className="space-y-2">
         {rows.map((r) => (
           <div key={r.label}>
-            <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
               {r.label}
             </dt>
             <dd className="text-sm leading-relaxed" dir="auto">
@@ -107,7 +107,7 @@ function StrategyDerived({ kit }: { kit: BrandKit | null }) {
 
       {hashtags.length > 0 && (
         <div>
-          <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+          <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
             Hashtags
           </dt>
           <ul className="mt-1 flex flex-wrap gap-1.5">

@@ -77,7 +77,7 @@ export function LandingPersonas() {
                     <Icon className="size-6" />
                   </div>
                   <span
-                    className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${p.tagBg} ${p.tagColor}`}
+                    className={`rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wider ${p.tagBg} ${p.tagColor}`}
                   >
                     {t(`${p.key}.tag`)}
                   </span>

@@ -334,7 +334,7 @@ export function StoryboardTab({
           >
             <summary className="flex cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden">
               <Film className="size-3.5 text-accent" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
+              <span className="text-xs font-bold uppercase tracking-wider text-accent">
                 {g("title")}
               </span>
               <ChevronDown className="guide-caret ms-auto size-4 text-accent/70 transition-transform" />
@@ -362,7 +362,7 @@ export function StoryboardTab({
               />
             </div>
             <div className="mt-2 space-y-1">
-              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted">
                 {g("tip")}
               </Label>
               <Input
@@ -387,7 +387,7 @@ export function StoryboardTab({
             setup") ou au vol (bouton "enregistrer" sur une scène). */}
         <div className="flex flex-wrap items-center gap-2">
           <span
-            className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted"
             title={t("presetsHint")}
           >
             <Bookmark className="size-3.5" />
@@ -507,7 +507,7 @@ function GuideField({
 }) {
   return (
     <div className="space-y-1">
-      <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+      <Label className="text-xs font-bold uppercase tracking-wider text-muted">
         {label}
       </Label>
       <Input
@@ -626,7 +626,7 @@ function SceneCard({
         />
 
         {/* Numéro de plan façon clap — remplace la ligne "1 · PLAN 01". */}
-        <span className="pointer-events-none absolute start-2 top-2 z-10 inline-flex h-6 items-center rounded-md bg-ink/85 px-2 text-[11px] font-bold tabular-nums tracking-wider text-white backdrop-blur-sm">
+        <span className="pointer-events-none absolute start-2 top-2 z-10 inline-flex h-6 items-center rounded-md bg-ink/85 px-2 text-xs font-bold tabular-nums tracking-wider text-white backdrop-blur-sm">
           {String(index + 1).padStart(2, "0")}
         </span>
 
@@ -642,7 +642,7 @@ function SceneCard({
           aria-label={optimisticFilmed ? t("filmed") : t("markFilmed")}
           aria-pressed={optimisticFilmed}
           className={cn(
-            "absolute bottom-2 start-2 z-10 inline-flex h-7 items-center gap-1.5 rounded-full ps-1.5 pe-2.5 text-[11px] font-bold shadow-sm backdrop-blur-sm transition disabled:opacity-50",
+            "absolute bottom-2 start-2 z-10 inline-flex h-7 items-center gap-1.5 rounded-full ps-1.5 pe-2.5 text-xs font-bold shadow-sm backdrop-blur-sm transition disabled:opacity-50",
             optimisticFilmed
               ? "bg-emerald-500 text-white"
               : "bg-ink/75 text-white/90 hover:bg-ink/90 hover:text-white",
@@ -728,7 +728,7 @@ function SceneCard({
                 return (
                   <span
                     key={i}
-                    className="inline-flex max-w-36 items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[11px] text-muted transition hover:bg-accent/10 hover:text-accent"
+                    className="inline-flex max-w-36 items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-xs text-muted transition hover:bg-accent/10 hover:text-accent"
                   >
                     <Icon className="size-3 shrink-0" />
                     <span className="truncate" dir="auto">
@@ -738,7 +738,7 @@ function SceneCard({
                 );
               })}
               {chips.length > 3 && (
-                <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold text-muted">
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-muted">
                   +{chips.length - 3}
                 </span>
               )}
@@ -747,7 +747,7 @@ function SceneCard({
             <button
               type="button"
               onClick={() => setDetailsOpen(true)}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-muted transition hover:bg-secondary hover:text-foreground"
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-muted transition hover:bg-secondary hover:text-foreground"
             >
               <Plus className="size-3" />
               {t("details")}
@@ -857,7 +857,7 @@ function SceneDetailsDialog({
             onChange={(v) => onFieldChange("on_screen_text", v)}
           />
           <div className="space-y-1">
-            <Label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
+            <Label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
               <Scissors className="size-3" />
               {t("editingNotes")}
             </Label>
@@ -896,7 +896,7 @@ function DetailField({
 }) {
   return (
     <div className="space-y-1">
-      <Label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
+      <Label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
         <Icon className="size-3" />
         {label}
       </Label>
@@ -1066,7 +1066,7 @@ function CreatePresetDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted">
               Cadrage par défaut (optionnel)
             </Label>
             <Input
@@ -1076,7 +1076,7 @@ function CreatePresetDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+            <Label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
               <Zap className="size-3" />
               Matériel à ce lieu (optionnel)
             </Label>
@@ -1087,7 +1087,7 @@ function CreatePresetDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted">
               Photo de référence (optionnel)
             </Label>
             {/* On réutilise le bucket du content courant pour stocker l'image
@@ -1201,7 +1201,7 @@ function SavePresetDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+            <Label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
               <Zap className="size-3" />
               Matériel à ce lieu (optionnel)
             </Label>

@@ -212,7 +212,7 @@ function Section({
 }) {
   return (
     <div className="space-y-1.5">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
+      <div className="text-xs font-bold uppercase tracking-wider text-muted">
         {label}
       </div>
       {children}
@@ -279,7 +279,7 @@ function VlogPreview({
               key={c.t}
               className="rounded-xl border border-border bg-card p-2.5"
             >
-              <div className="text-[10px] font-bold uppercase tracking-wider text-accent">
+              <div className="text-xs font-bold uppercase tracking-wider text-accent">
                 {c.t}
               </div>
               <p className="mt-0.5 text-xs leading-snug">{c.v}</p>
@@ -295,7 +295,7 @@ function VlogPreview({
               key={i}
               className="flex items-start gap-2 rounded-lg bg-card px-2.5 py-1.5 text-sm"
             >
-              <span className="mt-0.5 text-[10px] font-bold tabular-nums text-muted">
+              <span className="mt-0.5 text-xs font-bold tabular-nums text-muted">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <span className="flex-1">{s}</span>

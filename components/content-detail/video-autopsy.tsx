@@ -90,7 +90,7 @@ export function VideoAutopsy({
         </div>
         <div>
           <h3 className="text-sm font-bold">Autopsie IA</h3>
-          <p className="text-[11px] text-muted">
+          <p className="text-xs text-muted">
             Croise ton script + tes captures d&apos;insights pour comprendre ce
             qui a marché.
           </p>
@@ -114,7 +114,7 @@ export function VideoAutopsy({
         {/* Captures des insights (plusieurs, petites) */}
         <div className="space-y-1.5">
           <Label>Captures des insights</Label>
-          <p className="text-[10px] text-muted">
+          <p className="text-xs text-muted">
             Ajoute autant de captures que tu veux (courbe de rétention, stats,
             portée…). L&apos;IA lit tout dedans.
           </p>
@@ -179,11 +179,11 @@ export function VideoAutopsy({
       {hasAutopsy && (
         <div className="space-y-2 rounded-2xl border border-border/60 bg-card p-4">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-accent">
+            <span className="text-xs font-bold uppercase tracking-wider text-accent">
               Résultat de l&apos;autopsie
             </span>
             {autopsyAt && (
-              <span className="text-[10px] text-muted">
+              <span className="text-xs text-muted">
                 {new Date(autopsyAt).toLocaleString("fr-FR", {
                   dateStyle: "short",
                   timeStyle: "short",

@@ -127,7 +127,7 @@ export function ContentTab({
                   />
                 )}
                 {isCarousel && (
-                  <span className="absolute start-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-ink text-[10px] font-bold text-white">
+                  <span className="absolute start-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-ink text-xs font-bold text-white">
                     {idx + 1}
                   </span>
                 )}

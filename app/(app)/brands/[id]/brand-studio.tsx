@@ -709,7 +709,7 @@ function ResultsScreen({
             className="pointer-events-none absolute -bottom-20 -left-10 size-44 rounded-full bg-orange-strong/25 blur-3xl"
           />
           <div className="relative">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-soft">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-soft">
               Positionnement
             </p>
             <p className="mt-3 text-xl font-bold leading-snug sm:text-2xl">
@@ -934,7 +934,7 @@ function StrategyCard({
           {icon}
         </span>
         <div className="min-w-0">
-          <span className="block text-[10px] font-bold tracking-[0.16em] text-muted">
+          <span className="block text-xs font-bold tracking-[0.16em] text-muted">
             {n}
           </span>
           <h3 className="truncate text-sm font-bold leading-tight">{title}</h3>

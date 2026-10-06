@@ -170,6 +170,17 @@
       "fri": "Fri",
       "sat": "Sat",
       "sun": "Sun"
+    },
+    "sectionTitle": "Planning",
+    "tabs": {
+      "calendar": "Calendar",
+      "planning": "Table",
+      "ideas": "Ideas"
+    },
+    "subtitles": {
+      "calendar": "See your month at a glance.",
+      "planning": "All your content this month, as a table.",
+      "ideas": "What has no date yet."
     }
   },
   "newContent": {

@@ -118,7 +118,7 @@ export function VlogTab({
             <Label className="text-xs font-semibold text-foreground">
               📐 Arc en 3 temps
             </Label>
-            <p className="text-[11px] text-muted">
+            <p className="text-xs text-muted">
               Même léger, un vlog a un début, un milieu et une chute.
             </p>
           </div>
@@ -157,7 +157,7 @@ export function VlogTab({
             <Film className="size-4 text-accent" />
             <Label className="text-sm font-semibold">🎙️ Voix-off</Label>
           </div>
-          <span className={cn("text-[10px] font-semibold", voColor)}>
+          <span className={cn("text-xs font-semibold", voColor)}>
             ~{voSeconds}s
           </span>
         </div>
@@ -200,7 +200,7 @@ function Field({
   return (
     <div className="space-y-1">
       <Label className="text-xs font-semibold text-foreground">{label}</Label>
-      <p className="text-[11px] text-muted">{hint}</p>
+      <p className="text-xs text-muted">{hint}</p>
       <Textarea
         dir="auto"
         value={value}
@@ -228,10 +228,10 @@ function ArcCell({
   return (
     <div className="space-y-1 rounded-2xl border border-border/60 bg-secondary/20 p-3">
       <div className="flex items-center gap-1.5">
-        <span className="flex size-5 items-center justify-center rounded-full bg-accent/15 text-[10px] font-bold text-accent">
+        <span className="flex size-5 items-center justify-center rounded-full bg-accent/15 text-xs font-bold text-accent">
           {n}
         </span>
-        <Label className="text-[11px] font-bold uppercase tracking-wider text-muted">
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted">
           {title}
         </Label>
       </div>

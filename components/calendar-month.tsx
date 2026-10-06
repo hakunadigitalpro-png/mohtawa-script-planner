@@ -258,7 +258,7 @@ export function CalendarMonth({
       {/* Vue grille — desktop. Sur un téléphone, sept colonnes font 50 px
           chacune : ni le visuel ni le titre n'y sont lisibles. */}
       <div className="hidden overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_2px_12px_-4px_rgba(26,15,37,0.06)] md:block">
-        <div className="grid grid-cols-7 border-b border-border/60 bg-secondary/50 text-[11px] font-bold uppercase tracking-wider text-muted">
+        <div className="grid grid-cols-7 border-b border-border/60 bg-secondary/50 text-xs font-bold uppercase tracking-wider text-muted">
           {(["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const).map((d) => (
             <div key={d} className="px-2 py-2.5 text-center">{t(`weekdays.${d}`)}</div>
           ))}
@@ -452,12 +452,12 @@ function EntryCard({
             title={slot.platform ? platformLabel(slot.platform) : undefined}
           >
             {Icon && <Icon className="size-3.5" />}
-            {own && <span className="text-[10px] font-semibold">{own}</span>}
+            {own && <span className="text-xs font-semibold">{own}</span>}
           </span>
         );
       })}
       {sharedTime && (
-        <span className="text-[10px] font-semibold text-muted">
+        <span className="text-xs font-semibold text-muted">
           {sharedTime}
         </span>
       )}

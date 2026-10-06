@@ -170,6 +170,17 @@
       "fri": "جم",
       "sat": "سب",
       "sun": "أح"
+    },
+    "sectionTitle": "التخطيط",
+    "tabs": {
+      "calendar": "التقويم",
+      "planning": "جدول",
+      "ideas": "أفكار"
+    },
+    "subtitles": {
+      "calendar": "شاهد شهرك بلمحة.",
+      "planning": "كل محتويات الشهر في جدول.",
+      "ideas": "ما ليس له تاريخ بعد."
     }
   },
   "newContent": {

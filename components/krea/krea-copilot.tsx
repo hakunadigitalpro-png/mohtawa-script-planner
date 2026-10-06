@@ -333,7 +333,7 @@ function GuideBubble({ guide }: { guide: GuidePage }) {
         </button>
         <div className="flex items-center gap-2">
           {guide.steps.length > 1 && (
-            <span className="text-[11px] tabular-nums text-muted">
+            <span className="text-xs tabular-nums text-muted">
               {index + 1}/{guide.steps.length}
             </span>
           )}

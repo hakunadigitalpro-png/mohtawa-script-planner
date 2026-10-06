@@ -69,7 +69,7 @@ export function PublicationsEditor({
       <div className="flex items-center gap-1.5">
         <Globe className="size-4 text-muted" />
         <Label className="text-sm font-semibold">Publications</Label>
-        <span className="text-[10px] text-muted">
+        <span className="text-xs text-muted">
           · Un contenu peut sortir sur plusieurs plateformes à des dates différentes
         </span>
       </div>
@@ -204,7 +204,7 @@ function PublicationRow({
           aria-label={`Heure de publication sur ${publication.platform}`}
         />
 
-        <span className="flex-1 text-[10px] text-muted sm:text-right">
+        <span className="flex-1 text-xs text-muted sm:text-right">
           L&apos;URL du contenu se renseigne après publication, dans l&apos;onglet
           Performance.
         </span>

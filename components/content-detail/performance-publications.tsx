@@ -45,7 +45,7 @@ export function PerformancePublications({
       <div className="flex items-center gap-1.5">
         <Globe className="size-4 text-muted" />
         <Label className="text-sm font-semibold">Liens des publications</Label>
-        <span className="text-[10px] text-muted">
+        <span className="text-xs text-muted">
           · Une URL par plateforme. Sert à retrouver tes contenus en ligne et à
           matcher les insights plus tard.
         </span>
@@ -106,7 +106,7 @@ function PublicationUrlRow({
         </span>
 
         {publication.scheduled_date && (
-          <span className="shrink-0 text-[10px] text-muted">
+          <span className="shrink-0 text-xs text-muted">
             Publié le{" "}
             {new Date(publication.scheduled_date).toLocaleDateString("fr-FR")}
           </span>

@@ -3,54 +3,45 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { NewContentModal } from "@/components/new-content-modal";
-import { CONTENT_TYPES } from "@/lib/constants";
 
 /**
- * Barre de création rapide du calendrier (inspiration Notion "Quick Button").
- * Un bouton par type de contenu (Reel / Story / Vlog) avec un « + » coloré
- * à la couleur du type — qui sert aussi d'indicateur de couleur du calendrier.
- * Ouvre la modale de création pré-remplie sur le bon type.
+ * Création d'un contenu depuis le planning : UN bouton, UN clic.
  *
- * `key={type}` sur la modale : force un remount quand on change de type pour
- * que son état interne (useState(defaultType)) reparte sur le bon type.
+ * Deux versions ont été écartées avant celle-ci.
+ *
+ * Un bouton par format (six pastilles alignées) : la rangée dépassait la
+ * largeur de l'écran, sans hiérarchie — dix contrôles de même poids, et
+ * l'action principale noyée au milieu.
+ *
+ * Puis un menu déroulant listant les six formats : il ajoutait un geste sans
+ * rien apporter, puisque la modale ouvre DÉJÀ sur un sélecteur de format en
+ * premier champ. On choisissait donc deux fois. Il traînait en prime un
+ * défaut reproductible : la modale n'était remontée que si le format
+ * changeait, si bien qu'après avoir modifié puis annulé, un clic sur « Reel »
+ * rouvrait sur « Story ».
+ *
+ * Reste le geste juste : on clique, la modale s'ouvre, le format s'y choisit
+ * comme le reste.
  */
 export function CalendarQuickCreate({ defaultDate }: { defaultDate?: string }) {
   const [open, setOpen] = useState(false);
-  const [type, setType] = useState<string>(CONTENT_TYPES[0].value);
-
-  const openFor = (value: string) => {
-    setType(value);
-    setOpen(true);
-  };
 
   return (
     <>
-      {/* Ligne horizontale compacte — vit dans l'en-tête à droite pour ne
-          consommer aucune hauteur au-dessus du calendrier. */}
-      <div className="flex shrink-0 items-center gap-2">
-        {CONTENT_TYPES.map((ct) => (
-          <button
-            key={ct.value}
-            type="button"
-            onClick={() => openFor(ct.value)}
-            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap h-9 rounded-full border border-border bg-card px-3 text-xs font-semibold text-foreground shadow-[0_1px_2px_rgba(10,6,18,0.04)] transition hover:border-accent/40 hover:bg-secondary"
-          >
-            <span
-              className="flex size-4 shrink-0 items-center justify-center rounded-full text-white"
-              style={{ background: ct.color }}
-            >
-              <Plus className="size-2.5" />
-            </span>
-            {ct.label}
-          </button>
-        ))}
-      </div>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-accent px-4 text-sm font-semibold text-accent-foreground shadow-soft transition hover:brightness-95"
+      >
+        <Plus className="size-4" />
+        {/* Le mot complet dès qu'il y a la place : sur téléphone il
+            poussait le bouton sur une troisième rangée. */}
+        Nouveau<span className="max-sm:hidden">&nbsp;contenu</span>
+      </button>
 
       <NewContentModal
-        key={type}
         open={open}
         onOpenChange={setOpen}
-        defaultType={type}
         defaultDate={defaultDate}
       />
     </>

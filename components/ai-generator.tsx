@@ -523,7 +523,7 @@ function ThinkingIndicator({ label }: { label: string }) {
 function PreviewField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
+      <div className="text-xs font-bold uppercase tracking-wider text-muted">
         {label}
       </div>
       <div className="mt-0.5 whitespace-pre-line text-sm leading-snug">{value}</div>
@@ -592,7 +592,7 @@ function ReelPreview({ data }: { data: ReelGeneration }) {
 
 function ScenePill({ label, value }: { label: string; value: string }) {
   return (
-    <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+    <span className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
       {label} : {value}
     </span>
   );
@@ -606,7 +606,7 @@ function StoryPreview({ data }: { data: StoryGeneration }) {
       <PreviewField label={t("objective")} value={data.objective} />
       <PreviewField label={t("ctaSoft")} value={data.cta_soft} />
       <div>
-        <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
+        <div className="text-xs font-bold uppercase tracking-wider text-muted">
           {t("stories")}
         </div>
         <ul className="mt-1 space-y-2">

@@ -261,7 +261,7 @@ function ReelScript({
         {/* Rappel du Hook (read-only, depuis Plan) */}
         {content.hook && (
           <div className="rounded-2xl border border-accent/20 bg-accent/5 px-4 py-2.5">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-accent">
+            <div className="text-xs font-bold uppercase tracking-wider text-accent">
               Hook (depuis le Plan)
             </div>
             <p className="mt-0.5 text-sm italic text-foreground/80">
@@ -376,13 +376,13 @@ function CompactField({
           >
             {label}
           </Label>
-          <span className="text-[10px] font-medium text-muted">· {timing}</span>
+          <span className="text-xs font-medium text-muted">· {timing}</span>
           <CommentButton targetType="script" targetId={blockKey} />
         </div>
         <div className="flex items-center gap-2">
           {headerExtra}
           {wordCount > 0 && (
-            <span className="text-[10px] text-muted">
+            <span className="text-xs text-muted">
               {wordCount} mots · ~{blockSeconds}s
             </span>
           )}
@@ -404,7 +404,7 @@ function CompactField({
       {/* Trames cliquables : pour ne jamais rester devant une case vide. */}
       {suggestions && suggestions.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-[11px] font-semibold text-muted">
+          <span className="text-xs font-semibold text-muted">
             💡 Trames :
           </span>
           {suggestions.map((s) => (
@@ -528,7 +528,7 @@ function StoryScript({
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted">
               {t("whatStory")}
             </Label>
             <Textarea
@@ -541,7 +541,7 @@ function StoryScript({
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted">
               {t("engagementGoals")}
             </Label>
             <Textarea
@@ -694,7 +694,7 @@ function PhoneCard({
           draggable
           onDragStart={onDragHandleStart}
           onDragEnd={onDragHandleEnd}
-          className="inline-flex cursor-grab items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted active:cursor-grabbing"
+          className="inline-flex cursor-grab items-center gap-1 text-xs font-bold uppercase tracking-wider text-muted active:cursor-grabbing"
           title="Glisse pour échanger avec une autre story"
         >
           <span className="text-foreground/40">⋮⋮</span>
@@ -752,7 +752,7 @@ function PhoneCard({
         />
         <span
           className={cn(
-            "text-[10px] font-semibold uppercase tracking-wider",
+            "text-xs font-semibold uppercase tracking-wider",
             optimisticFilmed ? "text-emerald-700" : "text-muted",
           )}
         >

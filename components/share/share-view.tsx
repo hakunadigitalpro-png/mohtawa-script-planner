@@ -194,7 +194,7 @@ export function ShareView({
           meta={
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white"
               >
                 <ColorDot color={typeColor(c.type)} />
                 {typeLabel(c.type)}
@@ -317,7 +317,7 @@ export function ShareView({
             </div>
             {bundle.reel.script_full && (
               <div className="mt-5 rounded-2xl bg-secondary/40 p-4 text-sm whitespace-pre-wrap">
-                <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted">
+                <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">
                   Script complet
                 </div>
                 {bundle.reel.script_full}
@@ -335,7 +335,7 @@ export function ShareView({
                   key={s.id}
                   className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm"
                 >
-                  <div className="flex items-center justify-between gap-1 border-b border-border/60 bg-secondary/50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted">
+                  <div className="flex items-center justify-between gap-1 border-b border-border/60 bg-secondary/50 px-3 py-2 text-xs font-bold uppercase tracking-wider text-muted">
                     <span>Plan {String(s.scene_number).padStart(2, "0")}</span>
                     <Btn
                       type="scene"
@@ -403,7 +403,7 @@ export function ShareView({
                       : STORY_SLOT_LABELS[slot] ?? `Story ${slot}`;
                 return (
                   <div key={slot} className="flex flex-col">
-                    <div className="mb-1.5 flex items-center justify-center gap-1 text-center text-[10px] font-bold uppercase tracking-wider text-muted">
+                    <div className="mb-1.5 flex items-center justify-center gap-1 text-center text-xs font-bold uppercase tracking-wider text-muted">
                       <span>{label}</span>
                       <Btn
                         type="slide"
@@ -425,7 +425,7 @@ export function ShareView({
                       </div>
                     </div>
                     {slide?.body && (
-                      <p className="mt-2 text-[11px] leading-snug">
+                      <p className="mt-2 text-xs leading-snug">
                         {slide.body}
                       </p>
                     )}
@@ -524,7 +524,7 @@ function Section({
   return (
     <Card className="p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-[11px] font-bold uppercase tracking-wider text-muted">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-muted">
           {title}
         </h2>
         {headerExtra}
@@ -547,7 +547,7 @@ function Field({
 }) {
   return (
     <div className={long ? "md:col-span-2" : ""}>
-      <dt className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+      <dt className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
         <span>{label}</span>
         {inlineExtra}
       </dt>
@@ -567,7 +567,7 @@ function Block({
 }) {
   return (
     <div>
-      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+      <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted">
         <span>{label}</span>
         {extra}
       </div>
@@ -590,7 +590,7 @@ function GuestCommentInlineButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition",
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold transition",
         count > 0
           ? "border-accent/40 bg-accent/10 text-accent hover:bg-accent/15"
           : "border-border/60 bg-card text-muted hover:border-foreground/30 hover:text-foreground",
@@ -755,7 +755,7 @@ function GuestCommentDrawer({
                           setReplyToId(root.id);
                           setReplyBody("");
                         }}
-                        className="ms-9 mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-muted hover:text-foreground"
+                        className="ms-9 mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-muted hover:text-foreground"
                       >
                         <CornerDownRight className="size-3" />
                         Répondre
@@ -864,7 +864,7 @@ function CommentBubble({ c }: { c: SharedComment }) {
     <div className="flex items-start gap-2">
       <div
         className={cn(
-          "flex size-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold uppercase",
+          "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold uppercase",
           c.is_guest
             ? "bg-orange-soft text-orange-strong"
             : "bg-secondary",

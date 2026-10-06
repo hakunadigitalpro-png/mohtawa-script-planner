@@ -106,7 +106,7 @@ export function MobileBottomNav({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-semibold transition-colors",
+                "flex flex-1 flex-col items-center justify-center gap-1 text-xs font-semibold transition-colors",
                 active ? "text-accent" : "text-muted-foreground",
               )}
             >
@@ -120,7 +120,7 @@ export function MobileBottomNav({
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
-          className="flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-semibold text-muted-foreground"
+          className="flex flex-1 flex-col items-center justify-center gap-1 text-xs font-semibold text-muted-foreground"
         >
           <Menu className="size-5" />
           <span>Plus</span>

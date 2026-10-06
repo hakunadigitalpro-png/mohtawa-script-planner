@@ -6,6 +6,8 @@ import { getTranslations } from "next-intl/server";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { formatDateLongFr, formatTimeFr } from "@/lib/utils";
+import { fetchNeighbours } from "@/lib/content-neighbours";
+import { ContentPager } from "@/components/content-detail/content-pager";
 import { SubmitReviewButton } from "@/components/content-detail/submit-review-button";
 import { ContentTitleField } from "@/components/content-detail/content-title-field";
 
@@ -212,6 +214,9 @@ export default async function ContentDetailPage({
   // n'affichait sa date NULLE PART — alors que le calendrier, lui, la
   // connaît via `contents.date`. On la remonte dans l'en-tête : c'est elle
   // qui dit « où je suis » quand on arrive depuis le planning.
+  // Les voisins au planning : enchaaîner sans repasser par le calendrier.
+  const nav = await fetchNeighbours(supabase, content.brand_id, c.id);
+
   const datedPubs = publications
     .filter((p) => p.scheduled_date)
     .sort((a, b) =>
@@ -236,6 +241,7 @@ export default async function ContentDetailPage({
         <PageHeader
           backHref="/calendar"
           backLabel={tContent("backToCalendar")}
+          aside={<ContentPager nav={nav} />}
           title={
             <ContentTitleField
               contentId={c.id}

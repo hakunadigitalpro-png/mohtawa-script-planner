@@ -51,7 +51,7 @@ export function BarChart({
     <div className={cn("relative", className)}>
       <div className="flex">
         <div
-          className="flex shrink-0 flex-col-reverse justify-between pe-2 text-end text-[10px] text-muted"
+          className="flex shrink-0 flex-col-reverse justify-between pe-2 text-end text-xs text-muted"
           style={{ height }}
         >
           {yTicks.map((t, i) => (
@@ -89,7 +89,7 @@ export function BarChart({
                     minHeight: d.value > 0 ? 2 : 0,
                   }}
                 />
-                <div className="pointer-events-none absolute -top-7 z-10 whitespace-nowrap rounded bg-foreground px-2 py-0.5 text-[10px] font-medium text-background opacity-0 group-hover:opacity-100">
+                <div className="pointer-events-none absolute -top-7 z-10 whitespace-nowrap rounded bg-foreground px-2 py-0.5 text-xs font-medium text-background opacity-0 group-hover:opacity-100">
                   {format(d.value, fmt)}
                 </div>
               </div>
@@ -102,7 +102,7 @@ export function BarChart({
         {data.map((d, i) => (
           <div
             key={i}
-            className="flex-1 truncate text-center text-[10px] text-muted"
+            className="flex-1 truncate text-center text-xs text-muted"
           >
             {d.label}
           </div>

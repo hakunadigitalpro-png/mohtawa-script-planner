@@ -178,7 +178,7 @@ function ShareDialog({
           {/* Mode selector — visible uniquement quand le partage est actif */}
           {enabled && (
             <div className="space-y-2">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted">
                 {t("modeLabel")}
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -205,7 +205,7 @@ function ShareDialog({
           {/* Link */}
           {enabled && (
             <div className="space-y-2">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
+              <div className="text-xs font-bold uppercase tracking-wider text-muted">
                 {t("linkLabel")}
               </div>
               <div className="flex items-center gap-2">
@@ -294,7 +294,7 @@ function ModeButton({
         {icon}
       </div>
       <div className="text-xs font-bold">{title}</div>
-      <div className="text-[10px] leading-snug text-muted">{description}</div>
+      <div className="text-xs leading-snug text-muted">{description}</div>
     </button>
   );
 }
