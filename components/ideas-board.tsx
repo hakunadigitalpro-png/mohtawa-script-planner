@@ -45,6 +45,23 @@ const LANES: { key: IdeaLane; label: string; hint: string }[] = [
   { key: "writing", label: "En écriture", hint: "On développe" },
 ];
 
+/**
+ * La première ligne qui dit quelque chose.
+ *
+ * Un texte importé arrive avec ses retours à la ligne et parfois ses
+ * minutages. En l'affichant brut sur deux lignes, le navigateur écrase les
+ * sauts : « 0–3s » et la réplique suivante se télescopaient en bouillie.
+ * Une seule ligne, tronquée proprement — le détail complet est dans la fiche.
+ */
+function firstLine(text: string | null | undefined): string | null {
+  if (!text) return null;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (line) return line;
+  }
+  return null;
+}
+
 /** La colonne où tombe un contenu, déduite de son statut réel. */
 function laneOf(status: string): IdeaLane {
   if (status === "idea") return "idea";
@@ -220,12 +237,12 @@ export function IdeasBoard({ ideas }: { ideas: IdeaCard[] }) {
                         {card.title || "Sans titre"}
                       </Link>
 
-                      {card.notes?.trim() && (
+                      {firstLine(card.notes) && (
                         <p
                           dir="auto"
-                          className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted"
+                          className="mt-1.5 truncate text-xs leading-relaxed text-muted"
                         >
-                          {card.notes}
+                          {firstLine(card.notes)}
                         </p>
                       )}
 
