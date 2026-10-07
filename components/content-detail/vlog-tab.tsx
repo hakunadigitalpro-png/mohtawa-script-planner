@@ -26,11 +26,14 @@ export function VlogTab({
   content,
   vlog,
   captureItems,
+  brandAudience,
   aiEnabled = true,
 }: {
   content: Content;
   vlog: VlogDetails | null;
   captureItems: ChecklistItem[];
+  /** Cible de la marque, pour pré-remplir la génération. */
+  brandAudience?: string | null;
   /**
    * Interrupteur IA de la marque (0054). Faux : le bloc de génération
    * disparaît. Le garde serveur refuse déjà l'appel — masquer évite
@@ -93,6 +96,7 @@ export function VlogTab({
             <VlogGeneratorButton
               contentId={content.id}
               platform={content.platform ?? undefined}
+              defaultAudience={brandAudience ?? undefined}
             />
           )}
         </div>

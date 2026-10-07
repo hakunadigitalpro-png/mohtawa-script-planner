@@ -71,6 +71,7 @@ export function MobileTopBar({
       <NotificationsBell
         userId={userId}
         initialNotifications={initialNotifications}
+        activeBrandId={active?.id ?? null}
         channelSuffix="mobile"
       />
     </header>

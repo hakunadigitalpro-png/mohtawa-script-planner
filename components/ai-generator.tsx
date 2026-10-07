@@ -315,6 +315,9 @@ function AiGeneratorModal({
               </Button>
               <Button type="button" onClick={generate} disabled={pending}>
                 <Wand2 className="size-3.5" />
+                {/* Pas de second indicateur ici : le panneau du corps de la
+                    modale annonce déjà que Krea réfléchit. Deux messages
+                    différents au même instant, c’est du bruit. */}
                 {pending ? t("generating") : t("generate")}
               </Button>
             </>

@@ -3,7 +3,8 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Bell, Check, CalendarClock, ListPlus } from "lucide-react";
+import { switchBrand } from "@/app/(app)/actions";
+import { Bell, Building2, Check, CalendarClock, ListPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { createTask } from "@/app/(app)/tasks/actions";
@@ -20,10 +21,13 @@ import type { Notification } from "./types";
 export function NotificationsBell({
   userId,
   initialNotifications,
+  activeBrandId,
   channelSuffix,
 }: {
   userId: string;
   initialNotifications: Notification[];
+  /** Marque actuellement ouverte, pour repérer celles qui viennent d'ailleurs. */
+  activeBrandId?: string | null;
   /** Suffixe de nom de channel Realtime. Permet de monter 2 cloches
    *  (sidebar desktop + top bar mobile) sans collision de channel. */
   channelSuffix?: string;
@@ -116,11 +120,22 @@ export function NotificationsBell({
         p_notification_id: notif.id,
       });
       setOpen(false);
-      if (notif.content_id) {
-        router.push(`/content/${notif.content_id}`);
+      if (!notif.content_id) return;
+
+      // La notification vient d'une AUTRE marque : on bascule dessus avant
+      // d'ouvrir. Sans ça, on arrivait sur le contenu avec le rôle,
+      // l'interrupteur d'écriture assistée et la navigation de la marque
+      // précédente — faux pour ce contenu-là, et sans rien pour le signaler.
+      if (
+        notif.brand_id &&
+        activeBrandId &&
+        notif.brand_id !== activeBrandId
+      ) {
+        await switchBrand(notif.brand_id);
       }
+      router.push(`/content/${notif.content_id}`);
     },
-    [router, supabase],
+    [router, supabase, activeBrandId],
   );
 
   // -------- Tout marquer comme lu --------
@@ -208,6 +223,7 @@ export function NotificationsBell({
                     notification={n}
                     onClick={() => handleClick(n)}
                     onAddTask={() => handleAddTask(n)}
+                    activeBrandId={activeBrandId}
                   />
                 ))}
               </ul>
@@ -223,10 +239,13 @@ function NotificationRow({
   notification,
   onClick,
   onAddTask,
+  activeBrandId,
 }: {
   notification: Notification;
   onClick: () => void;
   onAddTask: () => Promise<void>;
+  /** Marque ouverte : sert à signaler celles qui viennent d'ailleurs. */
+  activeBrandId?: string | null;
 }) {
   const t = useTranslations("notifications");
   const tTime = useTranslations("comments.time");
@@ -257,6 +276,22 @@ function NotificationRow({
             <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-accent" />
           )}
           <div className="flex-1 min-w-0">
+            {/* La marque n'est annoncée que si elle n'est pas celle ouverte :
+                sur sa propre marque, l'afficher partout serait du bruit.
+                Cliquer bascule dessus — autant prévenir avant. */}
+            {notification.brand_name &&
+              notification.brand_id &&
+              notification.brand_id !== activeBrandId && (
+                <p className="mb-0.5 inline-flex max-w-full items-center gap-1 rounded-md bg-secondary px-1.5 py-0.5 text-xs font-semibold text-foreground/70">
+                  <Building2 className="size-3 shrink-0" />
+                  {/* Le texte dans son propre bloc : `truncate` est sans effet
+                      sur un conteneur flex, un nom long serait coupé net sans
+                      points de suspension, voire déborderait. */}
+                  <span className="min-w-0 truncate">
+                    Ouvrir dans {notification.brand_name}
+                  </span>
+                </p>
+              )}
             {notification.type === "ready_to_schedule" ? (
               <ReadyToScheduleContent notification={notification} t={t} />
             ) : (

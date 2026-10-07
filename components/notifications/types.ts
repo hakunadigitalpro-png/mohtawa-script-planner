@@ -16,4 +16,11 @@ export type Notification = {
   guest_name: string | null;
   author_email: string | null;
   is_guest: boolean;
+  /**
+   * Marque du contenu concerné (migration 0056). Les notifications sont
+   * personnelles, donc elles arrivent de TOUTES les marques dont on est
+   * membre — il faut pouvoir le dire, et basculer dessus.
+   */
+  brand_id?: string | null;
+  brand_name?: string | null;
 };

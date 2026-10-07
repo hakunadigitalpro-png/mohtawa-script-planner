@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import type { BrandStrategy } from "@/lib/types";
 import { Sparkles, Send, Check, RefreshCcw, ArrowLeft } from "lucide-react";
 import {
   Dialog,
@@ -14,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Thinking } from "@/components/ui/thinking";
 import { cn } from "@/lib/utils";
 import { KreaBadge } from "@/components/krea-avatar";
 import {
@@ -47,7 +49,18 @@ const TONES = [
 
 const COUNTS = ["3 thèmes", "4 thèmes", "5 thèmes", "Décidez pour moi"];
 
-export function ThemeAssistant({ brandId }: { brandId: string }) {
+export function ThemeAssistant({
+  brandId,
+  strategy,
+}: {
+  brandId: string;
+  /**
+   * Stratégie déjà générée pour la marque. Elle contient déjà l'activité,
+   * la cible et le ton — les redemander ici reviendrait à faire ressaisir
+   * ce que l'IA vient d'établir.
+   */
+  strategy?: BrandStrategy | null;
+}) {
   const [open, setOpen] = React.useState(false);
   return (
     <>
@@ -56,7 +69,11 @@ export function ThemeAssistant({ brandId }: { brandId: string }) {
         Créer mes thèmes avec Krea
       </Button>
       {open && (
-        <AssistantModal brandId={brandId} onClose={() => setOpen(false)} />
+        <AssistantModal
+          brandId={brandId}
+          strategy={strategy}
+          onClose={() => setOpen(false)}
+        />
       )}
     </>
   );
@@ -64,19 +81,40 @@ export function ThemeAssistant({ brandId }: { brandId: string }) {
 
 function AssistantModal({
   brandId,
+  strategy,
   onClose,
 }: {
   brandId: string;
+  strategy?: BrandStrategy | null;
   onClose: () => void;
 }) {
   const router = useRouter();
 
+  // Pré-rempli depuis la stratégie : l'activité, la cible et le ton y sont
+  // déjà établis. Les redemander ferait ressaisir ce que l'IA vient
+  // d'écrire — et le résultat serait moins bon, puisqu'on résumerait de
+  // mémoire ce qui est déjà posé noir sur blanc. Tout reste modifiable.
+  const g = strategy?.generated ?? null;
+  const firstAudience = g?.audiences?.[0];
+
   // Réponses du questionnaire
-  const [activity, setActivity] = React.useState("");
-  const [audience, setAudience] = React.useState("");
+  const [activity, setActivity] = React.useState(g?.positioning ?? "");
+  const [audience, setAudience] = React.useState(
+    firstAudience ? `${firstAudience.name} — ${firstAudience.who}` : (g?.audience_summary ?? ""),
+  );
   const [objective, setObjective] = React.useState("");
-  const [tone, setTone] = React.useState("");
+  const [tone, setTone] = React.useState(g?.voice_summary ?? "");
   const [count, setCount] = React.useState("");
+
+  // Le ton de la stratégie est du texte libre, alors que les pastilles
+  // comparent à l'identique : sans l'ajouter aux options, AUCUNE ne serait
+  // allumée et la question semblerait sans réponse — alors qu'elle en a une.
+  // Cliquer une autre pastille remplace alors un choix visible, au lieu
+  // d'écraser sans le dire le ton de la marque.
+  const toneOptions = React.useMemo(
+    () => (g?.voice_summary ? [g.voice_summary, ...TONES] : TONES),
+    [g?.voice_summary],
+  );
 
   // Phase + état IA
   const [phase, setPhase] = React.useState<"form" | "results">("form");
@@ -194,7 +232,10 @@ function AssistantModal({
                     dir="auto"
                     autoFocus
                     placeholder="Ex : cabinet de podologie à Tunis"
-                    className="min-h-14 text-sm leading-relaxed [field-sizing:content]"
+                    /* Hauteur bridée : pré-rempli depuis la stratégie, ce
+                       champ contient une phrase entière d'IA et pousserait
+                       les questions suivantes sous la ligne de flottaison. */
+                    className="max-h-28 min-h-14 overflow-y-auto text-sm leading-relaxed [field-sizing:content]"
                   />
                 </Question>
 
@@ -208,7 +249,7 @@ function AssistantModal({
                     onChange={(e) => setAudience(e.target.value)}
                     dir="auto"
                     placeholder="Ex : personnes qui ont mal aux pieds, diabétiques, sportifs"
-                    className="min-h-14 text-sm leading-relaxed [field-sizing:content]"
+                    className="max-h-28 min-h-14 overflow-y-auto text-sm leading-relaxed [field-sizing:content]"
                   />
                 </Question>
 
@@ -225,7 +266,7 @@ function AssistantModal({
                   label="Le ton de tes vidéos ?"
                   hint="Comment tu veux parler à ton audience."
                 >
-                  <Chips options={TONES} value={tone} onChange={setTone} />
+                  <Chips options={toneOptions} value={tone} onChange={setTone} />
                 </Question>
 
                 <Question n={5} label="Combien de thèmes ?" hint="">
@@ -242,7 +283,11 @@ function AssistantModal({
                 className="w-full"
               >
                 <Sparkles className="size-4" />
-                {pending ? "Je réfléchis à tes thèmes…" : "Générer mes thèmes"}
+                {pending ? (
+                  <Thinking label="Je réfléchis à tes thèmes…" />
+                ) : (
+                  "Générer mes thèmes"
+                )}
               </Button>
             </>
           ) : (
@@ -390,7 +435,10 @@ function Chips({
             type="button"
             onClick={() => onChange(active ? "" : o)}
             className={cn(
-              "rounded-full border px-3.5 py-2 text-sm font-medium transition",
+              // `max-w-full text-start` : une option peut être une phrase
+              // entière quand elle vient de la stratégie — elle se replie au
+              // lieu de déborder.
+              "max-w-full rounded-full border px-3.5 py-2 text-start text-sm font-medium transition",
               active
                 ? "border-accent bg-accent/10 text-accent"
                 : "border-border bg-card hover:bg-secondary",

@@ -483,7 +483,8 @@
     "switchLabel": "Brand: {name}",
     "noBrandLabel": "—",
     "myBrands": "My brands",
-    "noBrandFound": "No brand"
+    "noBrandFound": "No brand",
+    "openBrand": "Manage this brand"
   },
   "brandDetail": {
     "backToAll": "All brands",

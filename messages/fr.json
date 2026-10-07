@@ -483,7 +483,8 @@
     "switchLabel": "Marque : {name}",
     "noBrandLabel": "—",
     "myBrands": "Mes marques",
-    "noBrandFound": "Aucune marque"
+    "noBrandFound": "Aucune marque",
+    "openBrand": "Gérer cette marque"
   },
   "brandDetail": {
     "backToAll": "Toutes les marques",

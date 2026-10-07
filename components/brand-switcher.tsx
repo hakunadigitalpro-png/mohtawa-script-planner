@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Check, Plus, Building2 } from "lucide-react";
+import { Check, Plus, Building2, Settings2 } from "lucide-react";
 import { switchBrand, createBrand } from "@/app/(app)/actions";
 import {
   Dialog,
@@ -105,6 +105,23 @@ export function BrandSwitcher({
             </DropdownItem>
           ))}
           <DropdownSeparator />
+          {active && (
+            <>
+              {/* Ouvrir la marque se faisait en deux temps — aller dans
+                  « Mes marques », puis cliquer la bonne. Or c'est ici qu'on
+                  pense à elle. */}
+              <DropdownItem
+                onClick={() => {
+                  startTransition(() => {
+                    router.push(`/brands/${active.id}`);
+                  });
+                }}
+              >
+                <Settings2 className="size-4 text-muted" />
+                <span className="flex-1 truncate">{t("openBrand")}</span>
+              </DropdownItem>
+            </>
+          )}
           <DropdownItem onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" />
             {t("newBrand")}

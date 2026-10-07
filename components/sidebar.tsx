@@ -95,6 +95,7 @@ export function Sidebar({
       <NotificationsBell
         userId={userId}
         initialNotifications={initialNotifications}
+        activeBrandId={active?.id ?? null}
       />
 
       {/* Primary nav */}

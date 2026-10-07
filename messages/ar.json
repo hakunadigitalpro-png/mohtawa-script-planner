@@ -483,7 +483,8 @@
     "switchLabel": "العلامة التجارية: {name}",
     "noBrandLabel": "—",
     "myBrands": "علاماتي التجارية",
-    "noBrandFound": "لا توجد علامة تجارية"
+    "noBrandFound": "لا توجد علامة تجارية",
+    "openBrand": "إدارة هذه العلامة"
   },
   "brandDetail": {
     "backToAll": "كل العلامات التجارية",

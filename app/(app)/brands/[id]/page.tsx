@@ -171,7 +171,7 @@ export default async function BrandDetailPage({
         </CardHeader>
         <CardContent className="space-y-4">
           <div data-tour="create-themes" className="inline-block">
-            <ThemeAssistant brandId={brand.id} />
+            <ThemeAssistant brandId={brand.id} strategy={strategy} />
           </div>
           <div data-tour="themes-list">
             <PillarManager brandId={brand.id} pillars={pillars} />

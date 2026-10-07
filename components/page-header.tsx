@@ -78,7 +78,12 @@ export function PageHeader({
         </div>
       )}
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
+        {/* Base de 20rem, pas de zéro. `flex-1` vaut `flex: 1 1 0%` : le bloc
+            ne pèse alors rien dans le calcul de retour à la ligne, donc les
+            actions ne descendent jamais et c'est le titre qui s'écrase. Avec
+            une vraie base, sous ~720 px utiles les actions passent dessous et
+            le titre récupère toute la largeur. */}
+        <div className="min-w-0 flex-[1_1_20rem]">
           {eyebrow && (
             <p
               className="truncate text-xs font-bold uppercase tracking-[0.18em] text-orange-soft"

@@ -135,7 +135,9 @@ export function DetailTabs({
         <>
           <TabsContent value="script">
             {isVlog ? (
-              <VlogTab content={content} vlog={vlog} captureItems={captureItems} />
+              <VlogTab
+                brandAudience={brandAudience}
+                aiEnabled={aiEnabled} content={content} vlog={vlog} captureItems={captureItems} />
             ) : (
               <ScriptTab
                 aiEnabled={aiEnabled}

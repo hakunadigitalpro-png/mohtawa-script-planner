@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Thinking } from "@/components/ui/thinking";
 import { cn } from "@/lib/utils";
 import {
   aiGenerateVlog,
@@ -26,9 +27,12 @@ import type { VlogGeneration } from "@/lib/ai";
 export function VlogGeneratorButton({
   contentId,
   platform,
+  defaultAudience,
 }: {
   contentId: string;
   platform?: string;
+  /** Cible de la marque, pré-remplie — comme pour le script d'un reel. */
+  defaultAudience?: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -46,6 +50,7 @@ export function VlogGeneratorButton({
         <VlogGeneratorModal
           contentId={contentId}
           platform={platform}
+          defaultAudience={defaultAudience}
           onClose={() => setOpen(false)}
         />
       )}
@@ -56,15 +61,19 @@ export function VlogGeneratorButton({
 function VlogGeneratorModal({
   contentId,
   platform,
+  defaultAudience,
   onClose,
 }: {
   contentId: string;
   platform?: string;
+  defaultAudience?: string;
   onClose: () => void;
 }) {
   const router = useRouter();
   const [topic, setTopic] = useState("");
-  const [audience, setAudience] = useState("");
+  // Pré-remplie depuis la marque : la cible est déjà établie, la retaper à
+  // chaque génération n'apporte rien. Elle reste modifiable au cas par cas.
+  const [audience, setAudience] = useState(defaultAudience ?? "");
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<VlogGeneration | null>(null);
   const [chosenHook, setChosenHook] = useState(0);
@@ -170,9 +179,24 @@ function VlogGeneratorModal({
               <Button type="button" variant="outline" onClick={onClose}>
                 Annuler
               </Button>
-              <Button type="button" onClick={generate} disabled={pending}>
-                <Wand2 className="size-3.5" />
-                {pending ? "Génération…" : "Générer"}
+              {/* `min-w-44` : les deux états tiennent dans la même largeur.
+                  Sans ça, le bouton doublait de taille pendant la génération
+                  et poussait « Annuler » — un saut qui se lit comme un bug,
+                  pas comme une attente. */}
+              <Button
+                type="button"
+                onClick={generate}
+                disabled={pending}
+                className="min-w-44"
+              >
+                {pending ? (
+                  <Thinking />
+                ) : (
+                  <>
+                    <Wand2 className="size-3.5" />
+                    Générer
+                  </>
+                )}
               </Button>
             </>
           ) : (

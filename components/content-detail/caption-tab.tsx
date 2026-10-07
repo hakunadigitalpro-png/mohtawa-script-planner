@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Select } from "@/components/ui/select";
+import { Thinking } from "@/components/ui/thinking";
 import { KreaBadge } from "@/components/krea-avatar";
 import { updateContent } from "@/app/(app)/contents/actions";
 import { aiGenerateCaption } from "@/app/(app)/contents/ai-actions";
@@ -162,7 +163,11 @@ export function CaptionTab({
               className="h-9"
             >
               <Sparkles className="size-4" />
-              {generating ? "J'écris…" : "Générer la légende"}
+              {generating ? (
+                <Thinking label="J'écris ta légende…" />
+              ) : (
+                "Générer la légende"
+              )}
             </Button>
           </div>
           {genError && (

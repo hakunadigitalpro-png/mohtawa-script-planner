@@ -28,7 +28,7 @@ export function ContentTitleField({
   placeholder: string;
 }) {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState(initialTitle);
   // Ce qui est réellement en base — sert de point de retour pour Échap et
   // évite d'enregistrer quand rien n'a changé.
@@ -46,8 +46,10 @@ export function ContentTitleField({
     startTransition(async () => {
       const res = await updateContent(contentId, { title: next || undefined });
       if (res && "error" in res && res.error) {
+        // On GARDE ce qui a été tapé. Remettre l'ancien titre effacerait son
+        // travail et lui dirait « réessaie » sans plus rien à réessayer.
+        // Le prochain départ du champ retentera l'enregistrement.
         setFailed(true);
-        setValue(saved); // on ne laisse pas croire que c'est enregistré
         return;
       }
       setSaved(next);
@@ -57,8 +59,14 @@ export function ContentTitleField({
 
   return (
     <div className="space-y-1">
-      <input
+      {/* Un `textarea` et pas un `input` : sur un écran plein, les boutons
+          d'action laissent environ 360 px au titre, soit une vingtaine de
+          caractères. Un champ d'une seule ligne ne replie pas et n'ellipse
+          pas — il coupe net, sans rien pour signaler la suite. Celui-ci
+          grandit avec son contenu. */}
+      <textarea
         ref={inputRef}
+        rows={1}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onBlur={commit}
@@ -73,15 +81,23 @@ export function ContentTitleField({
           }
         }}
         disabled={pending}
-        dir="auto"
+        // `dir="auto"` sur un champ VIDE retombe sur la gauche : en arabe,
+        // le texte d'invite se collerait à gauche alors que tout le reste du
+        // bandeau est à droite.
+        dir={value.trim() ? "auto" : undefined}
         placeholder={placeholder}
         aria-label="Titre du contenu"
         className={cn(
           // Sans bordure au repos : on lit un titre, on ne remplit pas un
           // formulaire. Le cadre n'apparaît qu'au survol et à la saisie.
-          "w-full rounded-xl border border-transparent bg-transparent px-2 py-1 -mx-2",
-          "text-2xl font-extrabold leading-tight text-white sm:text-3xl",
+          "-mx-2 block w-full resize-none overflow-hidden rounded-xl px-2 py-1",
+          "[field-sizing:content]",
+          "text-3xl font-bold tracking-tight leading-tight text-white",
           "transition-colors placeholder:text-white/40",
+          // Un filet permanent sous le texte : il dit « champ » sans dire
+          // « formulaire ». Sans lui, rien ne signalait qu'on peut écrire ici
+          // — et sur téléphone il n'y a pas de survol pour le découvrir.
+          "border border-transparent border-b-white/15 bg-transparent",
           "hover:border-white/25 hover:bg-white/5",
           "focus:border-white/40 focus:bg-white/10 focus:outline-none",
           pending && "opacity-60",
