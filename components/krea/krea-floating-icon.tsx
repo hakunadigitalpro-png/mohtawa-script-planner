@@ -12,6 +12,12 @@ import { cn } from "@/lib/utils";
  * partout vaut mieux qu'un personnage qui change de cadrage d'un écran à
  * l'autre.
  *
+ * Une tentative de la remplacer par un corps entier ANIMÉ dans le coin
+ * (07/10/2026) a été abandonnée : le rendu 3D fourni était blanc sur fond
+ * blanc, et le détourage mangeait ses jambes et ses avant-bras. Invisible
+ * sur le crème de l'app, flagrant dès qu'on la pose sur une couleur. Pour
+ * y revenir il faut un rendu AVEC canal alpha, ou sur un fond contrasté.
+ *
  * Fichier à part du copilote : les pages qui veulent seulement son visage
  * n'ont pas à embarquer tout le chat.
  */

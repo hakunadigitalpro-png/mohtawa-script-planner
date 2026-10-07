@@ -55,6 +55,94 @@ const SUGGESTIONS = [
   "C'est quoi la prochaine étape ?",
 ];
 
+/** Krea se rappelle au bon souvenir après 5 minutes SANS RIEN FAIRE. */
+const NUDGE_AFTER_IDLE_MS = 5 * 60 * 1000;
+/** Et elle se tait toute seule : une bulle qui reste est une bulle qui gêne. */
+const NUDGE_VISIBLE_MS = 8000;
+
+/** Le curseur est dans un champ : on n'interrompt pas quelqu'un qui écrit. */
+function isTyping() {
+  const el = document.activeElement as HTMLElement | null;
+  if (!el) return false;
+  return (
+    el.tagName === "INPUT" ||
+    el.tagName === "TEXTAREA" ||
+    el.tagName === "SELECT" ||
+    el.isContentEditable
+  );
+}
+
+/**
+ * La relance spontanée de Krea.
+ *
+ * Elle compte les minutes D'INACTIVITÉ, pas les minutes tout court. Une
+ * horloge fixe parlerait par-dessus quelqu'un en plein travail — c'est tout
+ * le reproche fait au trombone de Word. Ici elle ne se manifeste que dans un
+ * silence : ni clic, ni frappe, ni défilement, ni changement de page.
+ *
+ * Trois autres silences volontaires : jamais quand l'onglet est en
+ * arrière-plan (sinon on retrouve une bulle vieille de vingt minutes en
+ * revenant), jamais pendant qu'on écrit, jamais quand elle a déjà quelque
+ * chose à l'écran (`paused`).
+ */
+function useKreaNudge(paused: boolean) {
+  const [nudging, setNudging] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    let tick: number | undefined;
+    let last = Date.now();
+
+    function schedule(delay = NUDGE_AFTER_IDLE_MS) {
+      tick = window.setTimeout(fire, delay);
+    }
+    function fire() {
+      // On ne remet pas le minuteur à zéro à chaque geste (le défilement en
+      // déclencherait des centaines) : on le laisse arriver à terme et on
+      // regarde à ce moment-là depuis combien de temps plus rien ne bouge.
+      const idle = Date.now() - last;
+      if (idle < NUDGE_AFTER_IDLE_MS) {
+        schedule(NUDGE_AFTER_IDLE_MS - idle);
+        return;
+      }
+      if (document.visibilityState !== "visible" || isTyping()) {
+        schedule();
+        return;
+      }
+      setNudging(true);
+      schedule();
+    }
+    function seen() {
+      last = Date.now();
+    }
+
+    const events = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
+    for (const e of events) {
+      document.addEventListener(e, seen, { passive: true });
+    }
+    document.addEventListener("visibilitychange", seen);
+    schedule();
+
+    return () => {
+      window.clearTimeout(tick);
+      for (const e of events) document.removeEventListener(e, seen);
+      document.removeEventListener("visibilitychange", seen);
+    };
+  }, [paused]);
+
+  // L'effacement automatique vit à part du minuteur, et ne dépend donc PAS de
+  // `paused` : si le panneau s'ouvre pendant que la bulle est là, elle doit
+  // quand même finir par s'éteindre, sinon elle ressurgit intacte à la
+  // fermeture, sans plus rien pour la faire disparaître.
+  useEffect(() => {
+    if (!nudging) return;
+    const t = window.setTimeout(() => setNudging(false), NUDGE_VISIBLE_MS);
+    return () => window.clearTimeout(t);
+  }, [nudging]);
+
+  return { nudging: nudging && !paused, hush: () => setNudging(false) };
+}
+
 export function KreaCopilot({ firstName }: { firstName?: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -80,6 +168,11 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
     seenServerSnapshot,
   );
   const guiding = Boolean(guide) && !open && !isSeen(seen, guide!.id);
+  // Elle n'a qu'une bouche : tant qu'elle présente la page ou que le panneau
+  // est ouvert, elle ne se relance pas par-dessus.
+  const { nudging, hush } = useKreaNudge(open || guiding);
+  // Survol ET relance font la même chose : elle s'anime.
+  const alive = hovered || nudging;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -136,21 +229,31 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
   };
 
   return (
-    <>
-      {/* Bulle de Krea : deux usages, jamais les deux à la fois — l'accueil
-          de la page (elle explique) et le survol (elle propose son aide). */}
+    /* Une seule colonne ancrée en bas à droite : la bulle et le panneau se
+       posent AU-DESSUS de Krea sans qu'on ait à deviner sa hauteur en pixels.
+       `pointer-events-none` sur la colonne, rétabli sur chaque enfant — sinon
+       le vide à gauche de Krea avalerait les clics de la page.
+       En bas, on dégage la barre d'onglets mobile (4 rem) et l'encoche. */
+    <div className="pointer-events-none fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] end-5 z-40 flex flex-col items-end gap-2.5 md:bottom-6">
+      {/* Bulle de Krea : trois usages, jamais deux à la fois — l'accueil de la
+          page (elle explique), le survol, et sa relance toutes les 5 min. */}
       {guiding && guide ? (
         <GuideBubble key={guide.id} guide={guide} />
       ) : (
         !open &&
-        hovered && (
-          <KreaBubble>
+        alive && (
+          /* Une seule phrase pour les deux déclencheurs. Deux formulations
+             pour une même intention finissent toujours par diverger. */
+          <KreaBubble live={!hovered}>
             <p className="text-sm leading-relaxed text-foreground">
-              Je peux faire quelque chose pour toi ?
+              Je t&apos;aide ?
             </p>
             <button
               type="button"
-              onClick={() => setOpen(true)}
+              onClick={() => {
+                hush();
+                setOpen(true);
+              }}
               className="mt-2.5 text-xs font-semibold text-accent transition hover:underline"
             >
               Dis-moi ce dont tu as besoin →
@@ -159,30 +262,12 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
         )
       )}
 
-      {/* Lanceur : Krea elle-même en lévitation, sans pastille orange autour.
-          C'est le personnage qui appelle l'œil, pas un aplat de couleur. */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onFocus={() => setHovered(true)}
-        onBlur={() => setHovered(false)}
-        aria-label={open ? "Fermer Krea" : "Ouvrir Krea, ta coach"}
-        className={cn(
-          "fixed bottom-5 end-5 z-40 inline-flex items-center justify-center rounded-full transition hover:scale-105",
-          open && "size-12 bg-ink text-white shadow-lift",
-        )}
-      >
-        {open ? (
-          <X className="size-5" />
-        ) : (
-          <KreaFloatingIcon size={56} />
-        )}
-      </button>
-
       {open && (
-        <div className="fixed bottom-24 end-5 z-40 flex max-h-[min(34rem,calc(100vh-9rem))] w-[min(23rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-3xl border border-border/70 bg-card shadow-lift">
+        /* La hauteur max n'est pas la même sur téléphone et sur grand écran :
+           en bas il faut dégager Krea et son ancrage, en haut la barre du
+           haut (sélecteur de marque + cloche), que le panneau recouvrait
+           sinon dès qu'il atteignait sa taille maximale. */
+        <div className="pointer-events-auto flex max-h-[min(34rem,calc(100dvh-16rem))] w-[min(23rem,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-3xl border border-border/70 bg-card shadow-lift md:max-h-[min(34rem,calc(100dvh-7rem))]">
           <div className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-3">
             <p className="text-sm font-semibold">Krea</p>
             <button
@@ -294,16 +379,57 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
           </form>
         </div>
       )}
-    </>
+
+      {/* Lanceur : Krea elle-même en lévitation, sans pastille orange autour.
+          C'est le personnage qui appelle l'œil, pas un aplat de couleur. */}
+      <button
+        type="button"
+        onClick={() => {
+          hush();
+          // Le MÊME bouton ouvre et ferme. Sans ça, à la fermeture il garde
+          // le survol et le focus : la bulle resurgit dans la foulée, comme
+          // si le clic n'avait pas été pris en compte. Au doigt c'est pire —
+          // aucun `mouseleave` ne viendra la retirer.
+          setHovered(false);
+          setOpen((v) => !v);
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setHovered(true)}
+        onBlur={() => setHovered(false)}
+        aria-label={open ? "Fermer Krea" : "Ouvrir Krea, ta coach"}
+        className={cn(
+          "pointer-events-auto inline-flex items-center justify-center rounded-full transition hover:scale-105",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          open && "size-12 bg-ink text-white shadow-lift",
+        )}
+      >
+        {open ? <X className="size-5" /> : <KreaFloatingIcon size={56} />}
+      </button>
+    </div>
   );
 }
 
-/** L'habillage commun : une bulle de dialogue posée au-dessus de Krea. */
-function KreaBubble({ children }: { children: React.ReactNode }) {
+/**
+ * L'habillage commun : une bulle de dialogue posée au-dessus de Krea.
+ *
+ * `live` quand c'est Krea qui parle d'elle-même : la bulle apparaît sans
+ * qu'on ait rien demandé, donc elle s'annonce aussi aux lecteurs d'écran.
+ */
+function KreaBubble({
+  children,
+  live,
+}: {
+  children: React.ReactNode;
+  live?: boolean;
+}) {
   return (
     <div
-      className="fixed bottom-[5.5rem] end-5 z-40 w-[min(17rem,calc(100vw-2.5rem))] rounded-2xl rounded-br-sm border border-border/70 bg-card p-3.5 shadow-lift"
+      // Largeur AU CONTENU, plafonnée : « Je t'aide ? » dans une bulle de
+      // 17 rem, c'est trois mots perdus dans un cadre vide.
+      className="krea-pop pointer-events-auto w-fit max-w-[min(17rem,calc(100vw-2.5rem))] rounded-2xl rounded-br-sm border border-border/70 bg-card p-3.5 shadow-lift"
       dir="auto"
+      role={live ? "status" : undefined}
     >
       {children}
     </div>
