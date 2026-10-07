@@ -587,6 +587,8 @@
       "scene": "مشهد",
       "storyboardPlan": "ستوري بورد · لقطة {n}",
       "storySlot": "ستوري · شريحة {n}",
+      "visual": "صورة",
+      "carouselSlide": "شريحة {n}",
       "planField": "الخطة · {field}",
       "scriptField": "النص · {field}",
       "planGeneral": "معلومات عامة",

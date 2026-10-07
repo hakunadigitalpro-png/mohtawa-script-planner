@@ -6,6 +6,7 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { CommentButton } from "@/components/comments/comment-button";
 import { CaptionTab } from "./caption-tab";
 import {
   addContentVisual,
@@ -142,6 +143,21 @@ export function ContentTab({
                 >
                   <X className="size-3" />
                 </button>
+              </div>
+              {/* Le fil de discussion de CETTE diapo. Les remarques du client
+                  arrivent déjà ancrées sur le visuel qu'il a visé — sans ce
+                  bouton, il fallait les retrouver dans la boîte générale et
+                  deviner de quelle image on parlait. */}
+              <div className="mt-1 flex justify-center">
+                <CommentButton
+                  targetType="media"
+                  targetId={it.id}
+                  ariaLabel={
+                    isCarousel
+                      ? `Commentaires de la diapo ${idx + 1}`
+                      : "Commentaires du visuel"
+                  }
+                />
               </div>
             </div>
           ))}

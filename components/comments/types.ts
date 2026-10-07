@@ -1,4 +1,15 @@
-export type CommentTargetType = "plan" | "script" | "scene" | "slide";
+/**
+ * `media` = un visuel de carrousel / post / infographie. C'est la même
+ * logique que `scene` (une scène de storyboard) et `slide` (un slot de
+ * story), étendue aux formats non-vidéo : un fil de discussion ancré sur
+ * l'image dont on parle, et pas sur le contenu en bloc.
+ */
+export type CommentTargetType =
+  | "plan"
+  | "script"
+  | "scene"
+  | "slide"
+  | "media";
 
 export type Comment = {
   id: string;

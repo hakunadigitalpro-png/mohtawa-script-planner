@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export type CommentTargetType = "plan" | "script" | "scene" | "slide";
+// Une SEULE définition de la liste des cibles, dans `components/comments`.
+// Il y en avait deux, et elles ont divergé à la première extension : celle-ci
+// ignorait `media`, donc poser un commentaire sur un visuel ne compilait plus.
+import type { CommentTargetType } from "@/components/comments/types";
 
 /**
  * Crée un commentaire racine (parent_id = null) sur un item d'une vidéo.

@@ -755,6 +755,10 @@ function defaultLabel(
   }
   if (type === "scene") return t("labels.scene");
   if (type === "slide") return t("labels.storySlot", { n: id });
+  // Repli quand la fiche n'a pas fourni le numéro du visuel : on dit
+  // « Visuel », jamais `media` — le mot de la base n'a rien à faire sous
+  // les yeux de quelqu'un.
+  if (type === "media") return t("labels.visual");
   return type;
 }
 

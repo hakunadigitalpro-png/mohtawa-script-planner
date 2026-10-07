@@ -187,6 +187,7 @@ export default async function ContentDetailPage({
   const tTabs = await getTranslations("tabs");
   const tType = await getTranslations("contentTypes");
   const tStatus = await getTranslations("statuses");
+  const tComments = await getTranslations("comments");
 
   const safeT = (fn: (k: string) => string, key: string, fallback: string) => {
     try {
@@ -214,6 +215,16 @@ export default async function ContentDetailPage({
           : tStories("slotLabels.default", { n: i });
     targetLabels[`slide:${i}`] = `${tTabs("stories")} · ${slotLabel}`;
   }
+  // Les visuels des formats non-vidéo. Un carrousel numérote ses diapos —
+  // c'est le mot que le client lit sur son écran de validation, et c'est
+  // donc celui qu'il faut retrouver ici. Un post ou une infographie n'en a
+  // qu'un : « Diapo 1 » n'y voudrait rien dire.
+  visuals.forEach((v, i) => {
+    targetLabels[`media:${v.id}`] =
+      visuals.length > 1
+        ? tComments("labels.carouselSlide", { n: i + 1 })
+        : tComments("labels.visual");
+  });
 
   // Depuis que la date a quitté l'onglet Plan pour vivre dans les
   // publications (« Idée 10 »), un contenu sans plateforme programmée

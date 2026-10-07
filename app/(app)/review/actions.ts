@@ -92,36 +92,85 @@ function senderName(brandName: string | null): string | undefined {
   return brandName ? `${brandName} via Kreatly` : undefined;
 }
 
+/** Une remarque du client. `mediaId` null : elle porte sur l'ensemble. */
+export type ReviewNoteInput = { mediaId: string | null; body: string };
+
 /**
- * La décision du client. Tout passe par la RPC `client_review_content`
- * (migration 0052) : depuis cette migration, un `viewer` n'a plus AUCUN
- * droit d'écriture direct sur `contents`. La fonction est le seul passage,
- * et elle ne touche que le statut, la traçabilité et le commentaire.
+ * Nomme chaque remarque pour l'e-mail — « Diapo 2 », et pas un identifiant.
+ *
+ * Les numéros sont relus en base plutôt que repris du navigateur : c'est la
+ * position réelle des visuels qui fait foi, et l'e-mail part à l'équipe sans
+ * qu'elle puisse vérifier d'où vient le chiffre.
+ */
+async function noteDigest(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  contentId: string,
+  notes: ReviewNoteInput[],
+): Promise<string | undefined> {
+  if (!notes.length) return undefined;
+
+  const { data } = await supabase
+    .from("content_media")
+    .select("id")
+    .eq("content_id", contentId)
+    .order("position", { ascending: true });
+
+  const rank = new Map<string, number>();
+  ((data ?? []) as { id: string }[]).forEach((m, i) => rank.set(m.id, i + 1));
+  const many = rank.size > 1;
+
+  return notes
+    .map((n) => {
+      const n0 = n.mediaId ? rank.get(n.mediaId) : undefined;
+      const label = n.mediaId
+        ? many && n0
+          ? `Diapo ${n0}`
+          : "Le visuel"
+        : "Sur l'ensemble";
+      return `${label} — ${n.body}`;
+    })
+    .join("\n\n");
+}
+
+/**
+ * La décision du client, et ses remarques — une par visuel s'il le veut.
+ *
+ * Tout passe par la RPC `client_review_content_many` (migration 0057). Ce
+ * n'est pas une question de droits : `comments_insert_members` (0009)
+ * autorise bien un client à écrire ses commentaires, la 0052 l'a laissé
+ * exprès. C'est une question d'atomicité — un « je demande une modif' »
+ * sans la remarque qui l'explique ne doit jamais pouvoir exister.
+ *
+ * Les remarques partent avec les DEUX décisions : un client qui valide en
+ * disant « parfait, la 3 est ma préférée » n'a pas à choisir entre se taire
+ * et demander une modification dont il ne veut pas.
  */
 export async function reviewContent(input: {
   contentId: string;
   decision: "approve" | "revise";
-  comment?: string;
-  /** Visuel visé par la remarque — sinon le retour porte sur l'ensemble. */
-  mediaId?: string;
+  notes?: ReviewNoteInput[];
 }): Promise<ReviewResult> {
-  const comment = input.comment?.trim();
+  const notes = (input.notes ?? [])
+    .map((n) => ({ mediaId: n.mediaId, body: n.body.trim() }))
+    .filter((n) => n.body.length > 0);
 
   // Un « je demande une modif' » sans explication laisse l'équipe sans rien
-  // à corriger : la boucle tournerait à vide.
-  if (input.decision === "revise" && !comment) {
-    return { ok: false, error: "Dis-nous ce qui ne va pas, sinon on ne saura pas quoi corriger." };
+  // à corriger : la boucle tournerait à vide. La RPC le refuse aussi — ici
+  // c'est pour le dire avec des mots plutôt qu'avec un code d'erreur.
+  if (input.decision === "revise" && notes.length === 0) {
+    return {
+      ok: false,
+      error: "Dis-nous ce qui ne va pas, sinon on ne saura pas quoi corriger.",
+    };
   }
 
   const supabase = await createClient();
   const card = await contentCard(supabase, input.contentId);
 
-  const { error } = await supabase.rpc("client_review_content", {
+  const { error } = await supabase.rpc("client_review_content_many", {
     p_content_id: input.contentId,
     p_decision: input.decision,
-    p_comment: comment || null,
-    p_target_type: input.mediaId ? "media" : "plan",
-    p_target_id: input.mediaId ?? "general",
+    p_notes: notes.map((n) => ({ media_id: n.mediaId, body: n.body })),
   });
 
   if (error) {
@@ -131,17 +180,37 @@ export async function reviewContent(input: {
         error: "Ce contenu n'attend plus ta validation — quelqu'un est passé avant.",
       };
     }
+    if (error.message.includes("invalid_media")) {
+      return {
+        ok: false,
+        error: "Un des visuels n'existe plus. Recharge la page et réessaie.",
+      };
+    }
     if (error.message.includes("Forbidden") || error.message.includes("not_found")) {
       return { ok: false, error: "Ce contenu ne t'est pas accessible." };
+    }
+    // La migration 0057 n'a pas encore été jouée : un message en français
+    // plutôt qu'une erreur Postgres brute sous les yeux d'un client.
+    if (
+      error.code === "PGRST202" ||
+      error.message.includes("Could not find the function")
+    ) {
+      return {
+        ok: false,
+        error:
+          "La mise à jour de la base n'est pas encore en place. Préviens l'équipe, ta réponse n'a pas été enregistrée.",
+      };
     }
     return { ok: false, error: error.message };
   }
 
   // L'e-mail APRÈS l'écriture, et jamais bloquant : la décision est prise,
-  // elle ne doit pas être remise en cause par un serveur de mail.
+  // elle ne doit pas être remise en cause par un serveur de mail. Un seul
+  // e-mail pour tout le lot — c'est un passage du client, pas six.
   if (card) {
     const { to, replyTo } = await audience(supabase, card.brandId, "equipe");
     const approved = input.decision === "approve";
+    const digest = await noteDigest(supabase, input.contentId, notes);
     await sendEmail({
       to,
       replyTo,
@@ -154,13 +223,15 @@ export async function reviewContent(input: {
           ? "Ton client a validé ce contenu"
           : "Ton client demande une modification",
         intro: approved
-          ? "C'est bon de son côté, tu peux le programmer."
-          : "Voici ce qu'il a écrit — sa remarque est aussi dans les commentaires du contenu.",
+          ? digest
+            ? "C'est bon de son côté — il a laissé un mot au passage."
+            : "C'est bon de son côté, tu peux le programmer."
+          : "Voici ce qu'il a écrit — ses remarques sont aussi sur les visuels concernés.",
         card: {
           title: card.title,
           meta: [card.brandName, card.meta].filter(Boolean).join(" · "),
         },
-        quote: approved ? undefined : comment,
+        quote: digest,
         ctaLabel: "Ouvrir le contenu",
         ctaPath: `/content/${input.contentId}`,
       }),

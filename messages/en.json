@@ -587,6 +587,8 @@
       "scene": "Scene",
       "storyboardPlan": "Storyboard · Shot {n}",
       "storySlot": "Story · Slot {n}",
+      "visual": "Visual",
+      "carouselSlide": "Slide {n}",
       "planField": "Plan · {field}",
       "scriptField": "Script · {field}",
       "planGeneral": "General info",
