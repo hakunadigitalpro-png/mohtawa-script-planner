@@ -360,7 +360,7 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
   - 8 presets de couleur d'accent + picker HEX libre
   - 6 presets de teinte de fond + picker HEX libre
   - Reset par défaut
-- Préférences stockées en cookies (`kreatly_theme`, `kreatly_accent`, `kreatly_tint`) — durée 1 an, lus en SSR pour éviter le flash. Les anciens noms `mohtawa_*` (et `mohtawa_locale`) sont encore lus en secours pour ne pas réinitialiser les préférences d'avant le rebranding — voir `LEGACY_*` dans `lib/theme.ts` et `i18n/config.ts`
+- Préférences stockées en cookies (`kreatly_theme`, `kreatly_accent`, `kreatly_tint`, `kreatly_nav` pour le menu, `kreatly_coach` pour les visites guidées) — durée 1 an, lus en SSR pour éviter le flash. Les anciens noms `mohtawa_*` (et `mohtawa_locale`) sont encore lus en secours pour ne pas réinitialiser les préférences d'avant le rebranding — voir `LEGACY_*` dans `lib/theme.ts` et `i18n/config.ts`
 
 ---
 
@@ -503,6 +503,9 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
     _Première version : rail de 80 px, icônes seules + infobulles, à la demande de l'utilisatrice. Elle est revenue dessus après usage (07/10/2026, trois captures d'un autre logiciel à l'appui) : sans libellé on ne retient pas où sont « Tâches » et « Accroches », et la cible — une patronne de PME, pas une social media manager — n'a pas à apprendre huit pictogrammes. Les entrées sont groupées sous trois titres (Principal / Production / Mon espace) ; un `viewer` n'en a que trois, on ne lui met donc aucun titre ni bouton de repli._
     _La justification d'origine (« +176 px au contenu ») était fausse : le contenu est capé à `max-w-6xl` (1152 px) et centré, donc au-delà de ~1400 px de fenêtre le menu large ne coûte RIEN au contenu, il déplace juste le centrage. En dessous (1280 px) il coûte ~120 px — d'où le pli, mémorisé en cookie lu en SSR comme le thème (décision 15) pour ne pas clignoter au chargement. Le pli s'écrit côté client (`document.cookie`) : un `revalidatePath("/", "layout")` re-rendrait toute l'application pour 176 px d'animation._
     _La liste des entrées vit dans `lib/nav.ts`, une seule fois : `components/sidebar.tsx` et `components/mobile-nav.tsx` la redéclaraient toutes les deux, règle du rôle `viewer` comprise._
+
+19. **Visites guidées page par page (coach-marks), jamais un grand tour**
+    _Krea montre OÙ cliquer : `components/krea/coach-tour.tsx` pose un projecteur sur un élément réel repéré par `data-tour="…"` et ancre une bulle à côté ; les étapes vivent dans `lib/krea-tours.ts`, une liste par page, dans l'ordre de la page. Chaque visite se joue une fois (mémoire `localStorage` `kreatly_tours_seen`), se rejoue depuis le panneau de Krea, et se coupe d'un lien dans la bulle ou depuis Mon profil (cookie `kreatly_coach`, écrit côté client comme le menu). Les étapes dont la cible est absente sont sautées ; la visite n'ouvre pas tant que la page n'a pas affiché sa première cible. Pas de grand tour enchaîné : l'ancienne visite racontait tout d'un coup, hors contexte, et rien ne restait. Les anciennes bulles d'accueil texte-seul (`lib/krea-guide.ts`) ont été retirées : elles disaient ce qu'est la page, la visite montre où cliquer. Le client invité a sa propre visite, sur `/review`._
 
 19. **Email confirmation OFF en dev**
     _Pour fluidifier les tests. À réactiver pour la prod._

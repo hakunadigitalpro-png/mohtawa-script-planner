@@ -270,7 +270,7 @@ export function CalendarMonth({
             <div key={d} className="px-2 py-2.5 text-center">{t(`weekdays.${d}`)}</div>
           ))}
         </div>
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-7" data-tour="calendar-grid">
           {days.map((d, i) => {
             const key = format(d, "yyyy-MM-dd");
             const items = byDay.get(key) ?? [];

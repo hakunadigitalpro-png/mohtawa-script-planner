@@ -1,28 +1,14 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  useTransition,
-} from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowUp, FileText, PenLine, X } from "lucide-react";
+import { ArrowUp, Compass, FileText, PenLine, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KreaFloatingIcon } from "./krea-floating-icon";
 import { askKrea, type KreaDeed } from "@/app/(app)/krea-actions";
 import type { KreaTurn } from "@/lib/krea";
-import {
-  guideForPath,
-  isSeen,
-  markSeen,
-  seenServerSnapshot,
-  seenSnapshot,
-  subscribeSeen,
-  type GuidePage,
-} from "@/lib/krea-guide";
+import { requestTour, tourForPath } from "@/lib/krea-tours";
 
 type Msg = {
   role: "krea" | "me";
@@ -158,19 +144,9 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [hovered, setHovered] = useState(false);
-  // Accueil : Krea explique CHAQUE page la première fois qu'on y arrive, puis
-  // se tait. Une visite guidée qui raconte tout d'un coup, hors contexte, ne
-  // laisse rien — c'était le reproche fait à la précédente.
-  const guide = guideForPath(pathname);
-  const seen = useSyncExternalStore(
-    subscribeSeen,
-    seenSnapshot,
-    seenServerSnapshot,
-  );
-  const guiding = Boolean(guide) && !open && !isSeen(seen, guide!.id);
   // Elle n'a qu'une bouche : tant qu'elle présente la page ou que le panneau
   // est ouvert, elle ne se relance pas par-dessus.
-  const { nudging, hush } = useKreaNudge(open || guiding);
+  const { nudging, hush } = useKreaNudge(open);
   // Survol ET relance font la même chose : elle s'anime.
   const alive = hovered || nudging;
 
@@ -235,12 +211,8 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
        le vide à gauche de Krea avalerait les clics de la page.
        En bas, on dégage la barre d'onglets mobile (4 rem) et l'encoche. */
     <div className="pointer-events-none fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] end-5 z-40 flex flex-col items-end gap-2.5 md:bottom-6">
-      {/* Bulle de Krea : trois usages, jamais deux à la fois — l'accueil de la
-          page (elle explique), le survol, et sa relance toutes les 5 min. */}
-      {guiding && guide ? (
-        <GuideBubble key={guide.id} guide={guide} />
-      ) : (
-        !open &&
+      {/* Bulle de Krea : au survol, et à sa relance toutes les 5 min. */}
+      {!open &&
         alive && (
           /* Une seule phrase pour les deux déclencheurs. Deux formulations
              pour une même intention finissent toujours par diverger. */
@@ -259,8 +231,7 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
               Dis-moi ce dont tu as besoin →
             </button>
           </KreaBubble>
-        )
-      )}
+        )}
 
       {open && (
         /* La hauteur max n'est pas la même sur téléphone et sur grand écran :
@@ -346,6 +317,25 @@ export function KreaCopilot({ firstName }: { firstName?: string | null }) {
               </div>
             )}
           </div>
+
+          {/* Rejouer la visite de la page : une action locale, pas une question
+              à l'IA — donc hors des suggestions, et toujours là, même en pleine
+              conversation. Seulement là où une visite existe. */}
+          {tourForPath(pathname, "team") && (
+            <div className="border-t border-border/60 px-2.5 pt-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  requestTour();
+                }}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:bg-secondary"
+              >
+                <Compass className="size-3.5 text-accent" />
+                Fais-moi visiter cette page
+              </button>
+            </div>
+          )}
 
           <form
             className="flex items-end gap-2 border-t border-border/60 p-2.5"
@@ -436,45 +426,6 @@ function KreaBubble({
   );
 }
 
-/**
- * L'accueil d'UNE page. Monté avec `key={guide.id}` : changer de page le
- * remonte, donc le compteur d'étapes repart de zéro sans effet de
- * synchronisation.
- */
-function GuideBubble({ guide }: { guide: GuidePage }) {
-  const [index, setIndex] = useState(0);
-  const step = guide.steps[index];
-  const last = index === guide.steps.length - 1;
-
-  return (
-    <KreaBubble>
-      <p className="text-sm leading-relaxed text-foreground">{step.text}</p>
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={() => markSeen(guide.id)}
-          className="text-xs font-medium text-muted transition hover:text-foreground"
-        >
-          Passer
-        </button>
-        <div className="flex items-center gap-2">
-          {guide.steps.length > 1 && (
-            <span className="text-xs tabular-nums text-muted">
-              {index + 1}/{guide.steps.length}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => (last ? markSeen(guide.id) : setIndex(index + 1))}
-            className="rounded-full bg-accent px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-accent/90"
-          >
-            {step.cta ?? "Suivant"}
-          </button>
-        </div>
-      </div>
-    </KreaBubble>
-  );
-}
 
 /** Ce que Krea a RÉELLEMENT fait, montré comme une carte cliquable — pas
  *  seulement affirmé dans le texte. */

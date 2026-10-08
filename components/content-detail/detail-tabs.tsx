@@ -85,7 +85,7 @@ export function DetailTabs({
 
   return (
     <Tabs defaultValue="plan">
-      <TabsList>
+      <TabsList data-tour="content-tabs">
         <TabsTrigger value="plan">{t("plan")}</TabsTrigger>
         {!hasFormat ? null : isSimple ? (
           /* Post / Carrousel / Infographie : un seul onglet "Contenu"
@@ -106,7 +106,7 @@ export function DetailTabs({
                 touchées — remettre ce déclencheur et son contenu suffit. */}
             {/* Caption pour Reel + Vlog — les Stories ont du texte par slide,
                 pas une caption globale au moment de la publication. */}
-            {!isStory && <TabsTrigger value="caption">Caption</TabsTrigger>}
+            {!isStory && <TabsTrigger value="caption">Légende</TabsTrigger>}
           </>
         )}
         {isPublished && <TabsTrigger value="performance">{t("performance")}</TabsTrigger>}

@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { LocaleSwitcherFull } from "@/components/locale-switcher";
 import { getThemeFromCookies } from "@/lib/theme";
+import { getCoachMode } from "@/lib/coach-pref";
+import { CoachSwitch } from "./coach-switch";
 import { PageHeader } from "@/components/page-header";
 
 export default async function ProfilePage() {
@@ -13,7 +15,10 @@ export default async function ProfilePage() {
 
   const t = await getTranslations("profile");
   const meta = (user.user_metadata ?? {}) as Record<string, string>;
-  const { theme, accent, tint } = await getThemeFromCookies();
+  const [{ theme, accent, tint }, coachMode] = await Promise.all([
+    getThemeFromCookies(),
+    getCoachMode(),
+  ]);
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -41,6 +46,8 @@ export default async function ProfilePage() {
           <LocaleSwitcherFull />
         </CardContent>
       </Card>
+
+      <CoachSwitch initialMode={coachMode} />
 
       <Card>
         <CardHeader>

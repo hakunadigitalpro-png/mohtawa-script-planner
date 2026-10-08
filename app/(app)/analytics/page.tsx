@@ -246,7 +246,7 @@ export default async function AnalyticsPage() {
         })}
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div data-tour="analytics-kpis" className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <KpiCard
           icon={<BarChart3 className="size-4" />}
           label={t("kpi.totalViews")}

@@ -75,6 +75,8 @@ export function DialogContent({
   const ctx = React.useContext(DialogContext);
   return (
     <div
+      role="dialog"
+      aria-modal="true"
       onClick={(e) => e.stopPropagation()}
       className={cn(
         "relative my-8 w-full max-w-2xl rounded-3xl border border-border/60 bg-card shadow-[0_24px_60px_-20px_rgba(26,15,37,0.25)]",

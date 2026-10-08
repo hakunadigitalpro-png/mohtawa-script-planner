@@ -305,8 +305,12 @@ export default async function ContentDetailPage({
           }
           actions={
             <>
-              <SubmitReviewButton contentId={c.id} status={c.status} />
-              <CommentsInboxButton />
+              <span data-tour="content-review" className="inline-flex">
+                <SubmitReviewButton contentId={c.id} status={c.status} />
+              </span>
+              <span data-tour="content-comments" className="inline-flex">
+                <CommentsInboxButton />
+              </span>
               <ShareButton
                 contentId={c.id}
                 initialToken={c.share_token}

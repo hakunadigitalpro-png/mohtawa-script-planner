@@ -227,7 +227,7 @@ export function ReviewDeck({
                 Tu peux laisser une remarque sur chaque diapo.
               </p>
             )}
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2" data-tour="review-visuals">
               {item.visuals.map((v, i) => (
                 <VisualCard
                   key={v.id}
@@ -310,7 +310,7 @@ export function ReviewDeck({
            écrans de haut, et la décision se retrouvait tout en bas — on
            faisait défiler des images sans jamais voir qu'on nous demandait
            quelque chose. `bottom-16` dégage la barre d'onglets. */
-        <Card className="sticky bottom-16 z-30 space-y-3 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-md:bg-card max-md:shadow-lift sm:p-6 md:static md:pb-6">
+        <Card data-tour="review-decision" className="sticky bottom-16 z-30 space-y-3 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] max-md:bg-card max-md:shadow-lift sm:p-6 md:static md:pb-6">
           <div className="flex flex-col gap-3 sm:flex-row-reverse">
             <Button
               type="button"

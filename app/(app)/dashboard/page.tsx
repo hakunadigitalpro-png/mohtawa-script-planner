@@ -226,12 +226,15 @@ export default async function DashboardPage({
           <>
             <Link
               href="/import"
+              data-tour="dashboard-import"
               className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:bg-secondary"
             >
               <ListPlus className="size-4" />
               Importer une série
             </Link>
-            <NewContentButton variant="accent" />
+            <span data-tour="dashboard-new" className="inline-flex">
+              <NewContentButton variant="accent" />
+            </span>
           </>
         }
       />
@@ -242,7 +245,7 @@ export default async function DashboardPage({
           (components/krea-progress-panel.tsx) — remettre ce bloc suffit à
           le réactiver. */}
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div data-tour="dashboard-kpis" className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Kpi label={t("kpi.total")} value={total} accent />
         <Kpi label={t("kpi.drafts")} value={drafts} />
         <Kpi label={t("kpi.published")} value={published} />

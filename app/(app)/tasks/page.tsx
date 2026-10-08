@@ -44,11 +44,13 @@ export default async function TasksPage() {
         title={t("title")}
         subtitle={t("subtitle", { brand: active.name })}
       />
+      <div data-tour="tasks-board">
       <TasksBoard
         currentUserId={user.id}
         initialTasks={tasks}
         members={members}
       />
+      </div>
     </div>
   );
 }

@@ -10,7 +10,6 @@ import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { PillarManager } from "./pillar-manager";
 import { ThemeAssistant } from "./theme-assistant";
-import { GuidedTour } from "./guided-tour";
 import { BrandAiSwitch } from "./ai-switch";
 import { ScenePresetManager } from "./scene-preset-manager";
 import { BrandKitManager } from "./brand-kit-manager";
@@ -113,11 +112,51 @@ export default async function BrandDetailPage({
         backLabel={t("backToAll")}
         title={brand.name}
         subtitle={t("subtitle")}
-        actions={<GuidedTour />}
       />
 
-      {/* 1. Identité — 2. Équipe — 3. Stratégie, puis ce qui en découle. */}
-      <Card>
+      {/* Dans l'ordre du travail — et c'est l'ordre de la visite guidée :
+          la stratégie déverrouille tout (thèmes, voix de Krea), puis les
+          thèmes, les lieux de tournage, le logo, l'équipe. L'interrupteur
+          d'écriture assistée est l'exception, donc en dernier. */}
+      <div data-tour="brand-strategy">
+        <BrandStudio brandId={brand.id} initialStrategy={strategy} />
+      </div>
+
+      <Card data-tour="brand-themes">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Layers className="size-4 text-accent" />
+            Thèmes de contenu
+          </CardTitle>
+          <CardDescription>
+            Les sujets récurrents de ta marque — ce dont tu parles dans tes
+            vidéos. Laisse l&apos;IA te les proposer, ou ajoute-les à la main.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ThemeAssistant brandId={brand.id} strategy={strategy} />
+          <PillarManager brandId={brand.id} pillars={pillars} />
+        </CardContent>
+      </Card>
+
+      <Card data-tour="brand-setups">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clapperboard className="size-4 text-accent" />
+            Setups de tournage
+          </CardTitle>
+          <CardDescription>
+            Tes lieux et cadrages récurrents (ex : les 4 coins de ton bureau).
+            Définis-les une fois ici, insère-les en 1 clic dans le storyboard
+            d&apos;une vidéo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ScenePresetManager brandId={brand.id} presets={scenePresets} />
+        </CardContent>
+      </Card>
+
+      <Card data-tour="brand-identity">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Palette className="size-4 text-accent" />
@@ -131,11 +170,6 @@ export default async function BrandDetailPage({
           <BrandKitManager brandId={brand.id} kit={kit} />
         </CardContent>
       </Card>
-
-      <BrandAiSwitch
-        brandId={brand.id}
-        initialEnabled={(brand as { ai_enabled?: boolean }).ai_enabled !== false}
-      />
 
       <Card>
         <CardHeader>
@@ -156,45 +190,18 @@ export default async function BrandDetailPage({
         </CardContent>
       </Card>
 
-      <BrandStudio brandId={brand.id} initialStrategy={strategy} />
+      <div data-tour="brand-ai">
+      <BrandAiSwitch
+        brandId={brand.id}
+        initialEnabled={(brand as { ai_enabled?: boolean }).ai_enabled !== false}
+      />
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Layers className="size-4 text-accent" />
-            Thèmes de contenu
-          </CardTitle>
-          <CardDescription>
-            Les sujets récurrents de ta marque — ce dont tu parles dans tes
-            vidéos. Laisse l&apos;IA te les proposer, ou ajoute-les à la main.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div data-tour="create-themes" className="inline-block">
-            <ThemeAssistant brandId={brand.id} strategy={strategy} />
-          </div>
-          <div data-tour="themes-list">
-            <PillarManager brandId={brand.id} pillars={pillars} />
-          </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clapperboard className="size-4 text-accent" />
-            Setups de tournage
-          </CardTitle>
-          <CardDescription>
-            Tes lieux et cadrages récurrents (ex : les 4 coins de ton bureau).
-            Définis-les une fois ici, insère-les en 1 clic dans le storyboard
-            d&apos;une vidéo.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ScenePresetManager brandId={brand.id} presets={scenePresets} />
-        </CardContent>
-      </Card>
+
+
+
+
     </div>
   );
 }

@@ -42,13 +42,15 @@ export function Tabs({
 export function TabsList({
   className,
   children,
-}: {
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & {
   className?: string;
   children: React.ReactNode;
 }) {
   return (
     <div
       role="tablist"
+      {...props}
       className={cn(
         "inline-flex h-11 items-center gap-1 rounded-full bg-card/70 p-1 border border-border/60 backdrop-blur",
         // Mobile : la barre d'onglets dépasse souvent la largeur de l'écran

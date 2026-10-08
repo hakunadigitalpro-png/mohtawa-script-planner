@@ -235,15 +235,17 @@ export default async function CalendarPage({
           // à la ligne si l'écran est vraiment étroit, ce qui vaut mieux
           // qu'une barre grise en travers du bandeau.
           <div className="flex w-full flex-wrap items-center gap-2">
+            <div data-tour="calendar-views" className="inline-flex">
             <CalendarViewTabs
               view={view}
               month={ym}
               platform={platformFilter || undefined}
               showIdeas={!isClient}
             />
+            </div>
             {view === "calendar" && <CalendarPlatformFilter />}
             {!isClient && (
-              <div className="ms-auto">
+              <div className="ms-auto" data-tour="calendar-new">
                 <CalendarQuickCreate defaultDate={defaultCreateDate} />
               </div>
             )}

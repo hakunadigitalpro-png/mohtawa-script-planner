@@ -13,8 +13,9 @@ import { setBrandAiEnabled } from "../brand-ai-actions";
  * Le libellé ne parle PAS du client, et c'est voulu : un client invité
  * (rôle viewer) ne voit aucun bouton IA — il est renvoyé de la fiche vers
  * sa page de validation, de la page marque vers le calendrier, et Krea
- * n'est même pas rendue pour lui. L'interrupteur agit donc sur l'équipe,
- * pas sur le client. L'annoncer autrement serait mentir sur ce qu'il fait.
+ * n'est même pas rendue pour lui (seule exception : la visite guidée de sa
+ * page de validation, qui ne génère rien). L'interrupteur agit donc sur
+ * l'équipe, pas sur le client. L'annoncer autrement serait mentir.
  */
 export function BrandAiSwitch({
   brandId,

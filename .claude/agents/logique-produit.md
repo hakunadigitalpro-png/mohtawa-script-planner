@@ -20,7 +20,7 @@ Dimensions à checker, dans cet ordre :
 
 3. **Sécurité multi-tenant RLS-first** — toute donnée par marque doit passer par `is_brand_member(brand_id)`. Jamais de contrôle d'accès fait uniquement côté app sans RLS derrière. Signale toute fonctionnalité qui contournerait ça.
 
-4. **Modèle de rôles** (`owner`/`admin`/`editor`/`viewer`) — le rôle `viewer` (le client invité) est volontairement cantonné au Calendrier + Profil. Toute nouvelle fonctionnalité doit décider explicitement si le viewer y a accès ou non — ne jamais l'oublier par défaut.
+4. **Modèle de rôles** (`owner`/`admin`/`editor`/`viewer`) — le rôle `viewer` (le client invité) est volontairement cantonné au Calendrier + sa page de validation `/review` + Profil. Toute nouvelle fonctionnalité doit décider explicitement si le viewer y a accès ou non — ne jamais l'oublier par défaut.
 
 5. **Absence d'infra cron** — l'app n'a pas de tâche planifiée en arrière-plan. Tout ce qui doit "se déclencher à une heure donnée" doit suivre le pattern déjà établi : recalcul paresseux à la lecture (voir `recompute_live_statuses`), pas une supposition qu'un job tourne quelque part.
 

@@ -84,7 +84,10 @@ export function TeamSection({
   return (
     <div className="space-y-6">
       {canManage && (
-        <div className="flex items-center justify-between gap-3">
+        <div
+          data-tour="brand-team"
+          className="flex items-center justify-between gap-3"
+        >
           <p className="text-sm text-muted">{t("intro")}</p>
           <Button onClick={() => setInviteOpen(true)} size="sm">
             <Plus className="size-3.5" />

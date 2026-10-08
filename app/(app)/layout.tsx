@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { getNavMode } from "@/lib/nav-pref";
+import { getCoachMode } from "@/lib/coach-pref";
+import { CoachTour } from "@/components/krea/coach-tour";
 import { Sidebar } from "@/components/sidebar";
 import { MobileTopBar, MobileBottomNav } from "@/components/mobile-nav";
 import { NoBrandWelcome } from "@/components/no-brand";
@@ -19,7 +21,7 @@ export default async function AppLayout({
   // ensemble. (`resolveActiveBrand` est mémorisée par `cache()`, la page qui
   // suit la réutilise sans re-interroger la base.)
   const supabase = await createClient();
-  const [user, brandCtx, notificationsRes, navMode] = await Promise.all([
+  const [user, brandCtx, notificationsRes, navMode, coachMode] = await Promise.all([
     getCachedUser(),
     resolveActiveBrand(),
     // Tolérant aux échecs : si la RPC n'existe pas encore (migration pas
@@ -27,6 +29,7 @@ export default async function AppLayout({
     supabase.rpc("list_my_notifications", { p_limit: 20 }),
     // Lu ici, donc le menu arrive déjà replié ou déplié — pas de saut.
     getNavMode(),
+    getCoachMode(),
   ]);
 
   if (!user) redirect("/login");
@@ -85,6 +88,9 @@ export default async function AppLayout({
           changements de page (navigation douce = le layout ne remonte pas).
           Pas pour un "viewer" (client invité) : il n'a rien à configurer. */}
       {role !== "viewer" && <KreaCopilot firstName={firstName} />}
+      {/* La visite guidée de la page courante — pour tout le monde, le client
+          invité compris : lui aussi découvre son écran de validation. */}
+      <CoachTour mode={coachMode} role={role} />
     </div>
   );
 }

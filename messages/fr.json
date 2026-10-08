@@ -553,7 +553,7 @@
       "owner": "Propriétaire",
       "admin": "Administrateur",
       "editor": "Éditeur",
-      "viewer": "Lecteur"
+      "viewer": "Client"
     },
     "roleDescriptions": {
       "owner": "Tout faire, y compris supprimer la marque",

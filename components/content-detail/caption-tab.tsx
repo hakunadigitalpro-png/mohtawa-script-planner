@@ -102,7 +102,7 @@ export function CaptionTab({
       <Card className="space-y-5 p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold">Caption</h2>
+            <h2 className="text-base font-semibold">Légende</h2>
             <p className="text-xs text-muted">
               Le texte qui sera publié avec le contenu. Prépare-le ici, copie-le
               au moment de poster.
@@ -179,7 +179,7 @@ export function CaptionTab({
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="caption">Texte de la caption</Label>
+          <Label htmlFor="caption">Texte de la légende</Label>
           <Textarea
             id="caption"
             className="min-h-48 text-sm [field-sizing:content]"
