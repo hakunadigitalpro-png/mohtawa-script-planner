@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { LogOut, PanelLeftClose, PanelLeftOpen, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -44,7 +44,6 @@ export function Sidebar({
   // que pour que le PROCHAIN chargement arrive déjà dans le bon état — c'est
   // le serveur qui le lit, d'où le `mode` reçu en props.
   const [wide, setWide] = useState(isClientOnly || mode === "wide");
-  const asideRef = useRef<HTMLElement>(null);
 
   const sections = navSectionsFor(role);
   // Des titres sur des groupes d'un seul élément seraient pires que pas de
@@ -59,28 +58,17 @@ export function Sidebar({
     const next: NavMode = wide ? "rail" : "wide";
     setWide(!wide);
     document.cookie = `${NAV_COOKIE}=${next}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
-    // La largeur du menu, lisible en CSS par les pages qui s'étalent (le
-    // calendrier) : posée côté serveur sur le conteneur, mise à jour ici.
-    asideRef.current?.parentElement?.style.setProperty(
-      "--nav-w",
-      next === "wide" ? "16rem" : "6.5rem",
-    );
   };
 
   return (
     <aside
-      ref={asideRef}
       className={cn(
-        // Pas d'`overflow-hidden` ici : il coupait les infobulles du rail au
-        // bord — il n'en restait qu'un croissant noir qui dépassait.
-        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col md:flex",
+        // Pas d'overflow-hidden : il coupait les infobulles du rail au bord.
+        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col py-4 md:flex",
         "transition-[width] duration-200 ease-out",
-        // Replié : tout est resserré pour tenir dans 636 px de fenêtre (un
-        // portable 1366×768 avec sa barre des tâches). Avant, le rail faisait
-        // 830 px — plus haut que le menu large qu'il est censé condenser.
         wide
-          ? "w-64 gap-1 border-e border-border/60 px-3 py-4"
-          : "w-[6.5rem] items-center gap-2 px-2 py-3",
+          ? "w-64 gap-1 border-e border-border/60 px-3"
+          : "w-20 items-center gap-3 px-2",
       )}
     >
       {/* En-tête : l'identité de l'app, puis celle de la marque ouverte. */}
@@ -121,24 +109,22 @@ export function Sidebar({
         </>
       ) : (
         <>
-          {/* Logo et bouton de repli sur la MÊME ligne : une rangée de moins,
-              et c'est elle qui faisait déborder le rail sur un portable. */}
-          <div className="flex items-center gap-1">
-            <Link
-              href={isClientOnly ? "/calendar" : "/dashboard"}
-              className="tooltip-trigger"
-            >
-              <LogoMark
-                className="size-10 rounded-xl shadow-sm"
-                iconClassName="size-5"
-              />
-              <span className="tooltip-content">{t("appName")}</span>
-            </Link>
-            {!isClientOnly && (
-              <CollapseButton wide={false} onClick={toggle} label={t("expand")} />
-            )}
-          </div>
+          <Link
+            href={isClientOnly ? "/calendar" : "/dashboard"}
+            className="tooltip-trigger"
+          >
+            <LogoMark
+              className="size-12 rounded-2xl shadow-sm"
+              iconClassName="size-6"
+            />
+            <span className="tooltip-content">{t("appName")}</span>
+          </Link>
+          {!isClientOnly && (
+            <CollapseButton wide={false} onClick={toggle} label={t("expand")} />
+          )}
+          <div className="h-px w-8 bg-border/80" />
           <BrandSwitcher brands={brands} active={active} role={role} />
+          <div className="h-px w-8 bg-border/80" />
           <NotificationsBell
             userId={userId}
             initialNotifications={initialNotifications}
@@ -152,13 +138,13 @@ export function Sidebar({
           "mt-1 flex min-h-0 flex-col",
           // Replié, les groupes se lisent à l'espacement — sinon huit icônes
           // d'affilée forment une colonne sans articulation.
-          wide ? "gap-5 overflow-y-auto" : "w-full items-center gap-2 overflow-y-auto",
+          wide ? "gap-5 overflow-y-auto" : "items-center gap-4",
         )}
       >
         {sections.map((section) => (
           <div
             key={section.key}
-            className={cn("flex flex-col", wide ? "gap-0.5" : "gap-1")}
+            className={cn("flex flex-col", wide ? "gap-0.5" : "gap-2")}
           >
             {showHeadings && (
               <p className="mb-1 px-3 text-xs font-bold uppercase tracking-wider text-muted">
@@ -196,7 +182,7 @@ export function Sidebar({
       <div
         className={cn(
           "flex",
-          wide ? "items-center gap-1" : "flex-col items-center gap-1",
+          wide ? "items-center gap-1" : "flex-col items-center gap-2",
         )}
       >
         <form
@@ -210,7 +196,7 @@ export function Sidebar({
               "flex items-center gap-3 text-muted-foreground transition",
               wide
                 ? "w-full rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-destructive/10 hover:text-destructive"
-                : "size-10 justify-center rounded-full bg-card/80 hover:bg-destructive/10 hover:text-destructive",
+                : "size-11 justify-center rounded-full bg-card/80 hover:bg-destructive/10 hover:text-destructive",
             )}
             aria-label={userEmail ? `${t("logout")} (${userEmail})` : t("logout")}
           >
@@ -219,9 +205,7 @@ export function Sidebar({
           </button>
           {!wide && <span className="tooltip-content">{t("logout")}</span>}
         </form>
-        {/* Pas de langue dans le rail : elle se change sur Mon profil, et
-            ces 48 px faisaient déborder le rail sur un portable. */}
-        {wide && <LocaleSwitcherCompact />}
+        <LocaleSwitcherCompact />
       </div>
     </aside>
   );
@@ -246,7 +230,7 @@ function CollapseButton({
       aria-expanded={wide}
       className={cn(
         "tooltip-trigger flex shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-secondary/60 hover:text-foreground",
-        "size-9",
+        wide ? "size-9" : "size-10",
       )}
     >
       {/* En arabe la barre latérale est à droite : la flèche doit pointer
@@ -298,13 +282,6 @@ function NavRow({
   );
 }
 
-/**
- * Une entrée du rail replié : l'icône, et son nom écrit DESSOUS.
- *
- * Plus d'infobulle à deviner au survol : le nom est là, en 12 px (le
- * plancher de la charte), sur deux lignes si besoin. C'est ce que montrait
- * la capture de référence, et c'est pour ça que le rail fait 96 px et non 80.
- */
 function NavIcon({
   href,
   label,
@@ -320,31 +297,15 @@ function NavIcon({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className="group flex w-full flex-col items-center gap-1 px-1"
+      className={cn(
+        "tooltip-trigger flex size-11 items-center justify-center rounded-full transition-all",
+        active
+          ? "bg-accent text-accent-foreground shadow-sm"
+          : "bg-card/80 text-muted-foreground hover:bg-card hover:text-foreground",
+      )}
     >
-      <span
-        className={cn(
-          "flex size-9 items-center justify-center rounded-full transition-all",
-          // Le rond orange plein pour « tu es ici » est volontaire dans le
-          // rail : c'est ce que montre la capture de référence de
-          // l'utilisatrice, et c'est le rail d'origine de l'application.
-          active
-            ? "bg-accent text-accent-foreground shadow-sm"
-            : "bg-card/80 text-muted-foreground group-hover:bg-card group-hover:text-foreground",
-        )}
-      >
-        <Icon className="size-4.5" />
-      </span>
-      <span
-        className={cn(
-          "line-clamp-2 text-center text-xs leading-tight",
-          active
-            ? "font-semibold text-foreground"
-            : "font-medium text-muted-foreground group-hover:text-foreground",
-        )}
-      >
-        {label}
-      </span>
+      <Icon className="size-4.5" />
+      <span className="tooltip-content">{label}</span>
     </Link>
   );
 }

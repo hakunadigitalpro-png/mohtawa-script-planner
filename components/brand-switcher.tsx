@@ -114,7 +114,7 @@ export function BrandSwitcher({
           ) : (
           <button
             type="button"
-            className="tooltip-trigger relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-card text-sm font-bold text-foreground shadow-sm transition hover:scale-105"
+            className="tooltip-trigger relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-card text-sm font-bold text-foreground shadow-sm transition hover:scale-105"
             aria-label={t("switchLabel", { name: active?.name ?? noBrand })}
           >
             {/* Le logo remplace l'initiale dès qu'il existe. */}
