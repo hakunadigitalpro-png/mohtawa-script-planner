@@ -49,7 +49,6 @@ app/
 │   ├── dashboard/
 │   ├── calendar/
 │   ├── analytics/
-│   ├── hooks/               # Bibliothèque d'accroches
 │   ├── content/[id]/        # Fiche vidéo (5 onglets)
 │   ├── brands/              # Liste + détail (gestion taxonomie)
 │   │   ├── [id]/
@@ -78,8 +77,6 @@ components/
 ├── content-card.tsx
 ├── calendar-month.tsx
 ├── new-content-modal.tsx
-├── hooks-library.tsx
-├── hooks-picker.tsx
 ├── ai-generator.tsx
 ├── theme-switcher.tsx
 └── no-brand.tsx
@@ -95,7 +92,6 @@ lib/
 ├── brand.ts                 # Active brand resolution (cookie)
 ├── theme.ts                 # Theme cookies (light/dark/custom)
 ├── ai.ts                    # OpenAI wrapper + prompts
-└── hooks-data.ts            # 70 accroches FR hardcodées
 
 supabase/migrations/
 ├── 0000_reset.sql           # Wipe (à exécuter une fois)
@@ -267,7 +263,6 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 #### Plan
 - Titre, format (Reel/Story, non-modifiable après création), plateforme (filtrée par type), pilier, objectif, date, statut, accroche, CTA, tags
 - **Pilier et objectif** sont des `<SelectWithCreate>` connectés aux tables `brand_pillars` / `brand_objectives` de la marque active (avec bouton orange `+` pour ajouter à la volée)
-- **Bouton "Choisir une accroche"** ouvre le picker de la bibliothèque (Hooks)
 - **Autosave** sur tous les champs (debounce 700ms)
 
 #### Script (Reel) ou Stories (Story)
@@ -288,14 +283,8 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 - Vues, likes, commentaires, partages, sauvegardes, rétention (%), notes
 - Autosave
 
-### 6. Bibliothèque d'accroches
-**Route** : `/hooks`
-
-- 70 accroches en français hardcodées dans `lib/hooks-data.ts`, 7 catégories
-- Recherche par mot-clé + filtres chips par catégorie
-- Bouton **Copier** (clipboard) sur chaque card
-- Composant `<HooksLibrary>` réutilisé en mode "picker" via `<HooksPickerButton>` dans l'éditeur
-
+### 6. Bibliothèque d'accroches — RETIRÉE (08/10/2026)
+Supprimée à la demande de l'utilisatrice : 70 phrases figées n'avaient plus de sens quand Krea écrit l'accroche à partir du sujet. Il n'y a plus ni page `/hooks`, ni « Choisir une accroche » dans l'éditeur.
 ### 7. AI Script Generator
 **Server action** : `app/(app)/contents/ai-actions.ts`
 
@@ -480,8 +469,8 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 12. **PDF export via print CSS du navigateur**
     _Pas de Puppeteer/jsPDF/react-pdf. Une page `/print/[id]` avec un CSS dédié, l'utilisateur fait Ctrl+P → Enregistrer en PDF. Robuste et gratuit._
 
-13. **Hooks library : statique en code**
-    _70 accroches hardcodées dans `lib/hooks-data.ts`. Pas de DB. Plus rapide à shipper. Peut migrer en DB plus tard si on veut crowd-sourcer._
+13. **Hooks library : retirée (08/10/2026)**
+    _Elle était statique en code (70 accroches). Retirée parce que l'IA écrit l'accroche à partir du sujet — garder une liste figée à côté n'avait plus de sens._
 
 14. **Sharing via token base64url + RPC public**
     _Pas de "share avec utilisateur authentifié" pour l'instant — uniquement des liens publics. Token rotable. Page exclue de l'indexation Google._
@@ -631,7 +620,6 @@ Pour les changements DB :
 | Le générateur IA | `lib/ai.ts` (prompts) + `app/(app)/contents/ai-actions.ts` |
 | Les types DB | `lib/types.ts` |
 | Les listes (statuts, formats...) | `lib/constants.ts` |
-| Les accroches | `lib/hooks-data.ts` |
 | Le système de thèmes | `lib/theme.ts` + `components/theme-switcher.tsx` + `app/layout.tsx` |
 | La page de partage public | `app/share/[token]/page.tsx` |
 | La page d'impression | `app/print/[id]/page.tsx` + `print.css` |

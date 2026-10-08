@@ -273,7 +273,6 @@ export const KREA_TOOLS: KreaTool[] = [
             "marque",
             "taches",
             "analytics",
-            "accroches",
           ],
           description: "La page à ouvrir.",
         },

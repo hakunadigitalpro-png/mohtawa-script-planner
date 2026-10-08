@@ -45,7 +45,7 @@ export async function listUserBrands(): Promise<Brand[]> {
 /**
  * Résout la marque active + le rôle de l'user courant dessus (client = rôle
  * "viewer", cantonné au Calendrier — voir les guards dans dashboard/
- * analytics/hooks/brands). `role` est null si aucune marque n'est active.
+ * analytics/brands). `role` est null si aucune marque n'est active.
  *
  * Mémoïsé par requête (React cache) : le layout ET la page appellent tous
  * les deux `resolveActiveBrand()` — sans ça, chaque navigation refaisait

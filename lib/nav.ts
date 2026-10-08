@@ -3,7 +3,6 @@ import {
   CalendarDays,
   CheckCircle2,
   BarChart3,
-  BookOpen,
   KanbanSquare,
   Building2,
   User,
@@ -29,28 +28,31 @@ export type NavKey =
   | "calendar"
   | "review"
   | "analytics"
-  | "hooks"
   | "tasks"
   | "brands"
   | "profile";
 
-export type NavSectionKey = "main" | "production" | "settings";
+export type NavSectionKey = "main" | "settings";
 
 export type NavItem = { href: string; key: NavKey; icon: LucideIcon };
 
 export type NavSection = { key: NavSectionKey; items: NavItem[] };
 
 /**
- * Trois groupes, nommés par ce qu'on y fait.
+ * Deux groupes, nommés par ce qu'on y fait.
  *
- * `main` — ce qu'on ouvre SANS tâche en tête : je regarde où j'en suis, je
- * planifie, je mesure. C'est la boucle du produit (Idée → Mesure →
+ * `main` — le travail : je regarde où j'en suis, je planifie, je suis les
+ * tâches de l'équipe, je mesure. C'est la boucle du produit (Idée → Mesure →
  * Amélioration) : les chiffres servent à décider le mois suivant, ils n'ont
  * rien à faire dans un tiroir « avancé ».
- * `production` — ce qu'on ouvre AVEC une tâche en main.
  * `settings` — « Mon espace », pas « Réglages » : la page d'une marque est
  * son studio (piliers, objectifs, équipe, stratégie, interrupteur IA), pas
  * un panneau de configuration.
+ *
+ * Il y avait un troisième groupe, « Production », avec les tâches et la
+ * bibliothèque d'accroches. La bibliothèque a été retirée (70 phrases figées
+ * n'ont plus de sens quand Krea écrit l'accroche à partir du sujet), et un
+ * titre pour une seule entrée est pire que pas de titre.
  */
 export const NAV_SECTIONS: NavSection[] = [
   {
@@ -59,14 +61,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
       { href: "/calendar", key: "calendar", icon: CalendarDays },
       { href: "/review", key: "review", icon: CheckCircle2 },
-      { href: "/analytics", key: "analytics", icon: BarChart3 },
-    ],
-  },
-  {
-    key: "production",
-    items: [
       { href: "/tasks", key: "tasks", icon: KanbanSquare },
-      { href: "/hooks", key: "hooks", icon: BookOpen },
+      { href: "/analytics", key: "analytics", icon: BarChart3 },
     ],
   },
   {

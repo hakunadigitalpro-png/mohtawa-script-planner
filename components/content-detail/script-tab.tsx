@@ -9,7 +9,6 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import { AiGeneratorButton } from "@/components/ai-generator";
 import { CommentButton } from "@/components/comments";
 import { ScriptHelp } from "@/components/field-help/script-help";
-import { HooksPickerButton } from "@/components/hooks-picker";
 import { STORY_SLOT_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import {
@@ -302,16 +301,6 @@ function ReelScript({
               value={state[block.key as keyof typeof state] as string}
               onChange={(v) => setState((s) => ({ ...s, [block.key]: v }))}
               suggestions={block.suggestions}
-              // Sur l'Accroche : bouton "Choisir une accroche" (biblio de hooks).
-              headerExtra={
-                block.key === "intro" ? (
-                  <HooksPickerButton
-                    onPick={(text) =>
-                      setState((s) => ({ ...s, intro: text }))
-                    }
-                  />
-                ) : undefined
-              }
             />
           ))
         )}

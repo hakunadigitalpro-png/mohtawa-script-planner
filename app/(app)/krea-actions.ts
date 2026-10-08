@@ -34,7 +34,6 @@ const PAGE_HREFS: Record<string, string> = {
   calendrier: "/calendar",
   taches: "/tasks",
   analytics: "/analytics",
-  accroches: "/hooks",
 };
 
 /** Au-delà, on coupe : une copilote qui enchaîne 10 outils part en vrille et

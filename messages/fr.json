@@ -32,14 +32,12 @@
     "review": "À valider",
     "tasks": "Tâches",
     "analytics": "Résultats",
-    "hooks": "Accroches",
     "brands": "Mes marques",
     "profile": "Mon profil",
     "logout": "Se déconnecter",
     "appName": "Kreatly",
     "sections": {
       "main": "Principal",
-      "production": "Production",
       "settings": "Mon espace"
     },
     "collapse": "Replier le menu",
@@ -392,25 +390,6 @@
     "preview": "Aperçu",
     "planAlt": "Plan {n}",
     "planImage": "Image du plan"
-  },
-  "hooks": {
-    "title": "Bibliothèque d'accroches",
-    "subtitle": "Inspire-toi des formats qui marchent. Une accroche bien choisie = un scroll arrêté.",
-    "searchPlaceholder": "Rechercher une accroche...",
-    "allCategories": "✨ Toutes ({count})",
-    "noResults": "Aucune accroche trouvée. Essaye d'autres mots-clés.",
-    "use": "Utiliser",
-    "pickerTitle": "Bibliothèque d'accroches",
-    "pickerSubtitle": "Clique sur « Utiliser » pour remplacer l'accroche de ton contenu.",
-    "categories": {
-      "curiosity": "Curiosité",
-      "mistake": "Erreurs",
-      "transformation": "Transformation",
-      "list": "Listes & How-to",
-      "controversy": "Controverse",
-      "question": "Question",
-      "urgency": "Urgence"
-    }
   },
   "analytics": {
     "title": "Résultats",

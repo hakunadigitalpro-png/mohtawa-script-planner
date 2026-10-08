@@ -32,14 +32,12 @@
     "review": "To review",
     "tasks": "Tasks",
     "analytics": "Analytics",
-    "hooks": "Hooks",
     "brands": "My brands",
     "profile": "Profile",
     "logout": "Sign out",
     "appName": "Kreatly",
     "sections": {
       "main": "Main",
-      "production": "Production",
       "settings": "My space"
     },
     "collapse": "Collapse menu",
@@ -392,25 +390,6 @@
     "preview": "Preview",
     "planAlt": "Shot {n}",
     "planImage": "Shot image"
-  },
-  "hooks": {
-    "title": "Hooks library",
-    "subtitle": "Get inspired by formats that work. The right hook = a stopped scroll.",
-    "searchPlaceholder": "Search a hook...",
-    "allCategories": "✨ All ({count})",
-    "noResults": "No hook found. Try different keywords.",
-    "use": "Use",
-    "pickerTitle": "Hooks library",
-    "pickerSubtitle": "Click \"Use\" to replace your content's hook.",
-    "categories": {
-      "curiosity": "Curiosity",
-      "mistake": "Mistakes",
-      "transformation": "Transformation",
-      "list": "Lists & How-to",
-      "controversy": "Controversy",
-      "question": "Question",
-      "urgency": "Urgency"
-    }
   },
   "analytics": {
     "title": "Analytics",

@@ -24,7 +24,6 @@ function pageLabel(pathname: string): string {
   if (pathname.startsWith("/dashboard")) return "le tableau de bord";
   if (pathname.startsWith("/analytics")) return "les statistiques";
   if (pathname.startsWith("/tasks")) return "le tableau des tâches";
-  if (pathname.startsWith("/hooks")) return "la bibliothèque d'accroches";
   if (pathname.startsWith("/brands")) return "la liste des marques";
   if (pathname.startsWith("/profile")) return "son profil";
   return "l'application";

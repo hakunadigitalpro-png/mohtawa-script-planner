@@ -32,14 +32,12 @@
     "review": "للمراجعة",
     "tasks": "المهام",
     "analytics": "التحليلات",
-    "hooks": "العناوين الجذابة",
     "brands": "علاماتي التجارية",
     "profile": "ملفي الشخصي",
     "logout": "تسجيل الخروج",
     "appName": "Kreatly",
     "sections": {
       "main": "الرئيسية",
-      "production": "الإنتاج",
       "settings": "مساحتي"
     },
     "collapse": "طيّ القائمة",
@@ -392,25 +390,6 @@
     "preview": "معاينة",
     "planAlt": "لقطة {n}",
     "planImage": "صورة اللقطة"
-  },
-  "hooks": {
-    "title": "مكتبة العناوين الجذابة",
-    "subtitle": "استلهم من الصيغ التي تنجح. عنوان جذاب جيد = توقف التمرير.",
-    "searchPlaceholder": "ابحث عن عنوان جذاب...",
-    "allCategories": "✨ الكل ({count})",
-    "noResults": "لم يتم العثور على عناوين. جرّب كلمات أخرى.",
-    "use": "استخدم",
-    "pickerTitle": "مكتبة العناوين الجذابة",
-    "pickerSubtitle": "اضغط على «استخدم» لاستبدال عنوان محتوىك.",
-    "categories": {
-      "curiosity": "فضول",
-      "mistake": "أخطاء",
-      "transformation": "تحول",
-      "list": "قوائم وكيف",
-      "controversy": "جدل",
-      "question": "سؤال",
-      "urgency": "إلحاح"
-    }
   },
   "analytics": {
     "title": "التحليلات",
