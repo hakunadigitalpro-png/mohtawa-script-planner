@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { setActiveBrandId } from "@/lib/brand";
 import { removeContentFiles, removeStorageFolder } from "@/lib/storage-cleanup";
+import { BRAND_NAME_MAX } from "@/lib/constants";
 import {
   LEGACY_LOCALE_COOKIE,
   LOCALES,
@@ -28,7 +29,12 @@ export async function switchBrand(brandId: string) {
 export async function renameBrand(brandId: string, name: string) {
   const trimmed = name.trim();
   if (!trimmed) return { error: "Le nom est requis." };
-  if (trimmed.length > 80) return { error: "Nom trop long (80 caractères max)." };
+  // Un NOM, pas une description : au-delà de 40 caractères il se coupe
+  // dans le menu, dans le sélecteur et dans les e-mails. Ce qu'on vend et
+  // à qui, c'est la stratégie qui le porte.
+  if (trimmed.length > BRAND_NAME_MAX) {
+    return { error: `Garde un nom court — ${BRAND_NAME_MAX} caractères au plus. Ce que tu fais et pour qui a sa place dans ta stratégie de contenu.` };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -181,7 +187,7 @@ export async function createBrand(formData: FormData) {
       return { error: "Le nom est requis." };
     }
     if (error.message.includes("name_too_long")) {
-      return { error: "Nom trop long (80 caractères max)." };
+      return { error: `Garde un nom court — ${BRAND_NAME_MAX} caractères au plus. Ce que tu fais et pour qui a sa place dans ta stratégie de contenu.` };
     }
     return { error: error.message };
   }

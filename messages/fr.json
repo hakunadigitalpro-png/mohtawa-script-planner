@@ -186,7 +186,8 @@
       "calendar": "Visualise ton mois en un coup d'œil.",
       "planning": "Tous tes contenus du mois, en tableau.",
       "ideas": "Ce qui n'a pas encore de date."
-    }
+    },
+    "seeAllOfDay": "Voir les {count} contenus du jour"
   },
   "newContent": {
     "title": "Nouveau contenu — {format}",

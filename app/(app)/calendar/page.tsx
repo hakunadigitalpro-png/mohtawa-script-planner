@@ -302,13 +302,19 @@ export default async function CalendarPage({
           />
         </div>
       ) : (
-        <CalendarMonth
-          initialMonth={monthStart}
-          entries={entries}
-          commentCounts={commentCounts}
-          canEdit={!isClient}
-          scopeQuery={scopeQuery}
-        />
+        /* Sept colonnes ont besoin de place : sur grand écran, la grille
+           déborde du conteneur centré (72 rem) pour prendre les marges
+           inoccupées de part et d'autre — jusqu'au bord du menu, dont la
+           largeur réelle (large ou replié) est dans `--nav-w`. */
+        <div className="xl:mx-[calc(-1*max(0px,(100vw-var(--nav-w)-72rem)/2))]">
+          <CalendarMonth
+            initialMonth={monthStart}
+            entries={entries}
+            commentCounts={commentCounts}
+            canEdit={!isClient}
+            scopeQuery={scopeQuery}
+          />
+        </div>
       )}
     </div>
   );

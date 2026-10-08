@@ -18,6 +18,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { renameBrand, deleteBrand } from "@/app/(app)/actions";
+import { BRAND_NAME_MAX } from "@/lib/constants";
 
 type BrandWithRole = {
   id: string;
@@ -104,6 +105,7 @@ function BrandRow({
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
+              maxLength={BRAND_NAME_MAX}
               className="h-8 max-w-xs"
             />
             <Button size="sm" onClick={onSaveName} disabled={pending}>
@@ -126,6 +128,7 @@ function BrandRow({
             <Link
               href={`/brands/${brand.id}`}
               className="truncate text-sm font-medium hover:text-accent hover:underline"
+              title={brand.name}
             >
               {brand.name}
             </Link>

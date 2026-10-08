@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown";
 import type { Brand } from "@/lib/types";
 import type { BrandRole } from "@/lib/brand";
+import { BRAND_NAME_MAX } from "@/lib/constants";
 
 export function BrandSwitcher({
   brands,
@@ -84,6 +85,8 @@ export function BrandSwitcher({
               type="button"
               className="flex w-full items-center gap-2.5 rounded-xl border border-border/60 bg-card/60 px-2.5 py-2 text-start transition hover:bg-card"
               aria-label={t("switchLabel", { name: active?.name ?? noBrand })}
+              // Un nom déjà trop long se coupe ; le survol le donne en entier.
+              title={active?.name}
             >
               <span className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-secondary text-xs font-bold text-foreground">
                 {active?.logo_url ? (
@@ -111,7 +114,7 @@ export function BrandSwitcher({
           ) : (
           <button
             type="button"
-            className="tooltip-trigger relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-card text-sm font-bold text-foreground shadow-sm transition hover:scale-105"
+            className="tooltip-trigger relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-card text-sm font-bold text-foreground shadow-sm transition hover:scale-105"
             aria-label={t("switchLabel", { name: active?.name ?? noBrand })}
           >
             {/* Le logo remplace l'initiale dès qu'il existe. */}
@@ -148,7 +151,9 @@ export function BrandSwitcher({
               }}
             >
               <Building2 className="size-4 text-muted" />
-              <span className="flex-1 truncate">{b.name}</span>
+              <span className="flex-1 truncate" title={b.name}>
+                {b.name}
+              </span>
               {active?.id === b.id && <Check className="size-4" />}
             </DropdownItem>
           ))}
@@ -196,7 +201,20 @@ export function BrandSwitcher({
             <DialogBody className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="brand-name">{t("brandNameLabel")}</Label>
-                <Input id="brand-name" name="name" required autoFocus placeholder={t("brandNamePlaceholder")} />
+                <Input
+                  id="brand-name"
+                  name="name"
+                  required
+                  autoFocus
+                  maxLength={BRAND_NAME_MAX}
+                  placeholder={t("brandNamePlaceholder")}
+                />
+                {/* Dit AVANT que le champ ne bloque : un `maxLength` seul
+                    arrête la frappe sans un mot. */}
+                <p className="text-xs text-muted">
+                  Juste le nom, {BRAND_NAME_MAX} caractères au plus. Ce que tu
+                  fais et pour qui a sa place dans ta stratégie de contenu.
+                </p>
               </div>
               {error && (
                 <p className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">

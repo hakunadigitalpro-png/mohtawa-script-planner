@@ -215,3 +215,10 @@ export function isLiveStatus(status: string | null | undefined) {
 export function platformLabel(platform: string | null | undefined) {
   return PLATFORMS.find((p) => p.value === platform)?.label ?? platform ?? "—";
 }
+
+/**
+ * Un NOM de marque, pas une description : au-dela il se coupe dans le menu,
+ * le selecteur et les e-mails. Partage entre la validation serveur et les
+ * champs de saisie (maxLength), pour que les deux disent la meme chose.
+ */
+export const BRAND_NAME_MAX = 40;

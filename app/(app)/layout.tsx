@@ -55,7 +55,11 @@ export default async function AppLayout({
     (notificationsRes.data as Notification[] | null) ?? [];
 
   return (
-    <div className="flex min-h-screen">
+    <div
+      className="flex min-h-screen"
+      // Lue par les pages qui s'étalent au-delà du conteneur (le calendrier).
+      style={{ "--nav-w": navMode === "wide" ? "16rem" : "6.5rem" } as React.CSSProperties}
+    >
       {/* Rail latéral : desktop uniquement (caché en <md via la classe interne). */}
       <Sidebar
         brands={brands}

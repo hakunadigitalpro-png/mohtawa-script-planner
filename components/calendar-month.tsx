@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ImageIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -281,7 +282,9 @@ export function CalendarMonth({
               <div
                 key={i}
                 className={cn(
-                  "group relative min-h-28 border-b border-e border-border/60 p-2 transition-all",
+                  // `@container` : la carte choisit sa forme selon la largeur
+                  // RÉELLE de la case, pas celle de la fenêtre.
+                  "group relative min-h-28 @container border-b border-e border-border/60 p-2 transition-all",
                   otherMonth && "bg-secondary/30",
                   (i + 1) % 7 === 0 && "border-e-0",
                   isDragOver && "bg-accent/10 ring-2 ring-accent ring-inset",
@@ -335,8 +338,15 @@ export function CalendarMonth({
                     />
                   ))}
                   {items.length > 3 && (
-                    <li className="px-1 text-xs font-medium text-muted">
-                      {t("moreItems", { count: items.length - 3 })}
+                    // « +2 autres » n'annonçait rien et ne faisait rien. Le
+                    // planning du mois les liste tous, en entier.
+                    <li className="px-1">
+                      <Link
+                        href={`/calendar?m=${format(cursor, "yyyy-MM")}&view=planning`}
+                        className="text-xs font-semibold text-muted transition hover:text-foreground"
+                      >
+                        {t("seeAllOfDay", { count: items.length })}
+                      </Link>
                     </li>
                   )}
                 </ul>
@@ -451,7 +461,8 @@ function EntryCard({
   const hasHeader = entry.slots.some((s) => s.platform) || times.length > 0;
 
   const header = hasHeader && (
-    <div className="mb-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-foreground/70">
+    // `pe-6` : la place du bouton de commentaire, posé dans le coin haut.
+    <div className="mb-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 pe-6 text-foreground/70">
       {entry.slots.map((slot, si) => {
         const Icon = slot.platform ? PLATFORM_ICONS[slot.platform] : null;
         const own = oneTime ? null : formatTimeFr(slot.time);
@@ -478,15 +489,21 @@ function EntryCard({
   const thumb = entry.thumbUrl && (
     <div
       className={cn(
+        // Dans le mois, une petite vignette à côté du titre, pas une image
+        // sur toute la largeur : trois contenus le même jour faisaient une
+        // ligne de 450 px, et le calendrier n'en finissait plus.
         "relative shrink-0 overflow-hidden rounded-md bg-secondary",
-        agenda ? "size-20" : "mb-1.5 aspect-square w-full",
+        // Case étroite (portable, menu large) : un bandeau de 40 px au-dessus
+        // du titre, qui garde toute sa largeur. Case large : un carré à côté.
+        // Le côte à côte n'avait de place qu'au-delà de ~1 800 px de fenêtre.
+        agenda ? "size-20" : "h-10 w-full @min-[200px]:size-14",
       )}
     >
       <Image
         src={entry.thumbUrl}
         alt=""
         fill
-        sizes={agenda ? "80px" : "(max-width: 768px) 45vw, 180px"}
+        sizes={agenda ? "80px" : "180px"}
         className="object-cover object-top"
       />
     </div>
@@ -494,14 +511,18 @@ function EntryCard({
 
   const body = (
     <>
-      {/* Nom. Sans visuel, le titre est la SEULE information : il s'affiche
-          en entier. Avec un visuel, l'image identifie déjà le contenu — deux
-          lignes suffisent et la grille reste lisible. En agenda la place ne
-          manque pas, donc le titre reste toujours entier. */}
+      {/* Nom. Dans le mois, deux lignes au plus — un titre long faisait une
+          carte de cinq lignes, et trois contenus le même jour une colonne
+          sans fin. Le titre entier est au survol, et dans la fiche à un clic.
+          En agenda la place ne manque pas : il reste entier. */}
       <div
+        title={agenda ? undefined : (entry.title || undefined)}
         className={cn(
           "text-sm font-semibold leading-snug text-foreground",
-          entry.thumbUrl && !agenda ? "line-clamp-2" : "break-words",
+          agenda ? "break-words" : "line-clamp-2",
+          // Sans en-tête, c'est la première ligne du titre qui passe sous
+          // le bouton de commentaire : on lui laisse la place.
+          !agenda && !hasHeader && "pe-6",
         )}
       >
         {entry.title || untitled}
@@ -552,7 +573,11 @@ function EntryCard({
         dir="auto"
         style={{ borderInlineStartColor: typeColor(entry.type) }}
         className={cn(
-          "block rounded-lg border-s-[3px] bg-secondary/40 p-2 pe-8 transition-colors hover:bg-secondary",
+          // Plus de `pe-8` sur toute la carte : il réservait 32 px à droite
+          // de CHAQUE ligne pour le bouton de commentaire, qui ne vit que
+          // dans le coin haut. À côté d'une vignette, le titre n'avait plus
+          // que trois lettres. C'est l'en-tête seul qui lui laisse la place.
+          "block rounded-lg border-s-[3px] bg-secondary/40 p-2 transition-colors hover:bg-secondary",
           canEdit && !agenda && "cursor-grab active:cursor-grabbing",
           agenda && "flex items-start gap-3",
         )}
@@ -568,8 +593,22 @@ function EntryCard({
         ) : (
           <>
             {header}
-            {thumb}
-            {body}
+            {/* Vignette et texte côte à côte : la carte garde la hauteur
+                de son texte, pas celle d'une image. */}
+            <div className="flex flex-col gap-1.5 @min-[200px]:flex-row @min-[200px]:items-start @min-[200px]:gap-2.5">
+              {thumb || (
+                // Sans visuel, la place du visuel reste réservée en côte à
+                // côte : les titres d'une même case s'alignent, au lieu de
+                // deux silhouettes de carte différentes.
+                <div
+                  aria-hidden
+                  className="hidden size-14 shrink-0 items-center justify-center rounded-md bg-secondary @min-[200px]:flex"
+                >
+                  <ImageIcon className="size-4 text-muted" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">{body}</div>
+            </div>
           </>
         )}
       </Link>

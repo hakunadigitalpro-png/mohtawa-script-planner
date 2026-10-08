@@ -186,7 +186,8 @@
       "calendar": "See your month at a glance.",
       "planning": "All your content this month, as a table.",
       "ideas": "What has no date yet."
-    }
+    },
+    "seeAllOfDay": "See all {count} for this day"
   },
   "newContent": {
     "title": "New content — {format}",
