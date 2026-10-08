@@ -78,7 +78,12 @@ export function BrandSwitcher({
 
   return (
     <>
-      <Dropdown align="start">
+      <Dropdown
+        align="start"
+        // En ligne pleine largeur, le conteneur doit l'etre aussi : sinon un
+        // nom long elargit la ligne au-dela du menu au lieu de se tronquer.
+        className={variant === "wide" ? "block w-full" : undefined}
+      >
         <DropdownTrigger asChild>
           {variant === "wide" ? (
             <button

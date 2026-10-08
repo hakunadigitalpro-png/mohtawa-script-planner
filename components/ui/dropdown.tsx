@@ -16,7 +16,10 @@ const DropdownContext = React.createContext<DropdownContextType | null>(null);
 export function Dropdown({
   children,
   align = "end",
+  className,
 }: {
+  /** Classes du conteneur : `block w-full` quand le declencheur doit remplir la largeur. */
+  className?: string;
   children: React.ReactNode;
   align?: "start" | "end";
 }) {
@@ -49,7 +52,10 @@ export function Dropdown({
 
   return (
     <DropdownContext.Provider value={{ open, setOpen, triggerRef, menuRef, align }}>
-      <div className="relative inline-block">{children}</div>
+      {/* `inline-block` par defaut : le conteneur epouse son declencheur.
+          Un declencheur en `w-full` a alors besoin de `block w-full` ici,
+          sinon un texte long elargit le tout au lieu de se tronquer. */}
+      <div className={cn("relative inline-block", className)}>{children}</div>
     </DropdownContext.Provider>
   );
 }
