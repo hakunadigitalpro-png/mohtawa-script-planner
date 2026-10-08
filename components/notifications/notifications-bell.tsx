@@ -179,7 +179,7 @@ export function NotificationsBell({
       >
         <Bell className="size-4.5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-xs font-bold leading-none text-accent-foreground">
+          <span className="absolute -top-0.5 -end-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-xs font-bold leading-none text-accent-foreground">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
@@ -189,7 +189,7 @@ export function NotificationsBell({
       {open && (
         <div
           ref={popoverRef}
-          className="fixed right-2 top-16 z-50 w-[calc(100vw-1rem)] max-w-sm origin-top rounded-2xl border border-border/60 bg-card p-2 shadow-xl md:absolute md:left-full md:right-auto md:top-0 md:ml-3 md:w-80 md:origin-top-left"
+          className="fixed end-2 top-16 z-50 w-[calc(100vw-1rem)] max-w-sm origin-top rounded-2xl border border-border/60 bg-card p-2 shadow-xl md:absolute md:start-full md:end-auto md:top-0 md:ms-3 md:w-80 md:origin-top-left rtl:md:origin-top-right"
           style={{ maxHeight: "70vh" }}
         >
           {/* Header */}

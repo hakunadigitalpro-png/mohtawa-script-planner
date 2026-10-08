@@ -499,8 +499,10 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 
 ### UX
 
-18. **Sidebar compact icon-only (80px) avec tooltips au hover**
-    _Inspiration directe du user. Donne +176px au contenu vs sidebar large._
+18. **Menu latéral large repliable (256 px ↔ 80 px), état en cookie `kreatly_nav` lu en SSR**
+    _Première version : rail de 80 px, icônes seules + infobulles, à la demande de l'utilisatrice. Elle est revenue dessus après usage (07/10/2026, trois captures d'un autre logiciel à l'appui) : sans libellé on ne retient pas où sont « Tâches » et « Accroches », et la cible — une patronne de PME, pas une social media manager — n'a pas à apprendre huit pictogrammes. Les entrées sont groupées sous trois titres (Principal / Production / Mon espace) ; un `viewer` n'en a que trois, on ne lui met donc aucun titre ni bouton de repli._
+    _La justification d'origine (« +176 px au contenu ») était fausse : le contenu est capé à `max-w-6xl` (1152 px) et centré, donc au-delà de ~1400 px de fenêtre le menu large ne coûte RIEN au contenu, il déplace juste le centrage. En dessous (1280 px) il coûte ~120 px — d'où le pli, mémorisé en cookie lu en SSR comme le thème (décision 15) pour ne pas clignoter au chargement. Le pli s'écrit côté client (`document.cookie`) : un `revalidatePath("/", "layout")` re-rendrait toute l'application pour 176 px d'animation._
+    _La liste des entrées vit dans `lib/nav.ts`, une seule fois : `components/sidebar.tsx` et `components/mobile-nav.tsx` la redéclaraient toutes les deux, règle du rôle `viewer` comprise._
 
 19. **Email confirmation OFF en dev**
     _Pour fluidifier les tests. À réactiver pour la prod._

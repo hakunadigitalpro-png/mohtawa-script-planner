@@ -36,7 +36,14 @@
     "brands": "علاماتي التجارية",
     "profile": "ملفي الشخصي",
     "logout": "تسجيل الخروج",
-    "appName": "Kreatly"
+    "appName": "Kreatly",
+    "sections": {
+      "main": "الرئيسية",
+      "production": "الإنتاج",
+      "settings": "مساحتي"
+    },
+    "collapse": "طيّ القائمة",
+    "expand": "فتح القائمة"
   },
   "auth": {
     "login": {
@@ -484,7 +491,8 @@
     "noBrandLabel": "—",
     "myBrands": "علاماتي التجارية",
     "noBrandFound": "لا توجد علامة تجارية",
-    "openBrand": "إدارة هذه العلامة"
+    "openBrand": "إدارة هذه العلامة",
+    "switchBrandSubtitle": "تغيير العلامة"
   },
   "brandDetail": {
     "backToAll": "كل العلامات التجارية",

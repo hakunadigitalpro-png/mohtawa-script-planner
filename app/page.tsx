@@ -16,11 +16,11 @@ import { LandingPage } from "@/components/landing/landing-page";
 export const metadata: Metadata = {
   title: "Kreatly — Planifie tes vidéos, structure ta production",
   description:
-    "Le planificateur vidéo pour créateurs francophones et arabophones. Plan éditorial, scripts IA, storyboard visuel, analytics. Bilingue FR/AR, RTL natif, bêta gratuite.",
+    "Le planificateur vidéo pour créateurs francophones et arabophones. Plan éditorial, scripts IA, storyboard visuel, résultats. Bilingue FR/AR, RTL natif, bêta gratuite.",
   openGraph: {
     title: "Kreatly — Le planificateur vidéo bilingue FR/AR",
     description:
-      "Plan éditorial, scripts IA, storyboard visuel, analytics. Pour créateurs francophones et arabophones.",
+      "Plan éditorial, scripts IA, storyboard visuel, résultats. Pour créateurs francophones et arabophones.",
     type: "website",
     locale: "fr_FR",
     alternateLocale: ["ar_TN"],
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Kreatly — Le planificateur vidéo bilingue FR/AR",
     description:
-      "Plan éditorial, scripts IA, storyboard visuel, analytics. Bêta gratuite.",
+      "Plan éditorial, scripts IA, storyboard visuel, résultats. Bêta gratuite.",
   },
 };
 

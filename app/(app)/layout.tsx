@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
+import { getNavMode } from "@/lib/nav-pref";
 import { Sidebar } from "@/components/sidebar";
 import { MobileTopBar, MobileBottomNav } from "@/components/mobile-nav";
 import { NoBrandWelcome } from "@/components/no-brand";
@@ -18,12 +19,14 @@ export default async function AppLayout({
   // ensemble. (`resolveActiveBrand` est mémorisée par `cache()`, la page qui
   // suit la réutilise sans re-interroger la base.)
   const supabase = await createClient();
-  const [user, brandCtx, notificationsRes] = await Promise.all([
+  const [user, brandCtx, notificationsRes, navMode] = await Promise.all([
     getCachedUser(),
     resolveActiveBrand(),
     // Tolérant aux échecs : si la RPC n'existe pas encore (migration pas
     // appliquée), on rend 0 notif et la cloche affiche un état vide.
     supabase.rpc("list_my_notifications", { p_limit: 20 }),
+    // Lu ici, donc le menu arrive déjà replié ou déplié — pas de saut.
+    getNavMode(),
   ]);
 
   if (!user) redirect("/login");
@@ -58,6 +61,7 @@ export default async function AppLayout({
         userId={user.id}
         initialNotifications={initialNotifications}
         role={role}
+        mode={navMode}
       />
       <div className="flex min-h-screen flex-1 flex-col">
         {/* Barre du haut : mobile uniquement (md:hidden). */}

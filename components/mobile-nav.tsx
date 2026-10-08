@@ -4,25 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import {
-  LayoutDashboard,
-  CalendarDays,
-  CheckCircle2,
-  BarChart3,
-  BookOpen,
-  KanbanSquare,
-  Menu,
-  Building2,
-  User,
-  LogOut,
-  type LucideIcon,
-} from "lucide-react";
+import { Menu, Building2, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandSwitcher } from "./brand-switcher";
 import { NotificationsBell } from "./notifications/notifications-bell";
 import type { Brand } from "@/lib/types";
 import type { Notification } from "./notifications/types";
 import type { BrandRole } from "@/lib/brand";
+import { navItemsFor } from "@/lib/nav";
 
 /**
  * Navigation mobile (remplace le rail latéral, caché en <md).
@@ -36,18 +25,6 @@ import type { BrandRole } from "@/lib/brand";
  * le <Sidebar> qui prend le relais.
  */
 
-const PRIMARY_NAV: {
-  href: string;
-  key: "dashboard" | "calendar" | "review" | "tasks" | "analytics" | "hooks";
-  icon: LucideIcon;
-}[] = [
-  { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
-  { href: "/calendar", key: "calendar", icon: CalendarDays },
-  { href: "/review", key: "review", icon: CheckCircle2 },
-  { href: "/tasks", key: "tasks", icon: KanbanSquare },
-  { href: "/analytics", key: "analytics", icon: BarChart3 },
-  { href: "/hooks", key: "hooks", icon: BookOpen },
-];
 
 export function MobileTopBar({
   brands,
@@ -90,11 +67,12 @@ export function MobileBottomNav({
   const t = useTranslations("nav");
   const [menuOpen, setMenuOpen] = useState(false);
   const isClientOnly = role === "viewer";
-  const nav = isClientOnly
-    ? PRIMARY_NAV.filter(
-        (item) => item.key === "calendar" || item.key === "review",
-      )
-    : PRIMARY_NAV.filter((item) => item.key !== "review");
+  // La MEME liste que le menu latéral (`lib/nav.ts`), moins les deux entrées
+  // qui vivent dans la feuille « Plus » : la barre du bas tient cinq onglets,
+  // pas huit.
+  const nav = navItemsFor(role).filter(
+    (item) => item.key !== "brands" && item.key !== "profile",
+  );
 
   return (
     <>

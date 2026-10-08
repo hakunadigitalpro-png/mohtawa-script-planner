@@ -193,3 +193,4 @@ export async function createBrand(formData: FormData) {
   // qui est la suite naturelle de la création.
   redirect(`/brands/${brandId as string}`);
 }
+

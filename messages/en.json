@@ -36,7 +36,14 @@
     "brands": "My brands",
     "profile": "Profile",
     "logout": "Sign out",
-    "appName": "Kreatly"
+    "appName": "Kreatly",
+    "sections": {
+      "main": "Main",
+      "production": "Production",
+      "settings": "My space"
+    },
+    "collapse": "Collapse menu",
+    "expand": "Expand menu"
   },
   "auth": {
     "login": {
@@ -484,7 +491,8 @@
     "noBrandLabel": "—",
     "myBrands": "My brands",
     "noBrandFound": "No brand",
-    "openBrand": "Manage this brand"
+    "openBrand": "Manage this brand",
+    "switchBrandSubtitle": "Switch brand"
   },
   "brandDetail": {
     "backToAll": "All brands",

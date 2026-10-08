@@ -4,7 +4,13 @@ import { useState, useTransition } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Check, Plus, Building2, Settings2 } from "lucide-react";
+import {
+  Check,
+  Plus,
+  Building2,
+  Settings2,
+  ChevronsUpDown,
+} from "lucide-react";
 import { switchBrand, createBrand } from "@/app/(app)/actions";
 import {
   Dialog,
@@ -26,13 +32,24 @@ import {
   DropdownLabel,
 } from "@/components/ui/dropdown";
 import type { Brand } from "@/lib/types";
+import type { BrandRole } from "@/lib/brand";
 
 export function BrandSwitcher({
   brands,
   active,
+  role,
+  variant = "rail",
 }: {
   brands: Brand[];
   active: Brand | null;
+  /** Un `viewer` est renvoyé au Calendrier depuis `/brands/[id]`. */
+  role?: BrandRole | null;
+  /**
+   * `rail` : la pastille ronde du menu replie. `wide` : une ligne pleine
+   * largeur, avec le nom de la marque lisible — dans un menu qui montre ses
+   * libelles, une initiale muette serait la seule chose a deviner.
+   */
+  variant?: "rail" | "wide";
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -62,6 +79,36 @@ export function BrandSwitcher({
     <>
       <Dropdown align="start">
         <DropdownTrigger asChild>
+          {variant === "wide" ? (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2.5 rounded-xl border border-border/60 bg-card/60 px-2.5 py-2 text-start transition hover:bg-card"
+              aria-label={t("switchLabel", { name: active?.name ?? noBrand })}
+            >
+              <span className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-secondary text-xs font-bold text-foreground">
+                {active?.logo_url ? (
+                  <Image
+                    src={active.logo_url}
+                    alt=""
+                    fill
+                    sizes="32px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <span>{initial}</span>
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-foreground">
+                  {active?.name ?? noBrand}
+                </span>
+                <span className="block text-xs text-muted">
+                  {t("switchBrandSubtitle")}
+                </span>
+              </span>
+              <ChevronsUpDown className="size-4 shrink-0 text-muted" />
+            </button>
+          ) : (
           <button
             type="button"
             className="tooltip-trigger relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-card text-sm font-bold text-foreground shadow-sm transition hover:scale-105"
@@ -81,6 +128,7 @@ export function BrandSwitcher({
             )}
             <span className="tooltip-content">{active?.name ?? noBrand}</span>
           </button>
+          )}
         </DropdownTrigger>
         <DropdownContent align="start" className="min-w-56">
           <DropdownLabel>{t("myBrands")}</DropdownLabel>
@@ -105,7 +153,9 @@ export function BrandSwitcher({
             </DropdownItem>
           ))}
           <DropdownSeparator />
-          {active && (
+          {/* Pas pour un client invité : `/brands/[id]` le renverrait
+              aussitôt au Calendrier — un lien qui ne mène nulle part. */}
+          {active && role !== "viewer" && (
             <>
               {/* Ouvrir la marque se faisait en deux temps — aller dans
                   « Mes marques », puis cliquer la bonne. Or c'est ici qu'on

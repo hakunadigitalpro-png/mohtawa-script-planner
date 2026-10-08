@@ -31,12 +31,19 @@
     "calendar": "Calendrier",
     "review": "À valider",
     "tasks": "Tâches",
-    "analytics": "Analytics",
+    "analytics": "Résultats",
     "hooks": "Accroches",
     "brands": "Mes marques",
     "profile": "Mon profil",
     "logout": "Se déconnecter",
-    "appName": "Kreatly"
+    "appName": "Kreatly",
+    "sections": {
+      "main": "Principal",
+      "production": "Production",
+      "settings": "Mon espace"
+    },
+    "collapse": "Replier le menu",
+    "expand": "Déplier le menu"
   },
   "auth": {
     "login": {
@@ -127,7 +134,7 @@
       "missing": "À préparer"
     },
     "miniAnalytics": {
-      "title": "Analytics",
+      "title": "Résultats",
       "seeAll": "Voir tout",
       "trendSub": "de vues ce mois vs le précédent",
       "highlightPillar": "Ton pilier qui cartonne : {pillar}",
@@ -364,8 +371,8 @@
     "deleteItem": "Supprimer l'item"
   },
   "performance": {
-    "title": "Résultats",
-    "subtitle": "Ce que tu mesures, tu peux l'améliorer.",
+    "title": "Performances",
+    "subtitle": "Les chiffres de ce contenu, une fois publié.",
     "views": "Vues",
     "likes": "Likes",
     "comments": "Commentaires",
@@ -406,7 +413,7 @@
     }
   },
   "analytics": {
-    "title": "Analytics",
+    "title": "Résultats",
     "subtitle": "{brand} · ce que tu mesures, tu peux l'améliorer.",
     "kpi": {
       "totalViews": "Total vues",
@@ -414,7 +421,7 @@
       "videosWithStats": "Contenus avec stats"
     },
     "noDataTitle": "Pas encore de données de performance",
-    "noDataSubtitle": "Pour voir tes analytics se remplir, va sur un contenu publié et renseigne les Performances (vues, likes, partages...).",
+    "noDataSubtitle": "Pour voir tes résultats se remplir, va sur un contenu publié et renseigne les Performances (vues, likes, partages...).",
     "pillarRanking": {
       "title": "Quels sujets performent le mieux ?",
       "subtitle": "Classement par pilier de contenu — pour savoir de quoi reparler.",
@@ -484,7 +491,8 @@
     "noBrandLabel": "—",
     "myBrands": "Mes marques",
     "noBrandFound": "Aucune marque",
-    "openBrand": "Gérer cette marque"
+    "openBrand": "Gérer cette marque",
+    "switchBrandSubtitle": "Changer de marque"
   },
   "brandDetail": {
     "backToAll": "Toutes les marques",
@@ -736,7 +744,7 @@
       "kreatlyTitle": "Comment Kreatly utilise tes piliers",
       "kreatly1": "Tu retrouves la liste dans le menu déroulant « Pilier de contenu » de chaque contenu (juste au-dessus).",
       "kreatly2": "Le bouton orange + à droite du menu te permet d'en ajouter un nouveau à la volée, sans quitter la fiche contenu.",
-      "kreatly3": "Dans l'onglet Analytics, tes piliers sont classés par performance : tu vois lequel ramène le plus de vues.",
+      "kreatly3": "Dans l'onglet Résultats, tes piliers sont classés par performance : tu vois lequel ramène le plus de vues.",
       "kreatly4": "Tu peux gérer toute ta taxonomie (ajouter, renommer, supprimer) depuis la page Marques → [ta marque].",
       "tip": "Conseil : commence avec 3 piliers seulement. Tu pourras toujours en ajouter un 4ᵉ ou 5ᵉ plus tard, une fois que tu maîtrises les premiers."
     }
@@ -871,7 +879,7 @@
       "betaBadge": "Bêta gratuite ouverte",
       "title1": "Pilote ta production vidéo",
       "titleAccent": "de A à Z",
-      "subtitle": "Plan éditorial, scripts assistés par IA, storyboard visuel, analytics. Pour les créateurs francophones et arabophones qui veulent arrêter de bricoler dans Notion.",
+      "subtitle": "Plan éditorial, scripts assistés par IA, storyboard visuel, résultats. Pour les créateurs francophones et arabophones qui veulent arrêter de bricoler dans Notion.",
       "ctaPrimary": "Essayer gratuitement",
       "ctaSecondary": "Voir comment ça marche",
       "trust": "Pas de carte bancaire · Trilingue FR/AR/EN · RTL natif"
@@ -893,7 +901,7 @@
         "description": "Découpe ton Reel scène par scène avec upload d'image, angle caméra, texte affiché."
       },
       "f4": {
-        "title": "Analytics par pilier",
+        "title": "Résultats par pilier",
         "description": "Découvre quel pilier de contenu performe. Classements, top vidéos, progression mensuelle."
       }
     },
