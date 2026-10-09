@@ -15,6 +15,8 @@ Repo : <https://github.com/hakunadigitalpro-png/mohtawa-script-planner>
 
 **Si la fonctionnalité appelle Claude** (nouveau bouton IA, ou modification d'un appel existant dans `lib/ai.ts`) : consulte AUSSI le sous-agent `logique-tokens` (`.claude/agents/logique-tokens.md`) pour vérifier qu'elle limite et optimise l'usage des tokens — pas d'appel redondant, `max_tokens` bien dimensionné, rate-limiting (`guardAiAction`) en place. Même traitement s'il répond ❌ ou ⚠️ : explique le point avant de coder.
 
+**Pour chercher QUOI construire** (pas pour valider une demande déjà formulée) : le sous-agent `parcours-utilisateur` (`.claude/agents/parcours-utilisateur.md`) rejoue la journée de chaque personne — la consultante, son éditrice, le client invité — sur le code réel, et en tire des frictions, des trous, du travail fait hors de l'app, puis des propositions classées par ce qu'elles font gagner. Il propose, il ne construit pas : l'utilisatrice tranche, et chaque proposition retenue repasse par `logique-produit` et `ui-design` avant d'être codée. À lancer quand elle demande « qu'est-ce qu'on pourrait améliorer », ou après une série de livraisons, pour vérifier que les boucles se referment.
+
 ---
 
 ## 📐 Architecture
