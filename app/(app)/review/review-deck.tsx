@@ -43,7 +43,12 @@ export type ReviewItem = {
   platform: string | null;
   status: string;
   caption: string | null;
-  visuals: { id: string; url: string }[];
+  /**
+   * `commentable` faux pour une diapo de story : les remarques par visuel
+   * s'ancrent sur `content_media` (0057), pas sur les diapos. Le client
+   * regarde, et laisse son mot « sur l'ensemble ».
+   */
+  visuals: { id: string; url: string; commentable?: boolean }[];
   script: string | null;
   notes: ReviewNote[];
 };
@@ -222,7 +227,7 @@ export function ReviewDeck({
             la 4 n'est pas la charte » ne tenaient pas dans la même phrase. */}
         {item.visuals.length > 0 && (
           <div className="space-y-3">
-            {awaiting && many && (
+            {awaiting && many && item.visuals.some((v) => v.commentable !== false) && (
               <p className="text-sm text-muted">
                 Tu peux laisser une remarque sur chaque diapo.
               </p>
@@ -236,7 +241,7 @@ export function ReviewDeck({
                   notes={item.notes.filter((n) => n.mediaId === v.id)}
                   draft={drafts[v.id] ?? ""}
                   open={openKey === v.id}
-                  editable={awaiting}
+                  editable={awaiting && v.commentable !== false}
                   pending={pending}
                   onToggle={() => setOpenKey(openKey === v.id ? null : v.id)}
                   onDraft={(value) => setDraft(v.id, value)}
@@ -261,11 +266,12 @@ export function ReviewDeck({
           </div>
         )}
 
-        {/* Les formats vidéo n'ont pas de visuel : c'est le script qu'on relit. */}
-        {!item.visuals.length && item.script && (
+        {/* Les formats vidéo n'ont pas de visuel : c'est le script qu'on relit.
+            Une story a les deux : ses images au-dessus, ses textes ici. */}
+        {item.script && (
           <div className="space-y-1.5">
             <p className="text-xs font-bold uppercase tracking-wider text-muted">
-              Script
+              {item.type === "story" ? "Texte des diapos" : "Script"}
             </p>
             <p
               dir="auto"

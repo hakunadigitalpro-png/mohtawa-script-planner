@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeNext } from "@/lib/utils";
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
@@ -50,13 +51,25 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/invite/");
 
   if (!user && !isPublic) {
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+    // Le lien survit à la connexion : un client qui ouvre « Voir et valider »
+    // sur son téléphone doit arriver sur le contenu, pas sur le calendrier.
+    // La recherche d'origine est REMPLACÉE, pas clonée : `/review?c=X`
+    // arrivait sur `/login?c=X`, que personne ne lisait.
+    const login = url.clone();
+    login.pathname = "/login";
+    login.search = "";
+    if (path !== "/") login.searchParams.set("next", `${path}${url.search}`);
+    return NextResponse.redirect(login);
   }
 
   if (user && isAuthRoute) {
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    // Déjà connecté : même règle dans l'autre sens, on honore `next`.
+    const target = url.clone();
+    const next = safeNext(url.searchParams.get("next"));
+    const [nextPath, nextSearch = ""] = next.split("?");
+    target.pathname = nextPath;
+    target.search = nextSearch ? `?${nextSearch}` : "";
+    return NextResponse.redirect(target);
   }
 
   return response;

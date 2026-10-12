@@ -128,3 +128,13 @@ Logique à ajouter dans `inviteToBrand` quand le billing est wire :
 const gate = await canAddMember(currentUser.id, brandId);
 if (!gate.ok) return { error: "Limite de membres atteinte. Upgrade en Agency." };
 ```
+
+## La marque suit le contenu (chantier 2, 2026-10-12)
+
+Le cookie `active_brand` mémorise la dernière marque ouverte — utile pour le tableau de bord, le calendrier, les tâches. Mais **le rôle est par marque, pas par cookie** : quand un lien (e-mail, notification, tâche, lien copié) ouvre un contenu d'une autre marque, l'application bascule dessus d'abord, puis décide.
+
+- **La porte unique** : `GET /switch-brand?to=<brandId>&next=<chemin>` (`app/switch-brand/route.ts`). Elle vérifie l'appartenance (`brand_members`, sous RLS), pose le cookie, redirige vers `next` (filtré par `safeNext`). Un `GET` qui pose ce cookie n'ouvre aucun droit : la RLS ne lit jamais le cookie. Ouverte au `viewer` — c'est ce qui l'amène sur `/review` d'une autre marque.
+- **Qui l'emprunte** : `/content/[id]` (le contenu se charge avant tout ; si sa marque n'est pas la marque active → bascule ; ensuite seulement le renvoi d'un `viewer` vers `/review?c=`), `/review?c=` (résolu par id, sans filtre de marque), la cloche (au lieu d'appeler `switchBrand`). Le sélecteur de marque garde `switchBrand` : un choix explicite est une action.
+- **Le lien survit à la connexion** : le middleware renvoie vers `/login?next=<chemin>` (recherche remplacée, pas clonée) et, à l'inverse, envoie une personne déjà connectée sur `/login?next=` vers `next`.
+- **Les tâches** : le tableau reste par marque ; `/tasks?all=1` liste ce qui m'est assigné et pas fait, toutes marques (policy `tasks_select`, 0049). « Ajouter à mes tâches » depuis la cloche crée la tâche sur la marque de la notification, assignée à moi. Hors de portée du `viewer`.
+- **Noté, hors périmètre** : `tasks_insert` (0049) vérifie `is_brand_member`, pas `is_brand_writer` — un `viewer` pourrait insérer une tâche par l'API alors que la page le renvoie. À resserrer dans une migration à part.

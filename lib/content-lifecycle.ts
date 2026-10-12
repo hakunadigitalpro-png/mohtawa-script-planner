@@ -259,6 +259,68 @@ export function isLate(input: {
   return date < today;
 }
 
+export type SendBlocker =
+  /** Sans format, rien ne peut être montré. */
+  | { kind: "needs_format" }
+  /** L'écran de validation n'aurait rien à afficher. */
+  | { kind: "nothing_to_review"; family: "video" | "story" | "simple" }
+  /** Personne ne recevrait l'e-mail : la marque n'a pas de client invité. */
+  | { kind: "no_client" };
+
+/**
+ * Pourquoi « Envoyer au client » n'est pas possible — ou `null` si ça l'est.
+ *
+ * « Rien à regarder » est exactement la règle de l'écran de validation
+ * (`review-deck.tsx`) : un visuel avec image, un script, ou une légende.
+ * Pas la règle de « Prêt » du tableau de bord (`hasMaterial`), qui compte
+ * une intro de reel ou un visuel sans image — des choses que le client ne
+ * verrait pas. La règle vaut par tous les chemins : le bouton d'en-tête et
+ * le menu Statut du Plan.
+ *
+ * La matière passe avant le client : c'est ce qu'elle peut régler seule, là,
+ * tout de suite.
+ */
+export function whyNotSendable(input: {
+  type: string | null;
+  hasClient: boolean;
+  /** Visuels AVEC image — ceux que l'écran de validation affiche. */
+  visuals: number;
+  script: string | null;
+  caption: string | null;
+}): SendBlocker | null {
+  if (!input.type) return { kind: "needs_format" };
+  const filled = (s: string | null | undefined) => Boolean(s && s.trim());
+  if (input.visuals <= 0 && !filled(input.script) && !filled(input.caption)) {
+    return {
+      kind: "nothing_to_review",
+      family:
+        input.type === "story"
+          ? "story"
+          : isSimpleType(input.type)
+            ? "simple"
+            : "video",
+    };
+  }
+  if (!input.hasClient) return { kind: "no_client" };
+  return null;
+}
+
+/** Le refus dit avec des mots, pour les actions serveur. */
+export function sendBlockerMessage(blocker: SendBlocker): string {
+  switch (blocker.kind) {
+    case "needs_format":
+      return "Choisis d'abord un format.";
+    case "no_client":
+      return "Invite d'abord ton client : personne ne recevrait l'e-mail.";
+    case "nothing_to_review":
+      return blocker.family === "video"
+        ? "Écris d'abord le script."
+        : blocker.family === "story"
+          ? "Ajoute une diapo avec son image."
+          : "Ajoute un visuel ou une légende.";
+  }
+}
+
 /** Aujourd'hui en `YYYY-MM-DD`, dans le fuseau du serveur. */
 export function todayISO(now: Date = new Date()): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;

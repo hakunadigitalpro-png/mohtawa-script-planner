@@ -3,7 +3,7 @@ import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { PageHeader } from "@/components/page-header";
 import { ReviewDeck, type ReviewItem, type ReviewNote } from "./review-deck";
-import type { ContentMedia } from "@/lib/types";
+import { fetchReviewMaterial, type ReviewMaterial } from "@/lib/review-material";
 
 type CommentRow = {
   id: string;
@@ -60,34 +60,35 @@ export default async function ReviewPage({
 
   let extra: ContentRow | null = null;
   if (params.c && !ids.includes(params.c)) {
+    // Résolu par son id, sans filtrer sur la marque active : un client
+    // invité sur deux marques peut arriver ici depuis l'e-mail de l'autre.
+    // Si c'est le cas, on bascule d'abord — le rôle est par marque.
     const { data } = await supabase
       .from("contents")
-      .select("id, title, type, date, platform, status, caption")
-      .eq("brand_id", active.id)
+      .select("id, brand_id, title, type, date, platform, status, caption")
       .eq("id", params.c)
       .maybeSingle();
-    extra = (data as ContentRow | null) ?? null;
+    const found = (data as (ContentRow & { brand_id: string }) | null) ?? null;
+    if (found && found.brand_id !== active.id) {
+      redirect(
+        `/switch-brand?to=${found.brand_id}&next=${encodeURIComponent(`/review?c=${found.id}`)}`,
+      );
+    }
+    extra = found;
     if (extra) ids.push(extra.id);
   }
 
-  // Les visuels et les scripts en DEUX requêtes groupées pour toute la file,
-  // pas une par contenu : un client avec 10 carrousels en attente chargerait
-  // sinon 20 allers-retours.
-  const [mediaRes, reelRes, vlogRes, commentRes] = ids.length
+  // Ce que l'écran montre — visuels, script, diapos d'une story — vient du
+  // même chargeur que le garde « Envoyer au client » (`fetchReviewMaterial`,
+  // `whyNotSendable`) : si l'un change, l'autre suit. Requêtes groupées pour
+  // toute la file, pas une par contenu.
+  const all = extra ? [...queue, extra] : queue;
+  const [material, commentRes] = ids.length
     ? await Promise.all([
-        supabase
-          .from("content_media")
-          .select("id, content_id, position, image_url, created_at")
-          .in("content_id", ids)
-          .order("position", { ascending: true }),
-        supabase
-          .from("reel_details")
-          .select("content_id, script_full")
-          .in("content_id", ids),
-        supabase
-          .from("vlog_details")
-          .select("content_id, voiceover")
-          .in("content_id", ids),
+        fetchReviewMaterial(
+          supabase,
+          all.map((c) => ({ id: c.id, type: c.type })),
+        ),
         // Le fil de la validation : ce que le client a écrit, et ce que
         // l'équipe lui a répondu. Sans ça il recevait une notification
         // « on t'a répondu » qui ne menait à rien de lisible.
@@ -102,28 +103,7 @@ export default async function ReviewPage({
           .in("target_type", ["media", "plan"])
           .order("created_at", { ascending: true }),
       ])
-    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];
-
-  const mediaByContent = new Map<string, ContentMedia[]>();
-  for (const m of (mediaRes.data ?? []) as ContentMedia[]) {
-    const list = mediaByContent.get(m.content_id) ?? [];
-    list.push(m);
-    mediaByContent.set(m.content_id, list);
-  }
-
-  const scriptByContent = new Map<string, string>();
-  for (const r of (reelRes.data ?? []) as {
-    content_id: string;
-    script_full: string | null;
-  }[]) {
-    if (r.script_full) scriptByContent.set(r.content_id, r.script_full);
-  }
-  for (const v of (vlogRes.data ?? []) as {
-    content_id: string;
-    voiceover: string | null;
-  }[]) {
-    if (v.voiceover) scriptByContent.set(v.content_id, v.voiceover);
-  }
+    : [new Map<string, ReviewMaterial>(), { data: [] }];
 
   const notesByContent = new Map<string, ReviewNote[]>();
   for (const r of (commentRes.data ?? []) as CommentRow[]) {
@@ -149,10 +129,8 @@ export default async function ReviewPage({
     platform: c.platform,
     status: c.status,
     caption: c.caption,
-    visuals: (mediaByContent.get(c.id) ?? [])
-      .filter((m) => m.image_url)
-      .map((m) => ({ id: m.id, url: m.image_url as string })),
-    script: scriptByContent.get(c.id) ?? null,
+    visuals: material.get(c.id)?.visuals ?? [],
+    script: material.get(c.id)?.script ?? null,
     notes: notesByContent.get(c.id) ?? [],
   });
 

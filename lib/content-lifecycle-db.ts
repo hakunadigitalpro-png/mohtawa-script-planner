@@ -1,6 +1,12 @@
 import type { createClient } from "@/lib/supabase/server";
 import { isSimpleType } from "@/lib/constants";
-import { hasMaterial, statusAfterFilming } from "@/lib/content-lifecycle";
+import {
+  hasMaterial,
+  statusAfterFilming,
+  whyNotSendable,
+  type SendBlocker,
+} from "@/lib/content-lifecycle";
+import { fetchReviewMaterial } from "@/lib/review-material";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -21,6 +27,40 @@ export async function hasDatedPublication(
     .eq("content_id", contentId)
     .not("scheduled_date", "is", null);
   return (count ?? 0) > 0;
+}
+
+/**
+ * Pourquoi ce contenu ne peut pas partir chez le client — ou `null`. Lu par
+ * le bouton d'en-tête (pour le dire avant le clic), par `submitForReview`
+ * et par `updateContent` (pour refuser, par tous les chemins).
+ *
+ * Les membres passent par `list_brand_members_with_emails` (0008) : la seule
+ * façon de lire l'équipe, réservée à ses membres.
+ */
+export async function sendBlockerFor(
+  supabase: Supabase,
+  content: {
+    id: string;
+    type: string | null;
+    caption: string | null;
+    brand_id: string;
+  },
+): Promise<SendBlocker | null> {
+  const [material, membersRes] = await Promise.all([
+    fetchReviewMaterial(supabase, [{ id: content.id, type: content.type }]),
+    supabase.rpc("list_brand_members_with_emails", { p_brand_id: content.brand_id }),
+  ]);
+  const m = material.get(content.id);
+  const hasClient = ((membersRes.data ?? []) as { role: string }[]).some(
+    (r) => r.role === "viewer",
+  );
+  return whyNotSendable({
+    type: content.type,
+    hasClient,
+    visuals: m?.visuals.length ?? 0,
+    script: m?.script ?? null,
+    caption: content.caption,
+  });
 }
 
 /**

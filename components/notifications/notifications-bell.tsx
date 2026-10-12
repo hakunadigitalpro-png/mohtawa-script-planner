@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { switchBrand } from "@/app/(app)/actions";
 import { Bell, Building2, Check, CalendarClock, ListPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -123,17 +122,22 @@ export function NotificationsBell({
       if (!notif.content_id) return;
 
       // La notification vient d'une AUTRE marque : on bascule dessus avant
-      // d'ouvrir. Sans ça, on arrivait sur le contenu avec le rôle,
+      // d'ouvrir, par la même porte que tous les liens vers un contenu
+      // (`/switch-brand`). Sans ça, on arrivait sur le contenu avec le rôle,
       // l'interrupteur d'écriture assistée et la navigation de la marque
       // précédente — faux pour ce contenu-là, et sans rien pour le signaler.
+      const target = `/content/${notif.content_id}`;
       if (
         notif.brand_id &&
         activeBrandId &&
         notif.brand_id !== activeBrandId
       ) {
-        await switchBrand(notif.brand_id);
+        router.push(
+          `/switch-brand?to=${notif.brand_id}&next=${encodeURIComponent(target)}`,
+        );
+        return;
       }
-      router.push(`/content/${notif.content_id}`);
+      router.push(target);
     },
     [router, supabase, activeBrandId],
   );
@@ -154,14 +158,19 @@ export function NotificationsBell({
               title: notif.content_title || t("untitled"),
               body: notif.comment_body ?? "",
             });
+      // « Ajouter à MES tâches » : sur la marque de la notification, et à
+      // moi — sinon elle tombait sur le tableau de la marque active, non
+      // assignée, invisible dans « Toutes mes marques ».
       await createTask({
         label,
         contentId: notif.content_id,
         contentTitle: notif.content_title,
+        brandId: notif.brand_id ?? null,
+        assigneeId: userId,
       });
       router.refresh();
     },
-    [t, router],
+    [t, router, userId],
   );
 
   return (

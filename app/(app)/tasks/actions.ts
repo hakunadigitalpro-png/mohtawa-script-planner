@@ -18,17 +18,23 @@ export async function createTask(input: {
   assigneeId?: string | null;
   contentId?: string | null;
   contentTitle?: string | null;
+  /**
+   * La marque de la tâche. Donnée par la cloche (celle de la notification),
+   * sinon la marque active. La policy `tasks_insert` (0049) refuse une
+   * marque dont on n'est pas membre.
+   */
+  brandId?: string | null;
 }) {
   const label = input.label.trim();
   if (!label) return { error: "Le libellé est requis." };
 
   const supabase = await createClient();
-  const { active } = await resolveActiveBrand();
+  const brandId = input.brandId ?? (await resolveActiveBrand()).active?.id ?? null;
   const { error } = await supabase.from("tasks").insert({
     label,
     priority: input.priority ?? "normal",
     assignee_id: input.assigneeId ?? null,
-    brand_id: active?.id ?? null,
+    brand_id: brandId,
     content_id: input.contentId ?? null,
     content_title: input.contentTitle ?? null,
   });

@@ -9,12 +9,14 @@ import { pick } from "@/lib/utils";
 import { removeContentFiles, removeOwnedFile } from "@/lib/storage-cleanup";
 import {
   isProgrammedStatus,
+  sendBlockerMessage,
   statusAfterFormat,
   whyNotProgrammed,
 } from "@/lib/content-lifecycle";
 import {
   applyFilmingProgress,
   hasDatedPublication,
+  sendBlockerFor,
 } from "@/lib/content-lifecycle-db";
 
 type CreateContentInput = {
@@ -132,6 +134,23 @@ export async function updateContent(
       hasDatedPublication: await hasDatedPublication(supabase, id),
     });
     if (blocker) return { error: blocker };
+  }
+
+  // « Chez le client » a ses conditions (un client, quelque chose à
+  // montrer) ; le menu Statut y obéit comme le bouton. Le chemin manuel
+  // n'envoie pas d'e-mail, mais il ne doit pas mentir sur l'étape.
+  if (patch.status === "pending_review") {
+    const { data: row } = await supabase
+      .from("contents")
+      .select("id, type, caption, brand_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (!row) return { error: "Contenu introuvable." };
+    const blocker = await sendBlockerFor(
+      supabase,
+      row as { id: string; type: string | null; caption: string | null; brand_id: string },
+    );
+    if (blocker) return { error: sendBlockerMessage(blocker) };
   }
 
   const clean = pick(patch, [

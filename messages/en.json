@@ -650,7 +650,15 @@
     "noMembersHint": "Invite members to the brand's team to be able to assign tasks to them.",
     "priorityUrgent": "Urgent — click to set back to normal",
     "priorityNormal": "Normal — click to mark urgent",
-    "delete": "Delete"
+    "delete": "Delete",
+    "tabThisBrand": "This brand",
+    "tabAllBrands": "All my brands",
+    "allEyebrow": "All my brands",
+    "allSubtitle": "What is assigned to you, across all your brands.",
+    "markDone": "Done",
+    "urgent": "Urgent",
+    "emptyAllTitle": "Nothing is assigned to you yet.",
+    "emptyAllSubtitle": "Tasks assigned to you, on any brand, will show up here."
   },
   "sharing": {
     "buttonOff": "Share",
@@ -1070,6 +1078,13 @@
       "description": "Paste it if you have it. Otherwise you can add it later in the Performance tab.",
       "where": "Where did it go out?",
       "url": "Content link (optional)"
+    },
+    "blocked": {
+      "inviteClient": "Invite your client first",
+      "askAdmin": "Ask the admin to invite your client",
+      "writeScript": "Write the script first",
+      "addVisual": "Add a visual or a caption",
+      "addSlide": "Add a slide with its image"
     }
   }
 }

@@ -171,7 +171,10 @@ export default async function BrandDetailPage({
         </CardContent>
       </Card>
 
-      <Card>
+      {/* `id="team"` : la pastille « Invite d'abord ton client » de la fiche
+          saute ici. `scroll-mt-20` : sans ça, sur téléphone, le titre
+          atterrit sous la barre collante du haut. */}
+      <Card id="team" className="scroll-mt-20">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="size-4 text-accent" />

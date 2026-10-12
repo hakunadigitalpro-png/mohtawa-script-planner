@@ -11,7 +11,12 @@ import { ContentPager } from "@/components/content-detail/content-pager";
 import { NextStepButton } from "@/components/content-detail/next-step-button";
 import { ContentTitleField } from "@/components/content-detail/content-title-field";
 import { buttonVariants } from "@/components/ui/button";
-import { todayISO } from "@/lib/content-lifecycle";
+import {
+  nextStep,
+  primaryPublication,
+  todayISO,
+} from "@/lib/content-lifecycle";
+import { sendBlockerFor } from "@/lib/content-lifecycle-db";
 
 // L'autopsie IA (appel Claude) peut prendre 15-30s. Le défaut Vercel est
 // de 10s sur le plan Hobby → la fonction était tuée avant de répondre.
@@ -59,26 +64,43 @@ export default async function ContentDetailPage({
   // D'où l'on vient : le mois, le filtre plateforme, ou l'onglet Idées. Le
   // compte « 4 / 17 » et les flèches s'y tiennent, au lieu de parcourir
   // toute la marque.
-  const scope = scopeFromParams(await searchParams);
+  const sp = await searchParams;
+  const scope = scopeFromParams(sp);
   const supabase = await createClient();
 
   const user = await getCachedUser();
   if (!user) redirect("/login");
 
-  // Un "viewer" (client invité) n'a rien à faire dans l'éditeur : il y
-  // trouvait l'autosave, les boutons IA, le partage et la suppression.
-  // C'était la SEULE page de l'app sans garde de rôle. On l'envoie sur sa
-  // vue de validation, positionnée sur le contenu qu'il vient d'ouvrir.
-  const { role, active: activeBrand } = await resolveActiveBrand();
-  if (role === "viewer") redirect(`/review?c=${id}`);
-
-  const { data: content } = await supabase
-    .from("contents")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const [{ role, active: activeBrand }, { data: content }] = await Promise.all([
+    resolveActiveBrand(),
+    supabase.from("contents").select("*").eq("id", id).maybeSingle(),
+  ]);
 
   if (!content) notFound();
+
+  // La marque, c'est celle du contenu qu'on regarde. Un lien — e-mail,
+  // notification, tâche — peut ouvrir un contenu d'une autre marque : on
+  // bascule dessus AVANT de décider quoi que ce soit, parce que le rôle est
+  // par marque, pas par cookie. La RLS a déjà répondu : si la ligne est là,
+  // la personne est membre de cette marque.
+  if (activeBrand && content.brand_id !== activeBrand.id) {
+    const search = new URLSearchParams();
+    for (const [key, value] of Object.entries(sp)) {
+      if (typeof value === "string") search.set(key, value);
+      else if (Array.isArray(value)) value.forEach((v) => search.append(key, v));
+    }
+    const qs = search.toString();
+    const here = `/content/${id}${qs ? `?${qs}` : ""}`;
+    redirect(
+      `/switch-brand?to=${content.brand_id}&next=${encodeURIComponent(here)}`,
+    );
+  }
+
+  // Un "viewer" (client invité) n'a rien à faire dans l'éditeur : il y
+  // trouvait l'autosave, les boutons IA, le partage et la suppression.
+  // On l'envoie sur sa vue de validation, positionnée sur le contenu qu'il
+  // vient d'ouvrir — avec le rôle de la BONNE marque, d'où l'ordre.
+  if (role === "viewer") redirect(`/review?c=${id}`);
 
   const [
     reelRes,
@@ -182,6 +204,28 @@ export default async function ContentDetailPage({
     ?.audience ?? null;
 
   const c = content as Content;
+
+  // Avant le clic : pourquoi « Envoyer au client » ne serait pas possible.
+  // Même règle que l'action serveur et que le menu Statut (`whyNotSendable`),
+  // lue seulement quand c'est l'étape en cours.
+  const today = todayISO();
+  const primary = primaryPublication(publications);
+  const step = nextStep({
+    status: c.status,
+    type: c.type,
+    publicationDate: primary?.scheduled_date ?? null,
+    today,
+    url: primary?.url ?? null,
+  });
+  const sendBlocker =
+    step.kind === "send_to_client"
+      ? await sendBlockerFor(supabase, {
+          id: c.id,
+          type: c.type,
+          caption: c.caption,
+          brand_id: c.brand_id,
+        })
+      : null;
 
   const tContent = await getTranslations("content");
   const tStoryboard = await getTranslations("storyboard");
@@ -314,7 +358,10 @@ export default async function ContentDetailPage({
                 status={c.status}
                 type={c.type}
                 publications={publications}
-                today={todayISO()}
+                today={today}
+                brandId={c.brand_id}
+                canInvite={role === "owner" || role === "admin"}
+                sendBlocker={sendBlocker}
               />
               <span data-tour="content-comments" className="inline-flex">
                 <CommentsInboxButton />

@@ -1,15 +1,20 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
+  ArrowRight,
   CalendarCheck,
   Check,
   Clock,
   ExternalLink,
+  FileText,
   Globe,
+  Image as ImageIcon,
   Send,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -26,7 +31,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { platformsForType } from "@/lib/constants";
-import { nextStep, primaryPublication } from "@/lib/content-lifecycle";
+import {
+  nextStep,
+  primaryPublication,
+  type SendBlocker,
+} from "@/lib/content-lifecycle";
 import { submitForReview } from "@/app/(app)/review/actions";
 import { advanceContent } from "@/app/(app)/contents/lifecycle-actions";
 import type { ContentPublication } from "@/lib/types";
@@ -55,6 +64,9 @@ export function NextStepButton({
   type,
   publications,
   today,
+  brandId,
+  canInvite,
+  sendBlocker,
 }: {
   contentId: string;
   status: string;
@@ -62,6 +74,14 @@ export function NextStepButton({
   publications: ContentPublication[];
   /** `YYYY-MM-DD` calculé par le serveur : une seule notion d'aujourd'hui. */
   today: string;
+  brandId: string;
+  /** owner/admin : la pastille « Invite d'abord ton client » mène à l'équipe. */
+  canInvite: boolean;
+  /**
+   * Pourquoi l'envoi au client n'est pas possible, calculé par le serveur
+   * avec la même règle que l'action (`whyNotSendable`). Null : on peut.
+   */
+  sendBlocker: SendBlocker | null;
 }) {
   const t = useTranslations("lifecycle");
   const router = useRouter();
@@ -131,6 +151,38 @@ export function NextStepButton({
   }
 
   if (step.kind === "send_to_client") {
+    // Bloqué : pas un bouton désactivé (illisible sur le bandeau, et il
+    // paraît en panne), une pastille dont le libellé EST l'instruction —
+    // comme « Choisis d'abord un format ». Rien d'autre dans la rangée : une
+    // phrase persistante y écraserait le titre sur grand écran.
+    if (sendBlocker) {
+      if (sendBlocker.kind === "needs_format") {
+        return pill(<Globe className="size-3.5" />, t("needsFormat"));
+      }
+      if (sendBlocker.kind === "nothing_to_review") {
+        return sendBlocker.family === "video"
+          ? pill(<FileText className="size-3.5" />, t("blocked.writeScript"))
+          : sendBlocker.family === "story"
+            ? pill(<ImageIcon className="size-3.5" />, t("blocked.addSlide"))
+            : pill(<ImageIcon className="size-3.5" />, t("blocked.addVisual"));
+      }
+      if (!canInvite) {
+        return pill(<UserPlus className="size-3.5" />, t("blocked.askAdmin"));
+      }
+      // Pour qui peut inviter, la pastille EST le lien vers l'équipe.
+      return (
+        <Link
+          href={`/brands/${brandId}#team`}
+          data-tour="content-review"
+          className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-card px-4 text-xs font-semibold text-muted transition hover:border-foreground/30 hover:text-foreground"
+        >
+          <UserPlus className="size-3.5" />
+          {t("blocked.inviteClient")}
+          <ArrowRight className="size-3.5 rtl-flip" />
+        </Link>
+      );
+    }
+
     return (
       <>
         <Button

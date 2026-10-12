@@ -650,7 +650,15 @@
     "noMembersHint": "Invite des membres dans l'équipe de la marque pour pouvoir leur assigner des tâches.",
     "priorityUrgent": "Urgent — clique pour repasser en normal",
     "priorityNormal": "Normal — clique pour marquer urgent",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "tabThisBrand": "Cette marque",
+    "tabAllBrands": "Toutes mes marques",
+    "allEyebrow": "Toutes mes marques",
+    "allSubtitle": "Ce qui t'est assigné, sur toutes tes marques.",
+    "markDone": "Fait",
+    "urgent": "Urgent",
+    "emptyAllTitle": "Rien ne t'est assigné pour l'instant.",
+    "emptyAllSubtitle": "Les tâches qu'on t'assigne, sur n'importe quelle marque, apparaîtront ici."
   },
   "sharing": {
     "buttonOff": "Partager",
@@ -1070,6 +1078,13 @@
       "description": "Colle-le si tu l'as. Sinon tu pourras l'ajouter plus tard dans l'onglet Performances.",
       "where": "Où est-il sorti ?",
       "url": "Lien du contenu (optionnel)"
+    },
+    "blocked": {
+      "inviteClient": "Invite d'abord ton client",
+      "askAdmin": "Demande à l'admin d'inviter ton client",
+      "writeScript": "Écris d'abord le script",
+      "addVisual": "Ajoute un visuel ou une légende",
+      "addSlide": "Ajoute une diapo avec son image"
     }
   }
 }

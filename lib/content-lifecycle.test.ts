@@ -8,10 +8,12 @@ import {
   primaryPublication,
   programmedStatusFor,
   rankOf,
+  sendBlockerMessage,
   statusAfterFilming,
   statusAfterFormat,
   todayISO,
   whyNotProgrammed,
+  whyNotSendable,
 } from "./content-lifecycle";
 
 describe("isForward — un geste n'avance que vers l'avant", () => {
@@ -298,6 +300,50 @@ describe("isLate — la date est passée et ce n'est pas sorti", () => {
   it("une idée sans date n'est jamais en retard", () => {
     expect(isLate({ status: "idea", date: null, today })).toBe(false);
     expect(isLate({ status: "idea", date: undefined, today })).toBe(false);
+  });
+});
+
+describe("whyNotSendable — la règle de l'écran de validation, avant l'envoi", () => {
+  const ok = { type: "carousel", hasClient: true, visuals: 2, script: null, caption: null };
+
+  it("laisse partir ce que le client pourra voir", () => {
+    expect(whyNotSendable(ok)).toBeNull();
+    expect(whyNotSendable({ ...ok, type: "reel", visuals: 0, script: "Bonjour" })).toBeNull();
+    expect(whyNotSendable({ ...ok, type: "post", visuals: 0, caption: "Légende" })).toBeNull();
+  });
+
+  it("demande un format avant tout", () => {
+    expect(whyNotSendable({ ...ok, type: null })).toEqual({ kind: "needs_format" });
+  });
+
+  it("refuse ce qui n'a rien à montrer, avec le mot de la famille", () => {
+    expect(
+      whyNotSendable({ ...ok, type: "reel", visuals: 0, script: "  ", caption: null }),
+    ).toEqual({ kind: "nothing_to_review", family: "video" });
+    expect(
+      whyNotSendable({ ...ok, type: "vlog", visuals: 0, script: null, caption: null }),
+    ).toEqual({ kind: "nothing_to_review", family: "video" });
+    expect(
+      whyNotSendable({ ...ok, type: "story", visuals: 0, script: null, caption: null }),
+    ).toEqual({ kind: "nothing_to_review", family: "story" });
+    expect(
+      whyNotSendable({ ...ok, type: "post", visuals: 0, script: null, caption: "" }),
+    ).toEqual({ kind: "nothing_to_review", family: "simple" });
+  });
+
+  it("refuse d'envoyer à personne, mais après la matière", () => {
+    expect(whyNotSendable({ ...ok, hasClient: false })).toEqual({ kind: "no_client" });
+    expect(
+      whyNotSendable({ ...ok, hasClient: false, visuals: 0 }),
+    ).toEqual({ kind: "nothing_to_review", family: "simple" });
+  });
+
+  it("dit chaque refus avec des mots", () => {
+    expect(sendBlockerMessage({ kind: "needs_format" })).toMatch(/format/);
+    expect(sendBlockerMessage({ kind: "no_client" })).toMatch(/client/);
+    expect(sendBlockerMessage({ kind: "nothing_to_review", family: "video" })).toMatch(/script/);
+    expect(sendBlockerMessage({ kind: "nothing_to_review", family: "story" })).toMatch(/diapo/);
+    expect(sendBlockerMessage({ kind: "nothing_to_review", family: "simple" })).toMatch(/visuel/);
   });
 });
 

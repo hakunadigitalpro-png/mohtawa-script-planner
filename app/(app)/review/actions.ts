@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { renderEmail, sendEmail } from "@/lib/email";
 import { typeLabel } from "@/lib/constants";
 import { formatDateFr } from "@/lib/utils";
+import { sendBlockerMessage } from "@/lib/content-lifecycle";
+import { sendBlockerFor } from "@/lib/content-lifecycle-db";
 
 type ReviewResult = { ok: true } | { ok: false; error: string };
 
@@ -251,6 +253,22 @@ export async function reviewContent(input: {
 export async function submitForReview(contentId: string): Promise<ReviewResult> {
   const supabase = await createClient();
   const card = await contentCard(supabase, contentId);
+
+  // Le garde, côté serveur — la vérité, même règle que le bouton et que le
+  // menu Statut (`whyNotSendable`) : un client à qui écrire, et quelque
+  // chose à lui montrer. Sinon l'e-mail partait dans le vide, ou vers une
+  // page vide.
+  const { data: row } = await supabase
+    .from("contents")
+    .select("id, type, caption, brand_id")
+    .eq("id", contentId)
+    .maybeSingle();
+  if (!row) return { ok: false, error: "Ce contenu ne t'est pas accessible." };
+  const blocker = await sendBlockerFor(
+    supabase,
+    row as { id: string; type: string | null; caption: string | null; brand_id: string },
+  );
+  if (blocker) return { ok: false, error: sendBlockerMessage(blocker) };
 
   const { error } = await supabase.rpc("submit_for_review", {
     p_content_id: contentId,

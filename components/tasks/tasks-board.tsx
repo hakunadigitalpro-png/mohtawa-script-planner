@@ -16,6 +16,7 @@ import {
 } from "@/app/(app)/tasks/actions";
 import type { Task, TaskStatus } from "@/lib/types";
 import type { BrandMember } from "@/app/(app)/tasks/page";
+import { TaskPriorityDot } from "./task-priority-dot";
 
 const DRAG_MIME = "application/x-kreatly-task-id";
 
@@ -184,12 +185,7 @@ export function TasksBoard({
                         aria-label={task.priority === "urgent" ? t("priorityUrgent") : t("priorityNormal")}
                         className="mt-1 flex size-4 shrink-0 items-center justify-center"
                       >
-                        <span
-                          className={cn(
-                            "size-2.5 rounded-full",
-                            task.priority === "urgent" ? "bg-destructive" : "bg-amber-400",
-                          )}
-                        />
+                        <TaskPriorityDot priority={task.priority} />
                       </button>
                       <p className="flex-1 text-sm leading-snug">{task.label}</p>
                       <button

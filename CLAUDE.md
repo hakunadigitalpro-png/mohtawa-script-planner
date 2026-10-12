@@ -229,6 +229,7 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 - Une marque = un workspace isolé
 - Un user peut être membre de N marques (roles : `owner`, `admin`, `editor`, `viewer`)
 - **Marque active** stockée en cookie `active_brand` (résolue par `lib/brand.ts`)
+- **La marque suit le contenu** (chantier 2, 12/10/2026) : un lien qui ouvre un contenu d'une autre marque passe par `GET /switch-brand?to=&next=` (`app/switch-brand/route.ts`), qui vérifie l'appartenance, pose le cookie et redirige. Empruntée par `/content/[id]`, `/review?c=` et la cloche. Le middleware pose `?next=` au renvoi vers `/login`. Spec : `docs/04-user-roles.md`.
 - Switcher dans la sidebar (composant `<BrandSwitcher>`)
 - `/brands/[id]` regroupe :
   - **Équipe** : liste des membres avec changement de rôle + retrait, et invitations en attente
@@ -281,6 +282,7 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 - Un seul moteur, `lib/content-lifecycle.ts` (pur, testé) : un statut change par un geste explicite ou par le temps qui passe, jamais par une case cachée. Spec complète : `docs/06-content-lifecycle.md`.
 - Dans l'en-tête de la fiche, `next-step-button.tsx` propose la prochaine étape : « Envoyer au client » → « C'est programmé » (boîte « Pour quand ? » s'il n'y a pas de date) → « C'est en ligne » (boîte « Tu as le lien ? »). Action serveur `advanceContent` (`contents/lifecycle-actions.ts`).
 - « Programmé » exige une publication datée, par tous les chemins (le menu Statut du Plan la refuse sans elle). Le menu Statut et le ⋮ des cartes restent comme correction manuelle.
+- « Envoyer au client » exige un client invité et quelque chose à montrer (`whyNotSendable`, même lecture que `/review` via `lib/review-material.ts`), par tous les chemins aussi. Bloqué, le bouton devient une pastille-instruction (« Invite d'abord ton client » mène à `/brands/[id]#team`).
 - L'onglet Checklist, la RPC `recompute_content_status` et `contents.auto_status` ont été retirés (migration 0058).
 
 #### Performances
@@ -509,6 +511,9 @@ Supprimée à la demande de l'utilisatrice : 70 phrases figées n'avaient plus d
 22. **Le statut d'un contenu change par un geste explicite, ou par le temps — un seul moteur (12/10/2026)**
     _`lib/content-lifecycle.ts` décide de tout : le bouton d'en-tête (« Envoyer au client » → « C'est programmé » → « C'est en ligne »), le passage en Tournage/Montage quand on marque filmé, « Script »/« Design » quand on choisit le format, le passage en ligne à la date (`recompute_live_statuses`). « Programmé » exige une publication datée par tous les chemins — c'est la date que le passage en ligne lit, sans elle un contenu restait programmé pour toujours. Validé avec une date déjà passée propose « C'est en ligne », pas une date à inventer : la cible poste à la main le jour J. L'ancienne auto-progression (RPC 0015, `auto_status`, onglet Checklist) est retirée (0058) : elle lisait une checklist que personne n'écrivait plus. Le menu Statut du Plan reste comme correction manuelle. ADR : `docs/decisions/2026-10-12-statut-par-gestes-explicites.md`._
 
+23. **La marque suit le contenu qu'on regarde (12/10/2026)**
+    _Le rôle est par marque, pas par cookie. Un lien (e-mail, cloche, tâche) qui ouvre un contenu d'une autre marque bascule dessus d'abord, par une porte unique `GET /switch-brand` — un Server Component ne peut pas écrire un cookie, un route handler si ; un cookie de marque dont on est membre n'ouvre aucun droit, la RLS ne le lit jamais. Sur la fiche : le contenu d'abord, la marque ensuite, le renvoi du `viewer` en dernier. Le lien survit à la connexion (`/login?next=` dans les deux sens). « Envoyer au client » exige un client invité et quelque chose à montrer, avec la lecture même de `/review` (`fetchReviewMaterial`), par tous les chemins ; bloqué, le bouton est une pastille-instruction, jamais un bouton désactivé. Les stories deviennent validables (diapos montrées sur `/review`, remarques « sur l'ensemble » seulement). Tâches : la cloche crée sur la marque de la notification, à moi ; `/tasks?all=1` liste ce qui m'est assigné partout. ADR : `docs/decisions/2026-10-12-la-marque-suit-le-contenu.md`._
+
 ---
 
 ## ✅ Ce qui est fait
@@ -528,6 +533,7 @@ Supprimée à la demande de l'utilisatrice : 70 phrases figées n'avaient plus d
 | Storyboard grille 3-col + image upload + drag reorder | ✅ |
 | Performances (autosave) | ✅ |
 | **Cycle de vie : un moteur, un bouton « étape suivante », « Prêt » et retard vrais** | ✅ |
+| **Contexte de marque : la marque suit le contenu, `next` à la connexion, garde avant l'envoi, tâches toutes marques** | ✅ |
 | Bibliothèque d'accroches (70 hooks) + picker | ✅ |
 | Analytics (pillar ranking + plat/format + top videos + charts) | ✅ |
 | Profil + langue préférée | ✅ |

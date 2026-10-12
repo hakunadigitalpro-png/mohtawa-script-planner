@@ -48,6 +48,7 @@ Deux règles valent **par tous les chemins** :
 
 - **« Programmé » exige une publication datée** (`whyNotProgrammed`). C'est cette date que `recompute_live_statuses` lit pour passer en ligne, et elle qui dit « en retard ». Le bouton la demande (« Pour quand ? »), le menu Statut refuse sans elle : « Donne-lui d'abord une date dans Publications. »
 - **Tournage et Montage ne s'appliquent qu'aux vidéos**, jamais en arrière, jamais au-delà de Montage.
+- **« Chez le client » a ses conditions** (`whyNotSendable`, chantier 2) : un client invité sur la marque (un membre `viewer`), et quelque chose à montrer — exactement ce que l'écran de validation affiche : un visuel avec image, un script (reel, vlog), les diapos d'une story, ou une légende. Lu par `fetchReviewMaterial` (`lib/review-material.ts`), le même chargeur que `/review`. Le bouton le dit avant le clic (pastille « Invite d'abord ton client », « Écris d'abord le script », « Ajoute un visuel ou une légende », « Ajoute une diapo avec son image ») ; `submitForReview` et le menu Statut refusent avec les mêmes mots.
 
 ## Le bouton qui suit le contenu
 
