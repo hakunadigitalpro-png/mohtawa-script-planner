@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  X,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
@@ -36,7 +37,13 @@ type PublicationJoinRow = {
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string; view?: string; platform?: string }>;
+  searchParams: Promise<{
+    m?: string;
+    view?: string;
+    platform?: string;
+    /** `1` sur le planning : seulement les contenus à remarque non lue. */
+    unread?: string;
+  }>;
 }) {
   const { active, role } = await resolveActiveBrand();
   if (!active) return null;
@@ -60,6 +67,11 @@ export default async function CalendarPage({
         ? "ideas"
         : "calendar";
   const platformFilter = params.platform || "";
+  // « Non lus » : le planning ne montre que les contenus qui ont une remarque
+  // non lue, TOUS mois confondus — une remarque du mois dernier ne doit pas
+  // disparaître parce qu'on a changé de page. Un client invité peut y venir :
+  // `count_unread_comments` est par personne, et en lecture.
+  const unreadOnly = view === "planning" && params.unread === "1";
 
   const monthStart = `${ym}-01`;
   const [year, month] = ym.split("-").map(Number);
@@ -102,12 +114,14 @@ export default async function CalendarPage({
           .eq("status", "pending_review")
       : Promise.resolve({ count: 0 }),
 
-    supabase
-      .from("contents")
-      .select("*")
-      .eq("brand_id", active.id)
-      .gte("date", monthStart)
-      .lt("date", monthEnd),
+    unreadOnly
+      ? Promise.resolve({ data: [] as Content[] })
+      : supabase
+          .from("contents")
+          .select("*")
+          .eq("brand_id", active.id)
+          .gte("date", monthStart)
+          .lt("date", monthEnd),
   ]);
 
   const commentCounts: Record<string, number> = {};
@@ -119,7 +133,19 @@ export default async function CalendarPage({
   }
 
   const awaitingCount = awaitingRes.count ?? 0;
-  const contents = (contentsRes.data ?? []) as Content[];
+  let contents = (contentsRes.data ?? []) as Content[];
+
+  if (unreadOnly) {
+    const ids = Object.keys(commentCounts).filter((id) => commentCounts[id] > 0);
+    const { data } = ids.length
+      ? await supabase
+          .from("contents")
+          .select("*")
+          .eq("brand_id", active.id)
+          .in("id", ids)
+      : { data: [] as Content[] };
+    contents = (data ?? []) as Content[];
+  }
 
   // Vue calendrier uniquement : une carte par (contenu × plateforme), sur SA
   // propre date — pas juste la date "primaire" legacy de contents.date.
@@ -275,6 +301,22 @@ export default async function CalendarPage({
         <IdeasBoard ideas={ideas} />
       ) : view === "planning" ? (
         <div className="space-y-4">
+          {unreadOnly ? (
+            /* Le filtre a une trace visible et un moyen de l'enlever ; les
+               flèches de mois sont masquées : elles le perdraient sans un mot. */
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-8 items-center gap-1 rounded-full bg-secondary ps-3 pe-1 text-xs font-semibold text-foreground">
+                {t("unread.chip")}
+                <Link
+                  href={`?m=${ym}&view=planning`}
+                  aria-label={t("unread.remove")}
+                  className="inline-flex size-6 items-center justify-center rounded-full transition hover:bg-card"
+                >
+                  <X className="size-3.5" />
+                </Link>
+              </span>
+            </div>
+          ) : (
           <div className="flex items-center gap-3">
             <Link
               href={`?m=${prevYm}&view=planning`}
@@ -294,11 +336,29 @@ export default async function CalendarPage({
               <ChevronRight className="size-4 rtl-flip" />
             </Link>
           </div>
+          )}
           <PlanningTable
             contents={contents}
             commentCounts={commentCounts}
             thumbs={planningThumbs}
             scopeQuery={scopeQuery}
+            groupBy={unreadOnly ? "month" : "week"}
+            emptyState={
+              unreadOnly ? (
+                <>
+                  <p className="font-medium text-foreground">
+                    {t("unread.emptyTitle")}
+                  </p>
+                  <p>{t("unread.emptySubtitle")}</p>
+                  <Link
+                    href={`?m=${ym}&view=planning`}
+                    className="mt-2 inline-block font-semibold text-foreground underline-offset-4 hover:underline"
+                  >
+                    {t("unread.seeAll")} →
+                  </Link>
+                </>
+              ) : undefined
+            }
           />
         </div>
       ) : (

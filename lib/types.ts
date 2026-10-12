@@ -134,13 +134,6 @@ export type Content = {
   /** 'read' = lien public en lecture seule, 'comment' = invités peuvent commenter. */
   share_mode: "read" | "comment";
   /**
-   * Auto-progression du statut activée (0015). Tant que true, le statut
-   * avance automatiquement quand l'utilisateur coche script_ready, marque
-   * des scènes filmed, etc. Bascule à false dès que l'user change le statut
-   * manuellement dans le Plan.
-   */
-  auto_status: boolean;
-  /**
    * URL de la vidéo publiée sur la plateforme (Instagram, TikTok, etc.).
    * Saisi par l'utilisateur dans l'onglet Performance après publication.
    * Migration 0017.
@@ -170,13 +163,6 @@ export type ReelDetails = {
   /** Mode d'écriture (migration 0030) : false = guidé (Accroche/Corps/Outro),
    *  true = libre (un seul bloc = script_full). */
   script_free_mode: boolean;
-  checklist: {
-    script_ready?: boolean;
-    scenes_ready?: boolean;
-    filmed?: boolean;
-    edited?: boolean;
-    published?: boolean;
-  } | null;
   /** Résumé de tournage généré par l'IA (migration 0047), en même temps que
    *  le storyboard — éclairage, style caméra, rythme, énergie, conseil pro.
    *  Éditable ensuite comme le reste. */

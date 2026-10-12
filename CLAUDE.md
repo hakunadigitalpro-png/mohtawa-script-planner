@@ -73,7 +73,7 @@ app/
 components/
 ├── ui/                      # Primitives (Button, Card, Dialog, Select...)
 ├── charts/                  # BarChart, RankedList
-├── content-detail/          # Tabs : Plan, Script, Storyboard, Checklist, Perf
+├── content-detail/          # Tabs : Plan, Script/Vlog/Stories, Storyboard, Légende, Performances + le bouton d'en-tête (next-step-button)
 ├── sidebar.tsx
 ├── brand-switcher.tsx
 ├── content-card.tsx
@@ -277,9 +277,11 @@ Server actions dans `app/(auth)/.../actions.ts`. Pas de magic link (mot de passe
 - **Drag & drop pour réorganiser** (renumérotation atomique en DB via `reorder_storyboard_scenes`)
 - "+ Ajouter une scène" en haut
 
-#### Checklist
-- 5 étapes de production (Script ready, Scenes ready, Filmed, Edited, Published)
-- Bouton "Marquer comme publiée" qui coche tout + passe le statut à `published`
+#### Statut — le bouton qui suit le contenu (chantier 1, 12/10/2026)
+- Un seul moteur, `lib/content-lifecycle.ts` (pur, testé) : un statut change par un geste explicite ou par le temps qui passe, jamais par une case cachée. Spec complète : `docs/06-content-lifecycle.md`.
+- Dans l'en-tête de la fiche, `next-step-button.tsx` propose la prochaine étape : « Envoyer au client » → « C'est programmé » (boîte « Pour quand ? » s'il n'y a pas de date) → « C'est en ligne » (boîte « Tu as le lien ? »). Action serveur `advanceContent` (`contents/lifecycle-actions.ts`).
+- « Programmé » exige une publication datée, par tous les chemins (le menu Statut du Plan la refuse sans elle). Le menu Statut et le ⋮ des cartes restent comme correction manuelle.
+- L'onglet Checklist, la RPC `recompute_content_status` et `contents.auto_status` ont été retirés (migration 0058).
 
 #### Performances
 - Vues, likes, commentaires, partages, sauvegardes, rétention (%), notes
@@ -498,11 +500,14 @@ Supprimée à la demande de l'utilisatrice : 70 phrases figées n'avaient plus d
 19. **Visites guidées page par page (coach-marks), jamais un grand tour**
     _Krea montre OÙ cliquer : `components/krea/coach-tour.tsx` pose un projecteur sur un élément réel repéré par `data-tour="…"` et ancre une bulle à côté ; les étapes vivent dans `lib/krea-tours.ts`, une liste par page, dans l'ordre de la page. Chaque visite se joue une fois (mémoire `localStorage` `kreatly_tours_seen`), se rejoue depuis le panneau de Krea, et se coupe d'un lien dans la bulle ou depuis Mon profil (cookie `kreatly_coach`, écrit côté client comme le menu). Les étapes dont la cible est absente sont sautées ; la visite n'ouvre pas tant que la page n'a pas affiché sa première cible. Pas de grand tour enchaîné : l'ancienne visite racontait tout d'un coup, hors contexte, et rien ne restait. Les anciennes bulles d'accueil texte-seul (`lib/krea-guide.ts`) ont été retirées : elles disaient ce qu'est la page, la visite montre où cliquer. Le client invité a sa propre visite, sur `/review`._
 
-19. **Email confirmation OFF en dev**
+20. **Email confirmation OFF en dev**
     _Pour fluidifier les tests. À réactiver pour la prod._
 
-20. **Background : gradient warm sur toute la page**
+21. **Background : gradient warm sur toute la page**
     _Décision visuelle prise après les premières maquettes : cards crème teinté qui flottent sur gradient pêche/lavande. Ambiance "Notion-meets-Linear-with-warmth"._
+
+22. **Le statut d'un contenu change par un geste explicite, ou par le temps — un seul moteur (12/10/2026)**
+    _`lib/content-lifecycle.ts` décide de tout : le bouton d'en-tête (« Envoyer au client » → « C'est programmé » → « C'est en ligne »), le passage en Tournage/Montage quand on marque filmé, « Script »/« Design » quand on choisit le format, le passage en ligne à la date (`recompute_live_statuses`). « Programmé » exige une publication datée par tous les chemins — c'est la date que le passage en ligne lit, sans elle un contenu restait programmé pour toujours. Validé avec une date déjà passée propose « C'est en ligne », pas une date à inventer : la cible poste à la main le jour J. L'ancienne auto-progression (RPC 0015, `auto_status`, onglet Checklist) est retirée (0058) : elle lisait une checklist que personne n'écrivait plus. Le menu Statut du Plan reste comme correction manuelle. ADR : `docs/decisions/2026-10-12-statut-par-gestes-explicites.md`._
 
 ---
 
@@ -521,7 +526,8 @@ Supprimée à la demande de l'utilisatrice : 70 phrases figées n'avaient plus d
 | Script Reel structuré + AI generator | ✅ |
 | Stories phone-preview + drag-swap + AI generator | ✅ |
 | Storyboard grille 3-col + image upload + drag reorder | ✅ |
-| Checklist + Performances (autosave) | ✅ |
+| Performances (autosave) | ✅ |
+| **Cycle de vie : un moteur, un bouton « étape suivante », « Prêt » et retard vrais** | ✅ |
 | Bibliothèque d'accroches (70 hooks) + picker | ✅ |
 | Analytics (pillar ranking + plat/format + top videos + charts) | ✅ |
 | Profil + langue préférée | ✅ |

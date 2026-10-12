@@ -27,6 +27,7 @@ export function DashboardFilters() {
   const router = useRouter();
   const sp = useSearchParams();
   const t = useTranslations("dashboard.filters");
+  const tLate = useTranslations("dashboard.late");
   const tStatus = useTranslations("statuses");
   const tType = useTranslations("contentTypes");
   const tPlatform = useTranslations("platforms");
@@ -37,6 +38,10 @@ export function DashboardFilters() {
   const type = sp.get("type") ?? "";
   const platform = sp.get("platform") ?? "";
   const month = sp.get("month") ?? "";
+  // Posé par la note de retard de Krea, pas par un contrôle d'ici : on
+  // l'affiche en pastille pour qu'on sache qu'il est là et qu'on puisse
+  // l'enlever.
+  const late = sp.get("late") === "1";
 
   const setParam = (key: string, value: string) => {
     const params = new URLSearchParams(sp.toString());
@@ -45,7 +50,7 @@ export function DashboardFilters() {
     router.replace(`/dashboard?${params.toString()}`, { scroll: false });
   };
 
-  const hasFilters = !!(q || status || type || platform || month);
+  const hasFilters = !!(q || status || type || platform || month || late);
 
   // Map status/type/platform values to their translated labels. We rely on
   // the i18n keys having the exact same value as the constant key.
@@ -130,6 +135,20 @@ export function DashboardFilters() {
             ]}
           />
         </div>
+
+        {late && (
+          <span className="inline-flex h-8 items-center gap-1 rounded-full bg-secondary ps-3 pe-1 text-xs font-semibold text-foreground">
+            {tLate("chip")}
+            <button
+              type="button"
+              onClick={() => setParam("late", "")}
+              aria-label={tLate("remove")}
+              className="inline-flex size-6 items-center justify-center rounded-full transition hover:bg-card"
+            >
+              <X className="size-3.5" />
+            </button>
+          </span>
+        )}
 
         {hasFilters && (
           <Button

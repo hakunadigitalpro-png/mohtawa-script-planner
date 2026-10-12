@@ -7,6 +7,15 @@ import { CONTENT_TYPES, isSimpleType } from "@/lib/constants";
 import { getActiveBrandId } from "@/lib/brand";
 import { pick } from "@/lib/utils";
 import { removeContentFiles, removeOwnedFile } from "@/lib/storage-cleanup";
+import {
+  isProgrammedStatus,
+  statusAfterFormat,
+  whyNotProgrammed,
+} from "@/lib/content-lifecycle";
+import {
+  applyFilmingProgress,
+  hasDatedPublication,
+} from "@/lib/content-lifecycle-db";
 
 type CreateContentInput = {
   /** Null : une idée sans format encore choisi (0055). */
@@ -114,9 +123,17 @@ export async function updateContent(
 ) {
   const supabase = await createClient();
 
-  // Auto-status (0015) : si l'user change le statut manuellement on désactive
-  // l'auto-progression pour cette vidéo (override perso). À l'inverse, si la
-  // mutation ne touche pas le statut, on laisse auto_status tel qu'il est.
+  // « Programmé » exige une date, par tous les chemins : le menu Statut du
+  // Plan et le ⋮ des cartes passent ici. Une règle, pas deux
+  // (`lib/content-lifecycle.ts`).
+  if (patch.status !== undefined && isProgrammedStatus(patch.status)) {
+    const blocker = whyNotProgrammed({
+      to: patch.status,
+      hasDatedPublication: await hasDatedPublication(supabase, id),
+    });
+    if (blocker) return { error: blocker };
+  }
+
   const clean = pick(patch, [
     "title",
     "date",
@@ -133,20 +150,11 @@ export async function updateContent(
     "caption",
     "notes",
   ]);
-  const patchWithFlag =
-    patch.status !== undefined ? { ...clean, auto_status: false } : clean;
-
   const { error } = await supabase
     .from("contents")
-    .update(patchWithFlag)
+    .update(clean)
     .eq("id", id);
   if (error) return { error: error.message };
-
-  // Si la date a changé sans changement de statut, on recompute (la règle
-  // editing → scheduled dépend de date > today).
-  if (patch.date !== undefined && patch.status === undefined) {
-    await supabase.rpc("recompute_content_status", { p_content_id: id });
-  }
 
   revalidatePath(`/content/${id}`);
   revalidatePath("/dashboard");
@@ -235,7 +243,6 @@ export async function duplicateContent(id: string) {
         recap: rd.recap,
         outro: rd.outro,
         script_full: rd.script_full,
-        checklist: {},
       });
     } else {
       await supabase.from("reel_details").insert({ content_id: newId });
@@ -336,7 +343,6 @@ export async function upsertReelDetails(
     outro: string;
     script_full: string;
     script_free_mode: boolean;
-    checklist: Record<string, boolean>;
     filming_guide: {
       lighting: string;
       camera_style: string;
@@ -362,7 +368,6 @@ export async function upsertReelDetails(
         "outro",
         "script_full",
         "script_free_mode",
-        "checklist",
         "filming_guide",
       ]),
     });
@@ -383,13 +388,6 @@ export async function upsertReelDetails(
   }
   if (Object.keys(legacySync).length > 0) {
     await supabase.from("contents").update(legacySync).eq("id", contentId);
-  }
-
-  // Auto-status (0015) : si la checklist a bougé (script_ready, edited…),
-  // on recompute. Les autres champs (intro, points…) n'impactent pas le
-  // statut, donc on ne paie la RPC que quand c'est utile.
-  if (patch.checklist !== undefined) {
-    await supabase.rpc("recompute_content_status", { p_content_id: contentId });
   }
 
   revalidatePath(`/content/${contentId}`);
@@ -477,10 +475,10 @@ export async function upsertStorySlide(
     );
   if (error) return { error: error.message };
 
-  // Auto-status (0015) : si filmed a bougé, le statut peut passer
-  // script → filming, ou filming → editing.
+  // Une diapo filmée fait avancer la story : Tournage, puis Montage quand
+  // toutes le sont (`lib/content-lifecycle.ts`).
   if (patch.filmed !== undefined) {
-    await supabase.rpc("recompute_content_status", { p_content_id: contentId });
+    await applyFilmingProgress(supabase, contentId);
   }
 
   revalidatePath(`/content/${contentId}`);
@@ -572,10 +570,10 @@ export async function updateScene(
     .eq("id", sceneId);
   if (error) return { error: error.message };
 
-  // Auto-status (0015) : si filmed a bougé, le statut peut passer
-  // script → filming, ou filming → editing.
+  // Une scène filmée fait avancer le reel : Tournage, puis Montage quand
+  // toutes le sont (`lib/content-lifecycle.ts`).
   if (patch.filmed !== undefined) {
-    await supabase.rpc("recompute_content_status", { p_content_id: contentId });
+    await applyFilmingProgress(supabase, contentId);
   }
 
   revalidatePath(`/content/${contentId}`);
@@ -841,7 +839,7 @@ export async function addPublication(input: {
     // 23505 = unique_violation côté Postgres
     if (error.code === "23505") {
       return {
-        error: `Cette vidéo est déjà associée à ${input.platform}.`,
+        error: `Ce contenu est déjà associé à ${input.platform}.`,
       };
     }
     return { error: error.message };
@@ -873,7 +871,7 @@ export async function updatePublication(
     if (error.code === "23505") {
       return {
         error:
-          "Une publication existe déjà pour cette plateforme sur cette vidéo.",
+          "Une publication existe déjà pour cette plateforme sur ce contenu.",
       };
     }
     return { error: error.message };
@@ -1088,7 +1086,7 @@ export async function setContentFormat(contentId: string, type: string) {
     .update({ type })
     .eq("id", contentId)
     .is("type", null)
-    .select("id, notes, caption")
+    .select("id, notes, caption, status")
     .limit(1);
 
   if (error) return { error: error.message };
@@ -1103,7 +1101,24 @@ export async function setContentFormat(contentId: string, type: string) {
   // Jamais d'écrasement : on n'écrit que dans un champ vide. Un contenu
   // peut avoir reçu un script entre-temps, et des notes de travail ne
   // valent pas mieux que du texte déjà rédigé.
-  const row = data[0] as { notes: string | null; caption: string | null };
+  const row = data[0] as {
+    notes: string | null;
+    caption: string | null;
+    status: string;
+  };
+
+  // Choisir le format ouvre l'écriture : « Script » pour une vidéo,
+  // « Design » pour un post — ce que l'onglet Idées faisait déjà. Sans ça,
+  // un reel créé par la modale restait « Idée » jusqu'à sa première scène
+  // filmée.
+  const writing = statusAfterFormat({ status: row.status, type });
+  if (writing) {
+    await supabase
+      .from("contents")
+      .update({ status: writing })
+      .eq("id", contentId);
+  }
+
   const notes = row.notes?.trim();
   if (notes) {
     if (type === "reel") {

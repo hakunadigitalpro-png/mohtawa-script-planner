@@ -22,10 +22,37 @@ describe("dashboardNote", () => {
     expect(dashboardNote({ ...base, total: 11 })?.tone).not.toBe("win");
   });
 
-  it("signale le stock prêt mais jamais publié", () => {
+  it("signale le stock créé mais jamais en ligne, sans le dire « prêt »", () => {
     const note = dashboardNote({ ...base, total: 7, published: 0 });
-    expect(note?.text).toMatch(/aucun publié/i);
+    expect(note?.text).toMatch(/aucun en ligne/i);
+    expect(note?.text).not.toMatch(/prêt/i);
     expect(note?.tone).toBe("push");
+  });
+
+  it("nomme le retard, avec le geste de sortie et un lien", () => {
+    const note = dashboardNote({ ...base, late: 2 });
+    expect(note?.tone).toBe("push");
+    expect(note?.text).toMatch(/2 contenus ont dépassé leur date/);
+    expect(note?.text).toMatch(/nouvelle date/);
+    expect(note?.action?.href).toBe("/dashboard?late=1");
+    expect(note?.action?.label).toBe("Les voir");
+  });
+
+  it("accorde le retard au singulier", () => {
+    const note = dashboardNote({ ...base, late: 1 });
+    expect(note?.text).toMatch(/^1 contenu a dépassé sa date/);
+    expect(note?.action?.label).toBe("Le voir");
+  });
+
+  it("fête le cap avant de parler de retard, mais parle du retard avant la relance générique", () => {
+    expect(dashboardNote({ ...base, total: 10, late: 1 })?.tone).toBe("win");
+    const note = dashboardNote({ ...base, total: 7, published: 0, late: 1 });
+    expect(note?.text).toMatch(/dépassé sa date/);
+  });
+
+  it("ne parle pas de retard quand il n'y en a pas", () => {
+    expect(dashboardNote({ ...base, late: 0 })?.text).not.toMatch(/dépassé/);
+    expect(dashboardNote({ ...base })?.action).toBeUndefined();
   });
 
   it("confirme quand l'objectif du mois est atteint", () => {

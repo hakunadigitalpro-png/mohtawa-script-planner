@@ -141,7 +141,9 @@
     "comments": {
       "title": "Commentaires",
       "seeAll": "Voir tout",
-      "empty": "Aucun commentaire récent."
+      "empty": "Aucun commentaire récent.",
+      "unread": "{count, plural, one {# non lu} other {# non lus}}",
+      "allRead": "Tout est lu"
     },
     "recent": "Contenus récents",
     "resultsCount": "{count, plural, =0 {Aucun résultat} one {# résultat} other {# résultats}}",
@@ -156,6 +158,12 @@
       "allPlatforms": "Toutes les plateformes",
       "allMonths": "Tous les mois",
       "clear": "Effacer les filtres"
+    },
+    "late": {
+      "chip": "En retard",
+      "remove": "Retirer le filtre En retard",
+      "emptyTitle": "Rien en retard.",
+      "emptySubtitle": "Tout ce qui a une date est sorti."
     }
   },
   "calendar": {
@@ -186,6 +194,13 @@
       "calendar": "Visualise ton mois en un coup d'œil.",
       "planning": "Tous tes contenus du mois, en tableau.",
       "ideas": "Ce qui n'a pas encore de date."
+    },
+    "unread": {
+      "chip": "Non lus",
+      "remove": "Retirer le filtre Non lus",
+      "emptyTitle": "Tout est lu.",
+      "emptySubtitle": "Rien n'attend ta réponse.",
+      "seeAll": "Voir tout le planning"
     }
   },
   "newContent": {
@@ -244,7 +259,8 @@
     "cta": "Appel à l'action",
     "ctaPlaceholder": "Abonne-toi / Commente / Télécharge...",
     "tags": "Tags (séparés par des virgules)",
-    "tagsPlaceholder": "marketing, débutant, conseils"
+    "tagsPlaceholder": "marketing, débutant, conseils",
+    "statusHelp": "Le bouton en haut de la fiche fait avancer ton contenu ; ici, tu corriges à la main."
   },
   "script": {
     "title": "Structure du script",
@@ -830,7 +846,7 @@
     "needs_revision": "À réviser",
     "approved": "Validé",
     "programmed": "Programmé",
-    "live": "Live"
+    "live": "En ligne"
   },
   "objectives": {
     "education": "Éducation",
@@ -1026,6 +1042,34 @@
       },
       "rights": "Tous droits réservés.",
       "made": "Fait avec ❤️ en Tunisie"
+    }
+  },
+  "lifecycle": {
+    "sendToClient": "Envoyer au client",
+    "sending": "Envoi…",
+    "retry": "Réessayer",
+    "waitingClient": "Chez le client",
+    "needsFormat": "Choisis d'abord un format",
+    "markProgrammed": "C'est programmé",
+    "markLive": "C'est en ligne",
+    "online": "En ligne",
+    "seeOnline": "Voir en ligne",
+    "saving": "Enregistrement…",
+    "program": {
+      "title": "Pour quand ?",
+      "description": "Dis-moi la date, je le passe en Programmé.",
+      "platform": "Plateforme",
+      "date": "Date",
+      "time": "Heure (optionnel)",
+      "dateHelp": "Le jour J, je le passerai en ligne tout seul.",
+      "dateMissing": "Choisis une date.",
+      "datePast": "Choisis une date à venir : avec une date passée, je le mettrais en ligne tout de suite."
+    },
+    "live": {
+      "title": "Tu as le lien ?",
+      "description": "Colle-le si tu l'as. Sinon tu pourras l'ajouter plus tard dans l'onglet Performances.",
+      "where": "Où est-il sorti ?",
+      "url": "Lien du contenu (optionnel)"
     }
   }
 }

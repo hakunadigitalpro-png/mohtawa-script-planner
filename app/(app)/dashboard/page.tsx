@@ -19,6 +19,8 @@ import { ContentCard } from "@/components/content-card";
 import { NewContentButton } from "@/components/new-content-modal";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { typeColor, typeLabel, platformLabel, isLiveStatus } from "@/lib/constants";
+import { isLate, isTrulyReady, todayISO } from "@/lib/content-lifecycle";
+import { fetchMaterial } from "@/lib/content-lifecycle-db";
 import type { Content } from "@/lib/types";
 
 type SearchParams = {
@@ -27,6 +29,8 @@ type SearchParams = {
   type?: string;
   platform?: string;
   month?: string;
+  /** `1` : seulement ce qui a dépassé sa date sans sortir. */
+  late?: string;
 };
 
 // Seuil "bravo" de la note coach — voir memory feedback_kreatly_coach_voice :
@@ -36,7 +40,7 @@ const MONTHLY_GOAL_THRESHOLD = 12;
 type UpcomingRow = {
   id: string;
   title: string | null;
-  type: string;
+  type: string | null;
   date: string;
   platform: string | null;
   status: string;
@@ -55,15 +59,6 @@ type RecentComment = {
   body: string;
   created_at: string;
 };
-
-/** "idea"/"design" = pas encore attaqué — le reste compte comme "en cours/prêt". */
-function isReady(status: string) {
-  return status !== "idea" && status !== "design";
-}
-
-function toLocalISODate(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 function dateBadgeParts(iso: string) {
   const d = new Date(iso);
@@ -107,8 +102,8 @@ export default async function DashboardPage({
   const now = new Date();
   const startMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const todayISO = toLocalISODate(now);
-  const weekAheadISO = toLocalISODate(
+  const today = todayISO(now);
+  const weekAheadISO = todayISO(
     new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7),
   );
   const curMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -118,13 +113,13 @@ export default async function DashboardPage({
   // KPIs + les 3 nouveaux modules "mission control" (Prochainement, mini
   // Analytics, Commentaires) — tout en parallèle, indépendant de la liste
   // filtrée plus bas.
-  const [allRes, upcomingRes, perfRes, commentsRes] = await Promise.all([
+  const [allRes, upcomingRes, perfRes, commentsRes, unreadRes] = await Promise.all([
     supabase.from("contents").select("status, date").eq("brand_id", active.id),
     supabase
       .from("contents")
       .select("id, title, type, date, platform, status")
       .eq("brand_id", active.id)
-      .gte("date", todayISO)
+      .gte("date", today)
       .lt("date", weekAheadISO)
       .order("date", { ascending: true })
       .limit(6),
@@ -136,6 +131,9 @@ export default async function DashboardPage({
       p_brand_id: active.id,
       p_limit: 4,
     }),
+    // Le total de non-lus : le lien de la carte Commentaires devient une
+    // valeur (« 3 non lus ») et non une promesse qui mène à une page vide.
+    supabase.rpc("count_unread_comments"),
   ]);
 
   const allContents = allRes.data ?? [];
@@ -148,7 +146,20 @@ export default async function DashboardPage({
     return d >= startMonth && d < endMonth;
   }).length;
 
+  // En retard : daté d'hier ou avant, et pas sorti. Calculé ici, à la
+  // lecture — pas de tâche de fond dans cette app.
+  const late = allContents.filter((c) =>
+    isLate({ status: c.status, date: c.date, today }),
+  ).length;
+
   const upcoming = (upcomingRes.data ?? []) as UpcomingRow[];
+
+  // « Prêt » ne se dit plus sur le seul statut : on va voir si le script ou
+  // les visuels existent — une requête par table pour les six contenus.
+  const material = await fetchMaterial(
+    supabase,
+    upcoming.map((u) => ({ id: u.id, type: u.type })),
+  );
 
   // Mini-Analytics : vues ce mois vs le précédent + pilier qui progresse le
   // plus (même logique que /analytics, en plus léger pour la carte).
@@ -183,6 +194,9 @@ export default async function DashboardPage({
   const hasAnalyticsData = viewsCur > 0 || viewsPrev > 0;
 
   const recentComments = (commentsRes.data ?? []) as RecentComment[];
+  const unreadTotal = (
+    (unreadRes.data ?? []) as { unread_count: number }[]
+  ).reduce((n, r) => n + (r.unread_count ?? 0), 0);
 
   // Liste filtrée
   let query = supabase
@@ -201,6 +215,11 @@ export default async function DashboardPage({
     const monthEnd = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-01`;
     query = query.gte("date", monthStart).lt("date", monthEnd);
   }
+  // La liste que la note de retard ouvre : même définition que `isLate`.
+  const lateOnly = params.late === "1";
+  if (lateOnly) {
+    query = query.lt("date", today).not("status", "in", "(live,published)");
+  }
 
   const { data: filtered } = await query
     .order("date", { ascending: false, nullsFirst: false })
@@ -213,7 +232,8 @@ export default async function DashboardPage({
     params.status ||
     params.type ||
     params.platform ||
-    params.month
+    params.month ||
+    lateOnly
   );
 
   return (
@@ -261,6 +281,7 @@ export default async function DashboardPage({
           published,
           thisMonth,
           goal: MONTHLY_GOAL_THRESHOLD,
+          late,
         })}
       />
 
@@ -286,7 +307,10 @@ export default async function DashboardPage({
             <ul className="divide-y divide-border/60">
               {upcoming.map((item) => {
                 const { day, month } = dateBadgeParts(item.date);
-                const ready = isReady(item.status);
+                const ready = isTrulyReady({
+                  status: item.status,
+                  hasMaterial: material.get(item.id) ?? false,
+                });
                 return (
                   <li key={item.id}>
                     <Link
@@ -295,7 +319,7 @@ export default async function DashboardPage({
                     >
                       <div className="flex size-10 shrink-0 flex-col items-center justify-center rounded-xl bg-secondary/60">
                         <span className="text-sm font-bold leading-none">{day}</span>
-                        <span className="text-[9px] font-medium uppercase text-muted">
+                        <span className="text-xs font-medium uppercase leading-none text-muted">
                           {month}
                         </span>
                       </div>
@@ -315,13 +339,16 @@ export default async function DashboardPage({
                           {item.platform && <span>· {platformLabel(item.platform)}</span>}
                         </div>
                       </div>
+                      {/* Les jetons de statut, pas des verts/ambres en dur :
+                          un `emerald-50` faisait une pastille lumineuse sur
+                          une carte sombre. */}
                       {ready ? (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-status-live/15 px-2.5 py-1 text-xs font-semibold text-status-live">
                           <Check className="size-3" />
                           {t("upcoming.ready")}
                         </span>
                       ) : (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-status-filming/15 px-2.5 py-1 text-xs font-semibold text-status-filming">
                           <Clock3 className="size-3" />
                           {t("upcoming.missing")}
                         </span>
@@ -377,12 +404,21 @@ export default async function DashboardPage({
                 <MessageSquare className="size-4 text-accent" />
                 {t("comments.title")}
               </h3>
-              <Link
-                href="/calendar?view=planning"
-                className="text-xs font-semibold text-muted hover:text-foreground"
-              >
-                {t("comments.seeAll")} →
-              </Link>
+              {/* Le lien mène à ce qu'il annonce : les contenus qui ont une
+                  remarque non lue, tous mois confondus. À zéro, pas de lien
+                  vers une page vide. */}
+              {unreadTotal > 0 ? (
+                <Link
+                  href="/calendar?view=planning&unread=1"
+                  className="text-xs font-semibold text-muted hover:text-foreground"
+                >
+                  {t("comments.unread", { count: unreadTotal })} →
+                </Link>
+              ) : (
+                <span className="text-xs font-semibold text-muted">
+                  {t("comments.allRead")}
+                </span>
+              )}
             </div>
             {recentComments.length === 0 ? (
               <p className="text-sm text-muted">{t("comments.empty")}</p>
@@ -420,7 +456,14 @@ export default async function DashboardPage({
         </h2>
         {contents.length === 0 ? (
           <Card className="flex flex-col items-center justify-center gap-2 p-10 text-center">
-            {hasFilters ? (
+            {lateOnly ? (
+              /* Sans ce cas, une marque de quarante contenus lisait
+                 « Commence par créer ton premier contenu ». */
+              <>
+                <p className="text-base font-medium">{t("late.emptyTitle")}</p>
+                <p className="text-sm text-muted">{t("late.emptySubtitle")}</p>
+              </>
+            ) : hasFilters ? (
               <>
                 <p className="text-base font-medium">{t("noResultsTitle")}</p>
                 <p className="text-sm text-muted">

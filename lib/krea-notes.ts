@@ -14,6 +14,8 @@ export type KreaNote = {
   text: string;
   /** `win` = on célèbre (accent vert), `push` = on relance, `info` = neutre. */
   tone: "win" | "push" | "info";
+  /** Un geste proposé au bout de la phrase — un lien, jamais une pastille. */
+  action?: { label: string; href: string };
 };
 
 /** Paliers fêtés. Au-delà de 100, on arrête : ce n'est plus un cap, c'est une habitude. */
@@ -28,6 +30,8 @@ export type DashboardStats = {
   thisMonth: number;
   /** Objectif mensuel de la marque. */
   goal: number;
+  /** Contenus dont la date est passée sans qu'ils soient sortis. */
+  late?: number;
 };
 
 /**
@@ -51,10 +55,33 @@ export function dashboardNote(s: DashboardStats): KreaNote | null {
     };
   }
 
-  // Beaucoup de préparé, rien en ligne : le blocage n'est pas la production.
+  // Une date dépassée est la seule urgence qu'on nomme : ce n'est pas un
+  // retard de production, c'est un fait. Elle passe avant la relance
+  // générique — avec cinq contenus non sortis dont deux en retard, c'est le
+  // message précis qu'il faut, pas le vague. La sortie est dans la phrase :
+  // dire que c'est en ligne, ou donner une nouvelle date — sinon la note
+  // reviendrait chaque matin pour un contenu abandonné.
+  const late = s.late ?? 0;
+  if (late > 0) {
+    return {
+      text:
+        late === 1
+          ? "1 contenu a dépassé sa date sans sortir — ouvre-le : dis-moi s'il est en ligne, ou donne-lui une nouvelle date."
+          : `${late} contenus ont dépassé leur date sans sortir — ouvre-les : dis-moi s'ils sont en ligne, ou donne-leur une nouvelle date.`,
+      tone: "push",
+      action: {
+        label: late === 1 ? "Le voir" : "Les voir",
+        href: "/dashboard?late=1",
+      },
+    };
+  }
+
+  // Beaucoup de créé, rien en ligne : le blocage n'est pas la production.
+  // « Créés », pas « prêts » : on ne sait pas s'ils le sont, et « Prêt »
+  // ne se dit plus qu'avec la matière sous les yeux (`isTrulyReady`).
   if (s.published === 0 && s.total >= 3) {
     return {
-      text: `Tu as ${s.total} contenus prêts et aucun publié. Le plus dur est fait — choisis-en un et mets-le en ligne.`,
+      text: `Tu as ${s.total} contenus créés et aucun en ligne. Le plus dur est fait — choisis-en un et mets-le en ligne.`,
       tone: "push",
     };
   }

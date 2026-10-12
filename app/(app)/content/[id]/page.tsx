@@ -8,8 +8,10 @@ import { resolveActiveBrand } from "@/lib/brand";
 import { formatDateLongFr, formatTimeFr } from "@/lib/utils";
 import { fetchNeighbours, scopeFromParams } from "@/lib/content-neighbours";
 import { ContentPager } from "@/components/content-detail/content-pager";
-import { SubmitReviewButton } from "@/components/content-detail/submit-review-button";
+import { NextStepButton } from "@/components/content-detail/next-step-button";
 import { ContentTitleField } from "@/components/content-detail/content-title-field";
+import { buttonVariants } from "@/components/ui/button";
+import { todayISO } from "@/lib/content-lifecycle";
 
 // L'autopsie IA (appel Claude) peut prendre 15-30s. Le défaut Vercel est
 // de 10s sur le plan Hobby → la fonction était tuée avant de répondre.
@@ -305,9 +307,15 @@ export default async function ContentDetailPage({
           }
           actions={
             <>
-              <span data-tour="content-review" className="inline-flex">
-                <SubmitReviewButton contentId={c.id} status={c.status} />
-              </span>
+              {/* Le bouton qui suit le contenu : la seule action en orange de
+                  la rangée. Il porte lui-même `data-tour="content-review"`. */}
+              <NextStepButton
+                contentId={c.id}
+                status={c.status}
+                type={c.type}
+                publications={publications}
+                today={todayISO()}
+              />
               <span data-tour="content-comments" className="inline-flex">
                 <CommentsInboxButton />
               </span>
@@ -320,7 +328,8 @@ export default async function ContentDetailPage({
                 href={`/print/${c.id}`}
                 target="_blank"
                 rel="noopener"
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-semibold text-foreground hover:bg-secondary"
+                // Même gabarit que ses voisins : la rangée avait deux hauteurs.
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 <FileDown className="size-3.5" />
                 {tContent("exportPdf")}

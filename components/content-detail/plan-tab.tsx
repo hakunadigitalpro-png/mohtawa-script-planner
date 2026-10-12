@@ -163,17 +163,7 @@ export function PlanTab({
             )}
           </div>
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="status">{t("status")}</Label>
-              {content.auto_status && (
-                <span
-                  className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent"
-                  title="Le statut avance automatiquement selon ton avancement (script, tournage, montage…). Change-le manuellement pour désactiver."
-                >
-                  ✨ Auto
-                </span>
-              )}
-            </div>
+            <Label htmlFor="status">{t("status")}</Label>
             <Select
               id="status"
               value={state.status}
@@ -183,6 +173,9 @@ export function PlanTab({
                 label: safeT(tStatus, s.value, s.label),
               }))}
             />
+            {/* La correction manuelle, assumée : le geste normal est le
+                bouton d'en-tête, mais une erreur se répare ici sans détour. */}
+            <p className="text-xs text-muted">{t("statusHelp")}</p>
           </div>
 
           <div className="space-y-2">

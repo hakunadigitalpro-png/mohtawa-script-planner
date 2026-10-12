@@ -1,161 +1,92 @@
 # Spec 06 — Cycle de vie d'un contenu
 
-## Vue d'ensemble
+_Réécrite le 2026-10-12 (chantier 1). L'ancienne version décrivait six statuts, « published » et un onglet Checklist : trois choses qui n'existent plus._
 
-Une vidéo (Reel ou Story) traverse plusieurs **statuts** depuis l'idée jusqu'à la mesure de performance. Le statut est stocké dans `contents.status` et drive certaines UI.
+## La règle
 
-## États & transitions
+**Un statut change par un geste explicite, ou par le temps qui passe. Jamais par une case cachée.**
 
-```
-   idea ─────► script ─────► filming ─────► editing ─────► scheduled ─────► published
-    │                                                                          ▲
-    │                                                                          │
-    └─────────────────── transition libre via menu d'action ───────────────────┘
-```
+Tout ce qui décide d'un statut vit dans **un seul moteur**, en logique pure et testée : [`lib/content-lifecycle.ts`](../lib/content-lifecycle.ts) (tests dans `content-lifecycle.test.ts`). Les actions serveur l'appellent ; elles n'inventent rien. Les quelques lectures et écritures nécessaires pour l'appliquer sont dans [`lib/content-lifecycle-db.ts`](../lib/content-lifecycle-db.ts).
 
-| Status | Libellé FR | Signification |
+## Le vocabulaire
+
+Deux familles, définies dans `lib/constants.ts` (`STATUSES`, `SIMPLE_STATUSES`), qui partagent leur début, leur boucle client et leur fin :
+
+| Étape | Vidéo (reel, story, vlog) | Simple (post, carrousel, infographie) |
 |---|---|---|
-| `idea` | Idée | Vient d'être créée, contenu vide |
-| `script` | Script | Le script est en cours d'écriture |
-| `filming` | Tournage | Le contenu est en phase de production |
-| `editing` | Montage | Le montage est en cours |
-| `scheduled` | Programmée | Prête à publier, date fixée |
-| `published` | Publiée | Mise en ligne, performance à renseigner |
+| Notée | `idea` Idée | `idea` Idée |
+| Choisie en atelier | `selected` Retenue | `selected` Retenue |
+| En écriture | `script` Script | `design` Design |
+| En tournage | `filming` Tournage | — |
+| En montage | `editing` Montage | — |
+| Chez le client | `pending_review` En attente de validation | idem |
+| Refusée par le client | `needs_revision` À réviser | idem |
+| Validée | `approved` Validé | idem |
+| Programmée | `scheduled` Programmée | `programmed` Programmé |
+| Sortie | `live` En ligne | idem |
 
-**Pas de transitions forcées** : l'utilisateur peut sauter d'un statut à l'autre (utile si on lui ajoute une vidéo déjà publiée pour suivi).
+`published` subsiste en base comme valeur héritée (0045) ; `isLiveStatus` et le moteur le tiennent pour l'équivalent de `live`. Côté client invité, ces douze valeurs sont projetées en cinq mots (`clientStatusLabel`) : rien de nouveau n'est stocké.
 
-## Création
+Le moteur place tout ça sur **une seule ligne de temps** (`rankOf`) : Script et Design ont le même rang, Programmée et Programmé aussi. Un geste n'avance que vers l'avant (`isForward`). La correction manuelle reste libre.
 
-### Depuis le Dashboard / Calendrier
+## Qui fait avancer quoi
 
-Modal `<NewContentModal>` :
-1. Choix Format (Reel ou Story)
-2. Choix Plateforme (filtrée par format via `platformsForType()`)
-3. Titre (optionnel)
-4. Date prévue (optionnelle)
-5. Submit → Server Action `createContent()`
+| Transition | Geste | Où |
+|---|---|---|
+| Idée → Retenue | « Retenir » | onglet Idées (`ideas-actions.ts`) |
+| Idée / Retenue → Script ou Design | choisir le format | Plan (`setContentFormat`, via `statusAfterFormat`), onglet Idées, « Planifier » |
+| → Tournage | marquer une première scène ou diapo « filmée » | Storyboard / Stories (`applyFilmingProgress`, via `statusAfterFilming`) |
+| Tournage → Montage | toutes les scènes filmées | idem |
+| → En attente de validation | « Envoyer au client » | bouton d'en-tête (`submitForReview`, RPC `submit_for_review`) |
+| En attente → Validé / À réviser | décision du client | `/review` (RPC `client_review_content_many`) |
+| Validé → Programmé(e) | « C'est programmé » | bouton d'en-tête (`advanceContent`) |
+| Validé (date passée) ou Programmé(e) → En ligne | « C'est en ligne » | bouton d'en-tête (`advanceContent`) |
+| Programmé(e) → En ligne | automatique à la lecture, quand date + heure sont passées | RPC `recompute_live_statuses` (0041, 0045), appelée par le tableau de bord, le calendrier et `/review` |
+| n'importe quoi → n'importe quoi | menu Statut du Plan, menu ⋮ d'une carte | `updateContent` / `quickChangeStatus` — correction manuelle assumée |
 
-### Server Action `createContent()`
+Deux règles valent **par tous les chemins** :
 
-1. Vérifie `auth.uid()` et `brand_id` (depuis le cookie `active_brand`)
-2. `INSERT INTO contents(brand_id, type, title, date, platform, status='idea')`
-3. `user_id` rempli automatiquement par trigger BEFORE INSERT
-4. Si `type === 'reel'` → crée la row `reel_details(content_id)` vide
-5. Si `type === 'story'` → crée la row `story_details(content_id)` vide
-6. `revalidatePath('/dashboard')` + `revalidatePath('/calendar')`
-7. `redirect('/content/{id}')` → ouvre la fiche détail
+- **« Programmé » exige une publication datée** (`whyNotProgrammed`). C'est cette date que `recompute_live_statuses` lit pour passer en ligne, et elle qui dit « en retard ». Le bouton la demande (« Pour quand ? »), le menu Statut refuse sans elle : « Donne-lui d'abord une date dans Publications. »
+- **Tournage et Montage ne s'appliquent qu'aux vidéos**, jamais en arrière, jamais au-delà de Montage.
 
-## Édition
+## Le bouton qui suit le contenu
 
-### Autosave
+[`components/content-detail/next-step-button.tsx`](../components/content-detail/next-step-button.tsx), dans l'en-tête de la fiche, ancre `data-tour="content-review"`. Un seul bouton, la seule action orange de la rangée ; `nextStep()` dit ce qu'il montre :
 
-Chaque champ de l'éditeur autosave via `useAutosave()` (debounce 700ms par défaut) :
-- Les champs `<Input>` et `<Textarea>` détectent les changements
-- Après 700ms d'inactivité → server action update
-- Indicateur visuel `<AutosaveIndicator>` en haut à droite ("Enregistrement..." / "Enregistré ✓")
+| Statut | Ce qu'on voit | Au clic |
+|---|---|---|
+| en fabrication | **Envoyer au client** | `submitForReview` — e-mail au client |
+| `pending_review` | pastille « Chez le client » | — |
+| `approved`, date à venir | **C'est programmé** | passe en Programmé(e) |
+| `approved`, aucune date | **C'est programmé** → « Pour quand ? » (plateforme si aucune, date, heure) | crée ou date la publication, puis Programmé(e) |
+| `approved`, date passée | **C'est en ligne** | la patronne poste le jour J : Live est la vérité, pas une date inventée |
+| `programmed` / `scheduled` | **C'est en ligne** → « Tu as le lien ? » (lien facultatif ; plateforme si aucune publication) | colle le lien, ramène une date future à aujourd'hui, passe en ligne |
+| `live` | « Voir en ligne » (lien) ou pastille « En ligne » | ouvre le lien |
+| `approved` ou programmé sans format | pastille « Choisis d'abord un format » | — |
 
-### Server Actions disponibles
+L'action serveur `advanceContent` (`app/(app)/contents/lifecycle-actions.ts`) relit tout en base avant d'écrire et refuse ce que le moteur refuse. Les droits sont ceux de la base (`is_brand_writer`, 0052).
 
-```ts
-updateContent(id, patch)          // contents
-upsertReelDetails(content_id, patch)
-upsertStoryDetails(content_id, patch)
-upsertStorySlide(content_id, slot, patch)
-upsertPerformance(content_id, patch)
-addScene(content_id)
-updateScene(scene_id, patch, content_id)
-deleteScene(scene_id, content_id)
-reorderScenes(content_id, ordered_ids)
-swapSlides(content_id, slot_a, slot_b)
-duplicateContent(id)
-deleteContent(id)
-deleteContentInPlace(id)
-quickChangeStatus(id, status)
-```
+Effets déjà en place : la notification « validé — pense à le programmer » (0046) se marque lue toute seule dès que le contenu quitte `approved`.
 
-## Transitions de statut
+## Ce que le tableau de bord en dit
 
-### Via le menu d'action sur la card (Dashboard)
+- **« Prêt » / « À préparer »** (carte Prochainement) : `isTrulyReady` — la matière existe (script, voix off, diapo écrite ou visuel selon le format, `hasMaterial` + `fetchMaterial`) **et** le contenu n'est ni en écriture ni « À réviser ».
+- **Le retard** : `isLate` — la date est passée et le contenu n'est pas en ligne, quelle que soit l'étape. Krea le nomme dans sa note (`dashboardNote`, après le cap fêté, avant la relance générique) avec un lien vers `/dashboard?late=1`. La sortie est dans la phrase : dire que c'est en ligne, ou donner une nouvelle date (retirer la date ramène le contenu en idée).
+- Rien de tout cela ne tourne en tâche de fond : tout se calcule à la lecture.
 
-`<ContentCard>` propose dans son dropdown (⋮) :
-- Ouvrir → naviguer vers `/content/{id}`
-- Dupliquer → `duplicateContent()` clone tout sauf `share_token` et `image_url`s
-- **Changer le statut** → liste des 6 statuts avec checkmark sur le current
-- Supprimer → `deleteContentInPlace()` (reste sur le Dashboard)
+## Création, édition, duplication, suppression
 
-### Via la fiche détail
+- **Création** : `createContentRow` (`contents/actions.ts`) insère en `idea`, avec ou sans format (0055), et une `content_publications` si une plateforme est donnée ; Krea et l'import passent par le même chemin.
+- **Édition** : chaque onglet a ses actions (`upsertReelDetails`, `upsertStorySlide`, `updateScene`, `addContentVisual`, `upsertPerformance`…). Le Plan enregistre explicitement (`useExplicitSave`), les publications sont atomiques (`addPublication`, `updatePublication`, `removePublication` ; le trigger 0020 recopie la principale dans `contents.date / platform / video_url`).
+- **Duplication** : `duplicateContent` repart en `idea`, sans date ni images.
+- **Suppression** : `deleteContent` / `deleteContentInPlace`, fichiers du stockage retirés avant la ligne (`lib/storage-cleanup.ts`).
 
-- Onglet **Plan** : dropdown `Statut` modifiable directement
-- Onglet **Checklist** : bouton "Marquer comme publiée" → coche tout + passe à `published`
+## Ce qui a été retiré (0058)
 
-### Effets secondaires
+- La RPC `recompute_content_status` (0015) : elle lisait une checklist que plus personne n'écrivait et ignorait la moitié des statuts.
+- `contents.auto_status`, son verrou, qui coupait la seule règle utile dès qu'on touchait au statut.
+- `reel_details.checklist` et l'onglet Checklist (`checklist-tab.tsx`, `checklist-item-section.tsx`), jamais monté.
 
-Le statut driver l'affichage uniquement (badge coloré, KPIs Dashboard, charts Analytics). Pas de side effect côté DB (pas de trigger sur status change pour l'instant).
+`content_checklist_items` reste : ce sont les moments à filmer du Vlog.
 
-## Drag & drop
-
-### Storyboard (Reel)
-
-- Chaque scène a un drag handle (`⋮⋮` icon)
-- Glisser une scène A sur une scène B → A insérée à la position de B, les autres décalent
-- Optimistic UI : la grille bouge immédiatement
-- Server Action `reorderScenes(content_id, ordered_ids[])` appelle la RPC SQL `reorder_storyboard_scenes` qui renumérote atomiquement (bump à +10000 puis renumérotation 1..N pour éviter le conflit UNIQUE).
-
-### Calendrier
-
-- Chaque vidéo affichée dans une cellule jour est draggable
-- Drop sur une autre cellule → `updateContent(id, { date: newDate })`
-- Cellule cible mise en évidence avec ring orange
-
-### Stories (5 slots)
-
-- Le `⋮⋮` du label d'une story est draggable
-- Drop sur un autre slot → `swap_story_slides(content_id, slot_a, slot_b)` SQL function échange body + image_url entre les 2 slots
-- **Les labels (Title/Intro, CTA, etc.) restent associés au slot, pas au contenu** — c'est le contenu qui bouge, les positions sémantiques restent fixes
-
-## Duplication
-
-`duplicateContent(id)` :
-1. Lit la vidéo source
-2. Insère une nouvelle row contents avec :
-   - Même brand_id, type, platform, pillar, objective, hook, cta, tags
-   - Titre : `{titre} (copie)` ou `Copie sans titre` si vide
-   - `status = 'idea'`, `date = null`
-3. Selon le type :
-   - **Reel** : copie reel_details (sans image_url) + storyboard_scenes (description/camera/text seulement, pas les image_url)
-   - **Story** : copie story_details + story_slides (body seulement, pas les image_url)
-4. **Note** : les images ne sont PAS dupliquées (pour éviter des références orphelines en cas de suppression du contenu source). L'utilisateur ré-uploade.
-5. `redirect('/content/{newId}')`
-
-## Suppression
-
-`deleteContent(id)` ou `deleteContentInPlace(id)` :
-1. `DELETE FROM contents WHERE id = $1`
-2. CASCADE supprime :
-   - reel_details / story_details / story_slides / storyboard_scenes / performances
-3. **Les images dans Storage ne sont PAS supprimées automatiquement** (pas de trigger Storage). À ajouter dans une future version (cleanup batch ou trigger Edge Function).
-
-## Performances
-
-Onglet Performance, autosave sur tous les champs. Quand `performances.views > 0`, la vidéo apparaît dans :
-- KPI "Vidéos avec stats" sur `/analytics`
-- Classement par pilier
-- Top 5 vidéos
-
-## Partage public
-
-Indépendant du statut. Une vidéo peut être partagée publiquement quel que soit son statut (idea, draft, published...). Le `share_token` est null par défaut, généré uniquement à la demande.
-
-Voir [07-sharing-public-pages.md](./07-sharing-public-pages.md).
-
-## Export PDF
-
-Page `/print/[id]` accessible à tout moment depuis la fiche détail. Affiche : Plan, Script ou Stories, Storyboard, Performances. Met en page pour l'impression.
-
-## Évolutions possibles
-
-- **Soft delete** : ajouter `deleted_at` pour permettre l'undo
-- **Notifications** : email à J-1 d'une date prévue avec statut `scheduled`
-- **Suggestion automatique de statut** : passer en `scheduled` si date renseignée + script complet
-- **Cleanup images orphelines** : Edge Function cron qui supprime les images Storage non référencées en DB
-- **Versioning du script** : table `content_revisions` qui garde l'historique
+Voir l'ADR [2026-10-12 — statut par gestes explicites](./decisions/2026-10-12-statut-par-gestes-explicites.md).

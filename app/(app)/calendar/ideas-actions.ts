@@ -93,9 +93,7 @@ export async function moveIdea(
   const status = lane === "writing" ? writingStatusFor(type) : lane;
   const { error } = await supabase
     .from("contents")
-    // `auto_status: false` comme partout ailleurs quand le statut est posé à
-    // la main (0015) : on n'écrase pas une décision humaine.
-    .update({ status, auto_status: false })
+    .update({ status })
     .eq("id", contentId);
 
   if (error) return { ok: false, error: error.message };
@@ -174,7 +172,7 @@ export async function scheduleIdea(input: {
   if (current.status === "idea" || current.status === "selected") {
     await supabase
       .from("contents")
-      .update({ status: writingStatusFor(type), auto_status: false })
+      .update({ status: writingStatusFor(type) })
       .eq("id", input.contentId);
   }
 

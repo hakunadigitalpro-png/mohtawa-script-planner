@@ -100,10 +100,6 @@ export function DetailTabs({
             {!isStory && !isVlog && (
               <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>
             )}
-            {/* Onglet Checklist retiré de l'affichage (reel, story, vlog) :
-                la préparation se gère ailleurs. Le composant reste dans le
-                repo (checklist-tab.tsx) et les données en base ne sont pas
-                touchées — remettre ce déclencheur et son contenu suffit. */}
             {/* Caption pour Reel + Vlog — les Stories ont du texte par slide,
                 pas une caption globale au moment de la publication. */}
             {!isStory && <TabsTrigger value="caption">Légende</TabsTrigger>}

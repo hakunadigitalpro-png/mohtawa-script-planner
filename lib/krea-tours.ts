@@ -131,8 +131,8 @@ export const TOURS: Tour[] = [
       },
       {
         target: "content-review",
-        title: "Quand c'est prêt, envoie-le à ton client",
-        body: "Il reçoit un e-mail, regarde, et valide ou laisse une remarque sur chaque visuel. Tu reçois un e-mail aussitôt.",
+        title: "Ce bouton suit ton contenu",
+        body: "Envoie-le à ton client : il reçoit un e-mail, valide ou laisse une remarque. Puis dis-moi quand c'est programmé, puis quand c'est en ligne.",
       },
       {
         target: "content-comments",

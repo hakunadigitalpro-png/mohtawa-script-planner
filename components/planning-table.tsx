@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -21,6 +22,8 @@ export function PlanningTable({
   commentCounts = {},
   thumbs = {},
   scopeQuery = "",
+  groupBy = "week",
+  emptyState,
 }: {
   contents: Content[];
   /** contentId → nombre de commentaires non lus (badge). */
@@ -29,6 +32,10 @@ export function PlanningTable({
   thumbs?: Record<string, string>;
   /** Périmètre transporté vers la fiche (mois affiché). */
   scopeQuery?: string;
+  /** Par semaine dans un mois ; par mois quand la liste traverse les mois. */
+  groupBy?: "week" | "month";
+  /** Ce que dit la boîte vide, quand « Aucun contenu ce mois-ci » serait faux. */
+  emptyState?: ReactNode;
 }) {
   const sorted = [...contents].sort((a, b) =>
     (a.date ?? "9999-99-99").localeCompare(b.date ?? "9999-99-99"),
@@ -42,7 +49,15 @@ export function PlanningTable({
     // mois, donc il était mort — et depuis l'onglet Idées, les contenus sans
     // date ont leur propre endroit. Deux listes pour la même chose, c'est
     // exactement ce qu'on cherche à éviter.
-    const label = `Semaine ${Math.ceil(Number((c.date ?? "").slice(8, 10)) / 7)}`;
+    const label =
+      groupBy === "month"
+        ? c.date
+          ? new Date(c.date).toLocaleDateString("fr-FR", {
+              month: "long",
+              year: "numeric",
+            })
+          : "Sans date"
+        : `Semaine ${Math.ceil(Number((c.date ?? "").slice(8, 10)) / 7)}`;
     let gi = idxByLabel.get(label);
     if (gi === undefined) {
       gi = groups.length;
@@ -55,7 +70,7 @@ export function PlanningTable({
   if (contents.length === 0) {
     return (
       <div className="rounded-2xl border border-border/60 bg-card p-10 text-center text-sm text-muted">
-        Aucun contenu ce mois-ci. Crée-en un avec « Nouveau ».
+        {emptyState ?? "Aucun contenu ce mois-ci. Crée-en un avec « Nouveau »."}
       </div>
     );
   }
