@@ -14,6 +14,7 @@ import {
   Pencil,
   Eye,
   LogOut,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -422,14 +423,22 @@ function InviteDialog({
   const router = useRouter();
   const [role, setRole] = useState<BrandRole>("editor");
   const [note, setNote] = useState("");
+  const [email, setEmail] = useState("");
   const [pending, startTransition] = useTransition();
-  const [generated, setGenerated] = useState<{ link: string } | null>(null);
+  const [generated, setGenerated] = useState<{
+    link: string;
+    sentTo: string | null;
+    /** L'adresse saisie quand l'e-mail n'est pas parti : on le dit. */
+    failedTo: string | null;
+  } | null>(null);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const reset = () => {
     setRole("editor");
     setNote("");
+    setEmail("");
     setGenerated(null);
     setError(null);
     setCopied(false);
@@ -445,14 +454,23 @@ function InviteDialog({
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await createBrandInvitation(brandId, role, note || null);
+      const res = await createBrandInvitation(
+        brandId,
+        role,
+        note || null,
+        email.trim() || null,
+      );
       if ("error" in res && res.error) {
         setError(res.error);
         return;
       }
       if ("ok" in res && res.ok) {
         const link = `${window.location.origin}/invite/${res.token}`;
-        setGenerated({ link });
+        setGenerated({
+          link,
+          sentTo: res.sentTo ?? null,
+          failedTo: res.emailFailed ? email.trim() : null,
+        });
       }
     });
   };
@@ -474,7 +492,11 @@ function InviteDialog({
         <DialogHeader>
           <DialogTitle>{tDialog("title")}</DialogTitle>
           <DialogDescription>
-            {generated ? tDialog("subtitleDone") : tDialog("subtitleForm")}
+            {generated
+              ? generated.failedTo
+                ? tDialog("subtitleFailed", { email: generated.failedTo })
+                : tDialog("subtitleDone")
+              : tDialog("subtitleForm")}
           </DialogDescription>
         </DialogHeader>
 
@@ -486,6 +508,16 @@ function InviteDialog({
                   {generated.link}
                 </div>
               </div>
+              {/* La réussite se voit : une coche et l'adresse, pas seulement
+                  un sous-titre gris. */}
+              {generated.sentTo && (
+                <p className="flex items-start gap-1.5 text-sm text-foreground">
+                  <Check className="mt-0.5 size-4 shrink-0 text-status-live" aria-hidden />
+                  <span className="break-all">
+                    {tDialog("sentTo", { email: generated.sentTo })}
+                  </span>
+                </p>
+              )}
               <p className="text-xs text-muted">{tDialog("linkHint")}</p>
             </DialogBody>
             <DialogFooter>
@@ -507,6 +539,9 @@ function InviteDialog({
           </>
         ) : (
           <form onSubmit={onSubmit}>
+            {/* Tout se fige pendant l'envoi : un e-mail est le moment le
+                plus lent, on ne modifie ni ne ferme en attendant. */}
+            <fieldset disabled={pending} className="contents">
             <DialogBody className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="invite-role">{tDialog("role")}</Label>
@@ -532,6 +567,20 @@ function InviteDialog({
                 />
                 <p className="text-xs text-muted">{tDialog("noteHint")}</p>
               </div>
+              {/* Facultatif : rempli, l'invitation part aussi par e-mail.
+                  L'adresse n'est pas stockée — une invitation est un lien. */}
+              <div className="space-y-2">
+                <Label htmlFor="invite-email">{tDialog("email")}</Label>
+                <Input
+                  id="invite-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={tDialog("emailPlaceholder")}
+                  autoComplete="off"
+                />
+                <p className="text-xs text-muted">{tDialog("emailHint")}</p>
+              </div>
               {error && (
                 <p className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
                   {error}
@@ -539,13 +588,21 @@ function InviteDialog({
               )}
             </DialogBody>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose_}>
+              <Button type="button" variant="outline" onClick={onClose_} disabled={pending}>
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={pending}>
-                {pending ? tDialog("generating") : tDialog("generate")}
+              <Button type="submit" disabled={pending} aria-busy={pending}>
+                {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                {pending
+                  ? emailValid
+                    ? tDialog("sending")
+                    : tDialog("generating")
+                  : emailValid
+                    ? tDialog("send")
+                    : tDialog("generate")}
               </Button>
             </DialogFooter>
+            </fieldset>
           </form>
         )}
       </DialogContent>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Users, Crown, Shield, Pencil, Eye, Clock } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
@@ -22,6 +23,11 @@ type Preview =
     }
   | { error: ErrorReason };
 
+/** Créé il y a moins d'une heure : c'est pour cette invitation qu'il existe. */
+function isFreshAccount(createdAt: string): boolean {
+  return Date.now() - new Date(createdAt).getTime() < 60 * 60 * 1000;
+}
+
 const ROLE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   owner: Crown,
   admin: Shield,
@@ -31,10 +37,13 @@ const ROLE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
 
 export default async function InvitePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ welcome?: string }>;
 }) {
   const { token } = await params;
+  const { welcome } = await searchParams;
   const supabase = await createClient();
 
   // Récupère la session courante (peut être null = non connecté)
@@ -56,6 +65,28 @@ export default async function InvitePage({
 
   if ("error" in preview) {
     return <ErrorView reason={preview.error} />;
+  }
+
+  // Un compte créé POUR cette invitation (`welcome=1`, posé par l'inscription
+  // ou la confirmation d'e-mail) la rejoint sans qu'on lui redemande : il
+  // vient de donner son nom et son mot de passe pour ça. Quelqu'un qui a déjà
+  // un compte, lui, voit la marque et le rôle, et clique — accepter reste un
+  // acte conscient quand on n'a pas créé son compte pour ça. La bascule de
+  // marque passe par la porte du chantier 2 : un rendu ne pose pas de cookie.
+  // `welcome=1` est dans l'URL, donc copiable : on ne le croit que pour un
+  // compte qui vient d'être créé (moins d'une heure). Un compte ancien qui
+  // tombe dessus voit la page normale et clique.
+  if (welcome === "1" && isFreshAccount(user.created_at)) {
+    const { error: acceptError } = await supabase.rpc("accept_brand_invitation", {
+      p_token: token,
+    });
+    if (!acceptError) {
+      redirect(
+        `/switch-brand?to=${preview.brand_id}&next=${encodeURIComponent("/dashboard")}`,
+      );
+    }
+    // Sinon (déjà membre, lien consommé entre-temps…) : la page normale, avec
+    // le bouton, et son message d'erreur s'il y a lieu.
   }
 
   const t = await getTranslations("invite");

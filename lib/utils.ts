@@ -37,6 +37,17 @@ export function safeNext(value: unknown): string {
 }
 
 /**
+ * Un compte créé POUR une invitation la rejoint tout seul : on marque le
+ * chemin d'invitation de `welcome=1`, que la page lit pour accepter sans
+ * redemander. Tout autre chemin est rendu tel quel.
+ */
+export function withWelcome(next: string): string {
+  if (!next.startsWith("/invite/")) return next;
+  if (/[?&]welcome=1(&|$)/.test(next)) return next;
+  return `${next}${next.includes("?") ? "&" : "?"}welcome=1`;
+}
+
+/**
  * Extraction JSON tolérante des réponses de l'IA (Claude ne garantit pas du
  * JSON pur) : retire un éventuel bloc ```json … ```, sinon prend du premier
  * `{` au dernier `}`. Renvoie la chaîne à passer à JSON.parse (l'appelant

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { safeNext } from "@/lib/utils";
+import { safeNext, withWelcome } from "@/lib/utils";
 
 /**
  * Returns error codes. The page maps these to localized strings.
@@ -16,7 +16,9 @@ export async function register(formData: FormData) {
   const fullName = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const next = safeNext(formData.get("next"));
+  // Un compte créé POUR une invitation la rejoint tout seul à l'arrivée :
+  // `welcome=1` dit à la page d'invitation d'accepter sans redemander.
+  const next = withWelcome(safeNext(formData.get("next")));
 
   if (!email || !password || password.length < 6) {
     return { error: "passwordTooShort" as const };

@@ -15,6 +15,7 @@ Specs fonctionnelles + décisions techniques (ADR) du produit.
 | 07 | [Sharing & public pages](./07-sharing-public-pages.md) | Tokens de partage, page publique, export PDF |
 | 08 | [AI Generator](./08-ai-generator.md) | Prompts, modèle, limites, coûts |
 | 09 | [Theme system](./09-theme-system.md) | Light/Dark/Custom, persistance, customisation |
+| 10 | [Qui prévient qui](./10-notifications.md) | Cloche et e-mails : qui est prévenu de quoi, par quel canal |
 
 ## 🧠 Architecture Decision Records
 

@@ -542,7 +542,15 @@
       "linkHint": "Tu peux toujours retrouver ce lien plus tard dans la liste « Invitations en attente » en bas de cette page.",
       "close": "Fermer",
       "generate": "Générer le lien",
-      "generating": "Génération…"
+      "generating": "Génération…",
+      "email": "E-mail (optionnel)",
+      "emailPlaceholder": "prenom@entreprise.com",
+      "emailHint": "Si tu le remplis, on lui envoie l'invitation. Le lien reste copiable.",
+      "send": "Envoyer l'invitation",
+      "subtitleSent": "Le lien est prêt.",
+      "sending": "Envoi en cours…",
+      "sentTo": "Invitation envoyée à {email}.",
+      "subtitleFailed": "L'e-mail n'a pas pu partir vers {email} — copie le lien et envoie-le toi-même."
     },
     "roles": {
       "owner": "Propriétaire",

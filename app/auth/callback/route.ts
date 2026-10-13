@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { withWelcome } from "@/lib/utils";
 
 /**
  * Le retour des e-mails envoyés par Supabase : confirmation d'inscription,
@@ -38,10 +39,13 @@ export async function GET(request: Request) {
   // complète fournie par le lien permettrait d'envoyer l'utilisateur
   // ailleurs avec sa session fraîchement ouverte.
   const requested = url.searchParams.get("next") ?? "";
-  const next =
+  // Après la confirmation d'un compte créé pour une invitation, la page
+  // d'invitation accepte sans redemander (`welcome=1`, voir `withWelcome`).
+  const next = withWelcome(
     requested.startsWith("/") && !requested.startsWith("//")
       ? requested
-      : "/dashboard";
+      : "/dashboard",
+  );
 
   const supabase = await createClient();
 

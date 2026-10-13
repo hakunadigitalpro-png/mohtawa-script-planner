@@ -343,7 +343,7 @@ Supprimée à la demande de l'utilisatrice : 70 phrases figées n'avaient plus d
 - **`<CommentsProvider>`** : context React qui charge les commentaires de la vidéo une seule fois (props initiales depuis le Server Component) et expose helpers + drawer state
 - **Statut "résolu"** : porté par le commentaire racine, toggleable par n'importe quel membre (pas seulement l'auteur)
 - **Permissions** : édition/suppression par l'auteur (+ delete par owner/admin de la brand), création/lecture par tout membre
-- **Notifications** : in-app uniquement (pas d'email pour l'instant). Le badge non-lu = nombre de commentaires créés après `content_reads.last_comment_read_at` par d'autres users que moi
+- **Notifications** : cloche pour l'équipe, e-mail pour le client (chantier 3, 13/10/2026 — `lib/notify.ts`, spec `docs/10-notifications.md`). Le badge non-lu = nombre de commentaires créés après `content_reads.last_comment_read_at` par d'autres users que moi
 - Marquage "tout lu" : à l'ouverture du drawer, on appelle `mark_content_read(content_id)` qui upsert `now()`
 
 ### 12. Profil & Thème
@@ -514,6 +514,9 @@ Supprimée à la demande de l'utilisatrice : 70 phrases figées n'avaient plus d
 23. **La marque suit le contenu qu'on regarde (12/10/2026)**
     _Le rôle est par marque, pas par cookie. Un lien (e-mail, cloche, tâche) qui ouvre un contenu d'une autre marque bascule dessus d'abord, par une porte unique `GET /switch-brand` — un Server Component ne peut pas écrire un cookie, un route handler si ; un cookie de marque dont on est membre n'ouvre aucun droit, la RLS ne le lit jamais. Sur la fiche : le contenu d'abord, la marque ensuite, le renvoi du `viewer` en dernier. Le lien survit à la connexion (`/login?next=` dans les deux sens). « Envoyer au client » exige un client invité et quelque chose à montrer, avec la lecture même de `/review` (`fetchReviewMaterial`), par tous les chemins ; bloqué, le bouton est une pastille-instruction, jamais un bouton désactivé. Les stories deviennent validables (diapos montrées sur `/review`, remarques « sur l'ensemble » seulement). Tâches : la cloche crée sur la marque de la notification, à moi ; `/tasks?all=1` liste ce qui m'est assigné partout. ADR : `docs/decisions/2026-10-12-la-marque-suit-le-contenu.md`._
 
+24. **Qui prévient qui : l'équipe a la cloche, le client reçoit un e-mail (13/10/2026)**
+    _Un seul module décide qui reçoit quoi (`lib/notify.ts`) ; `lib/email.ts` n'est que le transport. Le client reçoit un e-mail chaque fois qu'on attend quelque chose de lui ou qu'on lui a répondu (`notifyClientOfReply` depuis `replyToComment`, seulement si l'auteur de la remarque est `viewer`) ; jamais pour un échange interne, jamais à soi-même, jamais bloquant. L'invitation peut partir par e-mail depuis « Créer un lien » (`notifyInvitation`), l'adresse n'est pas stockée. Un compte créé pour une invitation la rejoint tout seul (`welcome=1`, posé par `register` et `/auth/callback`, lu par `/invite/[token]` qui accepte puis bascule par `/switch-brand`). Spec : `docs/10-notifications.md` ; ADR : `docs/decisions/2026-10-13-qui-previent-qui.md`._
+
 ---
 
 ## ✅ Ce qui est fait
@@ -553,7 +556,7 @@ Supprimée à la demande de l'utilisatrice : 70 phrases figées n'avaient plus d
 | Bloc | Priorité | Note |
 |---|---|---|
 | **i18n FR + AR + RTL** | Moyenne | Infrastructure prête (`messages/*.json` + `i18n/`), wiring à finir après stabilisation du wording |
-| **Email notifications** | Basse | Reminders avant date de publication, mail de bienvenue, mention sur commentaire |
+| **Email notifications** | Basse | Livrés (v101) : envoi au client, décision du client, réponse au client, invitation. Restent hors périmètre : rappels avant date, mail de bienvenue |
 | **Mobile polish** | Moyenne | Quelques pages assument desktop (calendrier surtout) |
 | **Analytics avancées** | Basse | Filtre par période, comparaison vs période précédente, export CSV |
 | **Templates** | Basse | Reel/Story pré-remplis (réutiliser une fiche comme template) |

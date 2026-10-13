@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { pick, safeNext, extractJsonBlock } from "./utils";
+import { pick, safeNext, extractJsonBlock, withWelcome } from "./utils";
 
 describe("pick — liste blanche anti mass-assignment", () => {
   it("ne garde que les clés autorisées", () => {
@@ -70,5 +70,18 @@ describe("extractJsonBlock — parsing tolérant des réponses IA", () => {
   it("gère un fence ``` sans le mot json", () => {
     const raw = "```\n{\"ok\":1}\n```";
     expect(JSON.parse(extractJsonBlock(raw))).toEqual({ ok: 1 });
+  });
+});
+
+describe("withWelcome — un compte créé pour une invitation la rejoint tout seul", () => {
+  it("marque un chemin d'invitation, une seule fois", () => {
+    expect(withWelcome("/invite/abc")).toBe("/invite/abc?welcome=1");
+    expect(withWelcome("/invite/abc?x=1")).toBe("/invite/abc?x=1&welcome=1");
+    expect(withWelcome("/invite/abc?welcome=1")).toBe("/invite/abc?welcome=1");
+  });
+
+  it("laisse tout autre chemin tel quel", () => {
+    expect(withWelcome("/dashboard")).toBe("/dashboard");
+    expect(withWelcome("/content/x?m=2026-10")).toBe("/content/x?m=2026-10");
   });
 });

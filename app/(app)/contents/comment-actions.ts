@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notifyClientOfReply } from "@/lib/notify";
 
 // Une SEULE définition de la liste des cibles, dans `components/comments`.
 // Il y en avait deux, et elles ont divergé à la première extension : celle-ci
@@ -88,6 +89,10 @@ export async function replyToComment(params: {
     .single();
 
   if (error) return { error: error.message };
+
+  // Si la remarque vient d'un client, il reçoit la réponse par e-mail —
+  // après l'écriture, jamais bloquant (`lib/notify.ts`).
+  await notifyClientOfReply(supabase, { parentId: params.parentId, body });
 
   revalidatePath(`/content/${params.contentId}`);
   return { ok: true as const, id: data.id };

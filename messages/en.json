@@ -542,7 +542,15 @@
       "linkHint": "You can always find this link later in the \"Pending invitations\" list below.",
       "close": "Close",
       "generate": "Generate link",
-      "generating": "Generating…"
+      "generating": "Generating…",
+      "email": "Email (optional)",
+      "emailPlaceholder": "name@company.com",
+      "emailHint": "If you fill it in, we send them the invitation. The link stays copyable.",
+      "send": "Send the invitation",
+      "subtitleSent": "The link is ready.",
+      "sending": "Sending…",
+      "sentTo": "Invitation sent to {email}.",
+      "subtitleFailed": "The email could not be sent to {email} — copy the link and send it yourself."
     },
     "roles": {
       "owner": "Owner",

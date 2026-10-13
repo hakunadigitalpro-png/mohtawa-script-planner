@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notifyInvitation } from "@/lib/notify";
 
 export type BrandRole = "owner" | "admin" | "editor" | "viewer";
 
@@ -14,8 +15,15 @@ export async function createBrandInvitation(
   brandId: string,
   role: BrandRole = "editor",
   note: string | null = null,
+  /** Facultatif : l'invitation part aussi à cette adresse. Non stockée. */
+  email: string | null = null,
 ) {
   const supabase = await createClient();
+
+  const address = email?.trim() || null;
+  if (address && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
+    return { error: "Cette adresse e-mail n'a pas l'air complète." };
+  }
 
   const { data, error } = await supabase.rpc("create_brand_invitation", {
     p_brand_id: brandId,
@@ -29,8 +37,27 @@ export async function createBrandInvitation(
   const row = Array.isArray(data) ? data[0] : data;
   if (!row?.token) return { error: "Impossible de générer le lien." };
 
+  // L'e-mail APRÈS la création, jamais bloquant : le lien existe, il reste
+  // copiable même si le serveur de mail répond mal.
+  const sent = address
+    ? await notifyInvitation(supabase, {
+        brandId,
+        email: address,
+        token: row.token as string,
+        role,
+        note: note && note.trim() ? note.trim() : null,
+      })
+    : false;
+
   revalidatePath(`/brands/${brandId}`);
-  return { ok: true as const, id: row.id as string, token: row.token as string };
+  return {
+    ok: true as const,
+    id: row.id as string,
+    token: row.token as string,
+    sentTo: sent ? address : null,
+    /** Une adresse était donnée mais l'e-mail n'est pas parti : à dire. */
+    emailFailed: Boolean(address) && !sent,
+  };
 }
 
 /**

@@ -3,96 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { renderEmail, sendEmail } from "@/lib/email";
-import { typeLabel } from "@/lib/constants";
-import { formatDateFr } from "@/lib/utils";
+import { audience, contentCard, senderName } from "@/lib/notify";
 import { sendBlockerMessage } from "@/lib/content-lifecycle";
 import { sendBlockerFor } from "@/lib/content-lifecycle-db";
 
 type ReviewResult = { ok: true } | { ok: false; error: string };
-
-type MemberRow = { user_id: string; email: string; role: string };
-
-/**
- * Qui prévenir, et de la part de qui.
- *
- * Tout passe par `list_brand_members_with_emails` (0008) : les adresses des
- * autres membres ne sont pas lisibles directement, seule cette fonction les
- * expose, et uniquement à un membre de la marque.
- *
- * `replyTo` est l'adresse de celui qui agit : un client qui répond à l'e-mail
- * écrit à l'équipe, pas dans le vide.
- */
-async function audience(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  brandId: string,
-  want: "clients" | "equipe",
-): Promise<{ to: string[]; replyTo?: string }> {
-  const [{ data }, { data: auth }] = await Promise.all([
-    supabase.rpc("list_brand_members_with_emails", { p_brand_id: brandId }),
-    supabase.auth.getUser(),
-  ]);
-
-  const me = auth?.user?.email ?? undefined;
-  const rows = (data ?? []) as MemberRow[];
-  const to = rows
-    .filter((m) =>
-      want === "clients" ? m.role === "viewer" : m.role !== "viewer",
-    )
-    .map((m) => m.email)
-    // On ne s'écrit pas à soi-même : l'auteur de l'action sait ce qu'il
-    // vient de faire.
-    .filter((e) => e && e !== me);
-
-  return { to, replyTo: me };
-}
-
-/** Le contenu concerné, pour composer un e-mail qui dit de quoi il parle. */
-async function contentCard(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  contentId: string,
-) {
-  const { data } = await supabase
-    .from("contents")
-    .select("id, brand_id, title, type, date, brands(name)")
-    .eq("id", contentId)
-    .maybeSingle();
-  if (!data) return null;
-  const c = data as unknown as {
-    id: string;
-    brand_id: string;
-    title: string | null;
-    type: string;
-    date: string | null;
-    brands?: { name: string } | { name: string }[] | null;
-  };
-  // PostgREST renvoie l'objet lié tantôt seul, tantôt dans un tableau selon
-  // la façon dont il infère la relation — on accepte les deux.
-  const rel = c.brands;
-  const brandName =
-    (Array.isArray(rel) ? rel[0]?.name : rel?.name)?.trim() || null;
-
-  const meta = [typeLabel(c.type), c.date ? formatDateFr(c.date) : null]
-    .filter(Boolean)
-    .join(" · ");
-  return {
-    brandId: c.brand_id,
-    brandName,
-    title: c.title || "Sans titre",
-    meta,
-  };
-}
-
-/**
- * Le nom affiché de l'expéditeur.
- *
- * Une consultante gère plusieurs marques, et chaque marque a SON client. Le
- * client d'Adala ne connaît pas « Kreatly » : il doit voir arriver un e-mail
- * d'Adala. L'adresse, elle, reste celle du domaine vérifié — c'est elle qui
- * porte la preuve DNS, on ne peut pas la changer par marque.
- */
-function senderName(brandName: string | null): string | undefined {
-  return brandName ? `${brandName} via Kreatly` : undefined;
-}
 
 /** Une remarque du client. `mediaId` null : elle porte sur l'ensemble. */
 export type ReviewNoteInput = { mediaId: string | null; body: string };
