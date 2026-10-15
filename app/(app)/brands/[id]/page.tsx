@@ -7,6 +7,7 @@ import { notFound, redirect } from "next/navigation";
 import { Clapperboard, Layers, Palette, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
+import { resolveActiveBrand } from "@/lib/brand";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { PillarManager } from "./pillar-manager";
 import { ThemeAssistant } from "./theme-assistant";
@@ -52,6 +53,16 @@ export default async function BrandDetailPage({
     .eq("id", id)
     .maybeSingle();
   if (!brand) notFound();
+
+  // La marque, c'est celle qu'on regarde (chantier 2) : ouvrir la page d'une
+  // marque depuis « Mes marques » ou un lien doit la rendre active, sinon on
+  // modifie Adala avec le menu, Krea et le calendrier de WorkZone.
+  const { active } = await resolveActiveBrand();
+  if (active && active.id !== brand.id) {
+    redirect(
+      `/switch-brand?to=${brand.id}&next=${encodeURIComponent(`/brands/${brand.id}`)}`,
+    );
+  }
 
   const [
     pillarsRes,

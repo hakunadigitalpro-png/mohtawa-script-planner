@@ -109,9 +109,11 @@ export function DropdownContent({
   const ctx = React.useContext(DropdownContext);
   const align = alignProp ?? ctx?.align ?? "end";
   const [pos, setPos] = React.useState<{
-    top: number;
+    top?: number;
+    bottom?: number;
     left?: number;
     right?: number;
+    maxHeight: number;
   } | null>(null);
 
   React.useEffect(() => {
@@ -123,12 +125,22 @@ export function DropdownContent({
       const el = ctx.triggerRef.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
-      const top = r.bottom + 6;
+      // Un menu ouvert près du bas de l'écran se coupait net : il s'ouvre
+      // vers le haut s'il y a plus de place au-dessus, et ne dépasse jamais
+      // la place disponible — il défile à l'intérieur.
+      const gap = 6;
+      const margin = 8;
+      const below = window.innerHeight - r.bottom - gap - margin;
+      const above = r.top - gap - margin;
+      const openUp = below < 240 && above > below;
+      const vertical = openUp
+        ? { bottom: window.innerHeight - r.top + gap, maxHeight: above }
+        : { top: r.bottom + gap, maxHeight: below };
       if (align === "end") {
         // Bord droit du menu aligné sur le bord droit du trigger.
-        setPos({ top, right: Math.max(8, window.innerWidth - r.right) });
+        setPos({ ...vertical, right: Math.max(margin, window.innerWidth - r.right) });
       } else {
-        setPos({ top, left: Math.max(8, r.left) });
+        setPos({ ...vertical, left: Math.max(margin, r.left) });
       }
     };
     update();
@@ -146,8 +158,10 @@ export function DropdownContent({
   const style: React.CSSProperties = {
     position: "fixed",
     top: pos.top,
+    bottom: pos.bottom,
     left: pos.left,
     right: pos.right,
+    maxHeight: Math.max(160, pos.maxHeight),
   };
 
   // Rendu dans <body> → jamais rogné par un overflow-hidden parent, jamais
@@ -164,7 +178,7 @@ export function DropdownContent({
         // parce qu'il est porté dans `document.body`. Ouvert depuis un bandeau
         // sombre sans portal, il hériterait du blanc — c'est exactement le
         // motif qui a déjà produit du blanc sur blanc.
-        "z-[60] max-h-[70vh] min-w-48 overflow-y-auto rounded-2xl border border-border/60 bg-card py-1.5 text-foreground shadow-[0_12px_40px_-10px_rgba(26,15,37,0.18)]",
+        "z-[60] min-w-48 overflow-y-auto rounded-2xl border border-border/60 bg-card py-1.5 text-foreground shadow-[0_12px_40px_-10px_rgba(26,15,37,0.18)]",
         className,
       )}
     >
