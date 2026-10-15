@@ -1391,7 +1391,7 @@ TON RÔLE, façon assistant interactif :
 - Parle simplement, avec chaleur, zéro jargon. La personne ne sait PAS ce qu'est un "pilier" ni un "thème de contenu" — ne le lui demande jamais frontalement.
 - Si tu n'as pas assez d'infos pour proposer de bons thèmes, pose 1 à 2 questions COURTES et concrètes (ex : "Tu fais quoi exactement ?", "C'est pour attirer de nouveaux clients ou rassurer les tiens ?"). Une étape à la fois, jamais un long questionnaire.
 - Dès que tu as de quoi travailler, PROPOSE 3 à 4 thèmes remplis. Puis ajuste selon la personne (ajouter/retirer un thème, changer le ton, les %…).
-- Chaque thème = un nom court avec un emoji au début + une part % (l'ensemble ≈ 100%) + un objectif en 1 phrase + 5 à 7 rubriques (formats récurrents courts) + 5 à 7 exemples de vidéos concrètes + une note (le pourquoi).
+- Chaque thème = un nom court avec un emoji au début + une part % (l'ensemble ≈ 100%) + un objectif en 1 phrase + 4 à 6 rubriques (formats récurrents, 8 mots au plus chacune) + 4 à 6 exemples de contenus concrets (une phrase courte chacun, 15 mots au plus) + une note (le pourquoi, 1 phrase). Sois concis : une réponse trop longue est coupée.
 
 FORMAT — réponds TOUJOURS avec un SEUL objet JSON valide, rien autour :
 {
@@ -1414,61 +1414,86 @@ Réponds dans la langue de la personne (français par défaut).`;
     });
   }
 
-  let res: Response;
-  try {
-    res = await fetch(ANTHROPIC_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: ANTHROPIC_MODEL,
-        max_tokens: 2200,
-        system,
-        messages,
-      }),
-      signal: aiSignal(aiDeadline()),
-    });
-  } catch (e) {
-    throw aiFetchError(e);
-  }
-
-  if (!res.ok) {
-    const status = res.status;
-    if (status === 401) {
-      throw new AiError("auth", "Clé Anthropic invalide. Vérifie ANTHROPIC_API_KEY.");
+  const deadline = aiDeadline();
+  const call = async (maxTokens: number) => {
+    let res: Response;
+    try {
+      res = await fetch(ANTHROPIC_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: ANTHROPIC_MODEL,
+          max_tokens: maxTokens,
+          system,
+          messages,
+        }),
+        signal: aiSignal(deadline),
+      });
+    } catch (e) {
+      throw aiFetchError(e);
     }
-    if (status === 429) {
-      throw new AiError(
-        "rate_limit",
-        "Quota atteint ou trop de requêtes. Réessaie dans une minute.",
-      );
-    }
-    throw new AiError("api", `Erreur Anthropic (${status}). Réessaie.`);
-  }
 
-  const data = (await res.json()) as {
-    content?: { type: string; text?: string }[];
+    if (!res.ok) {
+      const status = res.status;
+      if (status === 401) {
+        throw new AiError("auth", "Clé Anthropic invalide. Vérifie ANTHROPIC_API_KEY.");
+      }
+      if (status === 429) {
+        throw new AiError(
+          "rate_limit",
+          "Quota atteint ou trop de requêtes. Réessaie dans une minute.",
+        );
+      }
+      throw new AiError("api", `Erreur Anthropic (${status}). Réessaie.`);
+    }
+
+    const data = (await res.json()) as {
+      content?: { type: string; text?: string }[];
+      stop_reason?: string | null;
+    };
+    const text = (data.content ?? [])
+      .filter((b) => b.type === "text")
+      .map((b) => b.text ?? "")
+      .join("\n")
+      .trim();
+    return { text, stopReason: data.stop_reason ?? null };
   };
-  const text = (data.content ?? [])
-    .filter((b) => b.type === "text")
-    .map((b) => b.text ?? "")
-    .join("\n")
-    .trim();
+
+  // Quatre thèmes remplis font un JSON long : à 2 200 jetons la réponse se
+  // coupait, le JSON devenait invalide et l'écran affichait le texte brut.
+  // Budget large d'abord, et UNE relance si c'est encore coupé — seulement
+  // si le temps restant le permet (même garde-fou que `callClaudeJSON`).
+  const startedAt = Date.now();
+  let { text, stopReason } = await call(4500);
+  if (stopReason === "max_tokens") {
+    const firstCallMs = Date.now() - startedAt;
+    if (firstCallMs * 2 < deadline - Date.now()) {
+      ({ text, stopReason } = await call(8000));
+    }
+  }
   if (!text) throw new AiError("empty", "Réponse vide de l'IA.");
 
   const raw = extractJsonBlock(text);
   try {
     const parsed = JSON.parse(raw) as ThemeAssistantReply;
     return {
-      message: typeof parsed.message === "string" ? parsed.message : text,
+      message: typeof parsed.message === "string" ? parsed.message : "",
       themes: Array.isArray(parsed.themes) ? parsed.themes : null,
     };
   } catch {
-    // Pas de JSON exploitable → on montre le texte tel quel, sans thèmes.
-    return { message: text, themes: null };
+    // Pas de JSON exploitable : jamais le texte brut sous les yeux de
+    // l'utilisatrice — une phrase qui dit quoi faire.
+    return {
+      message:
+        stopReason === "max_tokens"
+          ? "Ma réponse était trop longue et s'est coupée. Clique « Régénérer », je ferai plus court."
+          : "Je n'ai pas réussi à mettre mes thèmes en forme. Clique « Régénérer » et je recommence.",
+      themes: null,
+    };
   }
 }
 
