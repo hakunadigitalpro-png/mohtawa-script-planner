@@ -1,10 +1,11 @@
+import Link from "next/link";
 // Les Server Actions IA de cette page (Studio de marque, assistant de
 // thèmes) dépassent facilement les 10s par défaut du plan Hobby Vercel —
 // même fix que content/[id]/page.tsx. On monte à 60s (max autorisé).
 export const maxDuration = 60;
 
 import { notFound, redirect } from "next/navigation";
-import { Clapperboard, Layers, Palette, Users } from "lucide-react";
+import { Clapperboard, FileDown, Layers, Palette, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
@@ -17,6 +18,7 @@ import { BrandKitManager } from "./brand-kit-manager";
 import { BrandStudio } from "./brand-studio";
 import { TeamSection } from "./team-section";
 import { PageHeader } from "@/components/page-header";
+import { buttonVariants } from "@/components/ui/button";
 import type { BrandRole } from "../team-actions";
 import type { BrandPillar, ScenePreset, BrandKit, BrandStrategy } from "@/lib/types";
 
@@ -135,10 +137,24 @@ export default async function BrandDetailPage({
 
       <Card data-tour="brand-themes">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Layers className="size-4 text-accent" />
-            Thèmes de contenu
-          </CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Layers className="size-4 text-accent" />
+              Thèmes de contenu
+            </CardTitle>
+            {/* Le même document que la stratégie : thèmes et idées y sont. */}
+            {pillars.length > 0 && (
+              <Link
+                href={`/print/strategy/${brand.id}#themes`}
+                target="_blank"
+                rel="noopener"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <FileDown className="size-3.5" />
+                Télécharger
+              </Link>
+            )}
+          </div>
           <CardDescription>
             Les sujets récurrents de ta marque — ce dont tu parles dans tes
             vidéos. Laisse l&apos;IA te les proposer, ou ajoute-les à la main.

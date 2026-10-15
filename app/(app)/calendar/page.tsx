@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  FileDown,
   X,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
@@ -15,6 +16,7 @@ import { CalendarViewTabs } from "@/components/calendar-view-tabs";
 import { PlanningTable } from "@/components/planning-table";
 import { IdeasBoard, type IdeaCard } from "@/components/ideas-board";
 import { PageHeader } from "@/components/page-header";
+import { buttonVariants } from "@/components/ui/button";
 import { fetchThumbnails } from "@/lib/thumbnails";
 import type { Content } from "@/lib/types";
 
@@ -270,6 +272,17 @@ export default async function CalendarPage({
             />
             </div>
             {view === "calendar" && <CalendarPlatformFilter />}
+            {view === "ideas" && ideas.length > 0 && (
+              <Link
+                href={`/print/strategy/${active.id}#idees`}
+                target="_blank"
+                rel="noopener"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <FileDown className="size-3.5" />
+                Télécharger
+              </Link>
+            )}
             {!isClient && (
               <div className="ms-auto" data-tour="calendar-new">
                 <CalendarQuickCreate defaultDate={defaultCreateDate} />
