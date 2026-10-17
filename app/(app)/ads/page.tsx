@@ -6,7 +6,7 @@ import { resolveActiveBrand } from "@/lib/brand";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { AD_STATUS_LABEL } from "@/lib/types-ads";
-import { createAdCampaign } from "./actions";
+// import { createAdCampaign } from "./actions"; // debug : écarté
 
 /**
  * VERSION ÉTAPE 1 — Liste simple sans ViewTabs ni composants externes
@@ -90,15 +90,15 @@ export default async function AdsPage() {
         title="Publicités"
         subtitle="Les propositions de campagnes et leurs résultats, par mois."
         actions={
-          <form action={createAdCampaign}>
+          <Link href="/ads/new">
             <Button
-              type="submit"
+              type="button"
               variant={campaigns.length === 0 ? "outline" : "accent"}
             >
               <Plus className="h-4 w-4" />
               Nouvelle campagne
             </Button>
-          </form>
+          </Link>
         }
       />
 
@@ -112,12 +112,12 @@ export default async function AdsPage() {
             Une campagne regroupe la proposition que tu montres au client et
             les résultats une fois diffusée.
           </p>
-          <form action={createAdCampaign} className="mt-4">
-            <Button type="submit" variant="accent">
+          <Link href="/ads/new" className="mt-4 inline-block">
+            <Button type="button" variant="accent">
               <Plus className="h-4 w-4" />
               Créer la première
             </Button>
-          </form>
+          </Link>
         </div>
       ) : (
         <div className="space-y-8">
