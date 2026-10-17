@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   BarChart3,
   KanbanSquare,
+  Megaphone,
   Building2,
   User,
   type LucideIcon,
@@ -29,6 +30,7 @@ export type NavKey =
   | "review"
   | "analytics"
   | "tasks"
+  | "ads"
   | "brands"
   | "profile";
 
@@ -62,6 +64,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/calendar", key: "calendar", icon: CalendarDays },
       { href: "/review", key: "review", icon: CheckCircle2 },
       { href: "/tasks", key: "tasks", icon: KanbanSquare },
+      { href: "/ads", key: "ads", icon: Megaphone },
       { href: "/analytics", key: "analytics", icon: BarChart3 },
     ],
   },
@@ -78,6 +81,8 @@ export const NAV_SECTIONS: NavSection[] = [
  *  et à son profil — toutes les autres pages le renvoient au Calendrier. */
 export function isVisibleFor(key: NavKey, role: BrandRole | null): boolean {
   if (role === "viewer") {
+    // Le client voit « À valider » (il y vient par e-mail) ; les campagnes
+    // ont leur propre page de validation hors menu, comme les contenus.
     return key === "calendar" || key === "review" || key === "profile";
   }
   // « À valider » est l'écran DU client : l'équipe envoie, elle n'y va pas

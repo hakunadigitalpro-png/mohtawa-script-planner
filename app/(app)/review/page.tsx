@@ -1,9 +1,20 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Megaphone } from "lucide-react";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { PageHeader } from "@/components/page-header";
 import { ReviewDeck, type ReviewItem, type ReviewNote } from "./review-deck";
 import { fetchReviewMaterial, type ReviewMaterial } from "@/lib/review-material";
+import { formatDateFr } from "@/lib/utils";
+
+type AdCampaignQueue = {
+  id: string;
+  title: string;
+  theme: string | null;
+  date_start: string | null;
+  date_end: string | null;
+};
 
 type CommentRow = {
   id: string;
@@ -48,12 +59,25 @@ export default async function ReviewPage({
   // La file d'attente : ce qui lui a été explicitement soumis. On y ajoute
   // le contenu ouvert depuis le calendrier (?c=) même s'il n'attend rien —
   // le client a le droit de regarder sans qu'on lui demande son avis.
-  const { data: queueData } = await supabase
-    .from("contents")
-    .select("id, title, type, date, platform, status, caption")
-    .eq("brand_id", active.id)
-    .eq("status", "pending_review")
-    .order("date", { ascending: true, nullsFirst: false });
+  const [{ data: queueData }, { data: adsData }] = await Promise.all([
+    supabase
+      .from("contents")
+      .select("id, title, type, date, platform, status, caption")
+      .eq("brand_id", active.id)
+      .eq("status", "pending_review")
+      .order("date", { ascending: true, nullsFirst: false }),
+    // Les campagnes Ads soumises partagent la file de validation : la fiche
+    // vit sur `/ads/[id]`, mais c'est ici qu'on arrive en premier quand le
+    // menu dit « À valider ».
+    supabase
+      .from("ad_campaigns")
+      .select("id, title, theme, date_start, date_end")
+      .eq("brand_id", active.id)
+      .eq("review_state", "pending_review")
+      .order("date_start", { ascending: true, nullsFirst: false }),
+  ]);
+
+  const adQueue = (adsData ?? []) as AdCampaignQueue[];
 
   const queue = (queueData ?? []) as ContentRow[];
   const ids = queue.map((c) => c.id);
@@ -142,6 +166,8 @@ export default async function ReviewPage({
     ? Math.max(0, items.findIndex((i) => i.id === params.c))
     : 0;
 
+  const nothingWaiting = items.length === 0 && adQueue.length === 0;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -150,12 +176,44 @@ export default async function ReviewPage({
         eyebrow={active.name}
         title="À valider"
         subtitle={
-          items.length === 0
+          nothingWaiting
             ? "Rien ne t'attend pour le moment."
             : "Regarde, puis dis-nous si c'est bon ou ce qu'il faut changer."
         }
       />
-      <ReviewDeck items={items} startIndex={startIndex} />
+      {adQueue.length > 0 ? (
+        <section className="space-y-2">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Megaphone className="h-4 w-4 text-foreground/60" />
+            Campagnes publicitaires
+          </h2>
+          <ul className="grid gap-2 md:grid-cols-2">
+            {adQueue.map((c) => (
+              <li key={c.id}>
+                <Link
+                  href={`/ads/${c.id}`}
+                  className="block rounded-2xl border border-foreground/10 bg-card p-3 transition hover:border-accent/40"
+                >
+                  <div className="text-sm font-medium text-foreground">
+                    {c.title}
+                  </div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {[
+                      c.theme,
+                      c.date_start ? formatDateFr(c.date_start) : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "Proposition à relire"}
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {items.length > 0 ? (
+        <ReviewDeck items={items} startIndex={startIndex} />
+      ) : null}
     </div>
   );
 }
