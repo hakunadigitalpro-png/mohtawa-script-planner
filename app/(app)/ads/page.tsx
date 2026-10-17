@@ -117,25 +117,34 @@ export default async function AdsPage({
             {/* ViewTabs retirés temporairement — debug du crash SSR. Les
                 vues restent accessibles par URL : /ads, /ads?view=planning,
                 /ads?view=calendar */}
-            <div className="inline-flex gap-1 text-xs">
-              <Link
-                href="/ads"
-                className={`rounded-full px-3 py-1 ${view === "list" ? "bg-foreground/10" : "bg-foreground/5"}`}
-              >
-                Liste
-              </Link>
-              <Link
-                href={monthHref("planning")}
-                className={`rounded-full px-3 py-1 ${view === "planning" ? "bg-foreground/10" : "bg-foreground/5"}`}
-              >
-                Planning
-              </Link>
-              <Link
-                href={monthHref("calendar")}
-                className={`rounded-full px-3 py-1 ${view === "calendar" ? "bg-foreground/10" : "bg-foreground/5"}`}
-              >
-                Calendrier
-              </Link>
+            <div className="inline-flex gap-0.5 rounded-full border border-white/20 bg-white/10 p-0.5 backdrop-blur-sm">
+              {(
+                [
+                  { v: "list" as const, href: "/ads", label: "Liste" },
+                  {
+                    v: "planning" as const,
+                    href: monthHref("planning"),
+                    label: "Planning",
+                  },
+                  {
+                    v: "calendar" as const,
+                    href: monthHref("calendar"),
+                    label: "Calendrier",
+                  },
+                ]
+              ).map(({ v, href, label }) => (
+                <Link
+                  key={v}
+                  href={href}
+                  className={`rounded-full px-3 py-1 text-sm font-medium transition ${
+                    view === v
+                      ? "bg-white text-foreground shadow-sm"
+                      : "text-white hover:bg-white/15"
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
             </div>
             <Link href="/ads/new">
               <Button
