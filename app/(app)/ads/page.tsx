@@ -1,18 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import {
-  Megaphone,
-  Plus,
-  CalendarDays,
-  List,
-  LayoutGrid,
-  Calendar as CalendarIcon,
-} from "lucide-react";
+import { Megaphone, Plus, CalendarDays } from "lucide-react";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
-import { ViewTab, ViewTabs } from "@/components/ui/view-tabs";
+// import { ViewTab, ViewTabs } from "@/components/ui/view-tabs"; // debug : écarté
 import { AD_STATUS_LABEL } from "@/lib/types-ads";
 import {
   AdsPlanningView,
@@ -121,25 +114,29 @@ export default async function AdsPage({
         subtitle="Les propositions de campagnes et leurs résultats."
         actions={
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <ViewTabs>
-              <ViewTab href="/ads" active={view === "list"} icon={List}>
+            {/* ViewTabs retirés temporairement — debug du crash SSR. Les
+                vues restent accessibles par URL : /ads, /ads?view=planning,
+                /ads?view=calendar */}
+            <div className="inline-flex gap-1 text-xs">
+              <Link
+                href="/ads"
+                className={`rounded-full px-3 py-1 ${view === "list" ? "bg-foreground/10" : "bg-foreground/5"}`}
+              >
                 Liste
-              </ViewTab>
-              <ViewTab
+              </Link>
+              <Link
                 href={monthHref("planning")}
-                active={view === "planning"}
-                icon={LayoutGrid}
+                className={`rounded-full px-3 py-1 ${view === "planning" ? "bg-foreground/10" : "bg-foreground/5"}`}
               >
                 Planning
-              </ViewTab>
-              <ViewTab
+              </Link>
+              <Link
                 href={monthHref("calendar")}
-                active={view === "calendar"}
-                icon={CalendarIcon}
+                className={`rounded-full px-3 py-1 ${view === "calendar" ? "bg-foreground/10" : "bg-foreground/5"}`}
               >
                 Calendrier
-              </ViewTab>
-            </ViewTabs>
+              </Link>
+            </div>
             <Link href="/ads/new">
               <Button
                 type="button"
