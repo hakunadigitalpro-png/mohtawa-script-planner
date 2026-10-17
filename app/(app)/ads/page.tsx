@@ -62,7 +62,38 @@ function formatRange(start: string | null, end: string | null): string {
   return `${s} → ${e}`;
 }
 
-export default async function AdsPage({
+export default async function AdsPage(props: {
+  searchParams: Promise<{ view?: string; month?: string }>;
+}) {
+  try {
+    return await renderAdsPage(props);
+  } catch (err) {
+    // On laisse passer redirect() et notFound() : ils sont implémentés
+    // comme des throws spéciaux reconnus par Next via leur `digest`.
+    const digest = (err as { digest?: string } | null)?.digest ?? "";
+    if (digest.startsWith("NEXT_REDIRECT") || digest === "NEXT_NOT_FOUND") {
+      throw err;
+    }
+    // Diagnostic temporaire : la prod masque les erreurs Server Component.
+    // On affiche le message + la stack directement dans la page pour
+    // identifier le crash. À retirer dès que la cause est corrigée.
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : "";
+    return (
+      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-900">
+        <h2 className="mb-2 text-base font-semibold">
+          /ads a planté (debug temporaire)
+        </h2>
+        <pre className="whitespace-pre-wrap break-words font-mono text-xs">
+          {message}
+          {stack ? `\n\n${stack}` : ""}
+        </pre>
+      </div>
+    );
+  }
+}
+
+async function renderAdsPage({
   searchParams,
 }: {
   searchParams: Promise<{ view?: string; month?: string }>;
