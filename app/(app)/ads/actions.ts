@@ -52,10 +52,14 @@ const EDITABLE_FIELDS = [
 type EditableField = (typeof EDITABLE_FIELDS)[number];
 type Patch = Partial<Record<EditableField, string | number | string[] | null>>;
 
+// Appelée en tant que `<form action={createAdCampaign}>`, donc sa signature
+// doit être compatible avec `(formData: FormData) => Promise<void>` — pas de
+// return d'erreur, on throw si ça casse (c'est de toute façon exceptionnel :
+// l'insert ne demande qu'un `brand_id` et un titre).
 export async function createAdCampaign() {
   const supabase = await createClient();
   const { active } = await resolveActiveBrand();
-  if (!active) return { error: "Aucune marque active" };
+  if (!active) throw new Error("Aucune marque active");
 
   const { data, error } = await supabase
     .from("ad_campaigns")
@@ -65,7 +69,7 @@ export async function createAdCampaign() {
     })
     .select("id")
     .single();
-  if (error || !data) return { error: error?.message ?? "Création impossible" };
+  if (error || !data) throw new Error(error?.message ?? "Création impossible");
 
   revalidatePath("/ads");
   redirect(`/ads/${data.id}`);
