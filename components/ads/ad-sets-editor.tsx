@@ -431,8 +431,8 @@ function SingleCardLegacy({
         placeholder="Texte principal de l'ad…"
         onBlur={(e) => save("hook", e.target.value || null)}
         disabled={!canEdit}
-        rows={3}
-        className="min-w-0 flex-1 text-sm"
+        rows={10}
+        className="min-w-0 flex-1 resize-y text-sm leading-relaxed"
       />
     </div>
   );
@@ -520,8 +520,8 @@ function SlideRow({
           placeholder={`Texte de la diapo ${index + 1}…`}
           onBlur={(e) => save("text", e.target.value || null)}
           disabled={!canEdit}
-          rows={3}
-          className="min-w-0 flex-1 text-sm"
+          rows={10}
+          className="min-w-0 flex-1 resize-y text-sm leading-relaxed"
         />
       </div>
     </li>
