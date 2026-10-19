@@ -75,6 +75,10 @@ export type AdCampaignComment = {
   user_id: string;
   body: string;
   created_at: string;
+  /** 'photo' | 'text' | null (global). Migration 0066. */
+  target_type: "photo" | "text" | null;
+  /** id de la ligne ad_slides (diapo) ou ads (carte unique). Null = global. */
+  target_id: string | null;
 };
 
 export const AD_STATUS_LABEL: Record<AdCampaignStatus, string> = {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarDays, Target } from "lucide-react";
 import { AD_STATUS_LABEL } from "@/lib/types-ads";
+import { PlanningAdCard } from "@/components/ads/planning-ad-card";
 
 /**
  * Les deux vues alternatives à la liste simple :
@@ -15,6 +16,7 @@ import { AD_STATUS_LABEL } from "@/lib/types-ads";
 
 export type CampaignRow = {
   id: string;
+  brand_id: string;
   title: string;
   theme: string | null;
   platforms: string[];
@@ -76,11 +78,17 @@ export function AdsPlanningView({
   campaigns,
   media,
   adSetsByCampaign = {},
+  commentsByTarget = {},
 }: {
   campaigns: CampaignRow[];
   media: MediaRow[];
   /** Les ad sets d'une campagne, chacun avec ses ads (visuel + texte). */
   adSetsByCampaign?: Record<string, AdSetWithAds[]>;
+  /** Commentaires ciblés (0066). Clé : "campaignId:photo|text:targetId". */
+  commentsByTarget?: Record<
+    string,
+    { id: string; body: string; created_at: string; author_email: string }[]
+  >;
 }) {
   // Legacy : visuels attachés à la campagne (avant la migration 0064). On
   // les garde en secours pour les campagnes qui n'ont pas encore d'ad.
@@ -181,70 +189,14 @@ export function AdsPlanningView({
                       </p>
                     ) : (
                       <ul className="grid gap-2 sm:grid-cols-2">
-                        {s.ads.map((a) => {
-                          // Diapos : les slides si l'ad est en carrousel,
-                          // sinon la carte unique (ad.visual_url + ad.hook).
-                          const cards =
-                            a.slides.length > 0
-                              ? a.slides
-                              : [{ visual_url: a.visual_url, text: a.hook }];
-                          const isCarousel = a.slides.length > 0;
-                          return (
-                            <li
-                              key={a.id}
-                              className="space-y-2 rounded-lg bg-card p-2"
-                            >
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="truncate font-semibold text-foreground">
-                                  {a.name ?? "Ad"}
-                                </span>
-                                {isCarousel && (
-                                  <span className="shrink-0 rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-medium text-foreground/70">
-                                    Carrousel · {cards.length} diapos
-                                  </span>
-                                )}
-                              </div>
-                              <ul className="space-y-1.5">
-                                {cards.map((card, ci) => (
-                                  <li
-                                    key={ci}
-                                    className="flex items-start gap-2"
-                                  >
-                                    {card.visual_url ? (
-                                      // eslint-disable-next-line @next/next/no-img-element
-                                      <img
-                                        src={card.visual_url}
-                                        alt=""
-                                        className="h-16 w-12 shrink-0 rounded-md object-cover"
-                                      />
-                                    ) : (
-                                      <div className="grid h-16 w-12 shrink-0 place-items-center rounded-md bg-foreground/5 text-[9px] text-muted-foreground">
-                                        —
-                                      </div>
-                                    )}
-                                    <div className="min-w-0 flex-1">
-                                      {isCarousel && (
-                                        <p className="text-[10px] font-semibold uppercase text-muted-foreground">
-                                          Diapo {ci + 1}
-                                        </p>
-                                      )}
-                                      <p
-                                        className="line-clamp-3 whitespace-pre-wrap text-[11px] text-foreground/70"
-                                        dir="auto"
-                                      >
-                                        {card.text?.trim() || (
-                                          <span className="text-muted-foreground">
-                                            Pas encore de texte
-                                          </span>
-                                        )}
-                                      </p>
-                                    </div>
-                                  </li>
-                                ))}
-                              </ul>
-                            </li>
-                          );
-                        })}
+                        {s.ads.map((a) => (
+                          <PlanningAdCard
+                            key={a.id}
+                            campaignId={c.id}
+                            ad={a}
+                            commentsByTarget={commentsByTarget}
+                          />
+                        ))}
                       </ul>
                     )}
                   </div>
@@ -298,26 +250,96 @@ export function AdsCalendarView({
   month,
 }: {
   campaigns: CampaignRow[];
-  /** YYYY-MM — le mois à afficher. */
   month: string;
 }) {
   const [yearStr, monthStr] = month.split("-");
   const year = Number(yearStr);
-  const m0 = Number(monthStr) - 1; // 0..11
+  const m0 = Number(monthStr) - 1;
   const firstOfMonth = new Date(year, m0, 1);
-  const lastOfMonth = new Date(year, m0 + 1, 0);
 
-  // On démarre la grille au lundi qui précède (ou égale) le 1er du mois.
-  const start = new Date(firstOfMonth);
-  const dow = (start.getDay() + 6) % 7; // 0 = lundi
-  start.setDate(start.getDate() - dow);
+  const gridStart = new Date(firstOfMonth);
+  gridStart.setDate(gridStart.getDate() - ((gridStart.getDay() + 6) % 7));
 
-  // Grille de 6 semaines (42 jours) : couvre tous les cas.
-  const days: Date[] = [];
-  for (let i = 0; i < 42; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    days.push(d);
+  // 6 semaines de 7 jours.
+  const weeks: Date[][] = [];
+  for (let w = 0; w < 6; w++) {
+    const row: Date[] = [];
+    for (let d = 0; d < 7; d++) {
+      const dd = new Date(gridStart);
+      dd.setDate(gridStart.getDate() + w * 7 + d);
+      row.push(dd);
+    }
+    weeks.push(row);
+  }
+
+  function iso(d: Date): string {
+    const y = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${mm}-${dd}`;
+  }
+  const todayKey = iso(new Date());
+
+  // Pour chaque campagne, on détermine ses « segments » : un segment par
+  // semaine traversée, avec colonne de départ et nombre de jours. Puis on
+  // assigne un « rail » par semaine en lecture gloutonne pour éviter les
+  // chevauchements. Un rail = une ligne horizontale sous les numéros du
+  // jour. Résultat : la bande s'étire sur plusieurs cases consécutives,
+  // au lieu d'être recopiée dans chaque case.
+  type Seg = { campaign: CampaignRow; weekIdx: number; startCol: number; span: number; isStart: boolean; isEnd: boolean };
+  const segs: Seg[] = [];
+  for (const c of campaigns) {
+    if (!c.date_start) continue;
+    const s = new Date(c.date_start);
+    const e = c.date_end ? new Date(c.date_end) : s;
+    // Normaliser à minuit
+    s.setHours(0, 0, 0, 0);
+    e.setHours(0, 0, 0, 0);
+    for (let w = 0; w < weeks.length; w++) {
+      const weekStart = weeks[w][0];
+      const weekEnd = weeks[w][6];
+      if (e < weekStart || s > weekEnd) continue;
+      const segStart = s < weekStart ? weekStart : s;
+      const segEnd = e > weekEnd ? weekEnd : e;
+      const startCol = Math.round(
+        (segStart.getTime() - weekStart.getTime()) / (24 * 3600 * 1000),
+      );
+      const span = Math.round(
+        (segEnd.getTime() - segStart.getTime()) / (24 * 3600 * 1000) + 1,
+      );
+      segs.push({
+        campaign: c,
+        weekIdx: w,
+        startCol,
+        span,
+        isStart: iso(segStart) === iso(s),
+        isEnd: iso(segEnd) === iso(e),
+      });
+    }
+  }
+
+  // Lane assignment par semaine : on trie par startCol puis par titre ;
+  // chaque rail garde la dernière colonne occupée.
+  const laneBySeg = new Map<Seg, number>();
+  const lanesByWeek = new Array(weeks.length).fill(0) as number[];
+  for (let w = 0; w < weeks.length; w++) {
+    const weekSegs = segs
+      .filter((s) => s.weekIdx === w)
+      .sort((a, b) =>
+        a.startCol - b.startCol ||
+        a.campaign.title.localeCompare(b.campaign.title),
+      );
+    const laneEnds: number[] = [];
+    for (const seg of weekSegs) {
+      let lane = laneEnds.findIndex((end) => end <= seg.startCol);
+      if (lane === -1) {
+        lane = laneEnds.length;
+        laneEnds.push(0);
+      }
+      laneEnds[lane] = seg.startCol + seg.span;
+      laneBySeg.set(seg, lane);
+    }
+    lanesByWeek[w] = laneEnds.length;
   }
 
   const prevMonth = new Date(year, m0 - 1, 1);
@@ -325,36 +347,16 @@ export function AdsCalendarView({
   const monthHref = (d: Date) =>
     `/ads?view=calendar&month=${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
-  // Index des campagnes par jour (YYYY-MM-DD) : une case affiche jusqu'à 3
-  // bandes et un « +N » si plus.
-  function iso(d: Date): string {
-    const y = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${y}-${mm}-${dd}`;
-  }
-  const byDay = new Map<string, CampaignRow[]>();
-  for (const d of days) byDay.set(iso(d), []);
-  for (const c of campaigns) {
-    if (!c.date_start) continue;
-    const s = new Date(c.date_start);
-    const e = c.date_end ? new Date(c.date_end) : s;
-    for (
-      const cur = new Date(s);
-      cur <= e;
-      cur.setDate(cur.getDate() + 1)
-    ) {
-      const key = iso(cur);
-      if (byDay.has(key)) byDay.get(key)!.push(c);
-    }
-  }
-
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
   const monthLabel = firstOfMonth.toLocaleDateString("fr-FR", {
     month: "long",
     year: "numeric",
   });
-  const todayKey = iso(new Date());
+
+  const LANE_H = 20; // px — hauteur d'un rail
+  const LANE_GAP = 4;
+  const HEADER_H = 24; // la zone avec le numéro du jour
+  const MIN_CELL = 90;
 
   return (
     <div className="space-y-3">
@@ -392,58 +394,77 @@ export function AdsCalendarView({
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7">
-          {days.map((d, i) => {
-            const inMonth = d.getMonth() === m0;
-            const key = iso(d);
-            const list = byDay.get(key) ?? [];
-            const visible = list.slice(0, 3);
-            const extra = list.length - visible.length;
-            const isToday = key === todayKey;
-            const isWeekStart = i % 7 === 0;
-            return (
-              <div
-                key={key}
-                className={`min-h-[88px] border-foreground/10 p-1.5 ${
-                  i >= 7 ? "border-t" : ""
-                } ${isWeekStart ? "" : "border-l"} ${
-                  inMonth ? "" : "bg-foreground/[0.02]"
-                }`}
-              >
-                <div
-                  className={`mb-1 text-xs ${
-                    isToday
-                      ? "inline-grid h-5 w-5 place-items-center rounded-full bg-accent font-semibold text-accent-foreground"
-                      : inMonth
-                        ? "text-foreground/70"
-                        : "text-foreground/30"
-                  }`}
-                >
-                  {d.getDate()}
-                </div>
-                <div className="space-y-1">
-                  {visible.map((c) => (
-                    <Link
-                      key={`${key}-${c.id}`}
-                      href={`/ads/${c.id}`}
-                      className={`block truncate rounded px-1.5 py-0.5 text-xs font-medium transition hover:opacity-80 ${
-                        BAND_TONE[c.status] ?? "bg-foreground/10 text-foreground"
+
+        {weeks.map((row, w) => {
+          const weekSegs = segs.filter((s) => s.weekIdx === w);
+          const laneCount = lanesByWeek[w];
+          const bandsHeight = laneCount * (LANE_H + LANE_GAP);
+          const rowHeight = Math.max(MIN_CELL, HEADER_H + bandsHeight + 8);
+          return (
+            <div
+              key={w}
+              className="relative grid grid-cols-7"
+              style={{ height: `${rowHeight}px` }}
+            >
+              {/* Cases : numéros du jour + fond + bordures */}
+              {row.map((d, di) => {
+                const key = iso(d);
+                const inMonth = d.getMonth() === m0;
+                const isToday = key === todayKey;
+                return (
+                  <div
+                    key={key}
+                    className={`relative border-foreground/10 p-1.5 ${
+                      w > 0 ? "border-t" : ""
+                    } ${di > 0 ? "border-l" : ""} ${
+                      inMonth ? "" : "bg-foreground/[0.02]"
+                    }`}
+                  >
+                    <div
+                      className={`text-xs ${
+                        isToday
+                          ? "inline-grid h-5 w-5 place-items-center rounded-full bg-accent font-semibold text-accent-foreground"
+                          : inMonth
+                            ? "text-foreground/70"
+                            : "text-foreground/30"
                       }`}
-                      title={c.title}
                     >
-                      {c.title}
-                    </Link>
-                  ))}
-                  {extra > 0 ? (
-                    <div className="text-xs text-muted-foreground">
-                      +{extra}
+                      {d.getDate()}
                     </div>
-                  ) : null}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                  </div>
+                );
+              })}
+              {/* Bandes continues superposées — une bande par (campagne,
+                  semaine), étirée sur ses colonnes. */}
+              {weekSegs.map((seg) => {
+                const lane = laneBySeg.get(seg) ?? 0;
+                const leftPct = (seg.startCol / 7) * 100;
+                const widthPct = (seg.span / 7) * 100;
+                const top = HEADER_H + lane * (LANE_H + LANE_GAP);
+                const rounded = `${seg.isStart ? "rounded-l-full" : ""} ${seg.isEnd ? "rounded-r-full" : ""}`;
+                return (
+                  <Link
+                    key={`${seg.campaign.id}-${seg.weekIdx}-${seg.startCol}`}
+                    href={`/ads/${seg.campaign.id}`}
+                    title={`${seg.campaign.title} · ${formatRange(seg.campaign.date_start, seg.campaign.date_end)}`}
+                    className={`absolute flex items-center overflow-hidden truncate px-2 text-[11px] font-medium transition hover:opacity-80 ${
+                      BAND_TONE[seg.campaign.status] ??
+                      "bg-foreground/10 text-foreground"
+                    } ${rounded}`}
+                    style={{
+                      top: `${top}px`,
+                      left: `calc(${leftPct}% + 2px)`,
+                      width: `calc(${widthPct}% - 4px)`,
+                      height: `${LANE_H}px`,
+                    }}
+                  >
+                    {seg.isStart ? seg.campaign.title : " "}
+                  </Link>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

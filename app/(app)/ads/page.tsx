@@ -35,7 +35,7 @@ const STATUS_TONE: Record<string, string> = {
   stopped: "bg-foreground/10 text-foreground",
 };
 
-type ViewMode = "list" | "planning" | "calendar";
+type ViewMode = "planning" | "calendar";
 
 function monthKey(iso: string | null): string {
   if (!iso) return "Sans date";
@@ -70,10 +70,8 @@ export default async function AdsPage({
   if (!active) redirect("/dashboard");
 
   const params = await searchParams;
-  const view: ViewMode =
-    params.view === "planning" || params.view === "calendar"
-      ? params.view
-      : "list";
+  // Planning est le défaut. L'ancienne « Liste » redirige en silence.
+  const view: ViewMode = params.view === "calendar" ? "calendar" : "planning";
 
   const now = new Date();
   const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -85,7 +83,7 @@ export default async function AdsPage({
   const { data } = await supabase
     .from("ad_campaigns")
     .select(
-      "id, title, theme, platforms, budget_global, budget_daily, targeting_age, targeting_location, targeting_interests, date_start, date_end, status, review_state, evaluation",
+      "id, brand_id, title, theme, platforms, budget_global, budget_daily, targeting_age, targeting_location, targeting_interests, date_start, date_end, status, review_state, evaluation",
     )
     .eq("brand_id", active.id)
     .order("date_start", { ascending: false, nullsFirst: false })
@@ -112,6 +110,12 @@ export default async function AdsPage({
         slides: { visual_url: string | null; text: string | null }[];
       }[];
     }[]
+  > = {};
+  // Commentaires ciblés (0066) sur photo/texte, chargés pour toutes les
+  // campagnes affichées dans le Planning. Clé = "campaignId:type:id".
+  const commentsByTargetPlanning: Record<
+    string,
+    { id: string; body: string; created_at: string; author_email: string }[]
   > = {};
   if (view === "planning" && campaigns.length > 0) {
     const campaignIds = campaigns.map((c) => c.id);
@@ -149,6 +153,45 @@ export default async function AdsPage({
         .in("ads.ad_sets.campaign_id", campaignIds)
         .order("position", { ascending: true }),
     ]);
+
+    // Commentaires ciblés uniquement (target_type non null) — les
+    // commentaires globaux restent sur la fiche.
+    const { data: targetedComments } = await supabase
+      .from("ad_campaign_comments")
+      .select("id, campaign_id, user_id, body, created_at, target_type, target_id")
+      .in("campaign_id", campaignIds)
+      .not("target_type", "is", null)
+      .order("created_at", { ascending: true });
+    // Résoudre les e-mails en une seule RPC par marque (ou en l'absence
+    // de la RPC, on affiche juste l'id).
+    const emails = new Map<string, string>();
+    const brandIds = Array.from(new Set(campaigns.map((c) => c.brand_id)));
+    for (const bid of brandIds) {
+      const { data: members } = await supabase.rpc(
+        "list_brand_members_with_emails",
+        { p_brand_id: bid },
+      );
+      for (const m of (members ?? []) as { user_id: string; email: string }[]) {
+        emails.set(m.user_id, m.email);
+      }
+    }
+    for (const c of (targetedComments ?? []) as {
+      id: string;
+      campaign_id: string;
+      user_id: string;
+      body: string;
+      created_at: string;
+      target_type: string;
+      target_id: string;
+    }[]) {
+      const key = `${c.campaign_id}:${c.target_type}:${c.target_id}`;
+      (commentsByTargetPlanning[key] ||= []).push({
+        id: c.id,
+        body: c.body,
+        created_at: c.created_at,
+        author_email: emails.get(c.user_id) ?? "—",
+      });
+    }
     media = (mediaData ?? []) as MediaRow[];
 
     // 1) poser les ad sets vides
@@ -233,7 +276,6 @@ export default async function AdsPage({
             <div className="inline-flex gap-0.5 rounded-full border border-white/20 bg-white/10 p-0.5 backdrop-blur-sm">
               {(
                 [
-                  { v: "list" as const, href: "/ads", label: "Liste" },
                   {
                     v: "planning" as const,
                     href: monthHref("planning"),
@@ -292,115 +334,17 @@ export default async function AdsPage({
             </Button>
           </form>
         </div>
-      ) : view === "planning" ? (
+      ) : view === "calendar" ? (
+        <AdsCalendarView campaigns={campaigns} month={month} />
+      ) : (
         <AdsPlanningView
           campaigns={campaigns}
           media={media}
           adSetsByCampaign={adSetsByCampaign}
+          commentsByTarget={commentsByTargetPlanning}
         />
-      ) : view === "calendar" ? (
-        <AdsCalendarView campaigns={campaigns} month={month} />
-      ) : (
-        <ListView campaigns={campaigns} />
       )}
     </div>
   );
 }
 
-// =====================================================================
-// Vue Liste (défaut) — groupée par mois
-// =====================================================================
-
-function ListView({ campaigns }: { campaigns: CampaignRow[] }) {
-  const groups = new Map<string, CampaignRow[]>();
-  for (const c of campaigns) {
-    const k = monthKey(c.date_start);
-    const list = groups.get(k) ?? [];
-    list.push(c);
-    groups.set(k, list);
-  }
-  return (
-    <div className="space-y-8">
-      {[...groups.entries()].map(([month, rows]) => (
-        <section key={month} className="space-y-3">
-          <h2 className="text-sm font-semibold capitalize text-muted-foreground">
-            {month}
-          </h2>
-          <ul className="grid gap-3 md:grid-cols-2">
-            {rows.map((c) => {
-              const platforms = Array.isArray(c.platforms) ? c.platforms : [];
-              return (
-                <li key={c.id} className="group relative">
-                  <AdCardDelete
-                    campaignId={c.id}
-                    title={c.title || "Sans titre"}
-                  />
-                  <Link
-                    href={`/ads/${c.id}`}
-                    className="block rounded-2xl border border-foreground/10 bg-card p-4 pe-12 transition hover:border-accent/40"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="truncate text-base font-semibold text-foreground">
-                          {c.title || "Sans titre"}
-                        </h3>
-                        {c.theme ? (
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                            {c.theme}
-                          </p>
-                        ) : null}
-                      </div>
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                          STATUS_TONE[c.status] ?? "bg-foreground/5"
-                        }`}
-                      >
-                        {AD_STATUS_LABEL[
-                          c.status as keyof typeof AD_STATUS_LABEL
-                        ] ?? c.status}
-                      </span>
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      {c.date_start ? (
-                        <span className="inline-flex items-center gap-1">
-                          <CalendarDays className="h-3.5 w-3.5" />
-                          {formatRange(c.date_start, c.date_end)}
-                        </span>
-                      ) : null}
-                      {c.budget_global ? (
-                        <span>Budget {c.budget_global}</span>
-                      ) : null}
-                      {platforms.length > 0 ? (
-                        <span>{platforms.join(" · ")}</span>
-                      ) : null}
-                      {c.review_state === "pending_review" ? (
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900 dark:bg-amber-500/20 dark:text-amber-200">
-                          En attente du client
-                        </span>
-                      ) : null}
-                      {c.review_state === "needs_revision" ? (
-                        <span className="rounded-full bg-rose-100 px-2 py-0.5 font-medium text-rose-900 dark:bg-rose-500/20 dark:text-rose-200">
-                          À retravailler
-                        </span>
-                      ) : null}
-                      {c.evaluation ? (
-                        <span className="rounded-full bg-foreground/5 px-2 py-0.5 font-medium">
-                          Résultat :{" "}
-                          {c.evaluation === "good"
-                            ? "bon"
-                            : c.evaluation === "average"
-                              ? "moyen"
-                              : "faible"}
-                        </span>
-                      ) : null}
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ))}
-    </div>
-  );
-}

@@ -417,3 +417,28 @@ export async function deleteAdSlide(slideId: string, campaignId: string) {
   revalidatePath("/ads");
   return { ok: true as const };
 }
+
+/** Commentaire ciblé sur une photo ou un texte d'ad (migration 0066).
+ *  target: null = global, sinon { type: 'photo'|'text', id: slide/ad id }. */
+export async function addAdCampaignTargetedComment(
+  campaignId: string,
+  body: string,
+  target: { type: "photo" | "text"; id: string } | null,
+) {
+  const supabase = await createClient();
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return { error: "Non authentifié" };
+  const text = body.trim();
+  if (!text) return { error: "Vide" };
+  const { error } = await supabase.from("ad_campaign_comments").insert({
+    campaign_id: campaignId,
+    user_id: u.user.id,
+    body: text.slice(0, 2000),
+    target_type: target?.type ?? null,
+    target_id: target?.id ?? null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/ads/${campaignId}`);
+  revalidatePath("/ads");
+  return { ok: true as const };
+}
