@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CalendarDays, Target } from "lucide-react";
 import { AD_STATUS_LABEL } from "@/lib/types-ads";
 import { PlanningAdCard } from "@/components/ads/planning-ad-card";
+import { CampaignCommentsButton } from "@/components/ads/campaign-comments-button";
 
 /**
  * Les deux vues alternatives à la liste simple :
@@ -135,6 +136,11 @@ export function AdsPlanningView({
                     En attente du client
                   </span>
                 ) : null}
+                <CampaignCommentsButton
+                  campaignId={c.id}
+                  campaignTitle={c.title}
+                  comments={commentsByTarget[`${c.id}:global`] ?? []}
+                />
               </div>
               {c.theme ? (
                 <p className="text-xs text-muted-foreground">{c.theme}</p>

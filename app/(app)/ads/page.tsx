@@ -154,13 +154,13 @@ export default async function AdsPage({
         .order("position", { ascending: true }),
     ]);
 
-    // Commentaires ciblés uniquement (target_type non null) — les
-    // commentaires globaux restent sur la fiche.
+    // Tous les commentaires (ciblés + globaux) pour les campagnes
+    // affichées. Les globaux (target_type NULL) alimentent le fil
+    // « sur toute la campagne » accessible depuis l'en-tête de carte.
     const { data: targetedComments } = await supabase
       .from("ad_campaign_comments")
       .select("id, campaign_id, user_id, body, created_at, target_type, target_id")
       .in("campaign_id", campaignIds)
-      .not("target_type", "is", null)
       .order("created_at", { ascending: true });
     // Résoudre les e-mails en une seule RPC par marque (ou en l'absence
     // de la RPC, on affiche juste l'id).
@@ -181,10 +181,15 @@ export default async function AdsPage({
       user_id: string;
       body: string;
       created_at: string;
-      target_type: string;
-      target_id: string;
+      target_type: string | null;
+      target_id: string | null;
     }[]) {
-      const key = `${c.campaign_id}:${c.target_type}:${c.target_id}`;
+      // Clé spéciale pour les commentaires globaux à la campagne :
+      // `<campaignId>:global` — pas de target_id derrière.
+      const key =
+        c.target_type && c.target_id
+          ? `${c.campaign_id}:${c.target_type}:${c.target_id}`
+          : `${c.campaign_id}:global`;
       (commentsByTargetPlanning[key] ||= []).push({
         id: c.id,
         body: c.body,
