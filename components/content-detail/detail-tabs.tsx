@@ -9,6 +9,7 @@ import { StoryboardTab } from "./storyboard-tab";
 import { CaptionTab } from "./caption-tab";
 import { ContentTab } from "./content-tab";
 import { FirstCommentTab } from "./first-comment-tab";
+import { VideoTab } from "./video-tab";
 import { PerformanceTab } from "./performance-tab";
 import { isSimpleType, isLiveStatus } from "@/lib/constants";
 import type {
@@ -89,10 +90,11 @@ export function DetailTabs({
       <TabsList data-tour="content-tabs">
         <TabsTrigger value="plan">{t("plan")}</TabsTrigger>
         {!hasFormat ? null : isSimple ? (
-          /* Post / Carrousel / Infographie : Contenu (visuels + légende) +
-             le premier commentaire à poster sous le post. */
+          /* Post / Carrousel / Infographie : Contenu (visuels + légende),
+             onglet Vidéo (lien externe) puis premier commentaire. */
           <>
             <TabsTrigger value="content">Contenu</TabsTrigger>
+            <TabsTrigger value="video">Vidéo</TabsTrigger>
             <TabsTrigger value="first-comment">Commentaires</TabsTrigger>
           </>
         ) : (
@@ -100,6 +102,9 @@ export function DetailTabs({
             <TabsTrigger value="script">
               {isStory ? t("stories") : isVlog ? "Vlog" : t("script")}
             </TabsTrigger>
+            {/* Onglet Vidéo juste après le Script : lien Drive/YouTube/Vimeo
+                de la vidéo déjà prête, avec aperçu intégré. */}
+            <TabsTrigger value="video">Vidéo</TabsTrigger>
             {/* Storyboard = Reel uniquement (le vlog se capture, pas se story-borde). */}
             {!isStory && !isVlog && (
               <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>
@@ -132,6 +137,9 @@ export function DetailTabs({
               isCarousel={content.type === "carousel"}
             />
           </TabsContent>
+          <TabsContent value="video">
+            <VideoTab contentId={content.id} previewUrl={content.preview_url} />
+          </TabsContent>
           <TabsContent value="first-comment">
             <FirstCommentTab
               contentId={content.id}
@@ -156,6 +164,9 @@ export function DetailTabs({
                 brandAudience={brandAudience}
               />
             )}
+          </TabsContent>
+          <TabsContent value="video">
+            <VideoTab contentId={content.id} previewUrl={content.preview_url} />
           </TabsContent>
           {!isStory && !isVlog && (
             <TabsContent value="storyboard">
