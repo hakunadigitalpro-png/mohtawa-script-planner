@@ -4,7 +4,16 @@ import * as React from "react";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Film, X } from "lucide-react";
+import { Film, X, Pencil } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import {
   statusColor,
   statusLabel,
@@ -55,6 +64,10 @@ export function PlanningTable({
 }) {
   const router = useRouter();
   const [lightbox, setLightbox] = React.useState<string | null>(null);
+  // Lecture d'une légende dans une popup — contient le contenu (pour
+  // le texte) et l'id (pour que le bouton crayon mène à sa fiche).
+  const [captionReader, setCaptionReader] =
+    React.useState<{ id: string; title: string | null; caption: string | null } | null>(null);
 
   // ESC ferme la lightbox — reproduit la convention des modales de l'app.
   React.useEffect(() => {
@@ -163,16 +176,25 @@ export function PlanningTable({
                     />
                     {statusLabel(c.status)}
                   </span>
-                  {/* Clic sur la légende → onglet Légende directement. On
-                      stoppe la propagation pour ne pas ouvrir le Plan. */}
+                  {/* Clic sur la légende → popup lecture avec un crayon
+                      pour aller la modifier. Vide → on va directement
+                      à l'onglet Légende pour la rédiger. */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      openFiche(c.id, "caption");
+                      if (c.caption?.trim()) {
+                        setCaptionReader({
+                          id: c.id,
+                          title: c.title,
+                          caption: c.caption,
+                        });
+                      } else {
+                        openFiche(c.id, "caption");
+                      }
                     }}
                     className="min-w-0 truncate text-start text-foreground/70 hover:text-foreground"
-                    title={c.caption ?? "Ouvrir la légende"}
+                    title={c.caption ?? "Rédiger la légende"}
                   >
                     {c.caption?.trim() || (
                       <span className="text-muted">— ajouter une légende</span>
@@ -242,6 +264,47 @@ export function PlanningTable({
           ))}
         </div>
       </div>
+
+      {/* Popup lecture de la légende : on la lit en entier sans quitter
+          le Planning ; le crayon ouvre l'onglet Légende pour modifier. */}
+      <Dialog open={Boolean(captionReader)} onOpenChange={(o) => !o && setCaptionReader(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>
+              Légende{captionReader?.title ? ` · ${captionReader.title}` : ""}
+            </DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <p
+              dir="auto"
+              className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-2xl bg-secondary/40 p-4 text-sm leading-relaxed text-foreground"
+            >
+              {captionReader?.caption}
+            </p>
+          </DialogBody>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setCaptionReader(null)}
+            >
+              Fermer
+            </Button>
+            <Button
+              type="button"
+              variant="accent"
+              onClick={() => {
+                const id = captionReader?.id;
+                setCaptionReader(null);
+                if (id) openFiche(id, "caption");
+              }}
+            >
+              <Pencil className="size-4" />
+              Modifier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Lightbox : agrandissement du visuel en superposition, cliquer
           l'arrière-plan ou Échap pour fermer. */}
