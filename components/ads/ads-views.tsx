@@ -58,28 +58,35 @@ function formatRange(start: string | null, end: string | null): string {
 // Vue Planning : une carte large par campagne
 // =====================================================================
 
+type AdSetWithAds = {
+  id: string;
+  name: string | null;
+  targeting: string;
+  budget_daily: string | null;
+  ads: {
+    id: string;
+    name: string | null;
+    hook: string | null;
+    visual_url: string | null;
+  }[];
+};
+
 export function AdsPlanningView({
   campaigns,
   media,
-  adSetCountByCampaign = {},
-  adsByCampaign = {},
+  adSetsByCampaign = {},
 }: {
   campaigns: CampaignRow[];
   media: MediaRow[];
-  /** Nombre d'ad sets par campagne (compteur discret dans la carte). */
-  adSetCountByCampaign?: Record<string, number>;
-  /** Les ads de chaque campagne (nom + visuel) — mini-strip sous les métadonnées. */
-  adsByCampaign?: Record<string, { name: string | null; visual_url: string | null }[]>;
+  /** Les ad sets d'une campagne, chacun avec ses ads (visuel + texte). */
+  adSetsByCampaign?: Record<string, AdSetWithAds[]>;
 }) {
-  // On garde le PREMIER visuel de chaque campagne comme vignette principale.
+  // Legacy : visuels attachés à la campagne (avant la migration 0064). On
+  // les garde en secours pour les campagnes qui n'ont pas encore d'ad.
   const firstVisualByCampaign = new Map<string, string>();
-  const firstTargetingByCampaign = new Map<string, string>();
   for (const m of media) {
     if (m.kind === "visual" && !firstVisualByCampaign.has(m.campaign_id)) {
       firstVisualByCampaign.set(m.campaign_id, m.image_url);
-    }
-    if (m.kind === "targeting" && !firstTargetingByCampaign.has(m.campaign_id)) {
-      firstTargetingByCampaign.set(m.campaign_id, m.image_url);
     }
   }
 
@@ -94,122 +101,142 @@ export function AdsPlanningView({
   return (
     <ul className="space-y-3">
       {campaigns.map((c) => {
-        const visual = firstVisualByCampaign.get(c.id);
-        const targeting = firstTargetingByCampaign.get(c.id);
-        const targetingText = [
-          c.targeting_age,
-          c.targeting_location,
-          c.targeting_interests,
-        ]
-          .filter(Boolean)
-          .join(" · ");
+        const adSets = adSetsByCampaign[c.id] ?? [];
+        const legacyVisual = firstVisualByCampaign.get(c.id);
+        const totalAds = adSets.reduce((n, s) => n + s.ads.length, 0);
         return (
-          <li key={c.id}>
+          <li
+            key={c.id}
+            className="rounded-2xl border border-foreground/10 bg-card p-4 transition hover:border-accent/40"
+          >
+            {/* En-tête — infos de la campagne, cliquable → la fiche. */}
             <Link
               href={`/ads/${c.id}`}
-              className="group grid gap-4 rounded-2xl border border-foreground/10 bg-card p-4 transition hover:border-accent/40 md:grid-cols-[180px_minmax(0,1fr)_200px]"
+              className="block space-y-2"
             >
-              {visual ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={visual}
-                  alt=""
-                  className="h-32 w-full rounded-xl object-cover md:h-full"
-                />
-              ) : (
-                <div className="grid h-32 w-full place-items-center rounded-xl bg-foreground/5 text-xs text-muted-foreground md:h-full">
-                  Pas encore de visuel
-                </div>
-              )}
-              <div className="min-w-0 space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="truncate text-base font-semibold text-foreground">
-                    {c.title}
-                  </h3>
-                  <span className="rounded-full bg-foreground/5 px-2 py-0.5 text-xs font-medium text-foreground">
-                    {statusLabel(c.status)}
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="truncate text-base font-semibold text-foreground">
+                  {c.title}
+                </h3>
+                <span className="rounded-full bg-foreground/5 px-2 py-0.5 text-xs font-medium text-foreground">
+                  {statusLabel(c.status)}
+                </span>
+                {c.review_state === "pending_review" ? (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-500/20 dark:text-amber-200">
+                    En attente du client
                   </span>
-                  {c.review_state === "pending_review" ? (
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-500/20 dark:text-amber-200">
-                      En attente du client
-                    </span>
-                  ) : null}
-                </div>
-                {c.theme ? (
-                  <p className="text-xs text-muted-foreground">{c.theme}</p>
                 ) : null}
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarDays className="h-3.5 w-3.5" />
-                    {formatRange(c.date_start, c.date_end)}
-                  </span>
-                  {c.platforms.length > 0 ? (
-                    <span>{c.platforms.join(" · ")}</span>
-                  ) : null}
-                  {c.budget_global ? (
-                    <span>Budget {c.budget_global}</span>
-                  ) : null}
-                </div>
-                {targetingText ? (
-                  <p className="flex items-start gap-1.5 text-xs text-foreground/70">
-                    <Target className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                    <span className="line-clamp-2">{targetingText}</span>
-                  </p>
-                ) : null}
-                {/* Structure Meta : compteur ad sets + mini-strip des
-                    visuels d'ads (jusqu'à 4). Donne un aperçu sans forcer
-                    à ouvrir la fiche. */}
-                {(() => {
-                  const ads = adsByCampaign[c.id] ?? [];
-                  const setCount = adSetCountByCampaign[c.id] ?? 0;
-                  if (setCount === 0 && ads.length === 0) return null;
-                  return (
-                    <div className="flex items-center gap-2 pt-1 text-xs">
-                      <span className="rounded-full bg-foreground/5 px-2 py-0.5 font-medium text-foreground/80">
-                        {setCount} ad set{setCount > 1 ? "s" : ""} · {ads.length} ad
-                        {ads.length > 1 ? "s" : ""}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {ads.slice(0, 4).map((a, i) =>
-                          a.visual_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              key={i}
-                              src={a.visual_url}
-                              alt={a.name ?? ""}
-                              className="h-7 w-7 rounded-md object-cover"
-                            />
-                          ) : (
-                            <span
-                              key={i}
-                              className="h-7 w-7 rounded-md bg-foreground/5"
-                              title={a.name ?? "Ad sans visuel"}
-                            />
-                          ),
-                        )}
-                        {ads.length > 4 && (
-                          <span className="text-muted-foreground">
-                            +{ads.length - 4}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()}
               </div>
-              {targeting ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={targeting}
-                  alt="Capture du ciblage"
-                  className="hidden h-full w-full rounded-xl object-cover md:block"
-                />
-              ) : (
-                <div className="hidden place-items-center rounded-xl bg-foreground/5 text-xs text-muted-foreground md:grid">
-                  Pas de capture
-                </div>
-              )}
+              {c.theme ? (
+                <p className="text-xs text-muted-foreground">{c.theme}</p>
+              ) : null}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  {formatRange(c.date_start, c.date_end)}
+                </span>
+                {c.platforms.length > 0 ? (
+                  <span>{c.platforms.join(" · ")}</span>
+                ) : null}
+                {c.budget_global ? (
+                  <span>Budget {c.budget_global}</span>
+                ) : null}
+                <span>
+                  {adSets.length} ad set{adSets.length > 1 ? "s" : ""} ·{" "}
+                  {totalAds} ad{totalAds > 1 ? "s" : ""}
+                </span>
+              </div>
             </Link>
+
+            {/* Les ad sets, chacun avec SES ads (visuel + texte côte à
+                côte). C'est ce qui va vraiment être diffusé — on le
+                montre, on ne le résume plus en vignettes anonymes. */}
+            {adSets.length > 0 ? (
+              <div className="mt-3 space-y-3">
+                {adSets.map((s) => (
+                  <div
+                    key={s.id}
+                    className="rounded-xl border border-foreground/10 bg-secondary/20 p-3"
+                  >
+                    <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                      <span className="font-semibold text-foreground">
+                        {s.name ?? "Ad set"}
+                      </span>
+                      {s.targeting ? (
+                        <span className="inline-flex items-center gap-1 text-muted-foreground">
+                          <Target className="h-3 w-3" />
+                          {s.targeting}
+                        </span>
+                      ) : null}
+                      {s.budget_daily ? (
+                        <span className="text-muted-foreground">
+                          {s.budget_daily}/j
+                        </span>
+                      ) : null}
+                    </div>
+                    {s.ads.length === 0 ? (
+                      <p className="rounded-lg border border-dashed border-foreground/10 p-2 text-center text-xs text-muted-foreground">
+                        Pas encore d&apos;ad dans ce groupe.
+                      </p>
+                    ) : (
+                      <ul className="grid gap-2 sm:grid-cols-2">
+                        {s.ads.map((a) => (
+                          <li
+                            key={a.id}
+                            className="flex items-start gap-2 rounded-lg bg-card p-2"
+                          >
+                            {a.visual_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={a.visual_url}
+                                alt={a.name ?? ""}
+                                className="h-20 w-16 shrink-0 rounded-md object-cover"
+                              />
+                            ) : (
+                              <div className="grid h-20 w-16 shrink-0 place-items-center rounded-md bg-foreground/5 text-[10px] text-muted-foreground">
+                                Pas de visuel
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <p className="truncate text-xs font-semibold text-foreground">
+                                {a.name ?? "Ad"}
+                              </p>
+                              <p
+                                className="line-clamp-4 whitespace-pre-wrap text-xs text-foreground/70"
+                                dir="auto"
+                              >
+                                {a.hook?.trim() || (
+                                  <span className="text-muted-foreground">
+                                    Pas encore de texte
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : legacyVisual ? (
+              <div className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-foreground/10 p-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={legacyVisual}
+                  alt=""
+                  className="h-20 w-16 rounded-md object-cover"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Visuel historique (campagne d&apos;avant la structure Ad
+                  sets). Crée un ad set pour l&apos;organiser.
+                </p>
+              </div>
+            ) : (
+              <p className="mt-3 rounded-xl border border-dashed border-foreground/10 p-3 text-center text-xs text-muted-foreground">
+                Pas encore d&apos;ad.
+              </p>
+            )}
           </li>
         );
       })}
