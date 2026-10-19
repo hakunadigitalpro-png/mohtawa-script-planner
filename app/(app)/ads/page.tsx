@@ -147,15 +147,18 @@ export default async function AdsPage({
                 </Link>
               ))}
             </div>
-            <Link href="/ads/new">
+            {/* <form method="POST"> plutôt qu'un <Link> : Next préfetchait
+                les liens visibles et appelait /ads/new à chaque affichage
+                de /ads, créant une campagne brouillon à chaque refresh. */}
+            <form action="/ads/new" method="post">
               <Button
-                type="button"
+                type="submit"
                 variant={campaigns.length === 0 ? "outline" : "accent"}
               >
                 <Plus className="h-4 w-4" />
                 Nouvelle campagne
               </Button>
-            </Link>
+            </form>
           </div>
         }
       />
@@ -170,12 +173,12 @@ export default async function AdsPage({
             Une campagne regroupe la proposition que tu montres au client
             (ciblage, visuels, budget) et les résultats une fois diffusée.
           </p>
-          <Link href="/ads/new" className="mt-4 inline-block">
-            <Button type="button" variant="accent">
+          <form action="/ads/new" method="post" className="mt-4 inline-block">
+            <Button type="submit" variant="accent">
               <Plus className="h-4 w-4" />
               Créer la première
             </Button>
-          </Link>
+          </form>
         </div>
       ) : view === "planning" ? (
         <AdsPlanningView campaigns={campaigns} media={media} />
