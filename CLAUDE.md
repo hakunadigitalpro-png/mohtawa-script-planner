@@ -427,7 +427,7 @@ Supprimée à la demande de l'utilisatrice : 70 phrases figées n'avaient plus d
 - Numérotées `0001_*.sql`, `0002_*.sql`, etc.
 - **Toujours idempotentes** : `create table if not exists`, `drop policy if exists ... create policy ...`, `alter table ... add column if not exists`
 - Une migration = une feature (pas de mégamigration)
-- Le SQL est exécuté manuellement dans le SQL Editor de Supabase Studio, sur <https://api.kreatly.app> (pas de migrate automatique) — voir « Workflow de déploiement »
+- Appliquée par `ssh kreatly-migrate "<fichier>.sql" < supabase/migrations/<fichier>.sql` (essai d'abord), pas de migrate automatique — voir « Workflow de déploiement »
 
 ---
 
@@ -612,10 +612,20 @@ Pointe sur la base de production (`https://api.kreatly.app`), comme avant sur Su
 4. Coolify reconstruit et redéploie tout seul (~3-5 min). Si la construction échoue, l'ancienne version reste en ligne : lire le journal dans Coolify (un échec ponctuel du téléchargement des polices Google se règle en relançant « Redeploy »)
 5. Vérif sur `kreatly.app`
 
-Pour les changements DB (Supabase auto-hébergé, plus Supabase Cloud) :
-1. Ouvrir le fichier `0XXX_*.sql` du dossier `supabase/migrations/`
-2. Ouvrir Supabase Studio sur <https://api.kreatly.app> — identifiant et mot de passe = `SERVICE_USER_ADMIN` / `SERVICE_PASSWORD_ADMIN` dans les Environment Variables du service Supabase de Coolify — puis SQL Editor
-3. Coller, Run
+Pour les changements DB (Supabase auto-hébergé, plus Supabase Cloud) — **une session Claude Code sur ce PC applique elle-même la migration**, par la clé SSH restreinte `kreatly-migrate` (elle ne peut QUE ça) :
+
+```bash
+# 1. Vérifier sans rien changer (exécute puis annule)
+ssh kreatly-migrate "essai 0067_nom.sql" < supabase/migrations/0067_nom.sql
+# 2. Appliquer pour de vrai
+ssh kreatly-migrate "0067_nom.sql" < supabase/migrations/0067_nom.sql
+```
+
+- Toujours l'essai d'abord ; n'appliquer qu'après « ESSAI OK », et qu'avec l'accord de l'utilisatrice pour une migration qui supprime ou transforme des données.
+- Le serveur fait une sauvegarde complète de la base juste avant (`/var/backups/kreatly-migrations/`, 20 dernières), exécute en une seule transaction (une erreur = rien n'est appliqué), relance la lecture de structure de l'API (`notify pgrst`) et note la migration dans `kreatly_ops.migrations` (schéma non exposé).
+- Le nom passé doit être celui du fichier (`0067_nom.sql`). Attendre « OK : … appliquée ».
+- Le code qui dépend d'une nouvelle colonne/table ne doit être poussé qu'APRÈS la migration appliquée (sinon le déploiement automatique met en ligne un code qui casse).
+- À la main, en secours : Supabase Studio sur <https://api.kreatly.app> (identifiant/mot de passe = `SERVICE_USER_ADMIN` / `SERVICE_PASSWORD_ADMIN` du service Supabase dans Coolify), SQL Editor.
 
 Le projet Supabase Cloud `ylhsnlxefxeuxtblcmwd` n'est plus la production : gelé depuis la bascule du 19/10/2026, gardé quelques semaines en filet. Ne plus y exécuter de SQL. (Migration `0061_push_subscriptions` jamais exécutée, ni sur Cloud ni sur le serveur : les notifications push demanderont aussi `SUPABASE_SERVICE_ROLE_KEY`, `VAPID_*`, `CRON_SECRET` dans Coolify et une tâche planifiée Coolify à la place du cron de `vercel.json`.)
 
