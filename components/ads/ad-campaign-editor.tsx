@@ -173,8 +173,42 @@ export function AdCampaignEditor({
   const isPendingForMe =
     !isWriter && local.review_state === "pending_review";
 
+  // Fil de remarques repliable, pour donner toute la place aux textes
+  // des ads. L'état est mémorisé en localStorage pour que la préférence
+  // tienne entre les visites — ferme une fois, elle reste fermée.
+  const [commentsOpen, setCommentsOpen] = React.useState(true);
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem("kreatly_ad_comments_open");
+      if (saved === "0") setCommentsOpen(false);
+    } catch {
+      /* localStorage indisponible : on reste par défaut ouvert */
+    }
+  }, []);
+  const toggleComments = () => {
+    setCommentsOpen((v) => {
+      try {
+        localStorage.setItem("kreatly_ad_comments_open", v ? "0" : "1");
+      } catch {
+        /* idem */
+      }
+      return !v;
+    });
+  };
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+    // On brise la contrainte `max-w-6xl` du layout parent avec le motif
+    // `left-1/2 -ml-[50vw] w-screen` : l'éditeur occupe toute la largeur
+    // de la fenêtre, et les textes des ads respirent. Centré par
+    // auto-margin pour ne pas déborder sous un sidebar.
+    <div className="relative left-1/2 -ml-[50vw] w-screen px-4 sm:px-6 lg:px-8">
+      <div
+        className={`grid gap-6 ${
+          commentsOpen
+            ? "lg:grid-cols-[minmax(0,1fr)_320px]"
+            : "lg:grid-cols-1"
+        }`}
+      >
       <div className="space-y-6">
         {/* En-tête : statut + validation + actions ============== */}
         <section className="rounded-3xl border border-foreground/10 bg-card p-5">
@@ -490,23 +524,57 @@ export function AdCampaignEditor({
         </section>
       </div>
 
-      {/* Colonne latérale : fil de remarques =========================== */}
-      <aside className="space-y-3">
-        <section className="rounded-3xl border border-foreground/10 bg-card p-4">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <MessageSquare className="h-4 w-4" />
-            Fil de remarques
-          </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            L&apos;équipe et le client y échangent sur la campagne.
-          </p>
-          <CommentThread
-            campaignId={campaign.id}
-            comments={comments}
-            currentUserId={currentUserId}
-          />
-        </section>
-      </aside>
+      {/* Colonne latérale : fil de remarques, repliable ================= */}
+      {commentsOpen ? (
+        <aside className="space-y-3">
+          <section className="rounded-3xl border border-foreground/10 bg-card p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <MessageSquare className="h-4 w-4" />
+                  Fil de remarques
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  L&apos;équipe et le client y échangent sur la campagne.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={toggleComments}
+                title="Masquer le fil"
+                aria-label="Masquer le fil de remarques"
+                className="rounded-full p-1 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <CommentThread
+              campaignId={campaign.id}
+              comments={comments}
+              currentUserId={currentUserId}
+            />
+          </section>
+        </aside>
+      ) : null}
+      </div>
+
+      {/* Bouton flottant pour ré-ouvrir le fil quand il est masqué. */}
+      {!commentsOpen && (
+        <button
+          type="button"
+          onClick={toggleComments}
+          title="Afficher le fil de remarques"
+          className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground shadow-lg transition hover:brightness-110"
+        >
+          <MessageSquare className="h-4 w-4" />
+          Fil de remarques
+          {comments.length > 0 && (
+            <span className="rounded-full bg-black/15 px-1.5 text-xs">
+              {comments.length}
+            </span>
+          )}
+        </button>
+      )}
     </div>
   );
 }
