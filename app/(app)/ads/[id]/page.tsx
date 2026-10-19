@@ -3,6 +3,7 @@ import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { PageHeader } from "@/components/page-header";
 import { AdCampaignEditor } from "@/components/ads/ad-campaign-editor";
+import { FullWidthBoost } from "@/components/full-width-boost";
 import type {
   Ad,
   AdCampaign,
@@ -139,6 +140,7 @@ export default async function AdCampaignPage({
 
   return (
     <div className="space-y-6">
+      <FullWidthBoost />
       <PageHeader
         eyebrow={active.name}
         title={campaign.title || "Campagne sans titre"}

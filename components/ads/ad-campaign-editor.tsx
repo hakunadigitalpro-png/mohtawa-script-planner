@@ -197,18 +197,13 @@ export function AdCampaignEditor({
   };
 
   return (
-    // On brise la contrainte `max-w-6xl` du layout parent avec le motif
-    // `left-1/2 -ml-[50vw] w-screen` : l'éditeur occupe toute la largeur
-    // de la fenêtre, et les textes des ads respirent. Centré par
-    // auto-margin pour ne pas déborder sous un sidebar.
-    <div className="relative left-1/2 -ml-[50vw] w-screen px-4 sm:px-6 lg:px-8">
-      <div
-        className={`grid gap-6 ${
-          commentsOpen
-            ? "lg:grid-cols-[minmax(0,1fr)_320px]"
-            : "lg:grid-cols-1"
-        }`}
-      >
+    <div
+      className={`grid gap-6 ${
+        commentsOpen
+          ? "lg:grid-cols-[minmax(0,1fr)_320px]"
+          : "lg:grid-cols-1"
+      }`}
+    >
       <div className="space-y-6">
         {/* En-tête : statut + validation + actions ============== */}
         <section className="rounded-3xl border border-foreground/10 bg-card p-5">
@@ -556,7 +551,6 @@ export function AdCampaignEditor({
           </section>
         </aside>
       ) : null}
-      </div>
 
       {/* Bouton flottant pour ré-ouvrir le fil quand il est masqué. */}
       {!commentsOpen && (
