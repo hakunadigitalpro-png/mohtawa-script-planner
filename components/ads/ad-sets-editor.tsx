@@ -12,6 +12,7 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import {
   addAd,
   addAdSet,
+  addAdToDefaultSet,
   deleteAd,
   deleteAdSet,
   updateAdField,
@@ -49,9 +50,16 @@ export function AdSetsEditor({
     });
   };
 
+  const onAddFirstAd = () => {
+    startTransition(async () => {
+      await addAdToDefaultSet(campaignId);
+      router.refresh();
+    });
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div>
           <h2 className="text-base font-semibold">Ad sets</h2>
           <p className="text-xs text-muted-foreground">
@@ -59,7 +67,7 @@ export function AdSetsEditor({
             publicités (visuels distincts pour tester).
           </p>
         </div>
-        {canEdit && (
+        {canEdit && adSets.length > 0 && (
           <Button
             type="button"
             variant="outline"
@@ -74,9 +82,36 @@ export function AdSetsEditor({
       </div>
 
       {adSets.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-foreground/15 p-6 text-center text-sm text-muted-foreground">
-          Aucun ad set pour l&apos;instant. Ajoute-en un pour y mettre tes
-          audiences et tes visuels.
+        <div className="space-y-3 rounded-2xl border border-dashed border-foreground/15 p-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            Pas encore d&apos;ad. Ajoute-en une : un premier ad set sera créé
+            automatiquement en reprenant le ciblage et le budget que tu as
+            saisis plus haut.
+          </p>
+          {canEdit && (
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                type="button"
+                variant="accent"
+                size="sm"
+                onClick={onAddFirstAd}
+                disabled={pending}
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter une ad
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onAddSet}
+                disabled={pending}
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter un ad set vide
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <ul className="space-y-3">

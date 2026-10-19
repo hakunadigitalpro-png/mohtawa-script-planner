@@ -337,3 +337,26 @@ export async function deleteAd(adId: string, campaignId: string) {
   revalidatePath("/ads");
   return { ok: true as const };
 }
+
+/** Ajoute une ad à la 1re ad set — ou crée un ad set par défaut si la
+ *  campagne n'en a pas encore (hérite du ciblage/budget de la campagne). */
+export async function addAdToDefaultSet(campaignId: string) {
+  const supabase = await createClient();
+
+  const { data: existingSet } = await supabase
+    .from("ad_sets")
+    .select("id")
+    .eq("campaign_id", campaignId)
+    .order("position", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  let adSetId = existingSet?.id as string | undefined;
+  if (!adSetId) {
+    const created = await addAdSet(campaignId);
+    if ("error" in created) return { error: created.error };
+    adSetId = created.id;
+  }
+
+  return addAd(adSetId, campaignId);
+}
