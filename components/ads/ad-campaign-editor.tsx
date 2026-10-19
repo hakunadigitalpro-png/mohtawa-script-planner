@@ -359,17 +359,9 @@ export function AdCampaignEditor({
             />
           </Field>
 
-          <Field label="Texte principal du post">
-            <Textarea
-              rows={5}
-              value={local.post_text ?? ""}
-              onChange={(e) =>
-                setLocal({ ...local, post_text: e.target.value || null })
-              }
-              onBlur={() => flush({ post_text: local.post_text }, "post_text")}
-              disabled={!isWriter}
-            />
-          </Field>
+          {/* Le texte principal vit maintenant sur chaque ad (champ Hook).
+              La colonne `post_text` reste en base pour les anciennes
+              campagnes mais n'est plus éditable d'ici. */}
 
           {/* Ciblage et visuels vivent maintenant au niveau de l'ad set
               (migration 0064). Les colonnes `targeting_*` restent en base

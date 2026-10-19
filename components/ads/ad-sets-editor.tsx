@@ -354,7 +354,7 @@ function AdCard({
           </div>
           <Textarea
             defaultValue={ad.hook ?? ""}
-            placeholder="Hook / message principal…"
+            placeholder="Texte principal de l'ad…"
             onBlur={(e) => save("hook", e.target.value || null)}
             disabled={!canEdit}
             rows={3}
