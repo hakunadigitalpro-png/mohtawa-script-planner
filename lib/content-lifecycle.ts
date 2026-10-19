@@ -287,10 +287,17 @@ export function whyNotSendable(input: {
   visuals: number;
   script: string | null;
   caption: string | null;
+  /** Lien externe Drive/YouTube/Vimeo. Compte comme matière à relire. */
+  previewUrl?: string | null;
 }): SendBlocker | null {
   if (!input.type) return { kind: "needs_format" };
   const filled = (s: string | null | undefined) => Boolean(s && s.trim());
-  if (input.visuals <= 0 && !filled(input.script) && !filled(input.caption)) {
+  if (
+    input.visuals <= 0 &&
+    !filled(input.script) &&
+    !filled(input.caption) &&
+    !filled(input.previewUrl)
+  ) {
     return {
       kind: "nothing_to_review",
       family:

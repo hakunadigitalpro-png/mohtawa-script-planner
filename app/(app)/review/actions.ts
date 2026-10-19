@@ -175,13 +175,19 @@ export async function submitForReview(contentId: string): Promise<ReviewResult> 
   // page vide.
   const { data: row } = await supabase
     .from("contents")
-    .select("id, type, caption, brand_id")
+    .select("id, type, caption, brand_id, preview_url")
     .eq("id", contentId)
     .maybeSingle();
   if (!row) return { ok: false, error: "Ce contenu ne t'est pas accessible." };
   const blocker = await sendBlockerFor(
     supabase,
-    row as { id: string; type: string | null; caption: string | null; brand_id: string },
+    row as {
+      id: string;
+      type: string | null;
+      caption: string | null;
+      brand_id: string;
+      preview_url: string | null;
+    },
   );
   if (blocker) return { ok: false, error: sendBlockerMessage(blocker) };
 

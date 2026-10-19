@@ -16,6 +16,7 @@ import {
   platformLabel,
   typeLabel,
 } from "@/lib/constants";
+import { parsePreviewUrl, previewProviderLabel } from "@/lib/preview-embed";
 import { reviewContent } from "./actions";
 
 /** `Button` ne gère pas `asChild` dans ce projet — même motif qu'ailleurs. */
@@ -43,6 +44,12 @@ export type ReviewItem = {
   platform: string | null;
   status: string;
   caption: string | null;
+  /**
+   * Lien externe de la vidéo prête (Drive, YouTube, Vimeo). Rendu dans un
+   * lecteur intégré au-dessus des visuels — ou en bouton « Ouvrir » si
+   * on ne reconnaît pas la source.
+   */
+  previewUrl: string | null;
   /**
    * `commentable` faux pour une diapo de story : les remarques par visuel
    * s'ancrent sur `content_media` (0057), pas sur les diapos. Le client
@@ -222,6 +229,46 @@ export function ReviewDeck({
           </span>
         </div>
 
+        {/* La vidéo prête depuis Drive / YouTube / Vimeo, s'il y en a une.
+            Lecteur intégré pour les sources reconnues, bouton d'ouverture
+            sinon — l'important c'est que le client puisse cliquer Play et
+            rendre son avis sans passer par trois onglets. */}
+        {item.previewUrl && (() => {
+          const embed = parsePreviewUrl(item.previewUrl);
+          return embed ? (
+            <div className="space-y-1.5">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted">
+                Vidéo · {previewProviderLabel(embed.provider)}
+              </p>
+              <div className="overflow-hidden rounded-2xl bg-black">
+                <div className="relative aspect-[9/16] max-h-[70vh] mx-auto w-full max-w-sm">
+                  <iframe
+                    src={embed.src}
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 h-full w-full"
+                    title={item.title ?? "Vidéo"}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted">
+                Vidéo (lien externe)
+              </p>
+              <a
+                href={item.previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={LINK_BUTTON}
+              >
+                Ouvrir le lien
+              </a>
+            </div>
+          );
+        })()}
+
         {/* Les visuels, chacun avec son fil. Une remarque par diapo : sur un
             carrousel, « le titre de la 1 est trop long » et « la couleur de
             la 4 n'est pas la charte » ne tenaient pas dans la même phrase. */}
@@ -282,7 +329,7 @@ export function ReviewDeck({
           </div>
         )}
 
-        {!item.visuals.length && !item.script && !item.caption && (
+        {!item.visuals.length && !item.script && !item.caption && !item.previewUrl && (
           <p className="rounded-2xl bg-secondary/40 p-4 text-sm text-muted">
             Ce contenu n&apos;a pas encore de visuel ni de texte à regarder.
           </p>

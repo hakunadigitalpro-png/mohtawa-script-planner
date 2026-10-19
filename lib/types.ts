@@ -151,6 +151,12 @@ export type Content = {
    * Migration 0060, affiché pour les formats "simples" (post/carrousel/infographie).
    */
   first_comment: string | null;
+  /**
+   * Lien externe vers la vidéo prête (Drive, YouTube, Vimeo). Converti en
+   * lecteur intégré sur /review. 0062. Nullable — la plupart des contenus
+   * passent par les visuels Supabase.
+   */
+  preview_url: string | null;
   created_at: string;
   updated_at: string;
 };

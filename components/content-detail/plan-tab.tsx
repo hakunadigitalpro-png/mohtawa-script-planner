@@ -16,6 +16,7 @@ import { SaveFooter } from "./save-footer";
 import { PillarHelp } from "@/components/field-help/pillar-help";
 import { CommentButton } from "@/components/comments";
 import { PublicationsEditor } from "./publications-editor";
+import { PreviewUrlField } from "./preview-url-field";
 import type { Content, ContentPublication } from "@/lib/types";
 
 function safeT(fn: (k: string) => string, key: string, fallback: string) {
@@ -286,6 +287,14 @@ export function PlanTab({
         error={error}
         onSave={handleSave}
         onReset={handleReset}
+      />
+
+      {/* Lien externe de la vidéo prête (Drive/YouTube/Vimeo). Enregistrement
+          atomique au blur, hors du formulaire du Plan — c'est un geste de
+          côté, pas une étape de la saisie. */}
+      <PreviewUrlField
+        contentId={content.id}
+        initialUrl={content.preview_url}
       />
     </div>
   );

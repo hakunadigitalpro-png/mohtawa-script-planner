@@ -44,6 +44,8 @@ export async function sendBlockerFor(
     type: string | null;
     caption: string | null;
     brand_id: string;
+    /** Lien externe Drive/YouTube/Vimeo (0062) — compte comme matière. */
+    preview_url?: string | null;
   },
 ): Promise<SendBlocker | null> {
   const [material, membersRes] = await Promise.all([
@@ -60,6 +62,7 @@ export async function sendBlockerFor(
     visuals: m?.visuals.length ?? 0,
     script: m?.script ?? null,
     caption: content.caption,
+    previewUrl: content.preview_url ?? null,
   });
 }
 

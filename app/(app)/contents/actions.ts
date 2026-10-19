@@ -121,6 +121,8 @@ export async function updateContent(
     caption: string | null;
     /** Premier commentaire à poster sous le post (hashtags, mentions). 0060. */
     first_comment: string | null;
+    /** Lien vidéo externe (Drive, YouTube, Vimeo) pour la validation. 0062. */
+    preview_url: string | null;
     /** L'angle d'une idée, avant qu'un format dise où l'écrire (0055). */
     notes: string | null;
   }>,
@@ -144,13 +146,19 @@ export async function updateContent(
   if (patch.status === "pending_review") {
     const { data: row } = await supabase
       .from("contents")
-      .select("id, type, caption, brand_id")
+      .select("id, type, caption, brand_id, preview_url")
       .eq("id", id)
       .maybeSingle();
     if (!row) return { error: "Contenu introuvable." };
     const blocker = await sendBlockerFor(
       supabase,
-      row as { id: string; type: string | null; caption: string | null; brand_id: string },
+      row as {
+        id: string;
+        type: string | null;
+        caption: string | null;
+        brand_id: string;
+        preview_url: string | null;
+      },
     );
     if (blocker) return { error: sendBlockerMessage(blocker) };
   }
@@ -170,6 +178,7 @@ export async function updateContent(
     "video_url",
     "caption",
     "first_comment",
+    "preview_url",
     "notes",
   ]);
   const { error } = await supabase

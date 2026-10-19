@@ -228,6 +228,7 @@ export default async function ContentDetailPage({
           type: c.type,
           caption: c.caption,
           brand_id: c.brand_id,
+          preview_url: c.preview_url,
         })
       : null;
 
