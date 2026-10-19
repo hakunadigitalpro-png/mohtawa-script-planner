@@ -438,14 +438,6 @@ export function AdCampaignEditor({
             media={initialMedia}
             canEdit={isWriter}
           />
-          <MediaGrid
-            label="Captures du ciblage"
-            kind="targeting"
-            campaignId={campaign.id}
-            media={initialMedia}
-            canEdit={isWriter}
-            hint="Les captures du gestionnaire de publicités"
-          />
         </section>
 
         {/* 3. Résultats ============================================ */}
