@@ -609,7 +609,11 @@ Pointe sur la base de production (`https://api.kreatly.app`), comme avant sur Su
 1. Modifs en local sur `main`
 2. `npm run dev` pour tester sur `localhost:3000`
 3. `git commit` + `git push origin main`
-4. Coolify reconstruit et redéploie tout seul (~3-5 min). Si la construction échoue, l'ancienne version reste en ligne : lire le journal dans Coolify (un échec ponctuel du téléchargement des polices Google se règle en relançant « Redeploy »)
+4. Coolify reconstruit et redéploie tout seul (~3-5 min). **Après chaque push, attendre la mise en ligne** avec la clé SSH en lecture seule `kreatly-status` :
+   ```bash
+   ssh kreatly-status "attendre $(git rev-parse --short HEAD)"
+   ```
+   « EN LIGNE » = c'est déployé. « ECHEC » = l'ancienne version reste en ligne et la commande affiche les erreurs de construction : corriger, re-pousser, ré-attendre. Ne jamais annoncer à l'utilisatrice qu'une modification est en ligne sans ce « EN LIGNE ». (`ssh kreatly-status` seul liste les 5 derniers déploiements.) Un échec isolé du téléchargement des polices Google (`next/font/google`) n'est pas un bug du code : re-pousser un commit vide (`git commit --allow-empty`) relance la construction.
 5. Vérif sur `kreatly.app`
 
 Pour les changements DB (Supabase auto-hébergé, plus Supabase Cloud) — **une session Claude Code sur ce PC applique elle-même la migration**, par la clé SSH restreinte `kreatly-migrate` (elle ne peut QUE ça) :
