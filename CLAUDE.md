@@ -2,7 +2,7 @@
 
 SaaS de gestion de production vidéo pour créateurs francophones/arabophones : planifier ses Reels et Stories, structurer ses scripts, suivre la performance, et boucler la boucle Idée → Mesure → Amélioration.
 
-URL prod : <https://mohtawa-script-planner.vercel.app>
+URL prod : <https://kreatly.app> (depuis le 19/10/2026, sur le VPS OVH — l'ancienne adresse `mohtawa-script-planner.vercel.app` ne fait plus que rediriger vers la même page sur kreatly.app)
 Repo : <https://github.com/hakunadigitalpro-png/mohtawa-script-planner>
 
 ---
@@ -36,7 +36,7 @@ Repo : <https://github.com/hakunadigitalpro-png/mohtawa-script-planner>
 | **Client Supabase** | `@supabase/ssr` (browser + server) | SSR-safe, gère les cookies |
 | **AI** | OpenAI `gpt-4o-mini` via `fetch` (pas de SDK) | Modèle le moins cher (~$0.0004/génération) |
 | **i18n** | `next-intl` (installé mais non câblé) | Mis en pause, infrastructure prête |
-| **Déploiement** | Vercel + Supabase Cloud | Auto-deploy sur push main |
+| **Déploiement** | VPS OVH + Coolify (app Next.js) + Supabase auto-hébergé sur le même serveur | Auto-deploy sur push main ; tout chez nous, base à < 1 ms de l'app (voir « Migrations & déploiement ») |
 
 ### Arborescence
 
@@ -427,7 +427,7 @@ Supprimée à la demande de l'utilisatrice : 70 phrases figées n'avaient plus d
 - Numérotées `0001_*.sql`, `0002_*.sql`, etc.
 - **Toujours idempotentes** : `create table if not exists`, `drop policy if exists ... create policy ...`, `alter table ... add column if not exists`
 - Une migration = une feature (pas de mégamigration)
-- Le SQL est exécuté manuellement dans le SQL Editor Supabase (pas de migrate automatique)
+- Le SQL est exécuté manuellement dans le SQL Editor de Supabase Studio, sur <https://api.kreatly.app> (pas de migrate automatique) — voir « Workflow de déploiement »
 
 ---
 
@@ -587,30 +587,37 @@ Supprimée à la demande de l'utilisatrice : 70 phrases figées n'avaient plus d
 
 ### Variables d'environnement
 
-#### Vercel (Production + Preview + Development)
+#### Production : Coolify, application « mohtawa-script-planner » du projet Kreatly (onglet Environment Variables)
 
 ```
-NEXT_PUBLIC_SUPABASE_URL        = https://ylhsnlxefxeuxtblcmwd.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY   = (anon key from Supabase API settings)
-OPENAI_API_KEY                  = sk-... (optionnel, requis seulement pour l'IA)
+NEXT_PUBLIC_SUPABASE_URL        = https://api.kreatly.app        (Build Variable)
+NEXT_PUBLIC_SUPABASE_ANON_KEY   = valeur de SERVICE_SUPABASEANON_KEY du service Supabase de Coolify (Build Variable)
+NEXT_PUBLIC_SITE_URL            = https://kreatly.app            (Build Variable)
+RESEND_FROM                     = Kreatly <info@kreatly.app>     (domaine vérifié dans Resend)
+RESEND_API_KEY / ANTHROPIC_API_KEY = clés propres au serveur
+NIXPACKS_NODE_VERSION           = 22
 ```
+
+Une nouvelle variable dans le code = l'ajouter dans Coolify, PAS dans Vercel (Vercel ne fait plus que rediriger). Les `NEXT_PUBLIC_*` doivent être cochées « Build Variable ». Commande d'installation réglée sur `npm install -g npm@11 && npm ci` : le `package-lock.json` est écrit par npm 11, que le npm 10 de Nixpacks refuse.
 
 #### Local (`.env.local`)
 
-Mêmes variables. **Ne JAMAIS commiter** ce fichier (`.gitignore` le protège).
+Pointe sur la base de production (`https://api.kreatly.app`), comme avant sur Supabase Cloud. **Ne JAMAIS commiter** ce fichier (`.gitignore` le protège).
 
 ### Workflow de déploiement
 
 1. Modifs en local sur `main`
 2. `npm run dev` pour tester sur `localhost:3000`
 3. `git commit` + `git push origin main`
-4. Vercel rebuild automatique (~1-2 min)
-5. Vérif sur `mohtawa-script-planner.vercel.app`
+4. Coolify reconstruit et redéploie tout seul (~3-5 min). Si la construction échoue, l'ancienne version reste en ligne : lire le journal dans Coolify (un échec ponctuel du téléchargement des polices Google se règle en relançant « Redeploy »)
+5. Vérif sur `kreatly.app`
 
-Pour les changements DB :
+Pour les changements DB (Supabase auto-hébergé, plus Supabase Cloud) :
 1. Ouvrir le fichier `0XXX_*.sql` du dossier `supabase/migrations/`
-2. Copier le contenu dans le SQL Editor Supabase
-3. Run
+2. Ouvrir Supabase Studio sur <https://api.kreatly.app> — identifiant et mot de passe = `SERVICE_USER_ADMIN` / `SERVICE_PASSWORD_ADMIN` dans les Environment Variables du service Supabase de Coolify — puis SQL Editor
+3. Coller, Run
+
+Le projet Supabase Cloud `ylhsnlxefxeuxtblcmwd` n'est plus la production : gelé depuis la bascule du 19/10/2026, gardé quelques semaines en filet. Ne plus y exécuter de SQL. (Migration `0061_push_subscriptions` jamais exécutée, ni sur Cloud ni sur le serveur : les notifications push demanderont aussi `SUPABASE_SERVICE_ROLE_KEY`, `VAPID_*`, `CRON_SECRET` dans Coolify et une tâche planifiée Coolify à la place du cron de `vercel.json`.)
 
 ### Tests rapides post-déploiement
 
