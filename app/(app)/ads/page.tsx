@@ -86,8 +86,10 @@ export default async function AdsPage({
       "id, brand_id, title, theme, platforms, budget_global, budget_daily, targeting_age, targeting_location, targeting_interests, date_start, date_end, status, review_state, evaluation",
     )
     .eq("brand_id", active.id)
-    .order("date_start", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false });
+    // Ordre chronologique croissant : la plus ancienne en haut, les sans-date
+    // en bas. Mariam suit sa planification de gauche à droite, pas l'inverse.
+    .order("date_start", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true });
 
   const campaigns = (data ?? []) as CampaignRow[];
 

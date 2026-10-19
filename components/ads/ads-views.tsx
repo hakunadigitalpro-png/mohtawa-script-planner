@@ -57,6 +57,27 @@ function formatRange(start: string | null, end: string | null): string {
   return `${formatDay(start)} → ${formatDay(end)}`;
 }
 
+/**
+ * Couleur de la période affichée dans l'en-tête de carte, choisie
+ * d'après le statut : d'un coup d'oeil on sait si c'est une campagne en
+ * cours (vert), déjà arrêtée (rouge), validée côté client (ambre),
+ * programmée (violet) ou encore en brouillon (neutre).
+ */
+function dateTone(status: string): string {
+  switch (status) {
+    case "live":
+      return "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-200";
+    case "stopped":
+      return "bg-rose-100 text-rose-900 dark:bg-rose-500/20 dark:text-rose-200";
+    case "approved":
+      return "bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200";
+    case "scheduled":
+      return "bg-violet-100 text-violet-900 dark:bg-violet-500/20 dark:text-violet-200";
+    default:
+      return "bg-foreground/5 text-foreground";
+  }
+}
+
 // =====================================================================
 // Vue Planning : une carte large par campagne
 // =====================================================================
@@ -146,7 +167,9 @@ export function AdsPlanningView({
                 <p className="text-xs text-muted-foreground">{c.theme}</p>
               ) : null}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${dateTone(c.status)}`}
+                >
                   <CalendarDays className="h-3.5 w-3.5" />
                   {formatRange(c.date_start, c.date_end)}
                 </span>
