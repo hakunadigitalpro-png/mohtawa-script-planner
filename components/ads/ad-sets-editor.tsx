@@ -12,13 +12,18 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import {
   addAd,
   addAdSet,
+  addAdSlide,
   addAdToDefaultSet,
   deleteAd,
   deleteAdSet,
+  deleteAdSlide,
   updateAdField,
   updateAdSetField,
+  updateAdSlideField,
 } from "@/app/(app)/ads/actions";
-import type { Ad, AdSet } from "@/lib/types-ads";
+import type { Ad, AdSet, AdSlide } from "@/lib/types-ads";
+
+type AdWithSlides = Ad & { slides: AdSlide[] };
 
 /**
  * Éditeur « Ad sets » d'une campagne — reproduit la hiérarchie Meta :
@@ -37,7 +42,7 @@ export function AdSetsEditor({
   canEdit,
 }: {
   campaignId: string;
-  adSets: (AdSet & { ads: Ad[] })[];
+  adSets: (AdSet & { ads: AdWithSlides[] })[];
   canEdit: boolean;
 }) {
   const router = useRouter();
@@ -134,7 +139,7 @@ function AdSetCard({
   campaignId,
   canEdit,
 }: {
-  adSet: AdSet & { ads: Ad[] };
+  adSet: AdSet & { ads: AdWithSlides[] };
   campaignId: string;
   canEdit: boolean;
 }) {
@@ -269,13 +274,12 @@ function AdCard({
   campaignId,
   canEdit,
 }: {
-  ad: Ad;
+  ad: AdWithSlides;
   campaignId: string;
   canEdit: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
-  const [visual, setVisual] = React.useState(ad.visual_url ?? null);
 
   const save = (field: Parameters<typeof updateAdField>[2], v: string | null) => {
     startTransition(async () => {
@@ -291,6 +295,98 @@ function AdCard({
     });
   };
 
+  const onAddSlide = () => {
+    startTransition(async () => {
+      await addAdSlide(ad.id, campaignId);
+      router.refresh();
+    });
+  };
+
+  // Les diapos à afficher : si des slides existent (carrousel), on les
+  // montre et on ignore les champs legacy `visual_url`/`hook` de l'ad.
+  // Sinon, on considère l'ad comme une seule carte (visuel + texte sur
+  // l'ad elle-même) — pour que les ads existantes continuent de marcher
+  // sans migration brutale.
+  const hasSlides = ad.slides.length > 0;
+
+  return (
+    <li className="rounded-xl border border-foreground/10 bg-secondary/20 p-3">
+      {/* Barre d'identité de l'ad */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <Input
+          defaultValue={ad.name ?? ""}
+          placeholder="Nom de l'ad"
+          onBlur={(e) => save("name", e.target.value || null)}
+          disabled={!canEdit}
+          className="h-9 text-sm font-semibold"
+        />
+        {canEdit && (
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={pending}
+            title="Supprimer cette ad"
+            className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Diapos : soit la seule carte legacy, soit la liste des slides. */}
+      {hasSlides ? (
+        <ul className="space-y-2">
+          {ad.slides.map((s, i) => (
+            <SlideRow
+              key={s.id}
+              slide={s}
+              index={i}
+              campaignId={campaignId}
+              canEdit={canEdit}
+            />
+          ))}
+        </ul>
+      ) : (
+        <SingleCardLegacy ad={ad} campaignId={campaignId} canEdit={canEdit} />
+      )}
+
+      {canEdit && (
+        <button
+          type="button"
+          onClick={onAddSlide}
+          disabled={pending}
+          className="mt-3 inline-flex items-center gap-1 rounded-full border border-dashed border-foreground/20 bg-card px-3 py-1 text-xs font-semibold text-foreground/70 hover:border-accent/40 hover:text-accent"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          {hasSlides ? "Ajouter une diapo" : "Transformer en carrousel"}
+        </button>
+      )}
+    </li>
+  );
+}
+
+/** Vue d'une ad à une seule carte (pas de slides) : visuel + texte sur
+ *  les colonnes de l'ad elle-même. Converti en carrousel au premier
+ *  ajout de slide — la carte legacy ne sera alors plus affichée. */
+function SingleCardLegacy({
+  ad,
+  campaignId,
+  canEdit,
+}: {
+  ad: AdWithSlides;
+  campaignId: string;
+  canEdit: boolean;
+}) {
+  const router = useRouter();
+  const [, startTransition] = React.useTransition();
+  const [visual, setVisual] = React.useState(ad.visual_url ?? null);
+
+  const save = (field: Parameters<typeof updateAdField>[2], v: string | null) => {
+    startTransition(async () => {
+      await updateAdField(ad.id, campaignId, field, v);
+    });
+  };
+
   const onVisual = (url: string | null) => {
     setVisual(url);
     save("visual_url", url);
@@ -298,26 +394,114 @@ function AdCard({
   };
 
   return (
-    <li className="rounded-xl border border-foreground/10 bg-secondary/20 p-3">
+    <div className="flex items-start gap-3">
+      <div className="w-28 shrink-0">
+        {visual ? (
+          <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-black">
+            <Image
+              src={visual}
+              alt=""
+              fill
+              sizes="112px"
+              className="object-cover"
+            />
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => onVisual(null)}
+                className="absolute end-1 top-1 flex size-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                aria-label="Retirer le visuel"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <ImageUpload
+            contentId={`ad/${campaignId}`}
+            value={null}
+            aspectRatio="portrait"
+            onChange={onVisual}
+            label="+ Visuel"
+          />
+        )}
+      </div>
+      <Textarea
+        defaultValue={ad.hook ?? ""}
+        placeholder="Texte principal de l'ad…"
+        onBlur={(e) => save("hook", e.target.value || null)}
+        disabled={!canEdit}
+        rows={3}
+        className="min-w-0 flex-1 text-sm"
+      />
+    </div>
+  );
+}
+
+/** Une diapo d'un carrousel : visuel + son texte propre. */
+function SlideRow({
+  slide,
+  index,
+  campaignId,
+  canEdit,
+}: {
+  slide: AdSlide;
+  index: number;
+  campaignId: string;
+  canEdit: boolean;
+}) {
+  const router = useRouter();
+  const [, startTransition] = React.useTransition();
+  const [visual, setVisual] = React.useState(slide.visual_url ?? null);
+
+  const save = (field: "visual_url" | "text", v: string | null) => {
+    startTransition(async () => {
+      await updateAdSlideField(slide.id, campaignId, field, v);
+    });
+  };
+
+  const onVisual = (url: string | null) => {
+    setVisual(url);
+    save("visual_url", url);
+    router.refresh();
+  };
+
+  const onDelete = () => {
+    if (!confirm(`Supprimer la diapo ${index + 1} ?`)) return;
+    startTransition(async () => {
+      await deleteAdSlide(slide.id, campaignId);
+      router.refresh();
+    });
+  };
+
+  return (
+    <li className="rounded-lg border border-foreground/10 bg-card p-2">
+      <div className="mb-2 flex items-center justify-between text-xs">
+        <span className="font-semibold text-foreground/70">Diapo {index + 1}</span>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Supprimer cette diapo"
+            className="rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
+        )}
+      </div>
       <div className="flex items-start gap-3">
-        <div className="w-28 shrink-0">
+        <div className="w-24 shrink-0">
           {visual ? (
-            <div className="relative aspect-[4/5] overflow-hidden rounded-lg bg-black">
-              <Image
-                src={visual}
-                alt=""
-                fill
-                sizes="112px"
-                className="object-cover"
-              />
+            <div className="relative aspect-[4/5] overflow-hidden rounded-md bg-black">
+              <Image src={visual} alt="" fill sizes="96px" className="object-cover" />
               {canEdit && (
                 <button
                   type="button"
                   onClick={() => onVisual(null)}
-                  className="absolute end-1 top-1 flex size-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
+                  className="absolute end-1 top-1 flex size-4 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80"
                   aria-label="Retirer le visuel"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Trash2 className="h-2.5 w-2.5" />
                 </button>
               )}
             </div>
@@ -331,36 +515,14 @@ function AdCard({
             />
           )}
         </div>
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <Input
-              defaultValue={ad.name ?? ""}
-              placeholder="Nom de l'ad"
-              onBlur={(e) => save("name", e.target.value || null)}
-              disabled={!canEdit}
-              className="h-9 text-sm font-semibold"
-            />
-            {canEdit && (
-              <button
-                type="button"
-                onClick={onDelete}
-                disabled={pending}
-                title="Supprimer cette ad"
-                className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-          <Textarea
-            defaultValue={ad.hook ?? ""}
-            placeholder="Texte principal de l'ad…"
-            onBlur={(e) => save("hook", e.target.value || null)}
-            disabled={!canEdit}
-            rows={3}
-            className="text-sm"
-          />
-        </div>
+        <Textarea
+          defaultValue={slide.text ?? ""}
+          placeholder={`Texte de la diapo ${index + 1}…`}
+          onBlur={(e) => save("text", e.target.value || null)}
+          disabled={!canEdit}
+          rows={3}
+          className="min-w-0 flex-1 text-sm"
+        />
       </div>
     </li>
   );

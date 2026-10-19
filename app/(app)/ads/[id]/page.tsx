@@ -9,6 +9,7 @@ import type {
   AdCampaignMedia,
   AdCampaignComment,
   AdSet,
+  AdSlide,
 } from "@/lib/types-ads";
 
 /**
@@ -49,6 +50,7 @@ export default async function AdCampaignPage({
     { data: memberData },
     { data: adSetData },
     { data: adData },
+    { data: slideData },
   ] = await Promise.all([
     supabase
       .from("ad_campaign_media")
@@ -76,6 +78,11 @@ export default async function AdCampaignPage({
       .select("*, ad_sets!inner(campaign_id)")
       .eq("ad_sets.campaign_id", id)
       .order("position", { ascending: true }),
+    supabase
+      .from("ad_slides")
+      .select("*, ads!inner(ad_set_id, ad_sets!inner(campaign_id))")
+      .eq("ads.ad_sets.campaign_id", id)
+      .order("position", { ascending: true }),
   ]);
 
   const media = (mediaData ?? []) as AdCampaignMedia[];
@@ -90,11 +97,20 @@ export default async function AdCampaignPage({
   const adsFlat = ((adData ?? []) as (Ad & { ad_sets: unknown })[]).map(
     ({ ad_sets: _ad_sets, ...a }) => a as Ad,
   );
+  const slidesFlat = ((slideData ?? []) as (AdSlide & { ads: unknown })[]).map(
+    ({ ads: _ads, ...s }) => s as AdSlide,
+  );
   const adSets = adSetsFlat.map((s) => ({
     ...s,
     ads: adsFlat
       .filter((a) => a.ad_set_id === s.id)
-      .sort((a, b) => a.position - b.position),
+      .sort((a, b) => a.position - b.position)
+      .map((a) => ({
+        ...a,
+        slides: slidesFlat
+          .filter((sl) => sl.ad_id === a.id)
+          .sort((a, b) => a.position - b.position),
+      })),
   }));
 
   const emailByUser = new Map(members.map((m) => [m.user_id, m.email]));

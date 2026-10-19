@@ -360,3 +360,60 @@ export async function addAdToDefaultSet(campaignId: string) {
 
   return addAd(adSetId, campaignId);
 }
+
+// =====================================================================
+// Slides (carrousel) — chaque diapo a son propre visuel et son texte
+// =====================================================================
+
+export async function addAdSlide(adId: string, campaignId: string) {
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("ad_slides")
+    .select("position")
+    .eq("ad_id", adId)
+    .order("position", { ascending: false })
+    .limit(1);
+  const nextPos = (existing?.[0]?.position ?? -1) + 1;
+
+  const { data, error } = await supabase
+    .from("ad_slides")
+    .insert({ ad_id: adId, position: nextPos })
+    .select("id")
+    .single();
+  if (error) return { error: error.message };
+  revalidatePath(`/ads/${campaignId}`);
+  revalidatePath("/ads");
+  return { ok: true as const, id: data.id as string };
+}
+
+const SLIDE_FIELDS = ["visual_url", "text"] as const;
+type SlideField = (typeof SLIDE_FIELDS)[number];
+
+export async function updateAdSlideField(
+  slideId: string,
+  campaignId: string,
+  field: SlideField,
+  value: string | null,
+) {
+  if (!(SLIDE_FIELDS as readonly string[]).includes(field)) {
+    return { error: "Champ non autorisé" };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("ad_slides")
+    .update({ [field]: value && value.trim() ? value : null })
+    .eq("id", slideId);
+  if (error) return { error: error.message };
+  revalidatePath(`/ads/${campaignId}`);
+  revalidatePath("/ads");
+  return { ok: true as const };
+}
+
+export async function deleteAdSlide(slideId: string, campaignId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("ad_slides").delete().eq("id", slideId);
+  if (error) return { error: error.message };
+  revalidatePath(`/ads/${campaignId}`);
+  revalidatePath("/ads");
+  return { ok: true as const };
+}

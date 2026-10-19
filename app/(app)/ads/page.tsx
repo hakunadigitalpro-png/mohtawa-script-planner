@@ -109,34 +109,46 @@ export default async function AdsPage({
         name: string | null;
         hook: string | null;
         visual_url: string | null;
+        slides: { visual_url: string | null; text: string | null }[];
       }[];
     }[]
   > = {};
   if (view === "planning" && campaigns.length > 0) {
     const campaignIds = campaigns.map((c) => c.id);
-    const [{ data: mediaData }, { data: adSetData }, { data: adData }] =
-      await Promise.all([
-        supabase
-          .from("ad_campaign_media")
-          .select("campaign_id, kind, position, image_url")
-          .in("campaign_id", campaignIds)
-          .in("kind", ["visual"])
-          .order("position", { ascending: true }),
-        supabase
-          .from("ad_sets")
-          .select(
-            "id, campaign_id, name, targeting_age, targeting_location, targeting_interests, budget_daily, position",
-          )
-          .in("campaign_id", campaignIds)
-          .order("position", { ascending: true }),
-        supabase
-          .from("ads")
-          .select(
-            "id, name, hook, visual_url, position, ad_sets!inner(campaign_id, id)",
-          )
-          .in("ad_sets.campaign_id", campaignIds)
-          .order("position", { ascending: true }),
-      ]);
+    const [
+      { data: mediaData },
+      { data: adSetData },
+      { data: adData },
+      { data: slideData },
+    ] = await Promise.all([
+      supabase
+        .from("ad_campaign_media")
+        .select("campaign_id, kind, position, image_url")
+        .in("campaign_id", campaignIds)
+        .in("kind", ["visual"])
+        .order("position", { ascending: true }),
+      supabase
+        .from("ad_sets")
+        .select(
+          "id, campaign_id, name, targeting_age, targeting_location, targeting_interests, budget_daily, position",
+        )
+        .in("campaign_id", campaignIds)
+        .order("position", { ascending: true }),
+      supabase
+        .from("ads")
+        .select(
+          "id, name, hook, visual_url, position, ad_sets!inner(campaign_id, id)",
+        )
+        .in("ad_sets.campaign_id", campaignIds)
+        .order("position", { ascending: true }),
+      supabase
+        .from("ad_slides")
+        .select(
+          "ad_id, visual_url, text, position, ads!inner(ad_set_id, ad_sets!inner(campaign_id))",
+        )
+        .in("ads.ad_sets.campaign_id", campaignIds)
+        .order("position", { ascending: true }),
+    ]);
     media = (mediaData ?? []) as MediaRow[];
 
     // 1) poser les ad sets vides
@@ -165,6 +177,20 @@ export default async function AdsPage({
       });
     }
     // 2) y injecter les ads
+    const slidesByAd: Record<
+      string,
+      { visual_url: string | null; text: string | null }[]
+    > = {};
+    for (const sl of (slideData ?? []) as {
+      ad_id: string;
+      visual_url: string | null;
+      text: string | null;
+    }[]) {
+      (slidesByAd[sl.ad_id] ||= []).push({
+        visual_url: sl.visual_url,
+        text: sl.text,
+      });
+    }
     for (const a of (adData ?? []) as {
       id: string;
       name: string | null;
@@ -184,6 +210,7 @@ export default async function AdsPage({
           name: a.name,
           hook: a.hook,
           visual_url: a.visual_url,
+          slides: slidesByAd[a.id] ?? [],
         });
       }
     }

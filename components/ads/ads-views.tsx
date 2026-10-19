@@ -68,6 +68,7 @@ type AdSetWithAds = {
     name: string | null;
     hook: string | null;
     visual_url: string | null;
+    slides: { visual_url: string | null; text: string | null }[];
   }[];
 };
 
@@ -180,40 +181,70 @@ export function AdsPlanningView({
                       </p>
                     ) : (
                       <ul className="grid gap-2 sm:grid-cols-2">
-                        {s.ads.map((a) => (
-                          <li
-                            key={a.id}
-                            className="flex items-start gap-2 rounded-lg bg-card p-2"
-                          >
-                            {a.visual_url ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={a.visual_url}
-                                alt={a.name ?? ""}
-                                className="h-20 w-16 shrink-0 rounded-md object-cover"
-                              />
-                            ) : (
-                              <div className="grid h-20 w-16 shrink-0 place-items-center rounded-md bg-foreground/5 text-[10px] text-muted-foreground">
-                                Pas de visuel
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1 space-y-1">
-                              <p className="truncate text-xs font-semibold text-foreground">
-                                {a.name ?? "Ad"}
-                              </p>
-                              <p
-                                className="line-clamp-4 whitespace-pre-wrap text-xs text-foreground/70"
-                                dir="auto"
-                              >
-                                {a.hook?.trim() || (
-                                  <span className="text-muted-foreground">
-                                    Pas encore de texte
+                        {s.ads.map((a) => {
+                          // Diapos : les slides si l'ad est en carrousel,
+                          // sinon la carte unique (ad.visual_url + ad.hook).
+                          const cards =
+                            a.slides.length > 0
+                              ? a.slides
+                              : [{ visual_url: a.visual_url, text: a.hook }];
+                          const isCarousel = a.slides.length > 0;
+                          return (
+                            <li
+                              key={a.id}
+                              className="space-y-2 rounded-lg bg-card p-2"
+                            >
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="truncate font-semibold text-foreground">
+                                  {a.name ?? "Ad"}
+                                </span>
+                                {isCarousel && (
+                                  <span className="shrink-0 rounded-full bg-foreground/5 px-2 py-0.5 text-[10px] font-medium text-foreground/70">
+                                    Carrousel · {cards.length} diapos
                                   </span>
                                 )}
-                              </p>
-                            </div>
-                          </li>
-                        ))}
+                              </div>
+                              <ul className="space-y-1.5">
+                                {cards.map((card, ci) => (
+                                  <li
+                                    key={ci}
+                                    className="flex items-start gap-2"
+                                  >
+                                    {card.visual_url ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img
+                                        src={card.visual_url}
+                                        alt=""
+                                        className="h-16 w-12 shrink-0 rounded-md object-cover"
+                                      />
+                                    ) : (
+                                      <div className="grid h-16 w-12 shrink-0 place-items-center rounded-md bg-foreground/5 text-[9px] text-muted-foreground">
+                                        —
+                                      </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      {isCarousel && (
+                                        <p className="text-[10px] font-semibold uppercase text-muted-foreground">
+                                          Diapo {ci + 1}
+                                        </p>
+                                      )}
+                                      <p
+                                        className="line-clamp-3 whitespace-pre-wrap text-[11px] text-foreground/70"
+                                        dir="auto"
+                                      >
+                                        {card.text?.trim() || (
+                                          <span className="text-muted-foreground">
+                                            Pas encore de texte
+                                          </span>
+                                        )}
+                                      </p>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            </li>
+                          );
+                        })}
                       </ul>
                     )}
                   </div>

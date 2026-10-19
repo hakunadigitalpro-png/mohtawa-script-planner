@@ -79,7 +79,9 @@ export function AdCampaignEditor({
   visualCount: number;
   brandId: string;
   adSets: (import("@/lib/types-ads").AdSet & {
-    ads: import("@/lib/types-ads").Ad[];
+    ads: (import("@/lib/types-ads").Ad & {
+      slides: import("@/lib/types-ads").AdSlide[];
+    })[];
   })[];
 }) {
   const router = useRouter();

@@ -103,13 +103,27 @@ export type AdSet = {
   updated_at: string;
 };
 
-/** Une ad = un visuel + un hook. Un ad set en porte 1 à N (A/B). */
+/** Une ad = un visuel + un hook (ad à une seule diapo) OU N `AdSlide`
+ *  (carrousel). Un ad set en porte 1 à N (A/B). */
 export type Ad = {
   id: string;
   ad_set_id: string;
   name: string | null;
   hook: string | null;
   visual_url: string | null;
+  position: number;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Une diapo d'ad carrousel (0065). Visuel + texte propres à cette
+ *  diapo. Si une ad a 0 slides, elle vaut une seule carte avec les
+ *  champs `visual_url` + `hook` de l'ad. */
+export type AdSlide = {
+  id: string;
+  ad_id: string;
+  visual_url: string | null;
+  text: string | null;
   position: number;
   created_at: string;
   updated_at: string;
