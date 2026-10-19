@@ -9,14 +9,12 @@ import { pick } from "@/lib/utils";
 import { removeContentFiles, removeOwnedFile } from "@/lib/storage-cleanup";
 import {
   isProgrammedStatus,
-  sendBlockerMessage,
   statusAfterFormat,
   whyNotProgrammed,
 } from "@/lib/content-lifecycle";
 import {
   applyFilmingProgress,
   hasDatedPublication,
-  sendBlockerFor,
 } from "@/lib/content-lifecycle-db";
 
 type CreateContentInput = {
@@ -142,28 +140,11 @@ export async function updateContent(
     if (blocker) return { error: blocker };
   }
 
-  // « Chez le client » a ses conditions (un client, quelque chose à
-  // montrer) ; le menu Statut y obéit comme le bouton. Le chemin manuel
-  // n'envoie pas d'e-mail, mais il ne doit pas mentir sur l'étape.
-  if (patch.status === "pending_review") {
-    const { data: row } = await supabase
-      .from("contents")
-      .select("id, type, caption, brand_id, preview_url")
-      .eq("id", id)
-      .maybeSingle();
-    if (!row) return { error: "Contenu introuvable." };
-    const blocker = await sendBlockerFor(
-      supabase,
-      row as {
-        id: string;
-        type: string | null;
-        caption: string | null;
-        brand_id: string;
-        preview_url: string | null;
-      },
-    );
-    if (blocker) return { error: sendBlockerMessage(blocker) };
-  }
+  // Le menu Statut est un chemin manuel : il n'envoie pas d'e-mail et ne
+  // doit pas exiger un client invité. On peut vouloir ranger un contenu
+  // en « En attente de validation » en attendant d'ajouter la personne.
+  // La garde complète (client + matière à montrer) reste sur le bouton
+  // « Envoyer au client » (`submitForReview`), qui envoie vraiment.
 
   const clean = pick(patch, [
     "title",
