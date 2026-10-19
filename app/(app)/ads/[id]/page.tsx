@@ -3,7 +3,13 @@ import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { PageHeader } from "@/components/page-header";
 import { AdCampaignEditor } from "@/components/ads/ad-campaign-editor";
-import type { AdCampaign, AdCampaignMedia, AdCampaignComment } from "@/lib/types-ads";
+import type {
+  Ad,
+  AdCampaign,
+  AdCampaignMedia,
+  AdCampaignComment,
+  AdSet,
+} from "@/lib/types-ads";
 
 /**
  * Fiche d'une campagne : proposition en haut, suivi au milieu, résultats
@@ -37,23 +43,40 @@ export default async function AdCampaignPage({
     redirect(`/switch-brand?to=${campaign.brand_id}&next=/ads/${id}`);
   }
 
-  const [{ data: mediaData }, { data: commentData }, { data: memberData }] =
-    await Promise.all([
-      supabase
-        .from("ad_campaign_media")
-        .select("*")
-        .eq("campaign_id", id)
-        .order("kind", { ascending: true })
-        .order("position", { ascending: true }),
-      supabase
-        .from("ad_campaign_comments")
-        .select("id, campaign_id, user_id, body, created_at")
-        .eq("campaign_id", id)
-        .order("created_at", { ascending: true }),
-      supabase.rpc("list_brand_members_with_emails", {
-        p_brand_id: campaign.brand_id,
-      }),
-    ]);
+  const [
+    { data: mediaData },
+    { data: commentData },
+    { data: memberData },
+    { data: adSetData },
+    { data: adData },
+  ] = await Promise.all([
+    supabase
+      .from("ad_campaign_media")
+      .select("*")
+      .eq("campaign_id", id)
+      .order("kind", { ascending: true })
+      .order("position", { ascending: true }),
+    supabase
+      .from("ad_campaign_comments")
+      .select("id, campaign_id, user_id, body, created_at")
+      .eq("campaign_id", id)
+      .order("created_at", { ascending: true }),
+    supabase.rpc("list_brand_members_with_emails", {
+      p_brand_id: campaign.brand_id,
+    }),
+    supabase
+      .from("ad_sets")
+      .select("*")
+      .eq("campaign_id", id)
+      .order("position", { ascending: true }),
+    // Les ads sont filtrées par ad_set_id → on les charge pour tous les
+    // ad_sets de cette campagne en un seul round-trip.
+    supabase
+      .from("ads")
+      .select("*, ad_sets!inner(campaign_id)")
+      .eq("ad_sets.campaign_id", id)
+      .order("position", { ascending: true }),
+  ]);
 
   const media = (mediaData ?? []) as AdCampaignMedia[];
   const comments = (commentData ?? []) as CommentRow[];
@@ -62,6 +85,17 @@ export default async function AdCampaignPage({
     email: string;
     role: string;
   }>;
+
+  const adSetsFlat = (adSetData ?? []) as AdSet[];
+  const adsFlat = ((adData ?? []) as (Ad & { ad_sets: unknown })[]).map(
+    ({ ad_sets: _ad_sets, ...a }) => a as Ad,
+  );
+  const adSets = adSetsFlat.map((s) => ({
+    ...s,
+    ads: adsFlat
+      .filter((a) => a.ad_set_id === s.id)
+      .sort((a, b) => a.position - b.position),
+  }));
 
   const emailByUser = new Map(members.map((m) => [m.user_id, m.email]));
   const commentsWithEmail = comments.map((c) => ({
@@ -105,6 +139,7 @@ export default async function AdCampaignPage({
         hasClient={hasClient}
         visualCount={visualCount}
         brandId={campaign.brand_id}
+        adSets={adSets}
       />
     </div>
   );

@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { AdSetsEditor } from "@/components/ads/ad-sets-editor";
 import {
   type AdCampaign,
   type AdCampaignMedia,
@@ -67,6 +68,7 @@ export function AdCampaignEditor({
   hasClient,
   visualCount,
   brandId,
+  adSets,
 }: {
   campaign: AdCampaign;
   media: AdCampaignMedia[];
@@ -76,6 +78,9 @@ export function AdCampaignEditor({
   hasClient: boolean;
   visualCount: number;
   brandId: string;
+  adSets: (import("@/lib/types-ads").AdSet & {
+    ads: import("@/lib/types-ads").Ad[];
+  })[];
 }) {
   const router = useRouter();
   const [local, setLocal] = React.useState<AdCampaign>(campaign);
@@ -436,6 +441,15 @@ export function AdCampaignEditor({
             kind="visual"
             campaignId={campaign.id}
             media={initialMedia}
+            canEdit={isWriter}
+          />
+        </section>
+
+        {/* 2 bis. Ad sets + Ads (0064) ============================= */}
+        <section className="space-y-4 rounded-3xl border border-foreground/10 bg-card p-5">
+          <AdSetsEditor
+            campaignId={campaign.id}
+            adSets={adSets}
             canEdit={isWriter}
           />
         </section>

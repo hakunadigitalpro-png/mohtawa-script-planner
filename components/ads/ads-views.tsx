@@ -61,9 +61,15 @@ function formatRange(start: string | null, end: string | null): string {
 export function AdsPlanningView({
   campaigns,
   media,
+  adSetCountByCampaign = {},
+  adsByCampaign = {},
 }: {
   campaigns: CampaignRow[];
   media: MediaRow[];
+  /** Nombre d'ad sets par campagne (compteur discret dans la carte). */
+  adSetCountByCampaign?: Record<string, number>;
+  /** Les ads de chaque campagne (nom + visuel) — mini-strip sous les métadonnées. */
+  adsByCampaign?: Record<string, { name: string | null; visual_url: string | null }[]>;
 }) {
   // On garde le PREMIER visuel de chaque campagne comme vignette principale.
   const firstVisualByCampaign = new Map<string, string>();
@@ -150,6 +156,46 @@ export function AdsPlanningView({
                     <span className="line-clamp-2">{targetingText}</span>
                   </p>
                 ) : null}
+                {/* Structure Meta : compteur ad sets + mini-strip des
+                    visuels d'ads (jusqu'à 4). Donne un aperçu sans forcer
+                    à ouvrir la fiche. */}
+                {(() => {
+                  const ads = adsByCampaign[c.id] ?? [];
+                  const setCount = adSetCountByCampaign[c.id] ?? 0;
+                  if (setCount === 0 && ads.length === 0) return null;
+                  return (
+                    <div className="flex items-center gap-2 pt-1 text-xs">
+                      <span className="rounded-full bg-foreground/5 px-2 py-0.5 font-medium text-foreground/80">
+                        {setCount} ad set{setCount > 1 ? "s" : ""} · {ads.length} ad
+                        {ads.length > 1 ? "s" : ""}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {ads.slice(0, 4).map((a, i) =>
+                          a.visual_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              key={i}
+                              src={a.visual_url}
+                              alt={a.name ?? ""}
+                              className="h-7 w-7 rounded-md object-cover"
+                            />
+                          ) : (
+                            <span
+                              key={i}
+                              className="h-7 w-7 rounded-md bg-foreground/5"
+                              title={a.name ?? "Ad sans visuel"}
+                            />
+                          ),
+                        )}
+                        {ads.length > 4 && (
+                          <span className="text-muted-foreground">
+                            +{ads.length - 4}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               {targeting ? (
                 // eslint-disable-next-line @next/next/no-img-element

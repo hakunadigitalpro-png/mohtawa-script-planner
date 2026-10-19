@@ -85,6 +85,36 @@ export const AD_STATUS_LABEL: Record<AdCampaignStatus, string> = {
   stopped: "Arrêtée",
 };
 
+/**
+ * Un ad set — un groupe d'audience/budget sous une campagne. Reproduit la
+ * structure Meta : une campagne peut en avoir 1 à N, chacun avec son
+ * propre ciblage et son propre budget quotidien.
+ */
+export type AdSet = {
+  id: string;
+  campaign_id: string;
+  name: string | null;
+  targeting_age: string | null;
+  targeting_location: string | null;
+  targeting_interests: string | null;
+  budget_daily: string | null;
+  position: number;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Une ad = un visuel + un hook. Un ad set en porte 1 à N (A/B). */
+export type Ad = {
+  id: string;
+  ad_set_id: string;
+  name: string | null;
+  hook: string | null;
+  visual_url: string | null;
+  position: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export const AD_PLATFORMS = [
   "Meta",
   "Google",

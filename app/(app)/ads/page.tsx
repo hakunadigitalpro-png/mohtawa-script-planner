@@ -94,14 +94,47 @@ export default async function AdsPage({
   const campaigns = (data ?? []) as CampaignRow[];
 
   let media: MediaRow[] = [];
+  // Ads par campagne, pour la vue Planning (compteurs + bande de visuels).
+  // On ne charge que ce qu'il faut : id, nom, visuel, set parent.
+  let adsByCampaign: Record<string, { name: string | null; visual_url: string | null }[]> = {};
+  let adSetsByCampaign: Record<string, number> = {};
   if (view === "planning" && campaigns.length > 0) {
-    const { data: mediaData } = await supabase
-      .from("ad_campaign_media")
-      .select("campaign_id, kind, position, image_url")
-      .in("campaign_id", campaigns.map((c) => c.id))
-      .in("kind", ["visual", "targeting"])
-      .order("position", { ascending: true });
+    const campaignIds = campaigns.map((c) => c.id);
+    const [{ data: mediaData }, { data: adSetData }, { data: adData }] =
+      await Promise.all([
+        supabase
+          .from("ad_campaign_media")
+          .select("campaign_id, kind, position, image_url")
+          .in("campaign_id", campaignIds)
+          .in("kind", ["visual", "targeting"])
+          .order("position", { ascending: true }),
+        supabase
+          .from("ad_sets")
+          .select("id, campaign_id")
+          .in("campaign_id", campaignIds),
+        // Les ads sont filtrées par ad_set → on joint pour retrouver la
+        // campagne, et on les tri par position pour que la 1re d'un set
+        // donne sa vignette.
+        supabase
+          .from("ads")
+          .select("name, visual_url, position, ad_sets!inner(campaign_id)")
+          .in("ad_sets.campaign_id", campaignIds)
+          .order("position", { ascending: true }),
+      ]);
     media = (mediaData ?? []) as MediaRow[];
+    for (const s of (adSetData ?? []) as { campaign_id: string }[]) {
+      adSetsByCampaign[s.campaign_id] = (adSetsByCampaign[s.campaign_id] ?? 0) + 1;
+    }
+    for (const a of (adData ?? []) as {
+      name: string | null;
+      visual_url: string | null;
+      ad_sets: { campaign_id: string } | { campaign_id: string }[];
+    }[]) {
+      const setRow = Array.isArray(a.ad_sets) ? a.ad_sets[0] : a.ad_sets;
+      const cid = setRow?.campaign_id;
+      if (!cid) continue;
+      (adsByCampaign[cid] ||= []).push({ name: a.name, visual_url: a.visual_url });
+    }
   }
 
   const monthHref = (v: ViewMode) =>
@@ -181,7 +214,12 @@ export default async function AdsPage({
           </form>
         </div>
       ) : view === "planning" ? (
-        <AdsPlanningView campaigns={campaigns} media={media} />
+        <AdsPlanningView
+          campaigns={campaigns}
+          media={media}
+          adSetCountByCampaign={adSetsByCampaign}
+          adsByCampaign={adsByCampaign}
+        />
       ) : view === "calendar" ? (
         <AdsCalendarView campaigns={campaigns} month={month} />
       ) : (

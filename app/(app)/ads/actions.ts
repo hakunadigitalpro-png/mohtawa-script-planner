@@ -202,3 +202,138 @@ export async function addCampaignComment(campaignId: string, body: string) {
   revalidatePath(`/ads/${campaignId}`);
   return { ok: true as const };
 }
+
+// =====================================================================
+// Ad sets & Ads (migration 0064)
+// =====================================================================
+
+/** Crée un ad set vide sous une campagne. Hérite du ciblage/budget de la
+ *  campagne pour que les premiers champs soient déjà remplis. */
+export async function addAdSet(campaignId: string) {
+  const supabase = await createClient();
+
+  const { data: campaign } = await supabase
+    .from("ad_campaigns")
+    .select("targeting_age, targeting_location, targeting_interests, budget_daily")
+    .eq("id", campaignId)
+    .maybeSingle();
+
+  const { data: existing } = await supabase
+    .from("ad_sets")
+    .select("position")
+    .eq("campaign_id", campaignId)
+    .order("position", { ascending: false })
+    .limit(1);
+  const nextPos = (existing?.[0]?.position ?? -1) + 1;
+
+  const { data, error } = await supabase
+    .from("ad_sets")
+    .insert({
+      campaign_id: campaignId,
+      name: `Ad set ${nextPos + 1}`,
+      position: nextPos,
+      targeting_age: campaign?.targeting_age ?? null,
+      targeting_location: campaign?.targeting_location ?? null,
+      targeting_interests: campaign?.targeting_interests ?? null,
+      budget_daily: campaign?.budget_daily ?? null,
+    })
+    .select("id")
+    .single();
+  if (error) return { error: error.message };
+  revalidatePath(`/ads/${campaignId}`);
+  revalidatePath("/ads");
+  return { ok: true as const, id: data.id as string };
+}
+
+const AD_SET_FIELDS = [
+  "name",
+  "targeting_age",
+  "targeting_location",
+  "targeting_interests",
+  "budget_daily",
+] as const;
+type AdSetField = (typeof AD_SET_FIELDS)[number];
+
+export async function updateAdSetField(
+  adSetId: string,
+  campaignId: string,
+  field: AdSetField,
+  value: string | null,
+) {
+  if (!(AD_SET_FIELDS as readonly string[]).includes(field)) {
+    return { error: "Champ non autorisé" };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("ad_sets")
+    .update({ [field]: value && value.trim() ? value : null })
+    .eq("id", adSetId);
+  if (error) return { error: error.message };
+  revalidatePath(`/ads/${campaignId}`);
+  return { ok: true as const };
+}
+
+export async function deleteAdSet(adSetId: string, campaignId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("ad_sets").delete().eq("id", adSetId);
+  if (error) return { error: error.message };
+  revalidatePath(`/ads/${campaignId}`);
+  return { ok: true as const };
+}
+
+export async function addAd(adSetId: string, campaignId: string) {
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("ads")
+    .select("position")
+    .eq("ad_set_id", adSetId)
+    .order("position", { ascending: false })
+    .limit(1);
+  const nextPos = (existing?.[0]?.position ?? -1) + 1;
+
+  const { data, error } = await supabase
+    .from("ads")
+    .insert({
+      ad_set_id: adSetId,
+      name: `Ad ${nextPos + 1}`,
+      position: nextPos,
+    })
+    .select("id")
+    .single();
+  if (error) return { error: error.message };
+  revalidatePath(`/ads/${campaignId}`);
+  revalidatePath("/ads");
+  return { ok: true as const, id: data.id as string };
+}
+
+const AD_FIELDS = ["name", "hook", "visual_url"] as const;
+type AdField = (typeof AD_FIELDS)[number];
+
+export async function updateAdField(
+  adId: string,
+  campaignId: string,
+  field: AdField,
+  value: string | null,
+) {
+  if (!(AD_FIELDS as readonly string[]).includes(field)) {
+    return { error: "Champ non autorisé" };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("ads")
+    .update({ [field]: value && value.trim() ? value : null })
+    .eq("id", adId);
+  if (error) return { error: error.message };
+  revalidatePath(`/ads/${campaignId}`);
+  revalidatePath("/ads");
+  return { ok: true as const };
+}
+
+export async function deleteAd(adId: string, campaignId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("ads").delete().eq("id", adId);
+  if (error) return { error: error.message };
+  revalidatePath(`/ads/${campaignId}`);
+  revalidatePath("/ads");
+  return { ok: true as const };
+}
