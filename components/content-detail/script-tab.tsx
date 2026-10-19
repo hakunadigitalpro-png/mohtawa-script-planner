@@ -20,7 +20,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useExplicitSave } from "./use-explicit-save";
 import { SaveFooter } from "./save-footer";
-// ReferenceAnalyzer (transcription d'une vidéo de référence) parké — voir
+// Analyse de vidéo de référence : retirée — plus de transcription côté app.
 // WISHLIST.md. Import + rendu retirés ; le composant reste dans le repo.
 import { FilmedProgress, computeFilmedStatus } from "./filmed-progress";
 import { Checkbox } from "@/components/ui/checkbox";

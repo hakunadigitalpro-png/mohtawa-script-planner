@@ -9,8 +9,6 @@ import {
   generateStory,
   generateAutopsy,
   generateVlog,
-  transcribeWithGroq,
-  analyzeReferenceVideo,
   segmentScriptIntoStoryboard,
   AiError,
   type GenerationLanguage,
@@ -608,60 +606,6 @@ export async function applyVlogGeneration(input: {
 
     revalidatePath(`/content/${input.contentId}`);
     return { ok: true as const };
-  } catch (e) {
-    if (e instanceof AiError) return { ok: false as const, error: e.message };
-    return { ok: false as const, error: "Erreur inattendue. Réessaie." };
-  }
-}
-
-/**
- * Analyse une vidéo de référence pour s'en inspirer. La vidéo est uploadée
- * côté client sur Supabase Storage (URL publique) ; ici Groq la transcrit,
- * puis Claude décortique le wording et propose un script. Résultat renvoyé
- * (non persisté — outil à la demande pour le moment).
- */
-export async function analyzeReferenceVideoAction(input: {
-  contentId: string;
-  videoUrl: string;
-  filename?: string;
-}) {
-  try {
-    const { supabase } = await guardAiAction("reference");
-
-    // Contexte (plateforme + marque) pour adapter le script proposé.
-    const { data: content } = await supabase
-      .from("contents")
-      .select("platform, brand_id, title")
-      .eq("id", input.contentId)
-      .maybeSingle();
-
-    let brandContext: string | null = content?.title
-      ? `Vidéo en préparation : "${content.title}"`
-      : null;
-    if (content?.brand_id) {
-      const { data: brand } = await supabase
-        .from("brands")
-        .select("name")
-        .eq("id", content.brand_id)
-        .maybeSingle();
-      if (brand?.name) {
-        brandContext = `Marque : ${brand.name}${
-          content?.title ? ` — vidéo en préparation : "${content.title}"` : ""
-        }`;
-      }
-    }
-
-    const transcript = await transcribeWithGroq(
-      input.videoUrl,
-      input.filename,
-    );
-    const analysis = await analyzeReferenceVideo({
-      transcript,
-      platform: content?.platform ?? null,
-      brandContext,
-    });
-
-    return { ok: true as const, analysis, transcript };
   } catch (e) {
     if (e instanceof AiError) return { ok: false as const, error: e.message };
     return { ok: false as const, error: "Erreur inattendue. Réessaie." };

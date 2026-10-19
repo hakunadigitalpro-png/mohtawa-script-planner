@@ -21,12 +21,11 @@ const BRAND_GATED_ACTIONS = new Set([
   "storyboard",
   "caption",
   "autopsy",
-  "reference",
   "krea",
 ]);
 
 /**
- * Garde commun à TOUTES les Server Actions qui appellent l'IA (Claude/Groq).
+ * Garde commun à TOUTES les Server Actions qui appellent l'IA (Claude).
  *
  *  1. Authentification : refuse si l'utilisateur n'est pas connecté.
  *  2. Rate-limiting : compte les appels IA par utilisateur (RPC
