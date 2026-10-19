@@ -321,18 +321,7 @@ export function AdCampaignEditor({
                 disabled={!isWriter}
               />
             </Field>
-            <Field label="Budget journalier" hint="Ex. 25 TND/jour">
-              <Input
-                value={local.budget_daily ?? ""}
-                onChange={(e) =>
-                  setLocal({ ...local, budget_daily: e.target.value || null })
-                }
-                onBlur={() =>
-                  flush({ budget_daily: local.budget_daily }, "budget_daily")
-                }
-                disabled={!isWriter}
-              />
-            </Field>
+            {/* Le budget journalier vit maintenant sur l'ad set (0064). */}
           </div>
 
           <Field label="Plateformes">
@@ -382,67 +371,10 @@ export function AdCampaignEditor({
             />
           </Field>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <Field label="Âge">
-              <Input
-                placeholder="25-55"
-                value={local.targeting_age ?? ""}
-                onChange={(e) =>
-                  setLocal({ ...local, targeting_age: e.target.value || null })
-                }
-                onBlur={() =>
-                  flush({ targeting_age: local.targeting_age }, "age")
-                }
-                disabled={!isWriter}
-              />
-            </Field>
-            <Field label="Localisation">
-              <Input
-                placeholder="Tunis, Grand Tunis…"
-                value={local.targeting_location ?? ""}
-                onChange={(e) =>
-                  setLocal({
-                    ...local,
-                    targeting_location: e.target.value || null,
-                  })
-                }
-                onBlur={() =>
-                  flush(
-                    { targeting_location: local.targeting_location },
-                    "location",
-                  )
-                }
-                disabled={!isWriter}
-              />
-            </Field>
-            <Field label="Centres d'intérêt">
-              <Input
-                placeholder="Marketing, Comptabilité…"
-                value={local.targeting_interests ?? ""}
-                onChange={(e) =>
-                  setLocal({
-                    ...local,
-                    targeting_interests: e.target.value || null,
-                  })
-                }
-                onBlur={() =>
-                  flush(
-                    { targeting_interests: local.targeting_interests },
-                    "interests",
-                  )
-                }
-                disabled={!isWriter}
-              />
-            </Field>
-          </div>
-
-          <MediaGrid
-            label="Visuels"
-            kind="visual"
-            campaignId={campaign.id}
-            media={initialMedia}
-            canEdit={isWriter}
-          />
+          {/* Ciblage et visuels vivent maintenant au niveau de l'ad set
+              (migration 0064). Les colonnes `targeting_*` restent en base
+              pour les anciennes campagnes et sont utilisées comme valeurs
+              par défaut quand on crée un premier ad set (addAdSet). */}
         </section>
 
         {/* 2 bis. Ad sets + Ads (0064) ============================= */}
