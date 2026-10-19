@@ -6,7 +6,11 @@ import { getTranslations } from "next-intl/server";
 import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { formatDateLongFr, formatTimeFr } from "@/lib/utils";
-import { fetchNeighbours, scopeFromParams } from "@/lib/content-neighbours";
+import {
+  fetchNeighbours,
+  scopeFromParams,
+  scopeToQuery,
+} from "@/lib/content-neighbours";
 import { ContentPager } from "@/components/content-detail/content-pager";
 import { NextStepButton } from "@/components/content-detail/next-step-button";
 import { ContentTitleField } from "@/components/content-detail/content-title-field";
@@ -302,7 +306,7 @@ export default async function ContentDetailPage({
     >
       <div className="space-y-6">
         <PageHeader
-          backHref="/calendar"
+          backHref={`/calendar${scopeToQuery(scope)}`}
           backLabel={tContent("backToCalendar")}
           aside={<ContentPager nav={nav} />}
           title={
