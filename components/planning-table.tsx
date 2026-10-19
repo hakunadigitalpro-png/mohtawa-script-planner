@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Film } from "lucide-react";
 import {
-  typeColor,
-  typeLabel,
   statusColor,
   statusLabel,
   platformLabel,
@@ -11,6 +10,14 @@ import {
 import { formatDateFr } from "@/lib/utils";
 import { ContentCommentsButton } from "@/components/comments";
 import type { Content } from "@/lib/types";
+
+/** Jour de la semaine abrégé en français (lun, mar…). */
+function dayShortFr(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "");
+}
 
 /**
  * Vue « Planning » — le tableau global du mois : tous les contenus (posts,
@@ -75,19 +82,24 @@ export function PlanningTable({
     );
   }
 
-  const cols = "grid-cols-[110px_120px_110px_140px_130px_1fr]";
+  // Jour · Date · Plateforme · Statut · Légende · Vidéo · Titre+Visuel
+  // Colonnes fixes à gauche pour que les repères s'alignent entre lignes,
+  // Légende et Titre élastiques pour prendre la place qui reste.
+  const cols =
+    "grid-cols-[60px_100px_110px_120px_minmax(0,1.5fr)_70px_minmax(0,1.6fr)]";
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
-      <div className="min-w-[760px]">
+      <div className="min-w-[900px]">
         <div
           className={`grid ${cols} gap-3 border-b border-border/60 bg-secondary/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted`}
         >
+          <div>Jour</div>
           <div>Date</div>
-          <div>Type</div>
           <div>Plateforme</div>
           <div>Statut</div>
-          <div>Pilier</div>
+          <div>Légende</div>
+          <div>Vidéo</div>
           <div>Titre</div>
         </div>
 
@@ -102,15 +114,11 @@ export function PlanningTable({
                   href={`/content/${c.id}${scopeQuery}`}
                   className={`grid ${cols} items-center gap-3 border-b border-border/40 px-4 py-3 pe-10 text-sm transition last:border-b-0 hover:bg-secondary/40`}
                 >
+                  <span className="font-medium capitalize text-foreground/80">
+                    {dayShortFr(c.date)}
+                  </span>
                   <span className="text-muted">
                     {c.date ? formatDateFr(c.date) : "—"}
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{ background: typeColor(c.type) }}
-                    />
-                    {typeLabel(c.type)}
                   </span>
                   <span className="truncate text-muted">
                     {c.platform ? platformLabel(c.platform) : "—"}
@@ -122,11 +130,32 @@ export function PlanningTable({
                     />
                     {statusLabel(c.status)}
                   </span>
-                  <span dir="auto">
-                    {c.pillar ? (
-                      <span className="inline-block max-w-full truncate rounded-md bg-secondary px-1.5 py-0.5 align-middle text-xs font-medium text-foreground/70">
-                        {c.pillar}
-                      </span>
+                  <span
+                    className="min-w-0 truncate text-foreground/70"
+                    dir="auto"
+                    title={c.caption ?? undefined}
+                  >
+                    {c.caption?.trim() || (
+                      <span className="text-muted">—</span>
+                    )}
+                  </span>
+                  {/* Icône cliquable → la vidéo externe. On intercepte le
+                      clic pour qu'il ne déclenche pas aussi la navigation
+                      vers la fiche. Vide : simple tiret, pas de bouton
+                      fantôme. */}
+                  <span className="inline-flex">
+                    {c.preview_url ? (
+                      <a
+                        href={c.preview_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex size-8 items-center justify-center rounded-full text-foreground/70 transition hover:bg-secondary hover:text-foreground"
+                        title="Ouvrir la vidéo"
+                        aria-label="Ouvrir la vidéo"
+                      >
+                        <Film className="size-4" />
+                      </a>
                     ) : (
                       <span className="text-muted">—</span>
                     )}
