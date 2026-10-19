@@ -13,6 +13,7 @@ import {
   type CampaignRow,
   type MediaRow,
 } from "@/components/ads/ads-views";
+import { AdCardDelete } from "@/components/ads/ad-card-delete";
 
 /**
  * Trois façons de regarder les mêmes campagnes :
@@ -210,10 +211,14 @@ function ListView({ campaigns }: { campaigns: CampaignRow[] }) {
             {rows.map((c) => {
               const platforms = Array.isArray(c.platforms) ? c.platforms : [];
               return (
-                <li key={c.id}>
+                <li key={c.id} className="group relative">
+                  <AdCardDelete
+                    campaignId={c.id}
+                    title={c.title || "Sans titre"}
+                  />
                   <Link
                     href={`/ads/${c.id}`}
-                    className="group block rounded-2xl border border-foreground/10 bg-card p-4 transition hover:border-accent/40"
+                    className="block rounded-2xl border border-foreground/10 bg-card p-4 pe-12 transition hover:border-accent/40"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
