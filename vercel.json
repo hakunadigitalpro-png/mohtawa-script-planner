@@ -1,6 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["dub1"],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "destination": "https://kreatly.app/:path*",
+      "permanent": false
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron/push-daily",
