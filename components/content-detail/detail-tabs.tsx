@@ -78,6 +78,11 @@ export function DetailTabs({
   // proposerait Script, Storyboard et Caption — des onglets vides pour
   // quelque chose dont on ignore encore si ce sera une vidéo.
   const hasFormat = Boolean(content.type);
+  // Masquer Script + Storyboard quand la vidéo est déjà prête (0063) :
+  // on l'autorise seulement si un lien a bien été renseigné, pour qu'un
+  // oubli de case cochée ne vide pas tous les onglets utiles.
+  const hideProduction =
+    Boolean(content.hide_production_tabs) && Boolean(content.preview_url);
   // Moments à filmer (catégorie 'capture') — affichés dans l'onglet Vlog,
   // pas dans la Checklist matériel/préparation.
   const captureItems = checklistItems.filter((it) => it.category === "capture");
@@ -99,16 +104,21 @@ export function DetailTabs({
           </>
         ) : (
           <>
-            <TabsTrigger value="script">
-              {isStory ? t("stories") : isVlog ? "Vlog" : t("script")}
-            </TabsTrigger>
-            {/* Onglet Vidéo juste après le Script : lien Drive/YouTube/Vimeo
-                de la vidéo déjà prête, avec aperçu intégré. */}
-            <TabsTrigger value="video">Vidéo</TabsTrigger>
+            {/* Script + Storyboard masqués quand la vidéo est déjà prête et
+                que l'utilisatrice a coché « cacher la production » dans
+                l'onglet Vidéo — leur contenu reste en base, juste caché ici. */}
+            {!hideProduction && (
+              <TabsTrigger value="script">
+                {isStory ? t("stories") : isVlog ? "Vlog" : t("script")}
+              </TabsTrigger>
+            )}
             {/* Storyboard = Reel uniquement (le vlog se capture, pas se story-borde). */}
-            {!isStory && !isVlog && (
+            {!isStory && !isVlog && !hideProduction && (
               <TabsTrigger value="storyboard">{t("storyboard")}</TabsTrigger>
             )}
+            {/* Onglet Vidéo APRÈS Storyboard : lien Drive/YouTube/Vimeo de
+                la vidéo déjà prête, avec aperçu intégré. */}
+            <TabsTrigger value="video">Vidéo</TabsTrigger>
             {/* Caption pour Reel + Vlog — les Stories ont du texte par slide,
                 pas une caption globale au moment de la publication. */}
             {!isStory && <TabsTrigger value="caption">Légende</TabsTrigger>}
@@ -138,7 +148,12 @@ export function DetailTabs({
             />
           </TabsContent>
           <TabsContent value="video">
-            <VideoTab contentId={content.id} previewUrl={content.preview_url} />
+            <VideoTab
+              contentId={content.id}
+              previewUrl={content.preview_url}
+              hideProductionTabs={content.hide_production_tabs}
+              canOfferHide={false}
+            />
           </TabsContent>
           <TabsContent value="first-comment">
             <FirstCommentTab
@@ -149,26 +164,25 @@ export function DetailTabs({
         </>
       ) : (
         <>
-          <TabsContent value="script">
-            {isVlog ? (
-              <VlogTab
-                brandAudience={brandAudience}
-                aiEnabled={aiEnabled} content={content} vlog={vlog} captureItems={captureItems} />
-            ) : (
-              <ScriptTab
-                aiEnabled={aiEnabled}
-                content={content}
-                reel={reel}
-                story={story}
-                slides={slides}
-                brandAudience={brandAudience}
-              />
-            )}
-          </TabsContent>
-          <TabsContent value="video">
-            <VideoTab contentId={content.id} previewUrl={content.preview_url} />
-          </TabsContent>
-          {!isStory && !isVlog && (
+          {!hideProduction && (
+            <TabsContent value="script">
+              {isVlog ? (
+                <VlogTab
+                  brandAudience={brandAudience}
+                  aiEnabled={aiEnabled} content={content} vlog={vlog} captureItems={captureItems} />
+              ) : (
+                <ScriptTab
+                  aiEnabled={aiEnabled}
+                  content={content}
+                  reel={reel}
+                  story={story}
+                  slides={slides}
+                  brandAudience={brandAudience}
+                />
+              )}
+            </TabsContent>
+          )}
+          {!isStory && !isVlog && !hideProduction && (
             <TabsContent value="storyboard">
               <StoryboardTab
                 contentId={content.id}
@@ -180,6 +194,14 @@ export function DetailTabs({
               />
             </TabsContent>
           )}
+          <TabsContent value="video">
+            <VideoTab
+              contentId={content.id}
+              previewUrl={content.preview_url}
+              hideProductionTabs={content.hide_production_tabs}
+              canOfferHide={!isStory}
+            />
+          </TabsContent>
           {!isStory && (
             <TabsContent value="caption">
               <CaptionTab

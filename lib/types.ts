@@ -157,6 +157,11 @@ export type Content = {
    * passent par les visuels Supabase.
    */
   preview_url: string | null;
+  /**
+   * Quand la vidéo est déjà prête (preview_url rempli), on peut masquer les
+   * onglets Script et Storyboard — ils ne servent plus. 0063.
+   */
+  hide_production_tabs: boolean;
   created_at: string;
   updated_at: string;
 };

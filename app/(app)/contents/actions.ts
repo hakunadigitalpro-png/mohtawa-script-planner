@@ -123,6 +123,8 @@ export async function updateContent(
     first_comment: string | null;
     /** Lien vidéo externe (Drive, YouTube, Vimeo) pour la validation. 0062. */
     preview_url: string | null;
+    /** Masquer Script + Storyboard quand la vidéo est déjà prête. 0063. */
+    hide_production_tabs: boolean;
     /** L'angle d'une idée, avant qu'un format dise où l'écrire (0055). */
     notes: string | null;
   }>,
@@ -179,6 +181,7 @@ export async function updateContent(
     "caption",
     "first_comment",
     "preview_url",
+    "hide_production_tabs",
     "notes",
   ]);
   const { error } = await supabase
