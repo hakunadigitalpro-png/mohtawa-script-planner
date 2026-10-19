@@ -392,6 +392,7 @@ export default async function ContentDetailPage({
         />
 
         <DetailTabs
+          defaultTab={typeof sp.tab === "string" ? sp.tab : undefined}
           content={c}
           reel={reel}
           story={story}

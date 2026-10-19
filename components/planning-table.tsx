@@ -1,7 +1,10 @@
+"use client";
+
+import * as React from "react";
 import type { ReactNode } from "react";
-import Link from "next/link";
 import Image from "next/image";
-import { Film } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Film, X } from "lucide-react";
 import {
   statusColor,
   statusLabel,
@@ -11,6 +14,17 @@ import { formatDateFr } from "@/lib/utils";
 import { ContentCommentsButton } from "@/components/comments";
 import type { Content } from "@/lib/types";
 
+/**
+ * Vue « Planning » — le tableau global du mois : tous les contenus (posts,
+ * carrousels, vidéos) en lignes, groupés par semaine, avec Jour / Date /
+ * Plateforme / Statut / Légende / Vidéo / Titre + visuel. La tour de
+ * contrôle éditoriale (équivalent du tableau Notion).
+ *
+ * Client component : la cellule Légende ouvre directement l'onglet Légende
+ * de la fiche, et la vignette s'agrandit sur place dans une lightbox. Le
+ * reste de la ligne ouvre la fiche sur l'onglet Plan.
+ */
+
 /** Jour de la semaine abrégé en français (lun, mar…). */
 function dayShortFr(iso: string | null): string {
   if (!iso) return "—";
@@ -19,11 +33,6 @@ function dayShortFr(iso: string | null): string {
   return d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "");
 }
 
-/**
- * Vue « Planning » — le tableau global du mois : tous les contenus (posts,
- * carrousels, vidéos) en lignes, groupés par semaine, avec Type / Plateforme /
- * Statut / Titre. La tour de contrôle éditoriale (équivalent du tableau Notion).
- */
 export function PlanningTable({
   contents,
   commentCounts = {},
@@ -44,18 +53,26 @@ export function PlanningTable({
   /** Ce que dit la boîte vide, quand « Aucun contenu ce mois-ci » serait faux. */
   emptyState?: ReactNode;
 }) {
+  const router = useRouter();
+  const [lightbox, setLightbox] = React.useState<string | null>(null);
+
+  // ESC ferme la lightbox — reproduit la convention des modales de l'app.
+  React.useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightbox(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [lightbox]);
+
   const sorted = [...contents].sort((a, b) =>
     (a.date ?? "9999-99-99").localeCompare(b.date ?? "9999-99-99"),
   );
 
-  // Groupe par semaine du mois (jours 1-7 = Semaine 1, 8-14 = Semaine 2…).
   const groups: { label: string; items: Content[] }[] = [];
   const idxByLabel = new Map<string, number>();
   for (const c of sorted) {
-    // Plus de groupe « Sans date » : la requête parente filtre déjà sur le
-    // mois, donc il était mort — et depuis l'onglet Idées, les contenus sans
-    // date ont leur propre endroit. Deux listes pour la même chose, c'est
-    // exactement ce qu'on cherche à éviter.
     const label =
       groupBy === "month"
         ? c.date
@@ -83,36 +100,52 @@ export function PlanningTable({
   }
 
   // Jour · Date · Plateforme · Statut · Légende · Vidéo · Titre+Visuel
-  // Colonnes fixes à gauche pour que les repères s'alignent entre lignes,
-  // Légende et Titre élastiques pour prendre la place qui reste.
   const cols =
     "grid-cols-[60px_100px_110px_120px_minmax(0,1.5fr)_70px_minmax(0,1.6fr)]";
 
-  return (
-    <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
-      <div className="min-w-[900px]">
-        <div
-          className={`grid ${cols} gap-3 border-b border-border/60 bg-secondary/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted`}
-        >
-          <div>Jour</div>
-          <div>Date</div>
-          <div>Plateforme</div>
-          <div>Statut</div>
-          <div>Légende</div>
-          <div>Vidéo</div>
-          <div>Titre</div>
-        </div>
+  // Un clic sur la ligne (hors cellules spéciales) ouvre la fiche. On
+  // intercepte les ouvertures de nouvel onglet (Ctrl/Cmd/middle-click) pour
+  // laisser le comportement natif aux utilisateurs qui connaissent.
+  const openFiche = (id: string, tab?: string) => {
+    const sep = scopeQuery ? "&" : "?";
+    const tabQs = tab ? `${scopeQuery || ""}${sep}tab=${tab}` : scopeQuery;
+    router.push(`/content/${id}${tabQs}`);
+  };
 
-        {groups.map((g) => (
-          <div key={g.label}>
-            <div className="bg-secondary/20 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted">
-              {g.label}
-            </div>
-            {g.items.map((c) => (
-              <div key={c.id} className="relative">
-                <Link
-                  href={`/content/${c.id}${scopeQuery}`}
-                  className={`grid ${cols} items-center gap-3 border-b border-border/40 px-4 py-3 pe-10 text-sm transition last:border-b-0 hover:bg-secondary/40`}
+  return (
+    <>
+      <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
+        <div className="min-w-[900px]">
+          <div
+            className={`grid ${cols} gap-3 border-b border-border/60 bg-secondary/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted`}
+          >
+            <div>Jour</div>
+            <div>Date</div>
+            <div>Plateforme</div>
+            <div>Statut</div>
+            <div>Légende</div>
+            <div>Vidéo</div>
+            <div>Titre</div>
+          </div>
+
+          {groups.map((g) => (
+            <div key={g.label}>
+              <div className="bg-secondary/20 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted">
+                {g.label}
+              </div>
+              {g.items.map((c) => (
+                <div
+                  key={c.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openFiche(c.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openFiche(c.id);
+                    }
+                  }}
+                  className={`relative grid ${cols} cursor-pointer items-center gap-3 border-b border-border/40 px-4 py-3 pe-10 text-sm transition last:border-b-0 hover:bg-secondary/40`}
                 >
                   <span className="font-medium capitalize text-foreground/80">
                     {dayShortFr(c.date)}
@@ -130,19 +163,22 @@ export function PlanningTable({
                     />
                     {statusLabel(c.status)}
                   </span>
-                  <span
-                    className="min-w-0 truncate text-foreground/70"
-                    dir="auto"
-                    title={c.caption ?? undefined}
+                  {/* Clic sur la légende → onglet Légende directement. On
+                      stoppe la propagation pour ne pas ouvrir le Plan. */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openFiche(c.id, "caption");
+                    }}
+                    className="min-w-0 truncate text-start text-foreground/70 hover:text-foreground"
+                    title={c.caption ?? "Ouvrir la légende"}
                   >
                     {c.caption?.trim() || (
-                      <span className="text-muted">—</span>
+                      <span className="text-muted">— ajouter une légende</span>
                     )}
-                  </span>
-                  {/* Icône cliquable → la vidéo externe. On intercepte le
-                      clic pour qu'il ne déclenche pas aussi la navigation
-                      vers la fiche. Vide : simple tiret, pas de bouton
-                      fantôme. */}
+                  </button>
+                  {/* Icône cliquable → la vidéo externe. */}
                   <span className="inline-flex">
                     {c.preview_url ? (
                       <a
@@ -162,16 +198,25 @@ export function PlanningTable({
                   </span>
                   <span className="flex min-w-0 items-center gap-2.5">
                     {thumbs[c.id] ? (
-                      <Image
-                        src={thumbs[c.id]}
-                        alt=""
-                        width={72}
-                        height={72}
-                        className="size-9 shrink-0 rounded-md object-cover object-top"
-                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightbox(thumbs[c.id]);
+                        }}
+                        className="relative size-9 shrink-0 cursor-zoom-in overflow-hidden rounded-md transition hover:ring-2 hover:ring-accent"
+                        title="Agrandir le visuel"
+                        aria-label="Agrandir le visuel"
+                      >
+                        <Image
+                          src={thumbs[c.id]}
+                          alt=""
+                          width={72}
+                          height={72}
+                          className="size-9 object-cover object-top"
+                        />
+                      </button>
                     ) : (
-                      /* Réserve la place : sans ce carré, les titres des lignes
-                         sans visuel ne seraient plus alignés avec les autres. */
                       <span className="size-9 shrink-0 rounded-md bg-secondary" />
                     )}
                     <span
@@ -181,20 +226,57 @@ export function PlanningTable({
                       {c.title || "Sans titre"}
                     </span>
                   </span>
-                </Link>
-                {/* Sibling du Link (pas nesté dedans) pour commenter sans
-                    quitter le Planning. */}
-                <div className="absolute end-3 top-1/2 -translate-y-1/2">
-                  <ContentCommentsButton
-                    contentId={c.id}
-                    unreadCount={commentCounts[c.id] ?? 0}
-                  />
+                  {/* Commenter sans quitter le Planning. */}
+                  <div
+                    className="absolute end-3 top-1/2 -translate-y-1/2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ContentCommentsButton
+                      contentId={c.id}
+                      unreadCount={commentCounts[c.id] ?? 0}
+                    />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ))}
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+
+      {/* Lightbox : agrandissement du visuel en superposition, cliquer
+          l'arrière-plan ou Échap pour fermer. */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setLightbox(null)}
+          role="dialog"
+          aria-modal
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightbox(null);
+            }}
+            className="absolute end-4 top-4 flex size-9 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
+            aria-label="Fermer l'aperçu"
+          >
+            <X className="size-5" />
+          </button>
+          <div
+            className="relative h-[88vh] w-full max-w-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={lightbox}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, 640px"
+              className="object-contain"
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }

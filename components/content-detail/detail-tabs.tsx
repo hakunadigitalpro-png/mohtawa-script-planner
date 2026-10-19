@@ -27,6 +27,7 @@ import type {
 } from "@/lib/types";
 
 export function DetailTabs({
+  defaultTab,
   content,
   reel,
   story,
@@ -44,6 +45,8 @@ export function DetailTabs({
   brandAudience,
   aiEnabled = true,
 }: {
+  /** Onglet à ouvrir par défaut (via ?tab=…). Validé plus bas. */
+  defaultTab?: string;
   content: Content;
   reel: ReelDetails | null;
   story: StoryDetails | null;
@@ -90,8 +93,21 @@ export function DetailTabs({
   // (pas encore de données à saisir). On le masque pour réduire le bruit visuel.
   const isPublished = isLiveStatus(content.status);
 
+  // Garde-fou : un `?tab=…` incohérent (onglet masqué, format qui ne l'a
+  // pas) ou vide retombe sur « plan » plutôt qu'ouvrir une page vide.
+  const ALLOWED = new Set<string>(["plan", "video", "performance"]);
+  if (isSimple) {
+    ALLOWED.add("content");
+    ALLOWED.add("first-comment");
+  } else if (hasFormat) {
+    if (!hideProduction) ALLOWED.add("script");
+    if (!isStory && !isVlog && !hideProduction) ALLOWED.add("storyboard");
+    if (!isStory) ALLOWED.add("caption");
+  }
+  const initial = defaultTab && ALLOWED.has(defaultTab) ? defaultTab : "plan";
+
   return (
-    <Tabs defaultValue="plan">
+    <Tabs defaultValue={initial}>
       <TabsList data-tour="content-tabs">
         <TabsTrigger value="plan">{t("plan")}</TabsTrigger>
         {!hasFormat ? null : isSimple ? (
