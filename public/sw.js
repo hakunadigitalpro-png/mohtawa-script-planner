@@ -25,6 +25,52 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// --- Web Push ----------------------------------------------------------
+//
+// Un push arrive avec un JSON { title, body, url?, tag? }. On affiche la
+// notification et au clic on ouvre l'URL demandée (ou l'app par défaut),
+// en évitant d'ouvrir un deuxième onglet si l'utilisatrice a déjà Kreatly
+// dans sa PWA — on bascule dessus à la place.
+
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = { title: "Kreatly", body: event.data ? event.data.text() : "" };
+  }
+  const title = payload.title || "Kreatly";
+  const options = {
+    body: payload.body || "",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    tag: payload.tag,
+    data: { url: payload.url || "/calendar" },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || "/calendar";
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of all) {
+        if ("focus" in client) {
+          try {
+            await client.navigate(target);
+          } catch {
+            /* navigate interdit cross-origin : focus simple suffira */
+          }
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
+    })(),
+  );
+});
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
 

@@ -7,6 +7,7 @@ import { LocaleSwitcherFull } from "@/components/locale-switcher";
 import { getThemeFromCookies } from "@/lib/theme";
 import { getCoachMode } from "@/lib/coach-pref";
 import { CoachSwitch } from "./coach-switch";
+import { PushToggle } from "@/components/push-toggle";
 import { PageHeader } from "@/components/page-header";
 
 export default async function ProfilePage() {
@@ -61,6 +62,21 @@ export default async function ProfilePage() {
             initialTheme={theme}
             initialAccent={accent}
             initialTint={tint}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Notifications</CardTitle>
+          <CardDescription>
+            Un rappel chaque matin pour les contenus programmés aujourd&apos;hui.
+            À activer sur chaque appareil où tu veux les recevoir.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PushToggle
+            publicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
           />
         </CardContent>
       </Card>
