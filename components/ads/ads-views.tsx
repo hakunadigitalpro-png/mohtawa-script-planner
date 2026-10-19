@@ -64,17 +64,20 @@ function formatRange(start: string | null, end: string | null): string {
  * programmée (violet) ou encore en brouillon (neutre).
  */
 function dateTone(status: string): string {
+  // `!text-…` force la couleur du texte au-dessus du `text-muted-foreground`
+  // hérité du parent — sans ça la pastille garde la couleur du fond et le
+  // texte reste illisible.
   switch (status) {
     case "live":
-      return "bg-emerald-100 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-200";
+      return "bg-emerald-200 !text-emerald-950 dark:bg-emerald-500/30 dark:!text-emerald-100";
     case "stopped":
-      return "bg-rose-100 text-rose-900 dark:bg-rose-500/20 dark:text-rose-200";
+      return "bg-rose-200 !text-rose-950 dark:bg-rose-500/30 dark:!text-rose-100";
     case "approved":
-      return "bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200";
+      return "bg-amber-200 !text-amber-950 dark:bg-amber-500/30 dark:!text-amber-100";
     case "scheduled":
-      return "bg-violet-100 text-violet-900 dark:bg-violet-500/20 dark:text-violet-200";
+      return "bg-violet-200 !text-violet-950 dark:bg-violet-500/30 dark:!text-violet-100";
     default:
-      return "bg-foreground/5 text-foreground";
+      return "bg-foreground/10 !text-foreground";
   }
 }
 
