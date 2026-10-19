@@ -145,6 +145,12 @@ export type Content = {
    * "Caption" entre Checklist et Performance.
    */
   caption: string | null;
+  /**
+   * Le texte à poster en premier commentaire sous le post (pratique IG :
+   * hashtags, mentions, mini-FAQ). Nullable — vide = rien à poster.
+   * Migration 0060, affiché pour les formats "simples" (post/carrousel/infographie).
+   */
+  first_comment: string | null;
   created_at: string;
   updated_at: string;
 };

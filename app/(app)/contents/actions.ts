@@ -119,6 +119,8 @@ export async function updateContent(
     tags: string[];
     video_url: string | null;
     caption: string | null;
+    /** Premier commentaire à poster sous le post (hashtags, mentions). 0060. */
+    first_comment: string | null;
     /** L'angle d'une idée, avant qu'un format dise où l'écrire (0055). */
     notes: string | null;
   }>,
@@ -167,6 +169,7 @@ export async function updateContent(
     "tags",
     "video_url",
     "caption",
+    "first_comment",
     "notes",
   ]);
   const { error } = await supabase

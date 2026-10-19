@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { platformAccentColor } from "@/lib/platform-colors";
 import {
   Dialog,
   DialogContent,
@@ -182,27 +183,28 @@ function PublicationRow({
   return (
     <li className="rounded-2xl border border-border/60 bg-card p-3">
       <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-        <span className="inline-flex shrink-0 items-center rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold capitalize text-accent">
+        <span
+          className="inline-flex shrink-0 items-center rounded-full px-3 py-1 text-xs font-semibold capitalize text-white"
+          style={{ background: platformAccentColor(publication.platform) }}
+        >
           {publication.platform}
         </span>
 
-        <Input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          onBlur={() => saveDate(date)}
-          className="h-9 flex-1 text-sm sm:max-w-44"
-          aria-label={`Date de publication sur ${publication.platform}`}
-        />
-
-        <Input
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          onBlur={() => saveTime(time)}
-          className="h-9 flex-1 text-sm sm:max-w-32"
-          aria-label={`Heure de publication sur ${publication.platform}`}
-        />
+        <div className="w-full sm:w-80">
+          <DateTimePicker
+            date={date}
+            time={time}
+            accentColor={platformAccentColor(publication.platform)}
+            ariaLabel={`Date et heure de publication sur ${publication.platform}`}
+            onChange={({ date: nd, time: nt }) => {
+              setDate(nd);
+              setTime(nt);
+              if (nd !== (publication.scheduled_date ?? "")) saveDate(nd);
+              if (nt !== (publication.scheduled_time?.slice(0, 5) ?? ""))
+                saveTime(nt);
+            }}
+          />
+        </div>
 
         <span className="flex-1 text-xs text-muted sm:text-right">
           L&apos;URL du contenu se renseigne après publication, dans l&apos;onglet
@@ -293,25 +295,17 @@ function AddPublicationDialog({
               placeholder="—"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="add-pub-date">Date (optionnel)</Label>
-              <Input
-                id="add-pub-date"
-                type="date"
-                value={scheduledDate}
-                onChange={(e) => setScheduledDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="add-pub-time">Heure (optionnel)</Label>
-              <Input
-                id="add-pub-time"
-                type="time"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label>Date et heure (optionnel)</Label>
+            <DateTimePicker
+              date={scheduledDate}
+              time={scheduledTime}
+              accentColor={platformAccentColor(platform)}
+              onChange={({ date, time }) => {
+                setScheduledDate(date);
+                setScheduledTime(time);
+              }}
+            />
           </div>
           {error && (
             <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs text-destructive">

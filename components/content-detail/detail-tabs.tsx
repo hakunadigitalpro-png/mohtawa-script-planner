@@ -8,6 +8,7 @@ import { VlogTab } from "./vlog-tab";
 import { StoryboardTab } from "./storyboard-tab";
 import { CaptionTab } from "./caption-tab";
 import { ContentTab } from "./content-tab";
+import { FirstCommentTab } from "./first-comment-tab";
 import { PerformanceTab } from "./performance-tab";
 import { isSimpleType, isLiveStatus } from "@/lib/constants";
 import type {
@@ -88,9 +89,12 @@ export function DetailTabs({
       <TabsList data-tour="content-tabs">
         <TabsTrigger value="plan">{t("plan")}</TabsTrigger>
         {!hasFormat ? null : isSimple ? (
-          /* Post / Carrousel / Infographie : un seul onglet "Contenu"
-             (légende + visuels), pas de Script/Storyboard. */
-          <TabsTrigger value="content">Contenu</TabsTrigger>
+          /* Post / Carrousel / Infographie : Contenu (visuels + légende) +
+             le premier commentaire à poster sous le post. */
+          <>
+            <TabsTrigger value="content">Contenu</TabsTrigger>
+            <TabsTrigger value="first-comment">Commentaires</TabsTrigger>
+          </>
         ) : (
           <>
             <TabsTrigger value="script">
@@ -118,15 +122,23 @@ export function DetailTabs({
       </TabsContent>
 
       {!hasFormat ? null : isSimple ? (
-        <TabsContent value="content">
-          <ContentTab
-            aiEnabled={aiEnabled}
-            contentId={content.id}
-            caption={content.caption}
-            visuals={visuals}
-            isCarousel={content.type === "carousel"}
-          />
-        </TabsContent>
+        <>
+          <TabsContent value="content">
+            <ContentTab
+              aiEnabled={aiEnabled}
+              contentId={content.id}
+              caption={content.caption}
+              visuals={visuals}
+              isCarousel={content.type === "carousel"}
+            />
+          </TabsContent>
+          <TabsContent value="first-comment">
+            <FirstCommentTab
+              contentId={content.id}
+              firstComment={content.first_comment}
+            />
+          </TabsContent>
+        </>
       ) : (
         <>
           <TabsContent value="script">

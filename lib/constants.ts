@@ -52,11 +52,10 @@ export function platformsForType(type: string | null | undefined) {
  */
 export const STATUSES = [
   { value: "idea", label: "Idée", color: "var(--color-status-idea)" },
-  {
-    value: "selected",
-    label: "Retenue",
-    color: "var(--color-status-selected)",
-  },
+  // « Retenue » (`selected`) existe en base pour le board des idées mais ne
+  // paraît plus dans le menu Statut d'un contenu qui a déjà un format : à
+  // ce stade on sait déjà où elle va, le mot n'ajoutait rien. Les quelques
+  // lignes historiques en « selected » restent lisibles via IDEA_STATUSES.
   { value: "script", label: "Script", color: "var(--color-status-script)" },
   { value: "filming", label: "Tournage", color: "var(--color-status-filming)" },
   { value: "editing", label: "Montage", color: "var(--color-status-editing)" },
@@ -74,11 +73,7 @@ export const STATUSES = [
  */
 export const SIMPLE_STATUSES = [
   { value: "idea", label: "Idée", color: "var(--color-status-idea)" },
-  {
-    value: "selected",
-    label: "Retenue",
-    color: "var(--color-status-selected)",
-  },
+  // « Retenue » retirée du menu Statut (voir STATUSES ci-dessus).
   { value: "design", label: "Design", color: "var(--color-status-design)" },
   {
     value: "pending_review",
@@ -118,10 +113,14 @@ export const IDEA_STATUSES = [
   },
 ] as const;
 
-/** Union dédupliquée des deux listes — pour un filtre global (dashboard). */
-export const ALL_STATUSES = [...STATUSES, ...SIMPLE_STATUSES].filter(
-  (s, i, arr) => arr.findIndex((s2) => s2.value === s.value) === i,
-);
+/** Union dédupliquée des trois listes — pour un filtre global (dashboard)
+ *  et pour que `statusLabel("selected")` continue de rendre « Retenue »
+ *  même si cette étape n'est plus proposée dans le menu Statut. */
+export const ALL_STATUSES = [
+  ...STATUSES,
+  ...SIMPLE_STATUSES,
+  ...IDEA_STATUSES,
+].filter((s, i, arr) => arr.findIndex((s2) => s2.value === s.value) === i);
 
 export type Status = (typeof STATUSES)[number]["value"];
 

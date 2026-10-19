@@ -88,18 +88,14 @@ export function ContentTitleField({
         placeholder={placeholder}
         aria-label="Titre du contenu"
         className={cn(
-          // Sans bordure au repos : on lit un titre, on ne remplit pas un
-          // formulaire. Le cadre n'apparaît qu'au survol et à la saisie.
+          // On lit un titre, pas un champ. Aucun cadre, aucun fond : la saisie
+          // garde juste un très léger voile au focus pour montrer qu'on écrit.
           "-mx-2 block w-full resize-none overflow-hidden rounded-xl px-2 py-1",
           "[field-sizing:content]",
           "text-3xl font-bold tracking-tight leading-tight text-white",
           "transition-colors placeholder:text-white/40",
-          // Un filet permanent sous le texte : il dit « champ » sans dire
-          // « formulaire ». Sans lui, rien ne signalait qu'on peut écrire ici
-          // — et sur téléphone il n'y a pas de survol pour le découvrir.
-          "border border-transparent border-b-white/15 bg-transparent",
-          "hover:border-white/25 hover:bg-white/5",
-          "focus:border-white/40 focus:bg-white/10 focus:outline-none",
+          "border-0 bg-transparent",
+          "focus:bg-white/5 focus:outline-none",
           pending && "opacity-60",
         )}
       />

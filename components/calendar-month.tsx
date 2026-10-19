@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/badge";
 import {
   typeColor,
+  typeLabel,
   statusColor,
   statusLabel,
   platformLabel,
@@ -448,7 +449,13 @@ function EntryCard({
     .filter((t): t is string => Boolean(t));
   const oneTime = new Set(times).size <= 1;
   const sharedTime = oneTime ? formatTimeFr(times[0] ?? null) : null;
-  const hasHeader = entry.slots.some((s) => s.platform) || times.length > 0;
+  const hasHeader =
+    entry.slots.some((s) => s.platform) || times.length > 0 || Boolean(entry.type);
+
+  // Le format écrit à côté de l'icône plateforme — « Post », « Carrousel »,
+  // « Reel »… — pour qu'un coup d'œil au calendrier dise QUOI, pas seulement
+  // OÙ. Discret : taille de la ligne, pas une pastille.
+  const formatLabel = entry.type ? typeLabel(entry.type) : null;
 
   const header = hasHeader && (
     <div className="mb-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-foreground/70">
@@ -467,6 +474,11 @@ function EntryCard({
           </span>
         );
       })}
+      {formatLabel && (
+        <span className="text-[11px] font-medium text-muted">
+          {formatLabel}
+        </span>
+      )}
       {sharedTime && (
         <span className="text-xs font-semibold text-muted">
           {sharedTime}
