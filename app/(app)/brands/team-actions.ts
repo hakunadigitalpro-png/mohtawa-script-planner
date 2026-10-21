@@ -17,6 +17,10 @@ export async function createBrandInvitation(
   note: string | null = null,
   /** Facultatif : l'invitation part aussi à cette adresse. Non stockée. */
   email: string | null = null,
+  /** Durée d'accès en jours (null = illimité). Posé sur le membership
+   *  à l'acceptation. Utilisé surtout pour les clients invités, dont la
+   *  mission a une fin. */
+  expiresDays: number | null = null,
 ) {
   const supabase = await createClient();
 
@@ -29,6 +33,7 @@ export async function createBrandInvitation(
     p_brand_id: brandId,
     p_role: role,
     p_note: note && note.trim() ? note.trim() : null,
+    p_expires_days: expiresDays,
   });
 
   if (error) return { error: error.message };
@@ -114,6 +119,28 @@ export async function updateMemberRole(
   if (error) return { error: error.message };
 
   revalidatePath(`/brands/${brandId}`);
+  return { ok: true as const };
+}
+
+/**
+ * Change la date de fin d'accès d'un membre (owner/admin seulement).
+ * `expiresAt = null` rend l'accès illimité à nouveau.
+ */
+export async function setMemberExpiry(
+  brandId: string,
+  userId: string,
+  expiresAt: Date | null,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_member_expiry", {
+    p_brand_id: brandId,
+    p_user_id: userId,
+    p_expires_at: expiresAt ? expiresAt.toISOString() : null,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath(`/brands/${brandId}`);
+  revalidatePath("/", "layout");
   return { ok: true as const };
 }
 

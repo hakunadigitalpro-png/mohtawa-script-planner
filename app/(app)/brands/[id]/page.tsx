@@ -27,6 +27,8 @@ type MemberRow = {
   email: string;
   role: BrandRole;
   joined_at: string;
+  /** Date de fin d'accès (NULL = illimité). Posée à l'invitation ou plus tard. */
+  expires_at: string | null;
 };
 
 type InvitationRow = {

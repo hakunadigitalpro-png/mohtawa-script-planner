@@ -36,6 +36,7 @@ import {
   revokeBrandInvitation,
   updateMemberRole,
   removeBrandMember,
+  setMemberExpiry,
   type BrandRole,
 } from "../team-actions";
 
@@ -44,7 +45,29 @@ type Member = {
   email: string;
   role: BrandRole;
   joined_at: string;
+  /** NULL = accès illimité. Au-delà, la RLS coupe les accès. */
+  expires_at: string | null;
 };
+
+/**
+ * Durées d'accès proposées à l'invitation ou à la révision. Volontairement
+ * courtes : un accès client dure une mission, pas une vie.
+ */
+const DURATIONS: { label: string; days: number | null }[] = [
+  { label: "1 semaine", days: 7 },
+  { label: "2 semaines", days: 14 },
+  { label: "1 mois", days: 30 },
+  { label: "3 mois", days: 90 },
+  { label: "6 mois", days: 180 },
+  { label: "Illimité", days: null },
+];
+
+/** Nombre de jours restants (positif) ou dépassés (négatif) jusqu'à une date. */
+function daysUntil(iso: string): number {
+  return Math.round(
+    (new Date(iso).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+  );
+}
 
 type Invitation = {
   id: string;
@@ -253,7 +276,21 @@ function MemberRow({
         )}
       </td>
       <td className="px-4 py-3 text-muted">
-        {formatDateFr(new Date(member.joined_at))}
+        <div>{formatDateFr(new Date(member.joined_at))}</div>
+        {member.expires_at ? (
+          <ExpiryBadge
+            brandId={brandId}
+            userId={member.user_id}
+            expiresAt={member.expires_at}
+            canManage={canManage}
+          />
+        ) : canManage && member.role === "viewer" && !isSelf ? (
+          <SetDurationButton
+            brandId={brandId}
+            userId={member.user_id}
+            label="Mettre une fin d'accès"
+          />
+        ) : null}
       </td>
       <td className="px-4 py-3 text-end">
         {canRemove && (
@@ -278,6 +315,116 @@ function MemberRow({
         )}
       </td>
     </tr>
+  );
+}
+
+// ============================================================
+// Pastille d'expiration + bouton pour poser/changer la fin d'accès
+// ============================================================
+function ExpiryBadge({
+  brandId,
+  userId,
+  expiresAt,
+  canManage,
+}: {
+  brandId: string;
+  userId: string;
+  expiresAt: string;
+  canManage: boolean;
+}) {
+  const days = daysUntil(expiresAt);
+  const expired = days <= 0;
+  const tone = expired
+    ? "bg-rose-100 text-rose-900 dark:bg-rose-500/20 dark:text-rose-200"
+    : days <= 7
+      ? "bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200"
+      : "bg-foreground/5 text-foreground";
+  const label = expired
+    ? `Expiré depuis ${-days} j`
+    : `Expire dans ${days} j`;
+  return (
+    <div className="mt-1 flex items-center gap-2">
+      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${tone}`}>
+        {label}
+      </span>
+      {canManage && (
+        <SetDurationButton
+          brandId={brandId}
+          userId={userId}
+          label="Modifier"
+        />
+      )}
+    </div>
+  );
+}
+
+function SetDurationButton({
+  brandId,
+  userId,
+  label,
+}: {
+  brandId: string;
+  userId: string;
+  label: string;
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [choice, setChoice] = useState<string>("30");
+
+  const onSave = () => {
+    const days = choice === "null" ? null : Number(choice);
+    const expiresAt =
+      days === null ? null : new Date(Date.now() + days * 86400_000);
+    startTransition(async () => {
+      const res = await setMemberExpiry(brandId, userId, expiresAt);
+      if ("ok" in res && res.ok) {
+        setOpen(false);
+        router.refresh();
+      }
+    });
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-xs text-muted underline-offset-2 hover:text-foreground hover:underline"
+      >
+        {label}
+      </button>
+      <Dialog open={open} onOpenChange={() => setOpen(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Durée d&apos;accès</DialogTitle>
+            <DialogDescription>
+              Au-delà de cette date, la personne ne verra plus la marque.
+              Tu peux changer plus tard.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogBody className="space-y-3">
+            <Select
+              value={choice}
+              onValueChange={setChoice}
+              options={DURATIONS.map((d) => ({
+                value: d.days === null ? "null" : String(d.days),
+                label: d.label,
+              }))}
+            />
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={onSave} disabled={pending} aria-busy={pending}>
+              {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
+              Appliquer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -424,6 +571,9 @@ function InviteDialog({
   const [role, setRole] = useState<BrandRole>("editor");
   const [note, setNote] = useState("");
   const [email, setEmail] = useState("");
+  // Par défaut : illimité pour un membre interne, 1 mois pour un client.
+  // Au changement de rôle on remet la valeur par défaut adaptée.
+  const [duration, setDuration] = useState<string>("null");
   const [pending, startTransition] = useTransition();
   const [generated, setGenerated] = useState<{
     link: string;
@@ -439,9 +589,18 @@ function InviteDialog({
     setRole("editor");
     setNote("");
     setEmail("");
+    setDuration("null");
     setGenerated(null);
     setError(null);
     setCopied(false);
+  };
+
+  // Quand on choisit un rôle « viewer » (client), la mission a par défaut
+  // une fin : on propose 1 mois. Pour un membre interne (editor/admin),
+  // l'accès est illimité par défaut.
+  const onRoleChange = (v: BrandRole) => {
+    setRole(v);
+    setDuration(v === "viewer" ? "30" : "null");
   };
 
   const onClose_ = () => {
@@ -459,6 +618,7 @@ function InviteDialog({
         role,
         note || null,
         email.trim() || null,
+        duration === "null" ? null : Number(duration),
       );
       if ("error" in res && res.error) {
         setError(res.error);
@@ -548,13 +708,30 @@ function InviteDialog({
                 <Select
                   id="invite-role"
                   value={role}
-                  onValueChange={(v) => setRole(v as BrandRole)}
+                  onValueChange={(v) => onRoleChange(v as BrandRole)}
                   options={INVITABLE_ROLES.map((r) => ({
                     value: r,
                     label: tRoles(r),
                   }))}
                 />
                 <p className="text-xs text-muted">{tRoleDescriptions(role)}</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="invite-duration">Durée d&apos;accès</Label>
+                <Select
+                  id="invite-duration"
+                  value={duration}
+                  onValueChange={setDuration}
+                  options={DURATIONS.map((d) => ({
+                    value: d.days === null ? "null" : String(d.days),
+                    label: d.label,
+                  }))}
+                />
+                <p className="text-xs text-muted">
+                  {role === "viewer"
+                    ? "Un client voit la marque pendant cette durée, puis l'accès se coupe tout seul."
+                    : "Laisse « Illimité » pour un membre interne. Tu peux changer plus tard."}
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="invite-note">{tDialog("note")}</Label>
