@@ -30,14 +30,26 @@ export function CalendarViewTabs({
 
   return (
     <ViewTabs>
-      <ViewTab href={query("calendar")} active={view === "calendar"} icon={CalendarDays}>
+      <ViewTab
+        href={query("calendar")}
+        active={view === "calendar"}
+        icon={<CalendarDays className="size-4 shrink-0 max-sm:hidden" aria-hidden />}
+      >
         {t("tabs.calendar")}
       </ViewTab>
-      <ViewTab href={query("planning")} active={view === "planning"} icon={LayoutList}>
+      <ViewTab
+        href={query("planning")}
+        active={view === "planning"}
+        icon={<LayoutList className="size-4 shrink-0 max-sm:hidden" aria-hidden />}
+      >
         {t("tabs.planning")}
       </ViewTab>
       {showIdeas && (
-        <ViewTab href={query("ideas")} active={view === "ideas"} icon={Lightbulb}>
+        <ViewTab
+          href={query("ideas")}
+          active={view === "ideas"}
+          icon={<Lightbulb className="size-4 shrink-0 max-sm:hidden" aria-hidden />}
+        >
           {t("tabs.ideas")}
         </ViewTab>
       )}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLinkStatus } from "next/link";
-import { Loader2, type LucideIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -44,7 +44,14 @@ export function ViewTab({
 }: {
   href: string;
   active: boolean;
-  icon: LucideIcon;
+  /**
+   * Icône déjà rendue en JSX (`<LayoutGrid className="…" />`), PAS la
+   * référence de composant. Depuis React 19, un Server Component ne peut
+   * pas passer une fonction (donc un composant) à un Client Component ;
+   * un `ReactNode` déjà rendu passe sans problème. Ajouter la classe
+   * `max-sm:hidden` à l'appel pour conserver le comportement d'origine.
+   */
+  icon?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -68,12 +75,8 @@ export function ViewTab({
  * L'icône, et elle seule, porte l'attente — et elle est rendue DANS le
  * `<Link>`, seule position où le contexte de `useLinkStatus` existe. Appelé
  * au-dessus, le hook lit la valeur par défaut et ne change jamais.
- *
- * Changer l'icône plutôt que l'apparence de la pastille, parce qu'un enfant
- * ne peut pas modifier la classe de son parent — et sur ordinateur la largeur
- * ne bouge pas, donc la rangée ne tremble pas.
  */
-function TabIcon({ icon: Icon }: { icon: LucideIcon }) {
+function TabIcon({ icon }: { icon?: React.ReactNode }) {
   const { pending } = useLinkStatus();
   if (pending) {
     return (
@@ -83,5 +86,5 @@ function TabIcon({ icon: Icon }: { icon: LucideIcon }) {
       </>
     );
   }
-  return <Icon className="size-4 shrink-0 max-sm:hidden" aria-hidden />;
+  return icon ? <>{icon}</> : null;
 }

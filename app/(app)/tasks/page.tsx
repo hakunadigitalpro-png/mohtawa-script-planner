@@ -41,10 +41,18 @@ export default async function TasksPage({
 
   const tabs = (
     <ViewTabs>
-      <ViewTab href="/tasks" active={!allBrands} icon={LayoutGrid}>
+      <ViewTab
+        href="/tasks"
+        active={!allBrands}
+        icon={<LayoutGrid className="size-4 shrink-0 max-sm:hidden" aria-hidden />}
+      >
         {t("tabThisBrand")}
       </ViewTab>
-      <ViewTab href="/tasks?all=1" active={allBrands} icon={Building2}>
+      <ViewTab
+        href="/tasks?all=1"
+        active={allBrands}
+        icon={<Building2 className="size-4 shrink-0 max-sm:hidden" aria-hidden />}
+      >
         {t("tabAllBrands")}
       </ViewTab>
     </ViewTabs>
