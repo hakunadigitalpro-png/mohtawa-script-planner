@@ -9,6 +9,7 @@ import { getCoachMode } from "@/lib/coach-pref";
 import { CoachSwitch } from "./coach-switch";
 import { PushToggle } from "@/components/push-toggle";
 import { PageHeader } from "@/components/page-header";
+import { getMyPlan } from "@/lib/plans";
 
 export default async function ProfilePage() {
   const user = await getCachedUser();
@@ -21,9 +22,65 @@ export default async function ProfilePage() {
     getCoachMode(),
   ]);
 
+  const plan = await getMyPlan();
+
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
+
+      {plan && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Mon plan</CardTitle>
+            <CardDescription>
+              Pour changer, prolonger ou activer l&apos;IA, contacte Mariam.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted">Plan</span>
+              <span className="font-medium text-foreground">
+                {plan.plan_label}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted">Statut</span>
+              <span className="font-medium text-foreground">
+                {plan.status === "trial" && "Essai"}
+                {plan.status === "active" && "Actif"}
+                {plan.status === "readonly" && "Lecture seule"}
+                {plan.status === "suspended" && "Suspendu"}
+              </span>
+            </div>
+            {plan.ends_at && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted">Fin d&apos;accès</span>
+                <span className="font-medium text-foreground">
+                  {new Date(plan.ends_at).toLocaleDateString("fr-FR", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-muted">IA</span>
+              <span className="font-medium text-foreground">
+                {plan.ai_enabled ? "Activée" : "Désactivée"}
+              </span>
+            </div>
+            <a
+              href="https://wa.me/21629555090"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-block text-sm font-medium text-accent underline underline-offset-2"
+            >
+              Contacter Mariam
+            </a>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

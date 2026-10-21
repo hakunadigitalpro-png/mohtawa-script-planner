@@ -3,6 +3,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveBrandId } from "@/lib/brand";
 import { AiError } from "@/lib/ai";
+import { assertCanUseAi } from "@/lib/plans";
 
 /**
  * Les actions coupées par l'interrupteur IA d'une marque (migration 0054).
@@ -47,6 +48,15 @@ export async function guardAiAction(action: string) {
   } = await supabase.auth.getUser();
   if (!user) {
     throw new AiError("auth_required", "Connecte-toi pour utiliser l'IA.");
+  }
+
+  // Garde plan (0069) : refuse si l'IA n'est pas incluse dans l'abonnement
+  // ou si l'accès est en lecture seule / suspendu. Fail-open comme le
+  // rate-limit : si le message n'est pas une interdiction nette, on laisse
+  // passer (une migration pas appliquée n'arrête pas la machine).
+  const planErr = await assertCanUseAi();
+  if (planErr) {
+    throw new AiError("ai_disabled", planErr);
   }
 
   const { error } = await supabase.rpc("check_ai_rate_limit", {

@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/sidebar";
 import { MobileTopBar, MobileBottomNav } from "@/components/mobile-nav";
 import { NoBrandWelcome } from "@/components/no-brand";
 import { KreaCopilot } from "@/components/krea/krea-copilot";
+import { PlanBanner } from "@/components/plan-banner";
 import type { Notification } from "@/components/notifications/types";
 
 export default async function AppLayout({
@@ -74,6 +75,7 @@ export default async function AppLayout({
           userId={user.id}
           initialNotifications={initialNotifications}
         />
+        <PlanBanner />
         <main className="flex-1 overflow-x-hidden">
           {/* pb-24 sur mobile = espace pour la barre du bas fixe ; px-4 gagne
               de la largeur. Dès md (rail + pas de barre du bas) → pb-10. */}

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { guardAiAction } from "@/lib/ai-guard";
+import { assertCanUseAi } from "@/lib/plans";
 import {
   generateCaption,
   generateReel,

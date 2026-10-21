@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { notifyInvitation } from "@/lib/notify";
+import { assertCanInviteMember } from "@/lib/plans";
 
 export type BrandRole = "owner" | "admin" | "editor" | "viewer";
 
@@ -28,6 +29,10 @@ export async function createBrandInvitation(
   if (address && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
     return { error: "Cette adresse e-mail n'a pas l'air complète." };
   }
+
+  // Garde plan : limite de membres / de viewers pour ce plan.
+  const planErr = await assertCanInviteMember(brandId, role);
+  if (planErr) return { error: planErr };
 
   const { data, error } = await supabase.rpc("create_brand_invitation", {
     p_brand_id: brandId,

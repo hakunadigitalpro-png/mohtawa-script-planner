@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { setActiveBrandId } from "@/lib/brand";
+import { assertCanAddBrand } from "@/lib/plans";
 import { removeContentFiles, removeStorageFolder } from "@/lib/storage-cleanup";
 import { BRAND_NAME_MAX } from "@/lib/constants";
 import {
@@ -173,6 +174,10 @@ export async function createBrand(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Non authentifié." };
+
+  // Garde plan : limite de marques du plan courant (0069).
+  const planErr = await assertCanAddBrand();
+  if (planErr) return { error: planErr };
 
   // RPC security definer (migration 0003) - contourne les soucis RLS.
   const { data: brandId, error } = await supabase.rpc("create_brand", {
