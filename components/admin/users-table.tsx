@@ -27,7 +27,15 @@ type AdminUser = {
   ends_at: string | null;
   ai_enabled: boolean | null;
   brand_count: number;
+  ai_calls_today: number;
+  ai_calls_month: number;
 };
+
+/** Seuil au-delà duquel on considère qu'un compte « consomme beaucoup » :
+ *  OpenAI coûte ~0,15 TND par génération, 300/mois = ~45 TND de coût brut,
+ *  à comparer à ~29 TND de marge sur l'IA au plan Agence. Au-delà, mettre
+ *  en lumière pour décider : facturer en plus, désactiver, ou absorber. */
+const AI_HEAVY_THRESHOLD = 300;
 
 type Plan = {
   id: string;
@@ -55,7 +63,9 @@ export function AdminUsersTable({
   users: AdminUser[];
   plans: Plan[];
 }) {
-  const [filter, setFilter] = useState<"all" | "expiring" | "suspended">("all");
+  const [filter, setFilter] = useState<
+    "all" | "expiring" | "suspended" | "heavy_ai"
+  >("all");
   const [editing, setEditing] = useState<AdminUser | null>(null);
 
   const filtered = users.filter((u) => {
@@ -67,6 +77,7 @@ export function AdminUsersTable({
       return d >= 0 && d <= 7;
     }
     if (filter === "suspended") return u.status === "suspended";
+    if (filter === "heavy_ai") return u.ai_calls_month >= AI_HEAVY_THRESHOLD;
     return true;
   });
 
@@ -78,6 +89,7 @@ export function AdminUsersTable({
             { v: "all" as const, label: "Tous" },
             { v: "expiring" as const, label: "Expire dans 7 j" },
             { v: "suspended" as const, label: "Suspendus" },
+            { v: "heavy_ai" as const, label: `IA > ${AI_HEAVY_THRESHOLD}/mois` },
           ]
         ).map(({ v, label }) => (
           <button
@@ -104,6 +116,7 @@ export function AdminUsersTable({
               <th className="px-4 py-2.5 text-start font-medium">Statut</th>
               <th className="px-4 py-2.5 text-start font-medium">Fin</th>
               <th className="px-4 py-2.5 text-start font-medium">IA</th>
+              <th className="px-4 py-2.5 text-start font-medium">Usage IA (mois / 24 h)</th>
               <th className="px-4 py-2.5 text-start font-medium">Marques</th>
               <th className="px-4 py-2.5"></th>
             </tr>
@@ -111,7 +124,7 @@ export function AdminUsersTable({
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted">
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-muted">
                   Aucun compte dans ce filtre.
                 </td>
               </tr>
@@ -186,6 +199,18 @@ function UserRow({ user, onEdit }: { user: AdminUser; onEdit: () => void }) {
         ) : (
           <ZapOff className="size-4 text-muted" aria-label="IA désactivée" />
         )}
+      </td>
+      <td className="px-4 py-3">
+        <div
+          className={`text-sm ${
+            user.ai_calls_month >= AI_HEAVY_THRESHOLD
+              ? "font-semibold text-rose-600"
+              : "text-foreground"
+          }`}
+        >
+          {user.ai_calls_month}
+        </div>
+        <div className="text-xs text-muted">{user.ai_calls_today} dernier 24 h</div>
       </td>
       <td className="px-4 py-3 text-foreground">{user.brand_count}</td>
       <td className="px-4 py-3 text-end">

@@ -18,6 +18,8 @@ type AdminUser = {
   ends_at: string | null;
   ai_enabled: boolean | null;
   brand_count: number;
+  ai_calls_today: number;
+  ai_calls_month: number;
 };
 
 type Plan = {
