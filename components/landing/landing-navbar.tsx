@@ -40,6 +40,7 @@ export function LandingNavbar() {
     { href: "#features", label: t("features") },
     { href: "#how", label: t("how") },
     { href: "#personas", label: t("personas") },
+    { href: "#tarifs", label: "Tarifs" },
     { href: "#faq", label: t("faq") },
   ];
 

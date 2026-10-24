@@ -4,6 +4,7 @@ import { LandingFeatures } from "./landing-features";
 import { LandingHow } from "./landing-how";
 import { LandingPersonas } from "./landing-personas";
 import { LandingWhy } from "./landing-why";
+import { LandingPricing } from "./landing-pricing";
 import { LandingBeta } from "./landing-beta";
 import { LandingFaq } from "./landing-faq";
 import { LandingCtaFinal } from "./landing-cta-final";
@@ -34,6 +35,7 @@ export function LandingPage() {
         <LandingHow />
         <LandingPersonas />
         <LandingWhy />
+        <LandingPricing />
         <LandingBeta />
         <LandingFaq />
         <LandingCtaFinal />
