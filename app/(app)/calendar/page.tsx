@@ -9,7 +9,10 @@ import {
 import { getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
+import { cookies } from "next/headers";
 import { CalendarMonth, type CalendarEntry } from "@/components/calendar-month";
+import { EventsCountriesToggle } from "@/components/events-countries-toggle";
+import { DEFAULT_COUNTRIES } from "@/lib/maghreb-events";
 import { CalendarQuickCreate } from "@/components/calendar-quick-create";
 import { CalendarPlatformFilter } from "@/components/calendar-platform-filter";
 import { CalendarViewTabs } from "@/components/calendar-view-tabs";
@@ -89,6 +92,19 @@ export default async function CalendarPage({
 
   const t = await getTranslations("calendar");
   const supabase = await createClient();
+
+  // Pays actifs pour les marqueurs Maghreb : cookie `kreatly_countries`
+  // posé par <EventsCountriesToggle>. Défaut : Tunisie seule.
+  const cookieStore = await cookies();
+  const rawCountries = cookieStore.get("kreatly_countries")?.value;
+  const countries = ((): ("TN" | "MA" | "DZ")[] => {
+    if (!rawCountries) return DEFAULT_COUNTRIES;
+    const parts = rawCountries.split(",").filter(Boolean);
+    const valid = parts.filter((p): p is "TN" | "MA" | "DZ" =>
+      p === "TN" || p === "MA" || p === "DZ",
+    );
+    return valid.length ? valid : DEFAULT_COUNTRIES;
+  })();
 
   // Ces quatre requêtes ne dépendent pas les unes des autres : les enchaîner
   // coûtait quatre allers-retours là où un seul suffit. Sur une base hébergée
@@ -375,13 +391,23 @@ export default async function CalendarPage({
           />
         </div>
       ) : (
-        <CalendarMonth
-          initialMonth={monthStart}
-          entries={entries}
-          commentCounts={commentCounts}
-          canEdit={!isClient}
-          scopeQuery={scopeQuery}
-        />
+        <>
+          {/* Toggle « événements par pays » lu depuis le cookie posé par
+              le composant client. Caché pour un viewer (il ne configure rien). */}
+          {!isClient && (
+            <div className="flex justify-end">
+              <EventsCountriesToggle />
+            </div>
+          )}
+          <CalendarMonth
+            initialMonth={monthStart}
+            entries={entries}
+            commentCounts={commentCounts}
+            canEdit={!isClient}
+            scopeQuery={scopeQuery}
+            countries={countries}
+          />
+        </>
       )}
     </div>
   );

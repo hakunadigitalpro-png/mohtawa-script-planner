@@ -8,7 +8,7 @@ import { Check, Sparkles } from "lucide-react";
  * ici — la source de vérité des limites reste `plans` côté base.
  */
 type Plan = {
-  id: "solo" | "agence" | "studio";
+  id: "solo" | "agence";
   label: string;
   tagline: string;
   priceTnd: number;
@@ -17,6 +17,9 @@ type Plan = {
   highlighted?: boolean;
 };
 
+// Cible = indépendants et petites structures : on ne montre que Solo et
+// Agence. Studio reste disponible pour les cas particuliers, mais
+// activé à la main par Mariam depuis /admin — pas de bruit sur la landing.
 const PLANS: Plan[] = [
   {
     id: "solo",
@@ -47,20 +50,6 @@ const PLANS: Plan[] = [
     ],
     highlighted: true,
   },
-  {
-    id: "studio",
-    label: "Studio",
-    tagline: "Pour les agences qui gèrent beaucoup de marques.",
-    priceTnd: 249,
-    priceEur: 79,
-    features: [
-      "Marques illimitées",
-      "Membres et clients illimités",
-      "IA incluse",
-      "Support prioritaire",
-      "Dédicaces d'onboarding",
-    ],
-  },
 ];
 
 export function LandingPricing() {
@@ -83,11 +72,15 @@ export function LandingPricing() {
         </div>
 
         {/* Cartes */}
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+        <div className="mx-auto mt-12 grid max-w-4xl gap-6 lg:grid-cols-2">
           {PLANS.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
           ))}
         </div>
+        <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
+          Tu gères plus de 10 marques, une équipe au complet ou un studio
+          d&apos;agence ? <a href="https://wa.me/21629555090" target="_blank" rel="noreferrer" className="font-medium text-accent underline underline-offset-2">Parle à Mariam</a> pour un plan sur mesure.
+        </p>
 
         {/* Note IA */}
         <div className="mx-auto mt-10 max-w-3xl rounded-3xl border border-amber-500/30 bg-amber-500/5 p-5">

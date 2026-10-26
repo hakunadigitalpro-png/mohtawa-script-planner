@@ -30,7 +30,7 @@ import {
 } from "date-fns";
 import { fr, ar } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { eventsOnDate, eventTone } from "@/lib/maghreb-events";
+import { eventsStartingOnDate, eventTone } from "@/lib/maghreb-events";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/badge";
 import {
@@ -124,9 +124,12 @@ export function CalendarMonth({
   commentCounts = {},
   canEdit = true,
   scopeQuery = "",
+  countries,
 }: {
   initialMonth: string; // YYYY-MM-01
   entries: CalendarEntry[];
+  /** Pays actifs pour les marqueurs Maghreb (cookie lu côté serveur). */
+  countries?: ("TN" | "MA" | "DZ")[];
   /** contentId → nombre de commentaires non lus (badge). */
   commentCounts?: Record<string, number>;
   /**
@@ -325,10 +328,12 @@ export function CalendarMonth({
                   </button>
                   )}
                 </div>
-                {/* Pastilles « temps forts du calendrier Maghreb » :
-                    Ramadan, Aïd, soldes, rentrée, fêtes nationales. */}
+                {/* Marqueurs du calendrier Maghreb : Ramadan, Aïd, soldes,
+                    rentrée, fêtes nationales. Posés UNIQUEMENT sur le premier
+                    jour de l'événement (plus de pastille répétée sur un mois
+                    de soldes). Filtrés par pays via le cookie. */}
                 {(() => {
-                  const evts = eventsOnDate(key);
+                  const evts = eventsStartingOnDate(key, countries);
                   if (evts.length === 0) return null;
                   return (
                     <div className="mt-1 flex flex-wrap gap-1">
@@ -337,7 +342,7 @@ export function CalendarMonth({
                           key={e.label + e.from}
                           title={e.hint ?? e.label}
                           className={cn(
-                            "inline-flex max-w-full items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-tight",
+                            "inline-flex max-w-full items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-tight",
                             eventTone(e.kind),
                           )}
                         >
