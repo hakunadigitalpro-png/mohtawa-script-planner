@@ -30,6 +30,7 @@ import {
 } from "date-fns";
 import { fr, ar } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { eventsOnDate, eventTone } from "@/lib/maghreb-events";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/badge";
 import {
@@ -324,6 +325,28 @@ export function CalendarMonth({
                   </button>
                   )}
                 </div>
+                {/* Pastilles « temps forts du calendrier Maghreb » :
+                    Ramadan, Aïd, soldes, rentrée, fêtes nationales. */}
+                {(() => {
+                  const evts = eventsOnDate(key);
+                  if (evts.length === 0) return null;
+                  return (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {evts.map((e) => (
+                        <span
+                          key={e.label + e.from}
+                          title={e.hint ?? e.label}
+                          className={cn(
+                            "inline-flex max-w-full items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-tight",
+                            eventTone(e.kind),
+                          )}
+                        >
+                          <span className="truncate">{e.label}</span>
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
                 <ul className="mt-1.5 space-y-1.5">
                   {items.slice(0, 3).map((entry) => (
                     <EntryCard

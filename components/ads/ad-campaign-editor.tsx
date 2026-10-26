@@ -355,6 +355,17 @@ export function AdCampaignEditor({
             {/* Le budget journalier vit maintenant sur l'ad set (0064). */}
           </div>
 
+          {/* Rollup budget : somme des budget_daily × durée en jours vs
+              budget global saisi. Donne en un coup d'œil « j'ai alloué
+              X sur mes Y de budget ». Pas de calcul si l'un des deux
+              bouts manque. */}
+          <BudgetRollup
+            budgetGlobal={local.budget_global}
+            dateStart={local.date_start}
+            dateEnd={local.date_end}
+            adSets={adSets}
+          />
+
           <Field label="Plateformes">
             <div className="flex flex-wrap gap-2">
               {AD_PLATFORMS.map((p) => {
@@ -849,6 +860,80 @@ function CommentThread({
           <Plus className="h-4 w-4" />
           Envoyer
         </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Encart « où en est le budget » posé sous les dates et le budget
+ * global. Reprend le motif Airtable des rollups : somme des budget_daily
+ * des ad sets × durée de la campagne, comparée au budget global saisi.
+ * Pas d'alerte si une donnée manque : on n'invente rien.
+ */
+function BudgetRollup({
+  budgetGlobal,
+  dateStart,
+  dateEnd,
+  adSets,
+}: {
+  budgetGlobal: string | null;
+  dateStart: string | null;
+  dateEnd: string | null;
+  adSets: { budget_daily: string | null }[];
+}) {
+  const toNumber = (v: string | null): number | null => {
+    if (!v) return null;
+    const n = parseFloat(v.replace(",", "."));
+    return Number.isFinite(n) ? n : null;
+  };
+  const dailySum = adSets.reduce((sum, s) => sum + (toNumber(s.budget_daily) ?? 0), 0);
+  if (dailySum === 0) return null;
+
+  const days =
+    dateStart && dateEnd
+      ? Math.max(
+          1,
+          Math.round(
+            (new Date(dateEnd).getTime() - new Date(dateStart).getTime()) / 86400_000,
+          ) + 1,
+        )
+      : null;
+  const allocated = days !== null ? dailySum * days : null;
+  const global = toNumber(budgetGlobal);
+  const diff = global !== null && allocated !== null ? global - allocated : null;
+
+  const toneDiff =
+    diff === null
+      ? "text-muted"
+      : diff < 0
+        ? "text-rose-600 font-semibold"
+        : "text-emerald-600";
+
+  return (
+    <div className="rounded-xl border border-foreground/10 bg-foreground/[0.02] p-3 text-xs">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <span>
+          <span className="text-muted">Alloué par les ad sets : </span>
+          <span className="font-medium text-foreground">
+            {dailySum.toLocaleString("fr-FR")} /j
+          </span>
+          {days !== null && (
+            <span className="text-muted">
+              {" "}
+              × {days} j = <span className="font-medium text-foreground">
+                {allocated!.toLocaleString("fr-FR")}
+              </span>
+            </span>
+          )}
+        </span>
+        {global !== null && allocated !== null && (
+          <span className={toneDiff}>
+            {diff! < 0
+              ? `Dépassement : ${(-diff!).toLocaleString("fr-FR")}`
+              : `Reste : ${diff!.toLocaleString("fr-FR")}`}
+          </span>
+        )}
       </div>
     </div>
   );
