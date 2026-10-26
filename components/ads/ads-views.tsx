@@ -63,10 +63,21 @@ function formatRange(start: string | null, end: string | null): string {
  * cours (vert), déjà arrêtée (rouge), validée côté client (ambre),
  * programmée (violet) ou encore en brouillon (neutre).
  */
-function dateTone(status: string): string {
-  // Texte toujours en noir (foreground), seul le fond change selon le
-  // statut. `!text-foreground` force la couleur au-dessus du
-  // `text-muted-foreground` hérité du parent.
+/**
+ * Pastille de date : fond doux ambre pour TOUTES les campagnes, texte
+ * noir forcé. C'est la pastille de statut (à côté du titre) qui porte
+ * la couleur vive — ici on reste neutre pour que l'œil se pose sur
+ * « quel statut ? » plutôt que sur « quelle date ? ».
+ */
+const DATE_TONE =
+  "bg-amber-100 !text-foreground dark:bg-amber-500/20";
+
+/**
+ * Pastille de statut : la vraie couleur info. Vert pour Live, rouge
+ * pour Arrêtée, ambre pour Validée, violet pour Programmée, neutre
+ * pour Brouillon.
+ */
+function statusTone(status: string): string {
   const text = "!text-foreground";
   switch (status) {
     case "live":
@@ -153,7 +164,9 @@ export function AdsPlanningView({
                 <h3 className="truncate text-base font-semibold text-foreground">
                   {c.title}
                 </h3>
-                <span className="rounded-full bg-foreground/5 px-2 py-0.5 text-xs font-medium text-foreground">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusTone(c.status)}`}
+                >
                   {statusLabel(c.status)}
                 </span>
                 {c.review_state === "pending_review" ? (
@@ -172,7 +185,7 @@ export function AdsPlanningView({
               ) : null}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${dateTone(c.status)}`}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ${DATE_TONE}`}
                 >
                   <CalendarDays className="h-3.5 w-3.5" />
                   {formatRange(c.date_start, c.date_end)}
