@@ -92,8 +92,17 @@ export function PlanningAdCard({
     return () => document.removeEventListener("keydown", onKey);
   }, [lightbox, open]);
 
+  // Carrousel = STRIP HORIZONTAL compact (grille cassée après N slides,
+  // scroll latéral si besoin). Un carrousel reste UNE publicité : on
+  // l'encapsule dans un bloc avec un cadre pointillé pour la distinguer
+  // des ads simples qui sont rendues comme des blocs pleins.
+  // Ad simple = ligne horizontale (photo à gauche, texte à droite).
   return (
-    <li className="space-y-2 rounded-lg bg-card p-2">
+    <li
+      className={`space-y-2 rounded-lg bg-card p-2 ${
+        isCarousel ? "border border-dashed border-foreground/15" : ""
+      }`}
+    >
       <div className="flex items-center justify-between text-xs">
         <span className="truncate font-semibold text-foreground">
           {ad.name ?? "Ad"}
@@ -104,17 +113,96 @@ export function PlanningAdCard({
           </span>
         )}
       </div>
-      <ul className="space-y-2">
-        {cards.map((card, ci) => {
-          // Pour les slides, on compose un targetId unique par diapo
-          // basé sur son index (les slides ne sont pas chargées avec
-          // leur id dans le Planning — on cible via "adId:index").
-          const photoId = card.isSlide ? `${ad.id}#${ci}` : card.photoTargetId;
-          const textId = card.isSlide ? `${ad.id}#${ci}` : card.textTargetId;
-          const photoCount = countFor("photo", photoId);
-          const textCount = countFor("text", textId);
+
+      {isCarousel ? (
+        // Bande horizontale avec scroll latéral — tient en 10 diapos
+        // sans forcer la page à scroller sur un kilomètre vertical.
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
+          {cards.map((card, ci) => {
+            const photoId = `${ad.id}#${ci}`;
+            const textId = `${ad.id}#${ci}`;
+            const photoCount = countFor("photo", photoId);
+            const textCount = countFor("text", textId);
+            return (
+              <div
+                key={ci}
+                className="w-32 shrink-0 space-y-1 rounded-md border border-foreground/5 bg-card p-1"
+              >
+                <button
+                  type="button"
+                  onClick={() => card.photo && setLightbox(card.photo)}
+                  className="relative block h-32 w-full overflow-hidden rounded-md transition hover:ring-2 hover:ring-accent disabled:opacity-50"
+                  disabled={!card.photo}
+                  title="Agrandir la photo"
+                  aria-label="Agrandir la photo"
+                >
+                  {card.photo ? (
+                    <>
+                      <Image
+                        src={card.photo}
+                        alt=""
+                        fill
+                        sizes="128px"
+                        className="object-cover"
+                      />
+                      {photoCount > 0 && (
+                        <span className="absolute end-1 top-1 inline-flex items-center gap-0.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                          <MessageCircle className="h-2.5 w-2.5" />
+                          {photoCount}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="grid h-full w-full place-items-center bg-foreground/5 text-[9px] text-muted-foreground">
+                      —
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpen({
+                      kind: "text",
+                      id: textId,
+                      label: `Diapo ${ci + 1} · texte`,
+                      photo: card.photo,
+                      text: card.text,
+                    })
+                  }
+                  className="w-full rounded-md px-1 py-0.5 text-start transition hover:bg-secondary/40"
+                  title="Lire et commenter"
+                >
+                  <p className="text-[10px] font-semibold uppercase text-muted-foreground">
+                    Diapo {ci + 1}
+                  </p>
+                  <p
+                    className="line-clamp-2 whitespace-pre-wrap text-[10px] text-foreground/70"
+                    dir="auto"
+                  >
+                    {card.text?.trim() || (
+                      <span className="italic text-muted-foreground">
+                        Pas de texte
+                      </span>
+                    )}
+                  </p>
+                  {textCount > 0 && (
+                    <p className="mt-0.5 inline-flex items-center gap-1 text-[9px] text-muted-foreground">
+                      <MessageCircle className="h-2.5 w-2.5" /> {textCount}
+                    </p>
+                  )}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        // Ad simple : UNE ligne (photo + texte côte à côte).
+        (() => {
+          const card = cards[0];
+          const photoCount = countFor("photo", card.photoTargetId);
+          const textCount = countFor("text", card.textTargetId);
           return (
-            <li key={ci} className="flex items-start gap-2">
+            <div className="flex items-start gap-2">
               <button
                 type="button"
                 onClick={() => card.photo && setLightbox(card.photo)}
@@ -150,7 +238,7 @@ export function PlanningAdCard({
                 onClick={() =>
                   setOpen({
                     kind: "text",
-                    id: textId,
+                    id: card.textTargetId,
                     label: `${card.label} · texte`,
                     photo: card.photo,
                     text: card.text,
@@ -159,11 +247,6 @@ export function PlanningAdCard({
                 className="min-w-0 flex-1 rounded-md p-1 text-start transition hover:bg-secondary/40"
                 title="Lire et commenter"
               >
-                {card.isSlide && (
-                  <p className="text-[10px] font-semibold uppercase text-muted-foreground">
-                    Diapo {ci + 1}
-                  </p>
-                )}
                 <p
                   className="line-clamp-3 whitespace-pre-wrap text-[11px] text-foreground/70"
                   dir="auto"
@@ -180,10 +263,10 @@ export function PlanningAdCard({
                   </p>
                 )}
               </button>
-            </li>
+            </div>
           );
-        })}
-      </ul>
+        })()
+      )}
 
       {/* Lightbox pour la photo */}
       {lightbox && (
