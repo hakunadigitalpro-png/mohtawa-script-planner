@@ -92,8 +92,11 @@ export default async function AdsPage({
       "id, brand_id, title, theme, platforms, budget_global, budget_daily, targeting_age, targeting_location, targeting_interests, date_start, date_end, status, review_state, evaluation",
     )
     .eq("brand_id", active.id)
-    // Ordre chronologique croissant : la plus ancienne en haut, les sans-date
-    // en bas. Mariam suit sa planification de gauche à droite, pas l'inverse.
+    // Ordre manuel (0073) : on respecte le `position` posé par le
+    // drag utilisateur. Pour les campagnes sans position (ne devrait
+    // plus arriver depuis le backfill, mais filet), on retombe sur
+    // la date de début croissante puis created_at.
+    .order("position", { ascending: true, nullsFirst: false })
     .order("date_start", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: true });
 
@@ -366,6 +369,7 @@ export default async function AdsPage({
           media={media}
           adSetsByCampaign={adSetsByCampaign}
           commentsByTarget={commentsByTargetPlanning}
+          brandId={active.id}
         />
       )}
     </div>

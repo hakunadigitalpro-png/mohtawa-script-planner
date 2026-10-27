@@ -1,8 +1,13 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
-import { CalendarDays, Target } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CalendarDays, Target, GripVertical } from "lucide-react";
 import { AD_STATUS_LABEL } from "@/lib/types-ads";
 import { PlanningAdCard } from "@/components/ads/planning-ad-card";
 import { CampaignCommentsButton } from "@/components/ads/campaign-comments-button";
+import { reorderAdCampaigns } from "@/app/(app)/ads/actions";
 
 /**
  * Les deux vues alternatives à la liste simple :
@@ -111,11 +116,14 @@ type AdSetWithAds = {
   }[];
 };
 
+const DRAG_MIME = "application/x-kreatly-ad-campaign";
+
 export function AdsPlanningView({
   campaigns,
   media,
   adSetsByCampaign = {},
   commentsByTarget = {},
+  brandId,
 }: {
   campaigns: CampaignRow[];
   media: MediaRow[];
@@ -126,7 +134,51 @@ export function AdsPlanningView({
     string,
     { id: string; body: string; created_at: string; author_email: string }[]
   >;
+  /** Marque active — on l'envoie à `reorderAdCampaigns` pour cibler
+   *  les bons UPDATE (sécurité ceinture-bretelles au-dessus de la RLS). */
+  brandId?: string;
 }) {
+  const router = useRouter();
+
+  // Ordre local optimiste : au drag, on repositionne tout de suite dans
+  // l'UI avant même que la mutation serveur réponde. Si le serveur
+  // refuse, un refresh viendra remettre l'ordre officiel.
+  const [order, setOrder] = React.useState<string[]>(
+    campaigns.map((c) => c.id),
+  );
+  React.useEffect(() => {
+    setOrder(campaigns.map((c) => c.id));
+  }, [campaigns]);
+
+  const byId = React.useMemo(
+    () => new Map(campaigns.map((c) => [c.id, c])),
+    [campaigns],
+  );
+  const orderedCampaigns = order
+    .map((id) => byId.get(id))
+    .filter((c): c is CampaignRow => Boolean(c));
+
+  const [dragging, setDragging] = React.useState<string | null>(null);
+  const [dragOver, setDragOver] = React.useState<string | null>(null);
+
+  const commitOrder = (next: string[]) => {
+    setOrder(next);
+    if (!brandId) return;
+    reorderAdCampaigns(brandId, next).then((res) => {
+      if ("error" in res && res.error) router.refresh();
+    });
+  };
+
+  const moveBefore = (dragId: string, targetId: string) => {
+    if (dragId === targetId) return;
+    const without = order.filter((id) => id !== dragId);
+    const idx = without.indexOf(targetId);
+    if (idx < 0) return;
+    const next = [...without.slice(0, idx), dragId, ...without.slice(idx)];
+    if (JSON.stringify(next) === JSON.stringify(order)) return;
+    commitOrder(next);
+  };
+
   // Legacy : visuels attachés à la campagne (avant la migration 0064). On
   // les garde en secours pour les campagnes qui n'ont pas encore d'ad.
   const firstVisualByCampaign = new Map<string, string>();
@@ -146,15 +198,58 @@ export function AdsPlanningView({
 
   return (
     <ul className="space-y-3">
-      {campaigns.map((c) => {
+      {orderedCampaigns.map((c) => {
         const adSets = adSetsByCampaign[c.id] ?? [];
         const legacyVisual = firstVisualByCampaign.get(c.id);
         const totalAds = adSets.reduce((n, s) => n + s.ads.length, 0);
+        const isDraggingOver = dragOver === c.id && dragging !== c.id;
         return (
           <li
             key={c.id}
-            className="rounded-2xl border border-foreground/10 bg-card p-4 transition hover:border-accent/40"
+            className={`rounded-2xl border bg-card p-4 transition hover:border-accent/40 ${
+              isDraggingOver
+                ? "border-accent ring-2 ring-accent/30"
+                : "border-foreground/10"
+            } ${dragging === c.id ? "opacity-50" : ""}`}
+            onDragOver={(e) => {
+              if (!brandId || !dragging) return;
+              if (!e.dataTransfer.types.includes(DRAG_MIME)) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              if (dragOver !== c.id) setDragOver(c.id);
+            }}
+            onDragLeave={() => {
+              if (dragOver === c.id) setDragOver(null);
+            }}
+            onDrop={(e) => {
+              if (!brandId) return;
+              const id = e.dataTransfer.getData(DRAG_MIME);
+              setDragging(null);
+              setDragOver(null);
+              if (id) moveBefore(id, c.id);
+            }}
           >
+            {/* Poignée de drag : seule la poignée est draggable, pour
+                ne pas gêner la sélection de texte et les clics internes. */}
+            {brandId && (
+              <div
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData(DRAG_MIME, c.id);
+                  setDragging(c.id);
+                }}
+                onDragEnd={() => {
+                  setDragging(null);
+                  setDragOver(null);
+                }}
+                title="Glisser pour réordonner"
+                className="mb-2 inline-flex cursor-grab items-center gap-1 rounded-full px-1.5 py-0.5 text-xs text-muted-foreground active:cursor-grabbing"
+              >
+                <GripVertical className="h-3.5 w-3.5" />
+                <span>Glisser</span>
+              </div>
+            )}
             {/* En-tête — infos de la campagne, cliquable → la fiche. */}
             <Link
               href={`/ads/${c.id}`}

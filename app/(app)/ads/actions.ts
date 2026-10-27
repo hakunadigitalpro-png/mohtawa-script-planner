@@ -442,3 +442,29 @@ export async function addAdCampaignTargetedComment(
   revalidatePath("/ads");
   return { ok: true as const };
 }
+
+/**
+ * Réordonne les campagnes de la marque active : on passe la liste
+ * complète des ids dans le nouvel ordre, on repose un `position`
+ * incrémenté de 100 en 100 (laisse de la marge pour insérer plus
+ * tard sans tout recalculer). La RLS protège : un user ne touchera
+ * que les campagnes de ses marques.
+ */
+export async function reorderAdCampaigns(brandId: string, orderedIds: string[]) {
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+    return { error: "Rien à réordonner." };
+  }
+  const supabase = await createClient();
+  // Un UPDATE par ligne : simple et sûr, et la liste est courte
+  // (quelques dizaines au plus) — pas besoin d'une RPC dédiée.
+  for (let i = 0; i < orderedIds.length; i++) {
+    const { error } = await supabase
+      .from("ad_campaigns")
+      .update({ position: (i + 1) * 100 })
+      .eq("id", orderedIds[i])
+      .eq("brand_id", brandId);
+    if (error) return { error: error.message };
+  }
+  revalidatePath("/ads");
+  return { ok: true as const };
+}
