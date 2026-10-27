@@ -40,14 +40,14 @@ export default async function AdCampaignPage({
   if (!raw) notFound();
   const campaign = raw as AdCampaign;
 
-  const { active, role } = await resolveActiveBrand();
+  const { active, role: brandRole } = await resolveActiveBrand();
   if (!active || active.id !== campaign.brand_id) {
     redirect(`/switch-brand?to=${campaign.brand_id}&next=/ads/${id}`);
   }
   // Un viewer n'ouvre une fiche campagne que si le scope 'ads' lui a
   // été accordé par l'owner. Sinon, retour au calendrier (seule page
   // qui lui est garantie).
-  if (role === "viewer") {
+  if (brandRole === "viewer") {
     const { data: canSee } = await supabase.rpc("has_brand_scope", {
       b: campaign.brand_id,
       s: "ads",
