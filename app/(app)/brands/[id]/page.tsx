@@ -115,6 +115,15 @@ export default async function BrandDetailPage({
   const kit = (kitRes.data ?? null) as BrandKit | null;
   const strategy = (strategyRes.data ?? null) as BrandStrategy | null;
   const members = (membersRes.data ?? []) as MemberRow[];
+  if (membersRes.error) {
+    // Loguer visiblement : si la liste est vide alors que la DB a des
+    // membres, c'est la RPC qui refuse. Vu une fois après l'ajout de
+    // la colonne scopes dans 0077 — PostgREST n'avait pas rechargé.
+    console.error(
+      "[brand/[id]] list_brand_members_with_emails:",
+      membersRes.error,
+    );
+  }
   const invitations = (invitationsRes.data ?? []) as InvitationRow[];
   const myRole = (selfMembershipRes.data?.role ?? "viewer") as BrandRole;
   // Un "viewer" (client invité) est cantonné au Calendrier.
