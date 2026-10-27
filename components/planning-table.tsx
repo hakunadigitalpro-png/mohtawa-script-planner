@@ -19,9 +19,50 @@ import {
   statusLabel,
   platformLabel,
 } from "@/lib/constants";
+import { platformAccentColor } from "@/lib/platform-colors";
 import { formatDateFr } from "@/lib/utils";
 import { ContentCommentsButton } from "@/components/comments";
 import type { Content } from "@/lib/types";
+
+/**
+ * Pastille colorée pour le statut : utilise la couleur sémantique du
+ * statut (CSS var `--color-status-*`) à 15 % d'opacité en fond + 100 % en
+ * texte, pour la lisibilité des deux thèmes sans toucher aux tokens.
+ */
+function StatusChip({ status }: { status: string | null | undefined }) {
+  const color = statusColor(status);
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold"
+      style={{
+        backgroundColor: `color-mix(in oklab, ${color} 20%, transparent)`,
+        color: `color-mix(in oklab, ${color} 80%, var(--color-ink, #0A0612) 20%)`,
+      }}
+    >
+      <span className="size-1.5 rounded-full" style={{ background: color }} />
+      {statusLabel(status)}
+    </span>
+  );
+}
+
+/**
+ * Pastille colorée pour la plateforme : fond pastel à l'accent plateforme.
+ */
+function PlatformChip({ platform }: { platform: string | null | undefined }) {
+  if (!platform) return <span className="text-muted">—</span>;
+  const color = platformAccentColor(platform);
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+      style={{
+        backgroundColor: `color-mix(in oklab, ${color} 15%, transparent)`,
+        color: `color-mix(in oklab, ${color} 80%, var(--color-ink, #0A0612) 20%)`,
+      }}
+    >
+      {platformLabel(platform)}
+    </span>
+  );
+}
 
 /**
  * Vue « Planning » — le tableau global du mois : tous les contenus (posts,
@@ -64,6 +105,13 @@ export function PlanningTable({
 }) {
   const router = useRouter();
   const [lightbox, setLightbox] = React.useState<string | null>(null);
+  // Tri par colonne : clic sur un en-tête bascule asc→desc→off. Pose un
+  // sortedOverride qui, s'il est défini, remplace le tri par date par
+  // défaut (et désactive le groupement par semaine/mois).
+  const [sortCol, setSortCol] = React.useState<
+    "date" | "platform" | "status" | "title" | null
+  >(null);
+  const [sortDir, setSortDir] = React.useState<"asc" | "desc">("asc");
   // Lecture d'une légende dans une popup — contient le contenu (pour
   // le texte) et l'id (pour que le bouton crayon mène à sa fiche).
   const [captionReader, setCaptionReader] =
@@ -79,12 +127,59 @@ export function PlanningTable({
     return () => document.removeEventListener("keydown", onKey);
   }, [lightbox]);
 
-  const sorted = [...contents].sort((a, b) =>
-    (a.date ?? "9999-99-99").localeCompare(b.date ?? "9999-99-99"),
-  );
+  // Tri par défaut : par date croissante (= le groupement par semaine
+  // tient la route). Dès que l'utilisatrice clique un en-tête, on passe
+  // en mode « liste plate » : plus de groupement, on respecte juste son
+  // tri — comme Airtable.
+  const sorted = [...contents];
+  if (sortCol === null) {
+    sorted.sort((a, b) =>
+      (a.date ?? "9999-99-99").localeCompare(b.date ?? "9999-99-99"),
+    );
+  } else {
+    const dir = sortDir === "asc" ? 1 : -1;
+    sorted.sort((a, b) => {
+      const av =
+        sortCol === "date"
+          ? a.date ?? ""
+          : sortCol === "platform"
+            ? a.platform ?? ""
+            : sortCol === "status"
+              ? a.status ?? ""
+              : (a.title ?? "").toLowerCase();
+      const bv =
+        sortCol === "date"
+          ? b.date ?? ""
+          : sortCol === "platform"
+            ? b.platform ?? ""
+            : sortCol === "status"
+              ? b.status ?? ""
+              : (b.title ?? "").toLowerCase();
+      return av.localeCompare(bv) * dir;
+    });
+  }
+
+  const toggleSort = (col: "date" | "platform" | "status" | "title") => {
+    if (sortCol !== col) {
+      setSortCol(col);
+      setSortDir("asc");
+    } else if (sortDir === "asc") {
+      setSortDir("desc");
+    } else {
+      setSortCol(null);
+    }
+  };
+
+  const sortArrow = (col: "date" | "platform" | "status" | "title") =>
+    sortCol === col ? (sortDir === "asc" ? " ↑" : " ↓") : "";
 
   const groups: { label: string; items: Content[] }[] = [];
   const idxByLabel = new Map<string, number>();
+  // Pas de groupement quand on trie à la main — l'utilisatrice veut lire
+  // sa liste dans son ordre, pas la voir recassée en semaines.
+  if (sortCol !== null) {
+    groups.push({ label: "", items: sorted });
+  } else
   for (const c of sorted) {
     const label =
       groupBy === "month"
@@ -133,19 +228,45 @@ export function PlanningTable({
             className={`grid ${cols} gap-3 border-b border-border/60 bg-secondary/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted`}
           >
             <div>Jour</div>
-            <div>Date</div>
-            <div>Plateforme</div>
-            <div>Statut</div>
+            <button
+              type="button"
+              onClick={() => toggleSort("date")}
+              className="text-start hover:text-foreground"
+            >
+              Date{sortArrow("date")}
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleSort("platform")}
+              className="text-start hover:text-foreground"
+            >
+              Plateforme{sortArrow("platform")}
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleSort("status")}
+              className="text-start hover:text-foreground"
+            >
+              Statut{sortArrow("status")}
+            </button>
             <div>Légende</div>
             <div>Vidéo</div>
-            <div>Titre</div>
+            <button
+              type="button"
+              onClick={() => toggleSort("title")}
+              className="text-start hover:text-foreground"
+            >
+              Titre{sortArrow("title")}
+            </button>
           </div>
 
           {groups.map((g) => (
-            <div key={g.label}>
-              <div className="bg-secondary/20 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted">
-                {g.label}
-              </div>
+            <div key={g.label || "flat"}>
+              {g.label && (
+                <div className="bg-secondary/20 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-muted">
+                  {g.label}
+                </div>
+              )}
               {g.items.map((c) => (
                 <div
                   key={c.id}
@@ -166,15 +287,11 @@ export function PlanningTable({
                   <span className="text-muted">
                     {c.date ? formatDateFr(c.date) : "—"}
                   </span>
-                  <span className="truncate text-muted">
-                    {c.platform ? platformLabel(c.platform) : "—"}
+                  <span className="min-w-0 truncate">
+                    <PlatformChip platform={c.platform} />
                   </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{ background: statusColor(c.status) }}
-                    />
-                    {statusLabel(c.status)}
+                  <span className="min-w-0 truncate">
+                    <StatusChip status={c.status} />
                   </span>
                   {/* Clic sur la légende → popup lecture avec un crayon
                       pour aller la modifier. Vide → on va directement

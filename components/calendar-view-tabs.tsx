@@ -1,10 +1,10 @@
 "use client";
 
-import { CalendarDays, LayoutList, Lightbulb } from "lucide-react";
+import { CalendarDays, LayoutList, Lightbulb, Columns3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ViewTab, ViewTabs } from "@/components/ui/view-tabs";
 
-export type CalendarView = "calendar" | "planning" | "ideas";
+export type CalendarView = "calendar" | "planning" | "kanban" | "ideas";
 
 /**
  * Les trois vues du planning : Calendrier · Planning · Idées. Le dessin et
@@ -43,6 +43,13 @@ export function CalendarViewTabs({
         icon={<LayoutList className="size-4 shrink-0 max-sm:hidden" aria-hidden />}
       >
         {t("tabs.planning")}
+      </ViewTab>
+      <ViewTab
+        href={query("kanban")}
+        active={view === "kanban"}
+        icon={<Columns3 className="size-4 shrink-0 max-sm:hidden" aria-hidden />}
+      >
+        Kanban
       </ViewTab>
       {showIdeas && (
         <ViewTab

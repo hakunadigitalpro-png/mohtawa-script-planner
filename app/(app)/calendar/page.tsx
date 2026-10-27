@@ -17,6 +17,7 @@ import { CalendarQuickCreate } from "@/components/calendar-quick-create";
 import { CalendarPlatformFilter } from "@/components/calendar-platform-filter";
 import { CalendarViewTabs } from "@/components/calendar-view-tabs";
 import { PlanningTable } from "@/components/planning-table";
+import { KanbanView } from "@/components/kanban-view";
 import { IdeasBoard, type IdeaCard } from "@/components/ideas-board";
 import { PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button";
@@ -68,9 +69,11 @@ export default async function CalendarPage({
   const view =
     requestedView === "planning"
       ? "planning"
-      : requestedView === "ideas" && role !== "viewer"
-        ? "ideas"
-        : "calendar";
+      : requestedView === "kanban"
+        ? "kanban"
+        : requestedView === "ideas" && role !== "viewer"
+          ? "ideas"
+          : "calendar";
   const platformFilter = params.platform || "";
   // « Non lus » : le planning ne montre que les contenus qui ont une remarque
   // non lue, TOUS mois confondus — une remarque du mois dernier ne doit pas
@@ -248,8 +251,9 @@ export default async function CalendarPage({
   // Le Planning montre les mêmes contenus, en tableau : il a besoin des
   // mêmes vignettes. Elles n'étaient chargées que dans la branche ci-dessus,
   // donc la colonne restait vide dès qu'on changeait d'onglet.
+  // Kanban aussi utilise les vignettes (une par carte).
   const planningThumbs =
-    view === "planning"
+    view === "planning" || view === "kanban"
       ? Object.fromEntries(
           await fetchThumbnails(supabase, contents.map((c) => c.id)),
         )
@@ -328,6 +332,15 @@ export default async function CalendarPage({
 
       {view === "ideas" ? (
         <IdeasBoard ideas={ideas} />
+      ) : view === "kanban" ? (
+        /* Vue Kanban — colonnes = statuts, drag d'une carte = change le
+           statut. Lecture seule pour un client invité. */
+        <KanbanView
+          contents={contents}
+          commentCounts={commentCounts}
+          thumbs={planningThumbs}
+          canEdit={!isClient}
+        />
       ) : view === "planning" ? (
         <div className="space-y-4">
           {unreadOnly ? (
