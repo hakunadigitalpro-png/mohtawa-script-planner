@@ -26,6 +26,10 @@ import {
   type AdCampaignMediaKind,
   type AdCampaignStatus,
   AD_STATUS_LABEL,
+  AD_STATUS_PICKER,
+} from "@/lib/types-ads";
+import { Select } from "@/components/ui/select";
+import {
   AD_PLATFORMS,
 } from "@/lib/types-ads";
 import {
@@ -668,19 +672,22 @@ function StatusMenu({
   disabled?: boolean;
   onChange: (s: AdCampaignStatus) => void;
 }) {
+  // On s'assure que la valeur courante est toujours visible dans le
+  // menu, même si c'est un ancien 'scheduled' qui n'est plus proposé.
+  const options = (
+    AD_STATUS_PICKER.includes(value)
+      ? AD_STATUS_PICKER
+      : [...AD_STATUS_PICKER, value]
+  ).map((s) => ({ value: s, label: AD_STATUS_LABEL[s] }));
+
   return (
-    <select
+    <Select
       value={value}
       disabled={disabled}
-      onChange={(e) => onChange(e.target.value as AdCampaignStatus)}
-      className="rounded-full border border-foreground/10 bg-background px-3 py-1 text-xs font-medium"
-    >
-      {(Object.keys(AD_STATUS_LABEL) as AdCampaignStatus[]).map((s) => (
-        <option key={s} value={s}>
-          {AD_STATUS_LABEL[s]}
-        </option>
-      ))}
-    </select>
+      onValueChange={(v) => onChange(v as AdCampaignStatus)}
+      options={options}
+      className="w-36"
+    />
   );
 }
 

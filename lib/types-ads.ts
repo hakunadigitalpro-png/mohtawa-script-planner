@@ -15,7 +15,8 @@ export type AdCampaignStatus =
   | "approved"
   | "scheduled"
   | "live"
-  | "stopped";
+  | "stopped"
+  | "completed";
 
 export type AdCampaignReviewState =
   | "pending_review"
@@ -85,9 +86,25 @@ export const AD_STATUS_LABEL: Record<AdCampaignStatus, string> = {
   draft: "Brouillon",
   approved: "Validée",
   scheduled: "Programmée",
-  live: "Live",
+  live: "En cours",
   stopped: "Arrêtée",
+  completed: "Terminée",
 };
+
+/**
+ * Statuts proposés dans le menu de sélection. On y retire 'scheduled' :
+ * dès qu'une campagne a une date de début, elle est « En cours » si on
+ * est entre ses dates, « Terminée » après. 'scheduled' reste supporté
+ * en base pour les campagnes historiques, mais ne s'offre plus en
+ * choix manuel.
+ */
+export const AD_STATUS_PICKER: AdCampaignStatus[] = [
+  "draft",
+  "approved",
+  "live",
+  "completed",
+  "stopped",
+];
 
 /**
  * Un ad set — un groupe d'audience/budget sous une campagne. Reproduit la
