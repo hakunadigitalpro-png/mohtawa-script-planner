@@ -36,6 +36,7 @@ export function DateTimePicker({
   placeholder = "Choisir une date",
   disabled = false,
   ariaLabel,
+  showTime = true,
 }: {
   /** YYYY-MM-DD, ou vide. */
   date: string;
@@ -48,6 +49,8 @@ export function DateTimePicker({
   placeholder?: string;
   disabled?: boolean;
   ariaLabel?: string;
+  /** Faux pour un sélecteur de date seule (sans colonne d'heures). */
+  showTime?: boolean;
 }) {
   const accent = accentColor ?? "var(--color-accent, #FF6B35)";
 
@@ -90,6 +93,7 @@ export function DateTimePicker({
           time={time}
           accent={accent}
           onChange={onChange}
+          showTime={showTime}
         />
       </DropdownContent>
     </Dropdown>
@@ -124,11 +128,13 @@ function Panel({
   time,
   accent,
   onChange,
+  showTime,
 }: {
   date: string;
   time: string;
   accent: string;
   onChange: (next: { date: string; time: string }) => void;
+  showTime: boolean;
 }) {
   const selected = date ? safeParse(date) : null;
   const [cursor, setCursor] = React.useState<Date>(selected ?? new Date());
@@ -220,6 +226,7 @@ function Panel({
           )}
         </div>
       </div>
+      {showTime && (
       <div className="w-[90px] border-l border-border/60 pl-3">
         <div className="mb-1 text-[11px] font-semibold uppercase text-muted">
           Heure
@@ -244,6 +251,7 @@ function Panel({
           })}
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -107,6 +107,21 @@ export const AD_STATUS_PICKER: AdCampaignStatus[] = [
 ];
 
 /**
+ * Les objectifs de campagne proposés par les régies (Meta surtout). Mariam
+ * voulait ne pas inventer : on reprend les six verbes officiels. Stockés
+ * en TEXT dans `ad_campaigns.objective` — pas d'enum pour qu'une régie
+ * qui change de vocabulaire ne nous casse pas la base.
+ */
+export const AD_OBJECTIVES: { value: string; label: string }[] = [
+  { value: "awareness", label: "Notoriété" },
+  { value: "traffic", label: "Trafic" },
+  { value: "engagement", label: "Interactions" },
+  { value: "leads", label: "Prospects" },
+  { value: "app_promotion", label: "Promotion de l'application" },
+  { value: "sales", label: "Ventes" },
+];
+
+/**
  * Un ad set — un groupe d'audience/budget sous une campagne. Reproduit la
  * structure Meta : une campagne peut en avoir 1 à N, chacun avec son
  * propre ciblage et son propre budget quotidien.

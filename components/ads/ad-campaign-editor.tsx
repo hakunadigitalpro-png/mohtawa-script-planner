@@ -27,11 +27,11 @@ import {
   type AdCampaignStatus,
   AD_STATUS_LABEL,
   AD_STATUS_PICKER,
-} from "@/lib/types-ads";
-import { Select } from "@/components/ui/select";
-import {
+  AD_OBJECTIVES,
   AD_PLATFORMS,
 } from "@/lib/types-ads";
+import { Select } from "@/components/ui/select";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
   updateCampaignField,
   deleteAdCampaign,
@@ -321,27 +321,31 @@ export function AdCampaignEditor({
               />
             </Field>
             <Field label="Date de début">
-              <Input
-                type="date"
-                value={local.date_start ?? ""}
-                onChange={(e) =>
-                  setLocal({ ...local, date_start: e.target.value || null })
-                }
-                onBlur={() =>
-                  flush({ date_start: local.date_start }, "date_start")
-                }
+              <DateTimePicker
+                date={local.date_start ?? ""}
+                time=""
+                showTime={false}
                 disabled={!isWriter}
+                placeholder="Choisir une date"
+                onChange={({ date }) => {
+                  const next = date || null;
+                  setLocal({ ...local, date_start: next });
+                  flush({ date_start: next }, "date_start");
+                }}
               />
             </Field>
             <Field label="Date de fin">
-              <Input
-                type="date"
-                value={local.date_end ?? ""}
-                onChange={(e) =>
-                  setLocal({ ...local, date_end: e.target.value || null })
-                }
-                onBlur={() => flush({ date_end: local.date_end }, "date_end")}
+              <DateTimePicker
+                date={local.date_end ?? ""}
+                time=""
+                showTime={false}
                 disabled={!isWriter}
+                placeholder="Choisir une date"
+                onChange={({ date }) => {
+                  const next = date || null;
+                  setLocal({ ...local, date_end: next });
+                  flush({ date_end: next }, "date_end");
+                }}
               />
             </Field>
             <Field label="Budget global" hint="Ex. 500 TND">
@@ -393,15 +397,19 @@ export function AdCampaignEditor({
             </div>
           </Field>
 
-          <Field label="Objectif de la campagne" hint="Notoriété, prospects, inscriptions…">
-            <Textarea
-              rows={2}
+          <Field label="Objectif de la campagne" hint="Les six verbes officiels des régies (Meta, LinkedIn)">
+            <Select
               value={local.objective ?? ""}
-              onChange={(e) =>
-                setLocal({ ...local, objective: e.target.value || null })
-              }
-              onBlur={() => flush({ objective: local.objective }, "objective")}
               disabled={!isWriter}
+              onValueChange={(v) => {
+                const next = v || null;
+                setLocal({ ...local, objective: next });
+                flush({ objective: next }, "objective");
+              }}
+              options={[
+                { value: "", label: "— Pas encore choisi —" },
+                ...AD_OBJECTIVES,
+              ]}
             />
           </Field>
 
