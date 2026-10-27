@@ -324,8 +324,13 @@ export function PlanningTable({
   // intercepte les ouvertures de nouvel onglet (Ctrl/Cmd/middle-click) pour
   // laisser le comportement natif aux utilisateurs qui connaissent.
   const openFiche = (id: string, tab?: string) => {
+    // Depuis le planning, on force l'onglet « Plan » quand aucun onglet
+    // spécifique n'est demandé — c'est la vue de pilotage, pas la vue
+    // de montage, et c'est là qu'on arrive si on vient voir « où en
+    // est ce contenu ».
+    const t = tab ?? "plan";
     const sep = scopeQuery ? "&" : "?";
-    const tabQs = tab ? `${scopeQuery || ""}${sep}tab=${tab}` : scopeQuery;
+    const tabQs = `${scopeQuery || ""}${sep}tab=${t}`;
     router.push(`/content/${id}${tabQs}`);
   };
 
