@@ -13,6 +13,7 @@ import {
   type CampaignRow,
   type MediaRow,
 } from "@/components/ads/ads-views";
+import { AdsTableView } from "@/components/ads/ads-table-view";
 import { AdCardDelete } from "@/components/ads/ad-card-delete";
 
 /**
@@ -35,7 +36,7 @@ const STATUS_TONE: Record<string, string> = {
   stopped: "bg-foreground/10 text-foreground",
 };
 
-type ViewMode = "planning" | "calendar";
+type ViewMode = "planning" | "calendar" | "table";
 
 function monthKey(iso: string | null): string {
   if (!iso) return "Sans date";
@@ -71,7 +72,12 @@ export default async function AdsPage({
 
   const params = await searchParams;
   // Planning est le défaut. L'ancienne « Liste » redirige en silence.
-  const view: ViewMode = params.view === "calendar" ? "calendar" : "planning";
+  const view: ViewMode =
+    params.view === "calendar"
+      ? "calendar"
+      : params.view === "table"
+        ? "table"
+        : "planning";
 
   const now = new Date();
   const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -119,7 +125,7 @@ export default async function AdsPage({
     string,
     { id: string; body: string; created_at: string; author_email: string }[]
   > = {};
-  if (view === "planning" && campaigns.length > 0) {
+  if ((view === "planning" || view === "table") && campaigns.length > 0) {
     const campaignIds = campaigns.map((c) => c.id);
     const [
       { data: mediaData },
@@ -289,6 +295,11 @@ export default async function AdsPage({
                     label: "Planning",
                   },
                   {
+                    v: "table" as const,
+                    href: "/ads?view=table",
+                    label: "Tableau",
+                  },
+                  {
                     v: "calendar" as const,
                     href: monthHref("calendar"),
                     label: "Calendrier",
@@ -343,6 +354,11 @@ export default async function AdsPage({
         </div>
       ) : view === "calendar" ? (
         <AdsCalendarView campaigns={campaigns} month={month} />
+      ) : view === "table" ? (
+        <AdsTableView
+          campaigns={campaigns}
+          adSetsByCampaign={adSetsByCampaign}
+        />
       ) : (
         <AdsPlanningView
           campaigns={campaigns}
