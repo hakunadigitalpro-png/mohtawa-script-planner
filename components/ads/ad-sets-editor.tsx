@@ -426,14 +426,67 @@ function SingleCardLegacy({
           />
         )}
       </div>
-      <Textarea
-        defaultValue={ad.hook ?? ""}
-        placeholder="Texte principal de l'ad…"
-        onBlur={(e) => save("hook", e.target.value || null)}
-        disabled={!canEdit}
-        rows={10}
-        className="min-w-0 flex-1 resize-y text-sm leading-relaxed"
+      <div className="min-w-0 flex-1 space-y-2">
+        <VideoUrlField
+          value={ad.video_url ?? null}
+          onChange={(v) => save("video_url", v)}
+          disabled={!canEdit}
+        />
+        <Textarea
+          defaultValue={ad.hook ?? ""}
+          placeholder="Texte principal de l'ad…"
+          onBlur={(e) => save("hook", e.target.value || null)}
+          disabled={!canEdit}
+          rows={10}
+          className="w-full resize-y text-sm leading-relaxed"
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Petit champ URL pour une vidéo de pub (Drive / YouTube / Vimeo).
+ * Enregistre au blur, pas d'embed ici — on garde la fiche compacte,
+ * le lien suffit pour cliquer et voir. L'icône signale ce qui est posé.
+ */
+function VideoUrlField({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string | null;
+  onChange: (v: string | null) => void;
+  disabled?: boolean;
+}) {
+  const [local, setLocal] = React.useState(value ?? "");
+  React.useEffect(() => {
+    setLocal(value ?? "");
+  }, [value]);
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        value={local}
+        onChange={(e) => setLocal(e.target.value)}
+        onBlur={() => {
+          const v = local.trim();
+          if (v !== (value ?? "")) onChange(v || null);
+        }}
+        placeholder="🎬 Lien vidéo (Drive, YouTube, Vimeo)…"
+        disabled={disabled}
+        className="min-w-0 flex-1 text-xs"
       />
+      {local && (
+        <a
+          href={local}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground hover:bg-secondary"
+          title="Ouvrir la vidéo"
+        >
+          Ouvrir ↗
+        </a>
+      )}
     </div>
   );
 }
@@ -454,7 +507,10 @@ function SlideRow({
   const [, startTransition] = React.useTransition();
   const [visual, setVisual] = React.useState(slide.visual_url ?? null);
 
-  const save = (field: "visual_url" | "text", v: string | null) => {
+  const save = (
+    field: "visual_url" | "text" | "video_url",
+    v: string | null,
+  ) => {
     startTransition(async () => {
       await updateAdSlideField(slide.id, campaignId, field, v);
     });
@@ -515,14 +571,21 @@ function SlideRow({
             />
           )}
         </div>
-        <Textarea
-          defaultValue={slide.text ?? ""}
-          placeholder={`Texte de la diapo ${index + 1}…`}
-          onBlur={(e) => save("text", e.target.value || null)}
-          disabled={!canEdit}
-          rows={10}
-          className="min-w-0 flex-1 resize-y text-sm leading-relaxed"
-        />
+        <div className="min-w-0 flex-1 space-y-2">
+          <VideoUrlField
+            value={slide.video_url ?? null}
+            onChange={(v) => save("video_url", v)}
+            disabled={!canEdit}
+          />
+          <Textarea
+            defaultValue={slide.text ?? ""}
+            placeholder={`Texte de la diapo ${index + 1}…`}
+            onBlur={(e) => save("text", e.target.value || null)}
+            disabled={!canEdit}
+            rows={10}
+            className="w-full resize-y text-sm leading-relaxed"
+          />
+        </div>
       </div>
     </li>
   );

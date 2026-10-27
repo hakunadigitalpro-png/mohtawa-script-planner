@@ -306,7 +306,7 @@ export async function addAd(adSetId: string, campaignId: string) {
   return { ok: true as const, id: data.id as string };
 }
 
-const AD_FIELDS = ["name", "hook", "visual_url"] as const;
+const AD_FIELDS = ["name", "hook", "visual_url", "video_url"] as const;
 type AdField = (typeof AD_FIELDS)[number];
 
 export async function updateAdField(
@@ -386,7 +386,7 @@ export async function addAdSlide(adId: string, campaignId: string) {
   return { ok: true as const, id: data.id as string };
 }
 
-const SLIDE_FIELDS = ["visual_url", "text"] as const;
+const SLIDE_FIELDS = ["visual_url", "video_url", "text"] as const;
 type SlideField = (typeof SLIDE_FIELDS)[number];
 
 export async function updateAdSlideField(

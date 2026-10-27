@@ -147,6 +147,9 @@ export type Ad = {
   name: string | null;
   hook: string | null;
   visual_url: string | null;
+  /** Lien externe (Drive / YouTube / Vimeo) — prime sur visual_url
+   *  pour la prévisualisation quand il est rempli (0072). */
+  video_url: string | null;
   position: number;
   created_at: string;
   updated_at: string;
@@ -159,6 +162,8 @@ export type AdSlide = {
   id: string;
   ad_id: string;
   visual_url: string | null;
+  /** Lien externe vers la vidéo de la diapo (0072). */
+  video_url: string | null;
   text: string | null;
   position: number;
   created_at: string;
