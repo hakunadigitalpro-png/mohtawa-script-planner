@@ -67,8 +67,16 @@ export default async function AdsPage({
   if (!user) redirect("/login");
 
   const { active, role } = await resolveActiveBrand();
-  if (role === "viewer") redirect("/calendar");
   if (!active) redirect("/dashboard");
+  // Un viewer n'y entre QUE si l'owner lui a ouvert le scope 'ads'
+  // (sinon il reste cantonné au Calendrier comme avant).
+  if (role === "viewer") {
+    const { data: canSee } = await supabase.rpc("has_brand_scope", {
+      b: active.id,
+      s: "ads",
+    });
+    if (!canSee) redirect("/calendar");
+  }
 
   const params = await searchParams;
   // Planning est le défaut. L'ancienne « Liste » redirige en silence.

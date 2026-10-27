@@ -128,6 +128,28 @@ export async function updateMemberRole(
 }
 
 /**
+ * Change les sections auxquelles un membre a accès (owner/admin seulement).
+ * `scopes = null` revient au défaut selon le rôle (viewer = contents,
+ * autres = tout).
+ */
+export async function setMemberScopes(
+  brandId: string,
+  userId: string,
+  scopes: string[] | null,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_member_scopes", {
+    p_brand_id: brandId,
+    p_user_id: userId,
+    p_scopes: scopes,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/brands/${brandId}`);
+  revalidatePath("/", "layout");
+  return { ok: true as const };
+}
+
+/**
  * Change la date de fin d'accès d'un membre (owner/admin seulement).
  * `expiresAt = null` rend l'accès illimité à nouveau.
  */

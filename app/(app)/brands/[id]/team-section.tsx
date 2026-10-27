@@ -30,13 +30,14 @@ import {
   DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { formatDateFr, isFarFuture } from "@/lib/utils";
+import { cn, formatDateFr, isFarFuture } from "@/lib/utils";
 import {
   createBrandInvitation,
   revokeBrandInvitation,
   updateMemberRole,
   removeBrandMember,
   setMemberExpiry,
+  setMemberScopes,
   type BrandRole,
 } from "../team-actions";
 
@@ -47,7 +48,24 @@ type Member = {
   joined_at: string;
   /** NULL = accès illimité. Au-delà, la RLS coupe les accès. */
   expires_at: string | null;
+  /** NULL = défaut selon le rôle. Sinon liste explicite. */
+  scopes: string[] | null;
 };
+
+/** Les sections qu'on peut activer/désactiver pour un membre. */
+const SCOPE_OPTIONS: { key: string; label: string }[] = [
+  { key: "contents", label: "Contenus" },
+  { key: "ads", label: "Publicités" },
+  { key: "tasks", label: "Tâches" },
+  { key: "analytics", label: "Analytics" },
+];
+
+/** Scopes effectifs d'un membre (défaut rôle si non posés). */
+function effectiveScopes(role: BrandRole, scopes: string[] | null): string[] {
+  if (scopes !== null) return scopes;
+  if (role === "viewer") return ["contents"];
+  return SCOPE_OPTIONS.map((o) => o.key);
+}
 
 /**
  * Durées d'accès proposées à l'invitation ou à la révision. Volontairement
@@ -166,6 +184,7 @@ function MembersList({
           <tr>
             <th className="px-4 py-2.5 text-start font-medium">{t("memberHeader")}</th>
             <th className="px-4 py-2.5 text-start font-medium">{t("roleHeader")}</th>
+            <th className="px-4 py-2.5 text-start font-medium">Accès</th>
             <th className="px-4 py-2.5 text-start font-medium">{t("joinedHeader")}</th>
             <th className="px-4 py-2.5"></th>
           </tr>
@@ -275,6 +294,13 @@ function MemberRow({
           <p className="mt-1 text-xs text-destructive">{error}</p>
         )}
       </td>
+      <td className="px-4 py-3">
+        <ScopePills
+          brandId={brandId}
+          member={member}
+          canManage={canManage && !isSelf}
+        />
+      </td>
       <td className="px-4 py-3 text-muted">
         <div>{formatDateFr(new Date(member.joined_at))}</div>
         {member.expires_at ? (
@@ -315,6 +341,67 @@ function MemberRow({
         )}
       </td>
     </tr>
+  );
+}
+
+// ============================================================
+// Pastilles d'accès par section (comme Kiro CRM)
+// ============================================================
+function ScopePills({
+  brandId,
+  member,
+  canManage,
+}: {
+  brandId: string;
+  member: Member;
+  canManage: boolean;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const effective = effectiveScopes(member.role, member.scopes);
+
+  const toggle = (key: string) => {
+    if (!canManage) return;
+    const next = effective.includes(key)
+      ? effective.filter((s) => s !== key)
+      : [...effective, key];
+    startTransition(async () => {
+      const res = await setMemberScopes(brandId, member.user_id, next);
+      if ("ok" in res && res.ok) router.refresh();
+    });
+  };
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {SCOPE_OPTIONS.map((s) => {
+        const on = effective.includes(s.key);
+        return (
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => toggle(s.key)}
+            disabled={!canManage || pending}
+            className={cn(
+              "rounded-full px-2 py-0.5 text-xs font-medium transition",
+              on
+                ? "bg-emerald-200 !text-emerald-950 dark:bg-emerald-500/30 dark:!text-emerald-100"
+                : "bg-foreground/5 text-muted hover:bg-foreground/10",
+              !canManage && "cursor-default",
+            )}
+            title={
+              canManage
+                ? on
+                  ? `Retirer l'accès « ${s.label} »`
+                  : `Donner l'accès « ${s.label} »`
+                : s.label
+            }
+          >
+            {on ? "✓ " : ""}
+            {s.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
