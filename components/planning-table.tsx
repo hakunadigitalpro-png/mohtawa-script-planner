@@ -4,7 +4,7 @@ import * as React from "react";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Film, X, Pencil } from "lucide-react";
+import { Film, X, Pencil, Send } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
+import { createComment } from "@/app/(app)/contents/comment-actions";
 import {
   statusColor,
   statusLabel,
@@ -81,6 +84,112 @@ function dayShortFr(iso: string | null): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "");
+}
+
+/**
+ * Panneau de commentaires attaché à la popup lecture de la légende :
+ * liste les remarques existantes sur la cible `plan:caption` et laisse
+ * l'utilisatrice (ou le client invité) en ajouter sans ouvrir la fiche.
+ * Charge à la demande (une seule fois par popup ouverte), poste via
+ * la Server Action `createComment`.
+ */
+function CaptionCommentPanel({ contentId }: { contentId: string }) {
+  type Row = {
+    id: string;
+    body: string;
+    created_at: string;
+    author_email: string;
+    target_type: string;
+    target_id: string;
+  };
+  const [rows, setRows] = React.useState<Row[] | null>(null);
+  const [draft, setDraft] = React.useState("");
+  const [pending, startTransition] = React.useTransition();
+  const [error, setError] = React.useState<string | null>(null);
+
+  const load = React.useCallback(async () => {
+    const supabase = createBrowserClient();
+    const { data } = await supabase.rpc(
+      "list_content_comments_with_authors",
+      { p_content_id: contentId },
+    );
+    const all = (data ?? []) as Row[];
+    setRows(all.filter((c) => c.target_type === "plan" && c.target_id === "caption"));
+  }, [contentId]);
+
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
+  const send = () => {
+    const body = draft.trim();
+    if (!body) return;
+    setError(null);
+    startTransition(async () => {
+      const res = await createComment({
+        contentId,
+        targetType: "plan",
+        targetId: "caption",
+        body,
+      });
+      if ("error" in res && res.error) {
+        setError(res.error);
+        return;
+      }
+      setDraft("");
+      load();
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-xs font-bold uppercase tracking-wider text-muted">
+        Remarques sur la légende
+      </h3>
+      {rows === null ? (
+        <p className="text-xs italic text-muted">Chargement…</p>
+      ) : rows.length === 0 ? (
+        <p className="text-xs italic text-muted">
+          Pas encore de remarque.
+        </p>
+      ) : (
+        <ul className="max-h-40 space-y-2 overflow-y-auto">
+          {rows.map((c) => (
+            <li
+              key={c.id}
+              className="rounded-xl border border-foreground/10 bg-card p-2 text-sm"
+            >
+              <p className="mb-1 text-[10px] uppercase tracking-wider text-muted">
+                {c.author_email}
+              </p>
+              <p className="whitespace-pre-wrap text-foreground/80" dir="auto">
+                {c.body}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+      <Textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        placeholder="Ta remarque sur la légende…"
+        rows={2}
+      />
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="accent"
+          size="sm"
+          onClick={send}
+          disabled={pending || !draft.trim()}
+        >
+          <Send className="size-3.5" />
+          Envoyer
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function PlanningTable({
@@ -382,8 +491,11 @@ export function PlanningTable({
         </div>
       </div>
 
-      {/* Popup lecture de la légende : on la lit en entier sans quitter
-          le Planning ; le crayon ouvre l'onglet Légende pour modifier. */}
+      {/* Popup lecture de la légende : texte en grand pour lire, liste
+          des commentaires existants sur la légende, et zone pour en
+          laisser un sans quitter le Planning. Le crayon ouvre l'onglet
+          Légende pour modifier. Même workflow pour le client invité
+          (qui n'a pas le crayon). */}
       <Dialog open={Boolean(captionReader)} onOpenChange={(o) => !o && setCaptionReader(null)}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
@@ -391,13 +503,16 @@ export function PlanningTable({
               Légende{captionReader?.title ? ` · ${captionReader.title}` : ""}
             </DialogTitle>
           </DialogHeader>
-          <DialogBody>
+          <DialogBody className="space-y-4">
             <p
               dir="auto"
-              className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-2xl bg-secondary/40 p-4 text-sm leading-relaxed text-foreground"
+              className="max-h-[45vh] overflow-y-auto whitespace-pre-wrap rounded-2xl bg-secondary/40 p-4 text-sm leading-relaxed text-foreground"
             >
               {captionReader?.caption}
             </p>
+            {captionReader && (
+              <CaptionCommentPanel contentId={captionReader.id} />
+            )}
           </DialogBody>
           <DialogFooter>
             <Button
