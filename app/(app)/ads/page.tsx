@@ -358,6 +358,7 @@ export default async function AdsPage({
         <AdsTableView
           campaigns={campaigns}
           adSetsByCampaign={adSetsByCampaign}
+          commentsByTarget={commentsByTargetPlanning}
         />
       ) : (
         <AdsPlanningView
