@@ -16,6 +16,9 @@ export type NeighbourScope = {
   platform?: string;
   /** Vrai quand on vient de l'onglet Idées : uniquement les contenus sans date. */
   undated?: boolean;
+  /** Vue d'où l'on vient (planning / kanban). Permet au retour de
+   *  recharger la MÊME vue au lieu du calendrier par défaut. */
+  view?: "planning" | "kanban";
 };
 
 export type Neighbours = {
@@ -34,10 +37,12 @@ export function scopeFromParams(
 ): NeighbourScope {
   const one = (v: string | string[] | undefined) =>
     typeof v === "string" && v ? v : undefined;
+  const v = one(params.view);
   return {
     month: /^\d{4}-\d{2}$/.test(one(params.m) ?? "") ? one(params.m) : undefined,
     platform: one(params.platform),
     undated: one(params.scope) === "ideas",
+    view: v === "planning" || v === "kanban" ? v : undefined,
   };
 }
 
@@ -46,6 +51,7 @@ export function scopeToQuery(scope: NeighbourScope): string {
   const parts: string[] = [];
   if (scope.undated) parts.push("scope=ideas");
   if (scope.month) parts.push(`m=${scope.month}`);
+  if (scope.view) parts.push(`view=${scope.view}`);
   if (scope.platform) parts.push(`platform=${encodeURIComponent(scope.platform)}`);
   return parts.length ? `?${parts.join("&")}` : "";
 }

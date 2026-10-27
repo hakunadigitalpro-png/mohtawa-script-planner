@@ -266,7 +266,12 @@ export default async function CalendarPage({
   // premier du mois consulté.
   // Ce que les listes transmettent à la fiche : le mois consulté et le filtre
   // plateforme actif. Sans ça, « suivant » sortait du mois et du filtre.
-  const scopeQuery = `?m=${ym}${platformFilter ? `&platform=${encodeURIComponent(platformFilter)}` : ""}`;
+  // On transporte aussi la vue courante (calendar / planning / kanban /
+  // ideas) : au clic sur « retour » depuis une fiche, on revient dans
+  // la MÊME vue qu'on avait, pas dans la vue par défaut (= calendrier).
+  const scopeQuery = `?m=${ym}${
+    view !== "calendar" ? `&view=${view}` : ""
+  }${platformFilter ? `&platform=${encodeURIComponent(platformFilter)}` : ""}`;
 
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const defaultCreateDate =
