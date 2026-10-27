@@ -95,7 +95,11 @@ export default async function BrandDetailPage({
       .select("*")
       .eq("brand_id", id)
       .maybeSingle(),
-    supabase.rpc("list_brand_members_with_emails", { p_brand_id: id }),
+    // Après plusieurs refontes de la fonction (0077/0079/0080), le cache
+    // PostgREST a cessé de la servir correctement sur un ancien build.
+    // La v2 est un NOUVEAU nom, mêmes colonnes — PostgREST repart de
+    // zéro et le cache ne peut plus mentir.
+    supabase.rpc("list_brand_members_v2", { p_brand_id: id }),
     supabase
       .from("brand_invitations")
       .select("id, role, token, note, created_at, expires_at")
