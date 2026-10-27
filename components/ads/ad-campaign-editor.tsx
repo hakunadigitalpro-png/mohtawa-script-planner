@@ -31,7 +31,7 @@ import {
   AD_PLATFORMS,
 } from "@/lib/types-ads";
 import { Select } from "@/components/ui/select";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   updateCampaignField,
   deleteAdCampaign,
@@ -320,31 +320,16 @@ export function AdCampaignEditor({
                 disabled={!isWriter}
               />
             </Field>
-            <Field label="Date de début">
-              <DateTimePicker
-                date={local.date_start ?? ""}
-                time=""
-                showTime={false}
+            <Field label="Période de la campagne" hint="Clique le début, puis la fin — style Notion.">
+              <DateRangePicker
+                start={local.date_start}
+                end={local.date_end}
                 disabled={!isWriter}
-                placeholder="Choisir une date"
-                onChange={({ date }) => {
-                  const next = date || null;
-                  setLocal({ ...local, date_start: next });
-                  flush({ date_start: next }, "date_start");
-                }}
-              />
-            </Field>
-            <Field label="Date de fin">
-              <DateTimePicker
-                date={local.date_end ?? ""}
-                time=""
-                showTime={false}
-                disabled={!isWriter}
-                placeholder="Choisir une date"
-                onChange={({ date }) => {
-                  const next = date || null;
-                  setLocal({ ...local, date_end: next });
-                  flush({ date_end: next }, "date_end");
+                onChange={({ start, end }) => {
+                  setLocal({ ...local, date_start: start, date_end: end });
+                  // On flush les deux dates ensemble pour qu'un revert
+                  // en base reflète bien l'état complet si l'une rate.
+                  flush({ date_start: start, date_end: end }, "date_start");
                 }}
               />
             </Field>
