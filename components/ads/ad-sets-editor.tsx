@@ -36,14 +36,25 @@ type AdWithSlides = Ad & { slides: AdSlide[] };
  * Les tables `ad_sets` et `ads` vivent dans la migration 0064 avec RLS
  * qui vérifie l'appartenance à la marque via la campagne parente.
  */
+type AdSetSuggestions = {
+  ages: string[];
+  locations: string[];
+  interests: string[];
+  budgets: string[];
+};
+
 export function AdSetsEditor({
   campaignId,
   adSets,
   canEdit,
+  suggestions,
 }: {
   campaignId: string;
   adSets: (AdSet & { ads: AdWithSlides[] })[];
   canEdit: boolean;
+  /** Valeurs déjà utilisées sur d'autres campagnes de la marque,
+   *  branchées en <datalist> pour auto-compléter. */
+  suggestions?: AdSetSuggestions;
 }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
@@ -126,6 +137,7 @@ export function AdSetsEditor({
               adSet={s}
               campaignId={campaignId}
               canEdit={canEdit}
+              suggestions={suggestions}
             />
           ))}
         </ul>
@@ -138,11 +150,16 @@ function AdSetCard({
   adSet,
   campaignId,
   canEdit,
+  suggestions,
 }: {
   adSet: AdSet & { ads: AdWithSlides[] };
   campaignId: string;
   canEdit: boolean;
+  suggestions?: AdSetSuggestions;
 }) {
+  // Un id unique par ad set pour que chaque input pointe sur sa propre
+  // datalist (deux datalists avec le même id = seul le premier compte).
+  const dlId = React.useId();
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
 
@@ -187,6 +204,7 @@ function AdSetCard({
                 onBlur={(e) => save("targeting_age", e.target.value)}
                 disabled={!canEdit}
                 className="h-9 text-sm"
+                list={`${dlId}-ages`}
               />
             </Field>
             <Field label="Localisation">
@@ -196,6 +214,7 @@ function AdSetCard({
                 onBlur={(e) => save("targeting_location", e.target.value)}
                 disabled={!canEdit}
                 className="h-9 text-sm"
+                list={`${dlId}-locations`}
               />
             </Field>
             <Field label="Centres d'intérêt">
@@ -205,6 +224,7 @@ function AdSetCard({
                 onBlur={(e) => save("targeting_interests", e.target.value)}
                 disabled={!canEdit}
                 className="h-9 text-sm"
+                list={`${dlId}-interests`}
               />
             </Field>
             <Field label="Budget / jour">
@@ -214,9 +234,30 @@ function AdSetCard({
                 onBlur={(e) => save("budget_daily", e.target.value)}
                 disabled={!canEdit}
                 className="h-9 text-sm"
+                list={`${dlId}-budgets`}
               />
             </Field>
           </div>
+          {/* Datalists partagées par cet ad set — alimentent l'autocomplétion
+              de chaque input via l'attribut `list`. Elles tirent des
+              valeurs déjà utilisées sur les AUTRES campagnes de la marque,
+              pour que Mariam ne retape pas « Canada » dix fois. */}
+          {suggestions && (
+            <>
+              <datalist id={`${dlId}-ages`}>
+                {suggestions.ages.map((v) => <option key={v} value={v} />)}
+              </datalist>
+              <datalist id={`${dlId}-locations`}>
+                {suggestions.locations.map((v) => <option key={v} value={v} />)}
+              </datalist>
+              <datalist id={`${dlId}-interests`}>
+                {suggestions.interests.map((v) => <option key={v} value={v} />)}
+              </datalist>
+              <datalist id={`${dlId}-budgets`}>
+                {suggestions.budgets.map((v) => <option key={v} value={v} />)}
+              </datalist>
+            </>
+          )}
         </div>
         {canEdit && (
           <button

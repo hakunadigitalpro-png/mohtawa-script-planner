@@ -73,6 +73,7 @@ export function AdCampaignEditor({
   visualCount,
   brandId,
   adSets,
+  adSetSuggestions,
 }: {
   campaign: AdCampaign;
   media: AdCampaignMedia[];
@@ -87,6 +88,14 @@ export function AdCampaignEditor({
       slides: import("@/lib/types-ads").AdSlide[];
     })[];
   })[];
+  /** Valeurs déjà utilisées sur les ad sets d'autres campagnes de la
+   *  marque — alimente les datalist pour éviter de retaper. */
+  adSetSuggestions?: {
+    ages: string[];
+    locations: string[];
+    interests: string[];
+    budgets: string[];
+  };
 }) {
   const router = useRouter();
   const [local, setLocal] = React.useState<AdCampaign>(campaign);
@@ -414,6 +423,7 @@ export function AdCampaignEditor({
             campaignId={campaign.id}
             adSets={adSets}
             canEdit={isWriter}
+            suggestions={adSetSuggestions}
           />
         </section>
 

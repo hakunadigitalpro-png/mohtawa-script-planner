@@ -94,6 +94,40 @@ export default async function AdCampaignPage({
     role: string;
   }>;
 
+  // Suggestions ad set : valeurs déjà utilisées sur les AUTRES campagnes
+  // de la marque. Datalist côté <input> → la saisie du client complète
+  // tout seul (« Canada », « 25-55 », « 30 », …) au lieu de retaper.
+  const { data: suggRows } = await supabase
+    .from("ad_sets")
+    .select("targeting_age, targeting_location, targeting_interests, budget_daily, ad_campaigns!inner(brand_id)")
+    .eq("ad_campaigns.brand_id", campaign.brand_id)
+    .limit(500);
+  const uniq = (xs: (string | null | undefined)[]) =>
+    Array.from(new Set(xs.map((v) => (v ?? "").trim()).filter(Boolean))).sort();
+  const adSetSuggestions = {
+    ages: uniq(
+      (suggRows ?? []).map(
+        (r) => (r as { targeting_age: string | null }).targeting_age,
+      ),
+    ),
+    locations: uniq(
+      (suggRows ?? []).map(
+        (r) => (r as { targeting_location: string | null }).targeting_location,
+      ),
+    ),
+    interests: uniq(
+      (suggRows ?? []).map(
+        (r) =>
+          (r as { targeting_interests: string | null }).targeting_interests,
+      ),
+    ),
+    budgets: uniq(
+      (suggRows ?? []).map(
+        (r) => (r as { budget_daily: string | null }).budget_daily,
+      ),
+    ),
+  };
+
   const adSetsFlat = (adSetData ?? []) as AdSet[];
   const adsFlat = ((adData ?? []) as (Ad & { ad_sets: unknown })[]).map(
     ({ ad_sets: _ad_sets, ...a }) => a as Ad,
@@ -158,6 +192,7 @@ export default async function AdCampaignPage({
         visualCount={visualCount}
         brandId={campaign.brand_id}
         adSets={adSets}
+        adSetSuggestions={adSetSuggestions}
       />
     </div>
   );
