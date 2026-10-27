@@ -324,11 +324,18 @@ export function PlanningTable({
   // intercepte les ouvertures de nouvel onglet (Ctrl/Cmd/middle-click) pour
   // laisser le comportement natif aux utilisateurs qui connaissent.
   const openFiche = (id: string, tab?: string) => {
-    // Depuis le planning, on arrive sur l'onglet « Contenu » (visuels
-    // + légende d'un post / carrousel / infographie). Pour un reel /
-    // story / vlog, « content » n'existe pas et la fiche retombe
-    // automatiquement sur « plan » (voir ALLOWED dans detail-tabs).
-    const t = tab ?? "content";
+    // Choix de l'onglet par défaut en fonction du type du contenu :
+    //   - vidéo (reel / story / vlog) → onglet « Vidéo » (lien externe
+    //     + aperçu du média)
+    //   - sinon → onglet « Contenu » (visuels + légende)
+    // On lit le type depuis la liste `contents` pour ne pas devoir
+    // repasser par l'URL.
+    const c = contents.find((x) => x.id === id);
+    const def =
+      c?.type === "reel" || c?.type === "story" || c?.type === "vlog"
+        ? "video"
+        : "content";
+    const t = tab ?? def;
     const sep = scopeQuery ? "&" : "?";
     const tabQs = `${scopeQuery || ""}${sep}tab=${t}`;
     router.push(`/content/${id}${tabQs}`);

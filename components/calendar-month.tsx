@@ -573,7 +573,11 @@ function EntryCard({
   return (
     <li className="relative">
       <Link
-        href={`/content/${entry.contentId}${scopeQuery}${scopeQuery ? "&" : "?"}tab=content`}
+        href={`/content/${entry.contentId}${scopeQuery}${scopeQuery ? "&" : "?"}tab=${
+          entry.type === "reel" || entry.type === "story" || entry.type === "vlog"
+            ? "video"
+            : "content"
+        }`}
         // Le glisser-déposer n'a pas de sens au doigt : en agenda la carte
         // n'est jamais draggable, quel que soit le rôle.
         draggable={canEdit && !agenda}
