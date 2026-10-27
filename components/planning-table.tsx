@@ -324,11 +324,11 @@ export function PlanningTable({
   // intercepte les ouvertures de nouvel onglet (Ctrl/Cmd/middle-click) pour
   // laisser le comportement natif aux utilisateurs qui connaissent.
   const openFiche = (id: string, tab?: string) => {
-    // Depuis le planning, on force l'onglet « Plan » quand aucun onglet
-    // spécifique n'est demandé — c'est la vue de pilotage, pas la vue
-    // de montage, et c'est là qu'on arrive si on vient voir « où en
-    // est ce contenu ».
-    const t = tab ?? "plan";
+    // Depuis le planning, on arrive sur l'onglet « Contenu » (visuels
+    // + légende d'un post / carrousel / infographie). Pour un reel /
+    // story / vlog, « content » n'existe pas et la fiche retombe
+    // automatiquement sur « plan » (voir ALLOWED dans detail-tabs).
+    const t = tab ?? "content";
     const sep = scopeQuery ? "&" : "?";
     const tabQs = `${scopeQuery || ""}${sep}tab=${t}`;
     router.push(`/content/${id}${tabQs}`);
