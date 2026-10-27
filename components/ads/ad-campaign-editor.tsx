@@ -342,31 +342,25 @@ export function AdCampaignEditor({
                 }}
               />
             </Field>
-            <Field label="Budget global" hint="Ex. 500 TND">
-              <Input
-                value={local.budget_global ?? ""}
-                onChange={(e) =>
-                  setLocal({ ...local, budget_global: e.target.value || null })
-                }
-                onBlur={() =>
-                  flush({ budget_global: local.budget_global }, "budget_global")
-                }
+            <Field
+              label="Budget global"
+              hint="Calculé automatiquement : nombre de jours × somme des budgets/jour des ad sets."
+            >
+              <AutoBudgetField
+                campaignId={campaign.id}
+                value={local.budget_global}
+                dateStart={local.date_start}
+                dateEnd={local.date_end}
+                adSets={adSets}
                 disabled={!isWriter}
+                onChange={(next) => {
+                  setLocal({ ...local, budget_global: next });
+                  flush({ budget_global: next }, "budget_global");
+                }}
               />
             </Field>
             {/* Le budget journalier vit maintenant sur l'ad set (0064). */}
           </div>
-
-          {/* Rollup budget : somme des budget_daily × durée en jours vs
-              budget global saisi. Donne en un coup d'œil « j'ai alloué
-              X sur mes Y de budget ». Pas de calcul si l'un des deux
-              bouts manque. */}
-          <BudgetRollup
-            budgetGlobal={local.budget_global}
-            dateStart={local.date_start}
-            dateEnd={local.date_end}
-            adSets={adSets}
-          />
 
           <Field label="Plateformes">
             <div className="flex flex-wrap gap-2">
@@ -876,75 +870,83 @@ function CommentThread({
 }
 
 /**
- * Encart « où en est le budget » posé sous les dates et le budget
- * global. Reprend le motif Airtable des rollups : somme des budget_daily
- * des ad sets × durée de la campagne, comparée au budget global saisi.
- * Pas d'alerte si une donnée manque : on n'invente rien.
+ * Champ « Budget global » auto-rempli : prend la somme des
+ * `budget_daily` des ad sets et la multiplie par le nombre de jours de
+ * la campagne. Si la valeur calculée diffère du budget global stocké,
+ * on écrit la nouvelle valeur en base — Mariam voit toujours le total
+ * à jour sans retaper. Si une donnée manque (pas de dates, pas de
+ * budget/j), le champ reste modifiable à la main.
  */
-function BudgetRollup({
-  budgetGlobal,
+function AutoBudgetField({
+  value,
   dateStart,
   dateEnd,
   adSets,
+  disabled,
+  onChange,
 }: {
-  budgetGlobal: string | null;
+  campaignId: string;
+  value: string | null;
   dateStart: string | null;
   dateEnd: string | null;
   adSets: { budget_daily: string | null }[];
+  disabled?: boolean;
+  onChange: (next: string | null) => void;
 }) {
   const toNumber = (v: string | null): number | null => {
     if (!v) return null;
-    const n = parseFloat(v.replace(",", "."));
+    const n = parseFloat(String(v).replace(",", "."));
     return Number.isFinite(n) ? n : null;
   };
-  const dailySum = adSets.reduce((sum, s) => sum + (toNumber(s.budget_daily) ?? 0), 0);
-  if (dailySum === 0) return null;
-
+  const dailySum = adSets.reduce(
+    (sum, s) => sum + (toNumber(s.budget_daily) ?? 0),
+    0,
+  );
   const days =
     dateStart && dateEnd
       ? Math.max(
           1,
           Math.round(
-            (new Date(dateEnd).getTime() - new Date(dateStart).getTime()) / 86400_000,
+            (new Date(dateEnd).getTime() - new Date(dateStart).getTime()) /
+              86400_000,
           ) + 1,
         )
       : null;
-  const allocated = days !== null ? dailySum * days : null;
-  const global = toNumber(budgetGlobal);
-  const diff = global !== null && allocated !== null ? global - allocated : null;
+  const computed =
+    dailySum > 0 && days !== null ? dailySum * days : null;
 
-  const toneDiff =
-    diff === null
-      ? "text-muted"
-      : diff < 0
-        ? "text-rose-600 font-semibold"
-        : "text-emerald-600";
+  // Dès que le calcul change (nouvelle date, nouveau budget/j), on
+  // écrit la nouvelle valeur en base — sauf si on serait en train
+  // d'écraser une saisie manuelle égale au total déjà posé.
+  React.useEffect(() => {
+    if (computed === null) return;
+    const str = String(computed);
+    if (str !== (value ?? "")) {
+      onChange(str);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [computed]);
+
+  if (computed === null) {
+    // Pas assez d'info pour calculer : on laisse Mariam taper à la main.
+    return (
+      <Input
+        value={value ?? ""}
+        placeholder="Ex. 500"
+        onChange={(e) => onChange(e.target.value || null)}
+        disabled={disabled}
+      />
+    );
+  }
 
   return (
-    <div className="rounded-xl border border-foreground/10 bg-foreground/[0.02] p-3 text-xs">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <span>
-          <span className="text-muted">Alloué par les ad sets : </span>
-          <span className="font-medium text-foreground">
-            {dailySum.toLocaleString("fr-FR")} /j
-          </span>
-          {days !== null && (
-            <span className="text-muted">
-              {" "}
-              × {days} j = <span className="font-medium text-foreground">
-                {allocated!.toLocaleString("fr-FR")}
-              </span>
-            </span>
-          )}
-        </span>
-        {global !== null && allocated !== null && (
-          <span className={toneDiff}>
-            {diff! < 0
-              ? `Dépassement : ${(-diff!).toLocaleString("fr-FR")}`
-              : `Reste : ${diff!.toLocaleString("fr-FR")}`}
-          </span>
-        )}
+    <div className="space-y-1">
+      <div className="flex h-11 w-full items-center rounded-full border border-input bg-foreground/[0.03] px-4 text-sm font-semibold text-foreground">
+        {computed.toLocaleString("fr-FR")}
       </div>
+      <p className="text-[11px] text-muted-foreground">
+        {dailySum.toLocaleString("fr-FR")} /j × {days} j
+      </p>
     </div>
   );
 }
