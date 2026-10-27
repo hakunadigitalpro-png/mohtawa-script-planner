@@ -100,11 +100,12 @@ export default async function CalendarPage({
   // posé par <EventsCountriesToggle>. Défaut : Tunisie seule.
   const cookieStore = await cookies();
   const rawCountries = cookieStore.get("kreatly_countries")?.value;
-  const countries = ((): ("TN" | "MA" | "DZ")[] => {
+  const countries = ((): ("TN" | "MA" | "DZ" | "CA")[] => {
     if (!rawCountries) return DEFAULT_COUNTRIES;
     const parts = rawCountries.split(",").filter(Boolean);
-    const valid = parts.filter((p): p is "TN" | "MA" | "DZ" =>
-      p === "TN" || p === "MA" || p === "DZ",
+    const valid = parts.filter(
+      (p): p is "TN" | "MA" | "DZ" | "CA" =>
+        p === "TN" || p === "MA" || p === "DZ" || p === "CA",
     );
     return valid.length ? valid : DEFAULT_COUNTRIES;
   })();

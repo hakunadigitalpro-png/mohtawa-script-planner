@@ -128,8 +128,8 @@ export function CalendarMonth({
 }: {
   initialMonth: string; // YYYY-MM-01
   entries: CalendarEntry[];
-  /** Pays actifs pour les marqueurs Maghreb (cookie lu côté serveur). */
-  countries?: ("TN" | "MA" | "DZ")[];
+  /** Pays actifs pour les marqueurs (cookie lu côté serveur). */
+  countries?: ("TN" | "MA" | "DZ" | "CA")[];
   /** contentId → nombre de commentaires non lus (badge). */
   commentCounts?: Record<string, number>;
   /**

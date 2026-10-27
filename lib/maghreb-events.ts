@@ -14,7 +14,7 @@
  * mais le `country` dit à qui elles comptent en premier.
  */
 
-export type EventCountry = "TN" | "MA" | "DZ" | "ALL";
+export type EventCountry = "TN" | "MA" | "DZ" | "CA" | "ALL";
 
 export type MaghrebEvent = {
   /** Première date couverte (ISO yyyy-mm-dd) — c'est celle qui porte la pastille. */
@@ -35,6 +35,7 @@ export const COUNTRY_LABELS: Record<Exclude<EventCountry, "ALL">, string> = {
   TN: "Tunisie",
   MA: "Maroc",
   DZ: "Algérie",
+  CA: "Canada",
 };
 
 export const DEFAULT_COUNTRIES: Exclude<EventCountry, "ALL">[] = ["TN"];
@@ -70,6 +71,35 @@ export const MAGHREB_EVENTS: MaghrebEvent[] = [
   { from: "2027-11-01", to: "2027-11-01", label: "Révolution DZ", kind: "national", country: "DZ" },
   { from: "2027-11-06", to: "2027-11-06", label: "Marche Verte", kind: "national", country: "MA" },
   { from: "2027-11-18", to: "2027-11-18", label: "Indépendance MA", kind: "national", country: "MA" },
+
+  // === CANADA — focus comptabilité (clients DIMPO) ===
+  // Dates fédérales ARC. Ne couvrent pas les variantes provinciales.
+  // 2026
+  { from: "2026-11-11", to: "2026-11-11", label: "Jour du Souvenir", kind: "national", country: "CA" },
+  { from: "2026-12-15", to: "2026-12-15", label: "Acomptes T1 Q4", kind: "commercial", country: "CA", hint: "Dernier acompte provisionnel 2026 pour les particuliers — relance clients." },
+  { from: "2026-12-25", to: "2026-12-25", label: "Noël", kind: "religious", country: "CA" },
+  { from: "2026-12-31", to: "2026-12-31", label: "Fin d'année fiscale", kind: "commercial", country: "CA", hint: "Boucler les livres, préparer les feuillets T4/T5 pour janvier." },
+
+  // 2027 — gros chantier comptable
+  { from: "2027-01-01", to: "2027-01-01", label: "Jour de l'An", kind: "national", country: "CA" },
+  { from: "2027-01-30", to: "2027-01-30", label: "Intérêts REER déductibles — fin", kind: "commercial", country: "CA", hint: "Dernier jour pour comptabiliser les intérêts REER à l'année précédente." },
+  { from: "2027-02-01", to: "2027-02-28", label: "Envoi des feuillets T4 / T5", kind: "commercial", country: "CA", hint: "Les comptables doivent transmettre les feuillets aux employés et à l'ARC d'ici le 28 février — période de rush." },
+  { from: "2027-03-01", to: "2027-03-01", label: "Fin cotisation REER", kind: "commercial", country: "CA", hint: "Dernier jour pour cotiser au REER et déduire sur l'année précédente — gros sujet client." },
+  { from: "2027-03-01", to: "2027-04-30", label: "Saison des impôts T1", kind: "commercial", country: "CA", hint: "LA période de rush des cabinets comptables. Contenus utiles, pas de promo agressive sauf J-7." },
+  { from: "2027-03-15", to: "2027-03-15", label: "Acomptes T1 Q1", kind: "commercial", country: "CA", hint: "Premier acompte provisionnel 2027 pour les particuliers." },
+  { from: "2027-04-30", to: "2027-04-30", label: "DATE LIMITE T1 (particuliers)", kind: "commercial", country: "CA", hint: "LA date du calendrier canadien pour les comptables. Compte à rebours dès avril." },
+  { from: "2027-05-01", to: "2027-05-15", label: "Après-saison T1 — bilan", kind: "seasonal", country: "CA", hint: "Récupération, remerciements clients, bilan de saison, premières offres pour l'année suivante." },
+  { from: "2027-06-15", to: "2027-06-15", label: "DATE LIMITE T1 (travailleurs autonomes)", kind: "commercial", country: "CA", hint: "Date limite pour les travailleurs autonomes et leurs conjoints — rush secondaire." },
+  { from: "2027-06-15", to: "2027-06-15", label: "Acomptes T1 Q2", kind: "commercial", country: "CA" },
+  { from: "2027-07-01", to: "2027-07-01", label: "Fête du Canada", kind: "national", country: "CA" },
+  { from: "2027-09-06", to: "2027-09-06", label: "Fête du Travail", kind: "national", country: "CA" },
+  { from: "2027-09-15", to: "2027-09-15", label: "Acomptes T1 Q3", kind: "commercial", country: "CA" },
+  { from: "2027-10-11", to: "2027-10-11", label: "Action de grâces", kind: "national", country: "CA" },
+  { from: "2027-10-15", to: "2027-11-15", label: "Pré-saison — préparer les clients", kind: "seasonal", country: "CA", hint: "Fenêtre pour transformer les prospects AVANT le rush : contenus 'préparez votre dossier dès maintenant'." },
+  { from: "2027-11-11", to: "2027-11-11", label: "Jour du Souvenir", kind: "national", country: "CA" },
+  { from: "2027-12-15", to: "2027-12-15", label: "Acomptes T1 Q4", kind: "commercial", country: "CA" },
+  { from: "2027-12-25", to: "2027-12-25", label: "Noël", kind: "religious", country: "CA" },
+  { from: "2027-12-31", to: "2027-12-31", label: "Fin d'année fiscale", kind: "commercial", country: "CA" },
 ];
 
 /**

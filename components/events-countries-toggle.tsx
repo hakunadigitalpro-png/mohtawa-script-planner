@@ -9,7 +9,7 @@ import {
 } from "@/lib/maghreb-events";
 
 type Country = Exclude<EventCountry, "ALL">;
-const ALL_COUNTRIES: Country[] = ["TN", "MA", "DZ"];
+const ALL_COUNTRIES: Country[] = ["TN", "MA", "DZ", "CA"];
 const COOKIE = "kreatly_countries";
 
 function readCookie(): Country[] {
