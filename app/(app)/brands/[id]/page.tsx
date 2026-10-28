@@ -95,11 +95,15 @@ export default async function BrandDetailPage({
       .select("*")
       .eq("brand_id", id)
       .maybeSingle(),
-    // Après plusieurs refontes de la fonction (0077/0079/0080), le cache
-    // PostgREST a cessé de la servir correctement sur un ancien build.
-    // La v2 est un NOUVEAU nom, mêmes colonnes — PostgREST repart de
-    // zéro et le cache ne peut plus mentir.
-    supabase.rpc("list_brand_members_v2", { p_brand_id: id }),
+    // Lecture directe de brand_members : la RPC a été capricieuse
+    // (cache PostgREST, enum role mal exposé…) et personne ne rendait
+    // la liste. On passe par une vue SECURITY DEFINER qui joint
+    // auth.users — même sécurité, mais prévisible côté shape.
+    supabase
+      .from("brand_members_with_emails")
+      .select("user_id, email, role, created_at, expires_at, scopes")
+      .eq("brand_id", id)
+      .order("created_at", { ascending: true }),
     supabase
       .from("brand_invitations")
       .select("id, role, token, note, created_at, expires_at")
@@ -118,15 +122,28 @@ export default async function BrandDetailPage({
   const scenePresets = (scenePresetsRes.data ?? []) as ScenePreset[];
   const kit = (kitRes.data ?? null) as BrandKit | null;
   const strategy = (strategyRes.data ?? null) as BrandStrategy | null;
-  const members = (membersRes.data ?? []) as MemberRow[];
+  // La vue renvoie `created_at` ; le composant Team attend `joined_at`
+  // — on mappe ici.
+  type ViewRow = {
+    user_id: string;
+    email: string;
+    role: BrandRole;
+    created_at: string;
+    expires_at: string | null;
+    scopes: string[] | null;
+  };
+  const members: MemberRow[] = (
+    (membersRes.data ?? []) as ViewRow[]
+  ).map((r) => ({
+    user_id: r.user_id,
+    email: r.email,
+    role: r.role,
+    joined_at: r.created_at,
+    expires_at: r.expires_at,
+    scopes: r.scopes,
+  }));
   if (membersRes.error) {
-    // Loguer visiblement : si la liste est vide alors que la DB a des
-    // membres, c'est la RPC qui refuse. Vu une fois après l'ajout de
-    // la colonne scopes dans 0077 — PostgREST n'avait pas rechargé.
-    console.error(
-      "[brand/[id]] list_brand_members_with_emails:",
-      membersRes.error,
-    );
+    console.error("[brand/[id]] members view:", membersRes.error);
   }
   const invitations = (invitationsRes.data ?? []) as InvitationRow[];
   const myRole = (selfMembershipRes.data?.role ?? "viewer") as BrandRole;
