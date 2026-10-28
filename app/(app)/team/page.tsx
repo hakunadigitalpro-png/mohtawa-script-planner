@@ -23,11 +23,13 @@ type Row = {
   expires_at: string | null;
 };
 
+// Fonds colorés mais clairs, texte toujours en noir (foreground forcé) :
+// Mariam a demandé l'écriture en noir et des pastilles pas trop grandes.
 const ROLE_TONE: Record<string, string> = {
-  owner: "bg-foreground text-background",
-  admin: "bg-violet-200 !text-violet-950 dark:bg-violet-500/30 dark:!text-violet-100",
-  editor: "bg-sky-200 !text-sky-950 dark:bg-sky-500/30 dark:!text-sky-100",
-  viewer: "bg-amber-200 !text-amber-950 dark:bg-amber-500/30 dark:!text-amber-100",
+  owner: "bg-foreground/10 !text-foreground",
+  admin: "bg-violet-100 !text-foreground dark:bg-violet-500/20",
+  editor: "bg-sky-100 !text-foreground dark:bg-sky-500/20",
+  viewer: "bg-amber-100 !text-foreground dark:bg-amber-500/20",
 };
 
 const ROLE_LABEL: Record<string, string> = {
@@ -175,16 +177,16 @@ export default async function TeamPage() {
                           ? `${m.brand_name} — expiré`
                           : `${m.brand_name} — ${ROLE_LABEL[m.role] ?? m.role}`
                       }
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition hover:ring-2 hover:ring-accent/40 ${
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium leading-tight transition hover:ring-1 hover:ring-accent/40 ${
                         expired
-                          ? "bg-rose-100 !text-rose-900 line-through dark:bg-rose-500/20"
-                          : ROLE_TONE[m.role] ?? "bg-foreground/5 text-foreground"
+                          ? "bg-rose-100 !text-foreground line-through dark:bg-rose-500/20"
+                          : ROLE_TONE[m.role] ?? "bg-foreground/5 !text-foreground"
                       }`}
                     >
-                      <span className="truncate max-w-[180px]">
+                      <span className="truncate max-w-[160px]">
                         {m.brand_name}
                       </span>
-                      <span className="opacity-70">
+                      <span className="opacity-60">
                         · {ROLE_LABEL[m.role] ?? m.role}
                       </span>
                     </Link>
