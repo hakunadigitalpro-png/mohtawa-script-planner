@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { MessageCircle, X, Send } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -90,16 +91,32 @@ function CampaignCommentDialog({
     });
   };
 
-  return (
+  // Portal : la popup est montée au niveau de <body>, donc elle n'est
+  // plus un enfant DOM du <Link> parent (la carte campagne). Sans ça,
+  // chaque clic dans la popup bubble jusqu'au Link et navigue vers la
+  // fiche campagne — y compris le clic pour poser le curseur dans la
+  // textarea. stopPropagation est quand même gardé par ceinture-bretelles
+  // au cas où un ancêtre React (hors du Link) écouterait aussi.
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-      onClick={onClose}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }}
+      onMouseDown={(e) => e.stopPropagation()}
       role="dialog"
       aria-modal
     >
       <div
         className="flex max-h-[85vh] w-full max-w-xl flex-col gap-4 overflow-hidden rounded-2xl bg-card p-5"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -163,6 +180,7 @@ function CampaignCommentDialog({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

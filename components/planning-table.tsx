@@ -486,9 +486,13 @@ export function PlanningTable({
                       {c.title || "Sans titre"}
                     </span>
                   </span>
-                  {/* Commenter sans quitter le Planning. */}
+                  {/* Commenter sans quitter le Planning. On centrait avec
+                      `translate-y-1/2` : ce transform créait un nouveau
+                      containing block pour position:fixed, et le panneau
+                      des commentaires s'affichait collé à la ligne au lieu
+                      de prendre tout l'écran. On passe en flex-center. */}
                   <div
-                    className="absolute end-3 top-1/2 -translate-y-1/2"
+                    className="absolute inset-y-0 end-3 flex items-center"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <ContentCommentsButton
