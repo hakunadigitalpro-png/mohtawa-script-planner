@@ -58,10 +58,12 @@ export function MobileTopBar({
 export function MobileBottomNav({
   userEmail,
   role,
+  scopes,
 }: {
   userEmail: string | null;
   /** Un "viewer" (client invité) est cantonné au Calendrier + son Profil. */
   role: BrandRole | null;
+  scopes?: string[] | null;
 }) {
   const pathname = usePathname();
   const t = useTranslations("nav");
@@ -70,7 +72,7 @@ export function MobileBottomNav({
   // La MEME liste que le menu latéral (`lib/nav.ts`), moins les deux entrées
   // qui vivent dans la feuille « Plus » : la barre du bas tient cinq onglets,
   // pas huit.
-  const nav = navItemsFor(role).filter(
+  const nav = navItemsFor(role, scopes ?? null).filter(
     (item) => item.key !== "brands" && item.key !== "profile",
   );
 

@@ -55,6 +55,18 @@ export default async function AppLayout({
   const initialNotifications =
     (notificationsRes.data as Notification[] | null) ?? [];
 
+  // Scopes effectifs de l'user sur la marque active : alimentent le
+  // filtrage de la sidebar (ne montre que les sections auxquelles il
+  // a accès). Fail-open : si la RPC n'existe pas / renvoie null, on
+  // affiche tout — c'est le rôle qui garde la main.
+  let scopes: string[] | null = null;
+  if (active) {
+    const { data: scopesData } = await supabase.rpc("my_brand_scopes", {
+      b: active.id,
+    });
+    scopes = (scopesData as string[] | null) ?? null;
+  }
+
   return (
     <div className="flex min-h-screen">
       {/* Rail latéral : desktop uniquement (caché en <md via la classe interne). */}
@@ -65,6 +77,7 @@ export default async function AppLayout({
         userId={user.id}
         initialNotifications={initialNotifications}
         role={role}
+        scopes={scopes}
         mode={navMode}
       />
       <div className="flex min-h-screen flex-1 flex-col">
@@ -85,7 +98,7 @@ export default async function AppLayout({
         </main>
       </div>
       {/* Barre d'onglets du bas : mobile uniquement (md:hidden). */}
-      <MobileBottomNav userEmail={user.email ?? null} role={role} />
+      <MobileBottomNav userEmail={user.email ?? null} role={role} scopes={scopes} />
       {/* Krea vit dans le layout : son fil de discussion survit donc aux
           changements de page (navigation douce = le layout ne remonte pas).
           Pas pour un "viewer" (client invité) : il n'a rien à configurer. */}

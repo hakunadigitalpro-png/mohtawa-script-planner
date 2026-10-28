@@ -23,6 +23,7 @@ export function Sidebar({
   userId,
   initialNotifications,
   role,
+  scopes,
   mode,
 }: {
   brands: Brand[];
@@ -32,6 +33,8 @@ export function Sidebar({
   initialNotifications: Notification[];
   /** Un "viewer" (client invité) est cantonné au Calendrier + son Profil. */
   role: BrandRole | null;
+  /** Scopes effectifs sur la marque active (filtre les entrées). */
+  scopes?: string[] | null;
   /** Large (libellés) ou rail d'icônes — lu en cookie côté serveur. */
   mode: NavMode;
 }) {
@@ -45,7 +48,7 @@ export function Sidebar({
   // le serveur qui le lit, d'où le `mode` reçu en props.
   const [wide, setWide] = useState(isClientOnly || mode === "wide");
 
-  const sections = navSectionsFor(role);
+  const sections = navSectionsFor(role, scopes ?? null);
   // Des titres sur des groupes d'un seul élément seraient pires que pas de
   // titres : le client invité n'a que trois entrées, il les lit d'un coup.
   const showHeadings =

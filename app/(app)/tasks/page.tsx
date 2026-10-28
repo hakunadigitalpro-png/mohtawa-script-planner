@@ -29,11 +29,14 @@ export default async function TasksPage({
   if (!user) redirect("/login");
 
   const { active, role } = await resolveActiveBrand();
-  // Un "viewer" (client invité) est cantonné au Calendrier — même
-  // traitement que Dashboard/Analytics/Brands. La vue « Toutes mes marques »
-  // est donc hors de sa portée aussi.
-  if (role === "viewer") redirect("/calendar");
   if (!active) redirect("/dashboard");
+  // Garde par scope (0082) : si l'owner a coché « Tâches » pour ce
+  // membre, il entre ; sinon il repart sur le calendrier.
+  const { data: canSee } = await supabase.rpc("has_brand_scope", {
+    b: active.id,
+    s: "tasks",
+  });
+  if (!canSee) redirect(role === "viewer" ? "/review" : "/calendar");
 
   const params = await searchParams;
   const allBrands = params.all === "1";

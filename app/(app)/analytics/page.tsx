@@ -96,8 +96,13 @@ function toRankedItems<T extends string>(
 export default async function AnalyticsPage() {
   const { active, role } = await resolveActiveBrand();
   if (!active) return null;
-  // Un "viewer" (client invité) est cantonné au Calendrier.
-  if (role === "viewer") redirect("/calendar");
+  // Garde par scope (0082) : « Analytics » décoché → retour calendrier.
+  const supabase = await createClient();
+  const { data: canSee } = await supabase.rpc("has_brand_scope", {
+    b: active.id,
+    s: "analytics",
+  });
+  if (!canSee) redirect(role === "viewer" ? "/review" : "/calendar");
 
   const t = await getTranslations("analytics");
   const tType = await getTranslations("contentTypes");
@@ -112,7 +117,6 @@ export default async function AnalyticsPage() {
     }
   };
 
-  const supabase = await createClient();
   const { data } = await supabase
     .from("contents")
     .select(

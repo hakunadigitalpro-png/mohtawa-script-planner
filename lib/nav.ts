@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { BrandRole } from "@/lib/brand";
+import type { ScopeKey } from "@/lib/scopes";
 
 /**
  * LA liste des entrées de menu, et la seule.
@@ -77,30 +78,67 @@ export const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
-/** Un « viewer » (client invité) est cantonné au Calendrier, à sa validation
- *  et à son profil — toutes les autres pages le renvoient au Calendrier. */
-export function isVisibleFor(key: NavKey, role: BrandRole | null): boolean {
-  if (role === "viewer") {
-    // Le client voit « À valider » (il y vient par e-mail) ; les campagnes
-    // ont leur propre page de validation hors menu, comme les contenus.
-    return key === "calendar" || key === "review" || key === "profile";
+/** Mapping entrée de menu → scope requis. `null` = entrée toujours
+ *  visible (dashboard, profil et marques restent accessibles à tout
+ *  membre). `review` reste réservé au client invité (viewer). */
+const NAV_SCOPE_REQUIRED: Record<NavKey, ScopeKey | null> = {
+  dashboard: null,
+  calendar: "contents",
+  review: "review",
+  tasks: "tasks",
+  ads: "ads",
+  analytics: "analytics",
+  brands: null,
+  profile: null,
+};
+
+/** Une entrée est visible si :
+ *   - l'user a le scope requis (ou aucun scope n'est requis)
+ *   - cas particulier : « À valider » reste l'écran DU client (viewer).
+ */
+export function isVisibleFor(
+  key: NavKey,
+  role: BrandRole | null,
+  scopes: readonly string[] | null = null,
+): boolean {
+  const required = NAV_SCOPE_REQUIRED[key];
+
+  // « À valider » : réservé au viewer (le client), masqué pour l'équipe.
+  if (key === "review") return role === "viewer";
+
+  if (required === null) {
+    // Un viewer ne voit QUE review + profil (dashboard et brands ne lui
+    // apportent rien, et son unique point d'entrée reste /review).
+    if (role === "viewer") return key === "profile";
+    return true;
   }
-  // « À valider » est l'écran DU client : l'équipe envoie, elle n'y va pas
-  // par le menu. (L'URL lui reste ouverte, et c'est voulu — la RPC
-  // `client_review_content` autorise explicitement un membre à relire avant
-  // le client, migration 0052.)
-  return key !== "review";
+
+  // Scopes posés : on les respecte à la lettre.
+  if (scopes && scopes.length > 0) {
+    return scopes.includes(required);
+  }
+
+  // Pas de scopes passés (ex. SSR qui ne les a pas chargés) : on
+  // retombe sur le défaut rôle, pour ne jamais rien cacher par erreur.
+  if (role === "viewer") return required === "review";
+  return true;
 }
 
-/** Les groupes filtrés par rôle, les vides retirés. */
-export function navSectionsFor(role: BrandRole | null): NavSection[] {
+/** Les groupes filtrés par rôle et scopes. */
+export function navSectionsFor(
+  role: BrandRole | null,
+  scopes: readonly string[] | null = null,
+): NavSection[] {
   return NAV_SECTIONS.map((s) => ({
     ...s,
-    items: s.items.filter((i) => isVisibleFor(i.key, role)),
+    items: s.items.filter((i) => isVisibleFor(i.key, role, scopes)),
   })).filter((s) => s.items.length > 0);
 }
 
 /** À plat, dans l'ordre — ce dont la barre d'onglets mobile a besoin. */
-export function navItemsFor(role: BrandRole | null): NavItem[] {
-  return navSectionsFor(role).flatMap((s) => s.items);
+export function navItemsFor(
+  role: BrandRole | null,
+  scopes: readonly string[] | null = null,
+): NavItem[] {
+  return navSectionsFor(role, scopes).flatMap((s) => s.items);
 }

@@ -40,6 +40,7 @@ import {
   setMemberScopes,
   type BrandRole,
 } from "../team-actions";
+import { SCOPES, effectiveScopes, type ScopeKey } from "@/lib/scopes";
 
 type Member = {
   user_id: string;
@@ -52,20 +53,9 @@ type Member = {
   scopes: string[] | null;
 };
 
-/** Les sections qu'on peut activer/désactiver pour un membre. */
-const SCOPE_OPTIONS: { key: string; label: string }[] = [
-  { key: "contents", label: "Contenus" },
-  { key: "ads", label: "Publicités" },
-  { key: "tasks", label: "Tâches" },
-  { key: "analytics", label: "Analytics" },
-];
-
-/** Scopes effectifs d'un membre (défaut rôle si non posés). */
-function effectiveScopes(role: BrandRole, scopes: string[] | null): string[] {
-  if (scopes !== null) return scopes;
-  if (role === "viewer") return ["contents"];
-  return SCOPE_OPTIONS.map((o) => o.key);
-}
+// Les modules et leurs défauts par rôle vivent dans lib/scopes.ts :
+// une source de vérité partagée entre page Équipe, sidebar, gardes
+// serveur et base (via has_brand_scope / my_brand_scopes).
 
 /**
  * Durées d'accès proposées à l'invitation ou à la révision. Volontairement
@@ -360,7 +350,7 @@ function ScopePills({
   const [pending, startTransition] = useTransition();
   const effective = effectiveScopes(member.role, member.scopes);
 
-  const toggle = (key: string) => {
+  const toggle = (key: ScopeKey) => {
     if (!canManage) return;
     const next = effective.includes(key)
       ? effective.filter((s) => s !== key)
@@ -372,8 +362,8 @@ function ScopePills({
   };
 
   return (
-    <div className="flex flex-wrap gap-1">
-      {SCOPE_OPTIONS.map((s) => {
+    <div className="grid max-w-md grid-cols-2 gap-1 sm:grid-cols-4">
+      {SCOPES.map((s) => {
         const on = effective.includes(s.key);
         return (
           <button
@@ -382,7 +372,7 @@ function ScopePills({
             onClick={() => toggle(s.key)}
             disabled={!canManage || pending}
             className={cn(
-              "rounded-full px-2 py-0.5 text-xs font-medium transition",
+              "rounded-full px-2 py-1 text-xs font-medium transition",
               on
                 ? "bg-emerald-200 !text-emerald-950 dark:bg-emerald-500/30 dark:!text-emerald-100"
                 : "bg-foreground/5 text-muted hover:bg-foreground/10",
@@ -390,10 +380,8 @@ function ScopePills({
             )}
             title={
               canManage
-                ? on
-                  ? `Retirer l'accès « ${s.label} »`
-                  : `Donner l'accès « ${s.label} »`
-                : s.label
+                ? `${s.label} — ${s.hint}`
+                : `${s.label} — ${s.hint}`
             }
           >
             {on ? "✓ " : ""}
