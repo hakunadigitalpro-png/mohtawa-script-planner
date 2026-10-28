@@ -372,17 +372,13 @@ function ScopePills({
             onClick={() => toggle(s.key)}
             disabled={!canManage || pending}
             className={cn(
-              "rounded-full px-2 py-1 text-xs font-medium transition",
+              "rounded-full px-2 py-0.5 text-[11px] font-medium leading-tight transition",
               on
-                ? "bg-emerald-200 !text-emerald-950 dark:bg-emerald-500/30 dark:!text-emerald-100"
-                : "bg-foreground/5 text-muted hover:bg-foreground/10",
+                ? "bg-emerald-100 !text-foreground dark:bg-emerald-500/20"
+                : "bg-foreground/5 !text-muted hover:bg-foreground/10",
               !canManage && "cursor-default",
             )}
-            title={
-              canManage
-                ? `${s.label} — ${s.hint}`
-                : `${s.label} — ${s.hint}`
-            }
+            title={`${s.label} — ${s.hint}`}
           >
             {on ? "✓ " : ""}
             {s.label}
