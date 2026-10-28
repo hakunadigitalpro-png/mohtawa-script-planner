@@ -28,6 +28,7 @@ type Row = {
 const ROLE_TONE: Record<string, string> = {
   owner: "bg-foreground/10 !text-foreground",
   admin: "bg-violet-100 !text-foreground dark:bg-violet-500/20",
+  editor_ai: "bg-emerald-100 !text-foreground dark:bg-emerald-500/20",
   editor: "bg-sky-100 !text-foreground dark:bg-sky-500/20",
   viewer: "bg-amber-100 !text-foreground dark:bg-amber-500/20",
 };
@@ -35,6 +36,7 @@ const ROLE_TONE: Record<string, string> = {
 const ROLE_LABEL: Record<string, string> = {
   owner: "Owner",
   admin: "Admin",
+  editor_ai: "Editor IA",
   editor: "Editor",
   viewer: "Client",
 };

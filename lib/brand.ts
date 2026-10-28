@@ -5,7 +5,7 @@ import type { Brand } from "@/lib/types";
 
 const COOKIE_NAME = "active_brand";
 
-export type BrandRole = "owner" | "admin" | "editor" | "viewer";
+export type BrandRole = "owner" | "admin" | "editor" | "editor_ai" | "viewer";
 
 export async function getActiveBrandId(): Promise<string | null> {
   const c = await cookies();

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notifyInvitation } from "@/lib/notify";
 import { assertCanInviteMember } from "@/lib/plans";
 
-export type BrandRole = "owner" | "admin" | "editor" | "viewer";
+export type BrandRole = "owner" | "admin" | "editor" | "editor_ai" | "viewer";
 
 /**
  * Crée un lien d'invitation pour une marque.

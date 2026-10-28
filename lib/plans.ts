@@ -64,7 +64,7 @@ export async function assertCanAddBrand(): Promise<string | null> {
 /** Garde à mettre dans l'invitation. */
 export async function assertCanInviteMember(
   brandId: string,
-  role: "owner" | "admin" | "editor" | "viewer",
+  role: "owner" | "admin" | "editor" | "editor_ai" | "viewer",
 ): Promise<string | null> {
   const plan = await getMyPlan();
   if (!plan) return "Impossible de lire ton plan.";

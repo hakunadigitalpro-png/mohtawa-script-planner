@@ -12,6 +12,7 @@ import {
   Crown,
   Shield,
   Pencil,
+  Sparkles,
   Eye,
   LogOut,
   Loader2,
@@ -90,11 +91,22 @@ const ROLE_ICON: Record<BrandRole, React.ComponentType<{ className?: string }>> 
   owner: Crown,
   admin: Shield,
   editor: Pencil,
+  editor_ai: Sparkles,
   viewer: Eye,
 };
 
-const ROLES: BrandRole[] = ["owner", "admin", "editor", "viewer"];
-const INVITABLE_ROLES: BrandRole[] = ["admin", "editor", "viewer"];
+// Libellés affichés dans l'app (le fichier de traduction n'était pas
+// à jour pour 'editor_ai' — on prend la main ici pour les 5 rôles).
+const ROLE_LABEL: Record<BrandRole, string> = {
+  owner: "Propriétaire",
+  admin: "Administrateur",
+  editor: "Éditeur",
+  editor_ai: "Éditeur IA",
+  viewer: "Client",
+};
+
+const ROLES: BrandRole[] = ["owner", "admin", "editor_ai", "editor", "viewer"];
+const INVITABLE_ROLES: BrandRole[] = ["admin", "editor_ai", "editor", "viewer"];
 
 export function TeamSection({
   brandId,
@@ -207,7 +219,7 @@ function MemberRow({
   canManage: boolean;
 }) {
   const t = useTranslations("team");
-  const tRoles = useTranslations("team.roles");
+  
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -271,13 +283,13 @@ function MemberRow({
             value={member.role}
             onValueChange={(v) => onRoleChange(v as BrandRole)}
             disabled={pending}
-            options={ROLES.map((r) => ({ value: r, label: tRoles(r) }))}
+            options={ROLES.map((r) => ({ value: r, label: ROLE_LABEL[r] }))}
             className="w-40"
           />
         ) : (
           <Badge className="gap-1.5 bg-secondary text-foreground">
             <RoleIcon className="size-3" />
-            {tRoles(member.role)}
+            {ROLE_LABEL[member.role]}
           </Badge>
         )}
         {error && (
@@ -579,7 +591,7 @@ function InvitationRow({
   canManage: boolean;
 }) {
   const t = useTranslations("team");
-  const tRoles = useTranslations("team.roles");
+  
   const tCommon = useTranslations("common");
   const router = useRouter();
   const [copied, setCopied] = useState(false);
@@ -614,7 +626,7 @@ function InvitationRow({
       <Link2 className="size-4 shrink-0 text-muted" />
       <Badge className="gap-1.5 bg-secondary text-foreground">
         <RoleIcon className="size-3" />
-        {tRoles(invitation.role)}
+        {ROLE_LABEL[invitation.role]}
       </Badge>
       {invitation.note && (
         <span className="text-muted">— {invitation.note}</span>
@@ -673,7 +685,7 @@ function InviteDialog({
 }) {
   const t = useTranslations("team");
   const tDialog = useTranslations("team.dialog");
-  const tRoles = useTranslations("team.roles");
+  
   const tRoleDescriptions = useTranslations("team.roleDescriptions");
   const tCommon = useTranslations("common");
   const router = useRouter();
@@ -820,7 +832,7 @@ function InviteDialog({
                   onValueChange={(v) => onRoleChange(v as BrandRole)}
                   options={INVITABLE_ROLES.map((r) => ({
                     value: r,
-                    label: tRoles(r),
+                    label: ROLE_LABEL[r],
                   }))}
                 />
                 <p className="text-xs text-muted">{tRoleDescriptions(role)}</p>

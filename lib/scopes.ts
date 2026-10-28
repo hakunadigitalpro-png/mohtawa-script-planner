@@ -41,8 +41,12 @@ export const SCOPES: { key: ScopeKey; label: string; hint: string }[] = [
 const ROLE_DEFAULTS: Record<BrandRole, ScopeKey[]> = {
   owner: ["contents", "ads", "tasks", "analytics", "review", "ai", "brand_settings", "team"],
   admin: ["contents", "ads", "tasks", "analytics", "review", "ai", "brand_settings", "team"],
-  editor: ["contents", "ads", "tasks", "analytics", "review", "ai"],
-  viewer: ["review"],
+  // Editor simple : pas d'IA (c'est Mariam qui paie les tokens, opt-in).
+  editor: ["contents", "ads", "tasks", "analytics", "review"],
+  // Editor IA : exactement comme editor + IA activée.
+  editor_ai: ["contents", "ads", "tasks", "analytics", "review", "ai"],
+  // Le client voit review + les publicités (pour valider les créas).
+  viewer: ["review", "ads"],
 };
 
 /** Les scopes effectifs d'un membre : la liste posée ou le défaut du rôle. */
