@@ -380,7 +380,6 @@ function ScopePills({
             )}
             title={`${s.label} — ${s.hint}`}
           >
-            {on ? "✓ " : ""}
             {s.label}
           </button>
         );
