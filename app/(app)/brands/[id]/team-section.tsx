@@ -334,6 +334,45 @@ function MemberRow({
   );
 }
 
+/**
+ * Aperçu lecture-seule des accès que ce rôle a par défaut. Posé sous
+ * le menu Rôle de la popup d'invitation : Mariam voit tout de suite
+ * ce que la personne verra en ouvrant son compte. Elle pourra ensuite
+ * cocher/décocher sur la fiche équipe une fois l'invitation acceptée.
+ */
+function RolePreviewPills({ role }: { role: BrandRole }) {
+  const defaults = effectiveScopes(role, null);
+  return (
+    <div className="mt-2">
+      <p className="mb-1 text-[11px] font-medium text-muted">
+        Il verra par défaut :
+      </p>
+      <div className="flex flex-wrap gap-1">
+        {SCOPES.map((s) => {
+          const on = defaults.includes(s.key);
+          return (
+            <span
+              key={s.key}
+              title={s.hint}
+              className={cn(
+                "rounded-full px-2 py-0.5 text-[11px] font-medium leading-tight",
+                on
+                  ? "bg-emerald-100 !text-foreground dark:bg-emerald-500/20"
+                  : "bg-foreground/5 !text-muted line-through",
+              )}
+            >
+              {s.label}
+            </span>
+          );
+        })}
+      </div>
+      <p className="mt-1 text-[11px] text-muted">
+        Tu pourras cocher/décocher chaque case une fois l&apos;invitation acceptée.
+      </p>
+    </div>
+  );
+}
+
 // ============================================================
 // Pastilles d'accès par section (comme Kiro CRM)
 // ============================================================
@@ -785,6 +824,7 @@ function InviteDialog({
                   }))}
                 />
                 <p className="text-xs text-muted">{tRoleDescriptions(role)}</p>
+                <RolePreviewPills role={role} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="invite-duration">Durée d&apos;accès</Label>
