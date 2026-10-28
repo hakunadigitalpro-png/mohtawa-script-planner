@@ -6,6 +6,7 @@ import {
   KanbanSquare,
   Megaphone,
   Building2,
+  Users,
   User,
   type LucideIcon,
 } from "lucide-react";
@@ -33,6 +34,7 @@ export type NavKey =
   | "tasks"
   | "ads"
   | "brands"
+  | "team"
   | "profile";
 
 export type NavSectionKey = "main" | "settings";
@@ -73,6 +75,7 @@ export const NAV_SECTIONS: NavSection[] = [
     key: "settings",
     items: [
       { href: "/brands", key: "brands", icon: Building2 },
+      { href: "/team", key: "team", icon: Users },
       { href: "/profile", key: "profile", icon: User },
     ],
   },
@@ -89,6 +92,10 @@ const NAV_SCOPE_REQUIRED: Record<NavKey, ScopeKey | null> = {
   ads: "ads",
   analytics: "analytics",
   brands: null,
+  // L'entrée « Équipe » n'apparaît que pour un membre qui a le scope
+  // 'team' sur la marque active. Un editor n'y a pas accès par défaut
+  // ni un viewer — seuls owner/admin.
+  team: "team",
   profile: null,
 };
 
