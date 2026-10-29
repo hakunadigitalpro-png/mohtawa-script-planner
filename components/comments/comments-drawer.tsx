@@ -21,7 +21,6 @@ import {
   replyToComment,
   toggleCommentResolved,
   deleteComment,
-  markContentRead,
 } from "@/app/(app)/contents/comment-actions";
 import { useComments } from "./comments-provider";
 import type { Comment, CommentTargetType } from "./types";
@@ -51,22 +50,13 @@ export function CommentsDrawer({
 }: {
   targetLabels: TargetLabels;
 }) {
-  const { drawer, closeDrawer, contentId, bumpLastReadAt } = useComments();
+  const { drawer, closeDrawer } = useComments();
   const router = useRouter();
 
-  // Marque la vidéo comme lue à l'ouverture du drawer.
-  //  - Côté serveur : RPC mark_content_read (qui depuis 0014 flippe aussi
-  //    les rows notifications.read pour ce content_id).
-  //  - Côté client : on bump immédiatement lastReadAt en mémoire pour que
-  //    les badges de non-lus tombent à 0 sans attendre un refresh.
-  // L'event Realtime UPDATE sur notifications fera le reste pour la cloche.
-  React.useEffect(() => {
-    if (drawer.open) {
-      bumpLastReadAt();
-      markContentRead(contentId).then(() => router.refresh());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drawer.open, contentId]);
+  // Ouvrir le drawer ne marque PLUS le contenu comme lu. Règle voulue par
+  // Mariam : la pastille de non-lus reste allumée — quel que soit le fil
+  // (plan, légende, visuel) — tant qu'elle n'a pas RÉPONDU. Le passage à
+  // « lu » se fait côté serveur dans createComment / replyToComment.
 
   // ESC pour fermer
   React.useEffect(() => {

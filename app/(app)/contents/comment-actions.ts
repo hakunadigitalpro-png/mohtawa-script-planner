@@ -43,7 +43,13 @@ export async function createComment(params: {
 
   if (error) return { error: error.message };
 
+  // Poster vaut « lu » : c'est le seul geste qui éteint la pastille de
+  // non-lus (ouvrir le fil ne suffit pas). Jamais bloquant.
+  await supabase.rpc("mark_content_read", { p_content_id: params.contentId });
+
   revalidatePath(`/content/${params.contentId}`);
+  revalidatePath("/calendar");
+  revalidatePath("/tasks");
   return { ok: true as const, id: data.id };
 }
 
@@ -94,7 +100,12 @@ export async function replyToComment(params: {
   // après l'écriture, jamais bloquant (`lib/notify.ts`).
   await notifyClientOfReply(supabase, { parentId: params.parentId, body });
 
+  // Répondre = lu : la pastille de non-lus s'éteint ici, et seulement ici.
+  await supabase.rpc("mark_content_read", { p_content_id: parent.content_id });
+
   revalidatePath(`/content/${params.contentId}`);
+  revalidatePath("/calendar");
+  revalidatePath("/tasks");
   return { ok: true as const, id: data.id };
 }
 
