@@ -126,7 +126,7 @@ function ContentCommentsLoader({
 
 /** Ouvre directement l'inbox (pas de "thread" précis pertinent ici). */
 function AutoOpenInbox({ onClose }: { onClose: () => void }) {
-  const { openThread, drawer } = useComments();
+  const { openThread, openInbox, comments, drawer } = useComments();
   // `drawer` démarre à { open: false } (état initial du Provider). Sans ce
   // ref, l'effet ci-dessous voyait ce false initial AVANT que openThread()
   // n'ait eu le temps d'appliquer son setState (les deux effets tournent
@@ -134,12 +134,15 @@ function AutoOpenInbox({ onClose }: { onClose: () => void }) {
   // le panneau se refermait tout seul avant même d'être visible.
   const hasOpenedRef = React.useRef(false);
 
-  // Va directement sur le thread "plan/general" (la discussion générale du
-  // contenu) plutôt que sur l'inbox : l'inbox liste des threads existants
-  // mais n'a PAS de zone pour écrire — sans ça, un contenu sans commentaire
-  // encore ouvrait un écran vide sans aucun moyen d'en poster un premier.
+  // S'il y a déjà des remarques, on ouvre l'INBOX : elle liste TOUS les
+  // fils (plan, légende, visuels…). Ouvrir directement « plan/general »
+  // cachait les remarques posées sur un visuel depuis /review — le fil
+  // Plan était vide, et l'utilisatrice concluait que le client n'avait
+  // rien écrit. Sans aucune remarque, on garde « plan/general » : l'inbox
+  // n'a pas de zone d'écriture, il faut un endroit où poster la première.
   React.useEffect(() => {
-    openThread("plan", "general");
+    if (comments.length > 0) openInbox("all");
+    else openThread("plan", "general");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
