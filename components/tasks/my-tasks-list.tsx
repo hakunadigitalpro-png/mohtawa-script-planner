@@ -8,6 +8,7 @@ import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { updateTaskStatus } from "@/app/(app)/tasks/actions";
 import { TaskPriorityDot } from "./task-priority-dot";
+import { ContentCommentsButton } from "@/components/comments";
 import type { Task } from "@/lib/types";
 
 export type MyTaskGroup = { brandId: string; brandName: string; tasks: Task[] };
@@ -77,13 +78,16 @@ export function MyTasksList({ groups }: { groups: MyTaskGroup[] }) {
                       {task.label}
                     </p>
                     {task.content_title && task.content_id && (
-                      <Link
-                        href={`/content/${task.content_id}`}
-                        className="mt-0.5 block truncate text-xs text-accent hover:underline"
-                        dir="auto"
-                      >
-                        {task.content_title}
-                      </Link>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <Link
+                          href={`/content/${task.content_id}`}
+                          className="min-w-0 flex-1 truncate text-xs text-accent hover:underline"
+                          dir="auto"
+                        >
+                          {task.content_title}
+                        </Link>
+                        <ContentCommentsButton contentId={task.content_id} />
+                      </div>
                     )}
                   </div>
                   <Button

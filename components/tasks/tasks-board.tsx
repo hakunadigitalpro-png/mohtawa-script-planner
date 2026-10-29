@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Plus, Trash2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Select } from "@/components/ui/select";
+import { ContentCommentsButton } from "@/components/comments";
 import {
   createTask,
   updateTaskStatus,
@@ -199,12 +200,18 @@ export function TasksBoard({
                     </div>
 
                     {task.content_title && task.content_id && (
-                      <Link
-                        href={`/content/${task.content_id}`}
-                        className="inline-block truncate text-xs text-accent hover:underline"
-                      >
-                        {task.content_title}
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/content/${task.content_id}`}
+                          className="min-w-0 flex-1 truncate text-xs text-accent hover:underline"
+                        >
+                          {task.content_title}
+                        </Link>
+                        {/* Bouton commentaires : ouvre le fil directement
+                            depuis la carte, pour les tâches issues d'une
+                            remarque client (« Répondre au commentaire sur… »). */}
+                        <ContentCommentsButton contentId={task.content_id} />
+                      </div>
                     )}
 
                     <div className="flex items-center gap-1.5 pt-0.5">
