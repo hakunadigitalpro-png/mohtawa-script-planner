@@ -317,7 +317,7 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
   const maxTokens = includeStoryboard
     ? 3000 + (hasPresets ? 300 : 0) + presetsWithEquipment.length * 150
     : 2000;
-  return geminiEnabled()
+  return useGeminiFor(opts.language)
     ? callGeminiJSON<ReelGeneration>(
         system,
         user,
@@ -415,7 +415,7 @@ Renvoie UNIQUEMENT ce JSON (sans markdown) :
   ]
 }`;
 
-  return geminiEnabled()
+  return useGeminiFor(opts.language)
     ? callGeminiJSON<StoryGeneration>(system, user, 1500, STORY_SCHEMA)
     : callClaudeJSON<StoryGeneration>(system, user, 1500);
 }
@@ -794,14 +794,14 @@ async function callClaudeJSON<T>(
 /* =========================================================================
    Génération de script — Gemini
    -------------------------------------------------------------------------
-   Les trois générateurs de SCRIPT (Reel, Story, Vlog) passent par Gemini.
-   Le reste des appels IA — découpage storyboard, autopsie, stratégie de
-   marque, assistant de thèmes, analyse de vidéo de référence — reste sur
-   Claude.
+   Routage par LANGUE des générateurs de texte (Reel, Story, Vlog, Légende) :
+   arabe (MSA / darija) → Gemini ; français et anglais → Claude. Voir
+   `useGeminiFor()`. Le reste des appels IA — découpage storyboard, autopsie,
+   stratégie de marque, assistant de thèmes, analyse de vidéo de référence —
+   reste sur Claude quelle que soit la langue.
 
-   Bascule : dès que GEMINI_API_KEY existe côté serveur, Gemini prend la main.
-   Sans la clé, on retombe sur Claude. Le déploiement ne casse donc jamais,
-   mais tant que la clé n'est pas dans Vercel c'est bien Claude qui répond.
+   Gemini n'est pris que si GEMINI_API_KEY existe côté serveur (Coolify).
+   Sans la clé, tout retombe sur Claude : le déploiement ne casse jamais.
    ========================================================================= */
 
 export const GEMINI_URL =
@@ -822,6 +822,16 @@ export type GeminiSchema = {
 /** Vrai dès que la clé Gemini est configurée côté serveur. */
 export function geminiEnabled(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
+}
+
+/**
+ * Règle de routage des générateurs de texte (scripts, stories, vlog,
+ * légendes) : l'ARABE (MSA ou darija tunisienne) passe par Gemini, le
+ * français et l'anglais restent sur Claude. Gemini n'est pris que si sa
+ * clé est posée ; sinon tout retombe sur Claude, sans casser.
+ */
+export function useGeminiFor(language?: GenerationLanguage): boolean {
+  return geminiEnabled() && (language === "ar_msa" || language === "ar_tn");
 }
 
 async function callGeminiJSON<T>(
@@ -1140,7 +1150,9 @@ Renvoie UNIQUEMENT ce JSON (sans markdown autour) :
   "caption": "${captionSpec}"
 }`;
 
-  return geminiEnabled()
+  // Le vlog n'a pas (encore) d'option de langue : il est écrit en français
+  // → Claude, conformément à la règle fr/en = Claude, arabe = Gemini.
+  return useGeminiFor(undefined)
     ? callGeminiJSON<VlogGeneration>(system, user, 2000, VLOG_SCHEMA)
     : callClaudeJSON<VlogGeneration>(system, user, 2000);
 }
@@ -1232,6 +1244,22 @@ ${source}
 
 Écris la légende.`;
 
+  // Arabe → Gemini (règle fr/en = Claude, arabe = Gemini). Gemini n'a pas
+  // d'appel « texte brut » ici : on passe par le mode JSON avec un schéma
+  // à une seule clé et on déballe. fr/en → Claude en texte, comme avant.
+  if (useGeminiFor(input.language)) {
+    const out = await callGeminiJSON<{ caption: string }>(
+      `${system}\n\nRenvoie un objet JSON {"caption": "..."} contenant la légende complète.`,
+      user,
+      900,
+      {
+        type: "object",
+        properties: { caption: { type: "string" } },
+        required: ["caption"],
+      },
+    );
+    return out.caption;
+  }
   return callClaudeText(system, user, 900);
 }
 
