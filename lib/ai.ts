@@ -13,7 +13,22 @@ export const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 // Modèle configurable via env ANTHROPIC_MODEL. Défaut : Sonnet 4.6
 // (même prix que 4.5 — 3$/15$ par 1M — mais meilleure qualité). Pour Haiku
 // (moins cher) ou Opus (plus puissant), définir ANTHROPIC_MODEL dans Vercel.
-export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6";
+const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-6";
+/** Période où Mariam a demandé le modèle le plus puissant. Bornes en
+ *  heure de Tunis : jusqu'au 25 novembre inclus, retour au défaut le 26. */
+const BOOST_MODEL = "claude-opus-5-5";
+const BOOST_UNTIL = new Date("2026-11-26T00:00:00+01:00");
+
+/**
+ * Le modèle Claude à utiliser MAINTENANT. Fonction, pas constante : le
+ * serveur tourne des semaines sans redémarrer, la date doit être relue à
+ * chaque appel pour que le retour au défaut se fasse tout seul le 26/11.
+ * ANTHROPIC_MODEL (env Coolify) garde la priorité s'il est posé.
+ */
+export function anthropicModel(): string {
+  if (process.env.ANTHROPIC_MODEL) return process.env.ANTHROPIC_MODEL;
+  return Date.now() < BOOST_UNTIL.getTime() ? BOOST_MODEL : DEFAULT_ANTHROPIC_MODEL;
+}
 
 export class AiError extends Error {
   constructor(public code: string, message: string) {
@@ -587,7 +602,7 @@ Fais l'autopsie de cette vidéo en suivant exactement le format demandé.`;
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: ANTHROPIC_MODEL,
+        model: anthropicModel(),
         // 2000 : compromis profondeur / latence. 3000 + plusieurs images
         // dépassait les 60s max de Vercel Hobby (timeout). 2000 garde une
         // bonne profondeur tout en restant sous la limite.
@@ -626,7 +641,7 @@ Fais l'autopsie de cette vidéo en suivant exactement le format demandé.`;
           : " Impossible de lister tes modèles (vérifie que ta clé a accès à l'API Messages).";
       throw new AiError(
         "model_not_found",
-        `Le modèle "${ANTHROPIC_MODEL}" n'est pas accessible.${hint}`,
+        `Le modèle "${anthropicModel()}" n'est pas accessible.${hint}`,
       );
     }
     let detail = "";
@@ -681,7 +696,7 @@ async function callClaudeRaw(
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: ANTHROPIC_MODEL,
+        model: anthropicModel(),
         max_tokens: maxTokens,
         system,
         messages: [{ role: "user", content: userText }],
@@ -1344,7 +1359,7 @@ Réponds dans la langue de la personne (français par défaut).`;
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: ANTHROPIC_MODEL,
+          model: anthropicModel(),
           max_tokens: maxTokens,
           system,
           messages,
