@@ -1196,7 +1196,7 @@ const CAPTION_FORMAT_HINT: Record<string, string> = {
  * existe déjà — thème, objectif, script — plutôt que de repartir du titre :
  * une légende qui ne reprend pas le contenu ne sert à rien.
  */
-export function generateCaption(input: CaptionInput): Promise<string> {
+export async function generateCaption(input: CaptionInput): Promise<string> {
   const format = CAPTION_FORMAT_HINT[input.type] ?? "un contenu";
 
   const system = `Tu écris la LÉGENDE de publication d'un contenu sur les réseaux sociaux, pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing). ${languageInstruction(input.language)}${voiceInstruction(input.voice)}
