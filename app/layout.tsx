@@ -5,6 +5,8 @@ import { getLocale, getMessages } from "next-intl/server";
 import { getThemeFromCookies, htmlDataTheme } from "@/lib/theme";
 import { dirOf, isRtl, type Locale } from "@/i18n/config";
 import { PwaRegister } from "@/components/pwa-register";
+import { UpdateToast } from "@/components/update-toast";
+import { getBuildId } from "@/lib/build-id";
 import "./globals.css";
 
 // Police latine : DM Sans — sans-serif neutre et lisible (utilisée par
@@ -85,6 +87,9 @@ export default async function RootLayout({
           {children}
         </NextIntlClientProvider>
         <PwaRegister />
+        {/* Bandeau « Mettre à jour » : la page connaît son build, et
+            compare avec /api/version jusqu'au prochain déploiement. */}
+        <UpdateToast current={getBuildId()} />
       </body>
     </html>
   );
