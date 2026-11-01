@@ -318,6 +318,19 @@ export async function askKrea(input: {
         deeds: [],
       };
     }
+    // Le plan du compte n'inclut pas l'IA (0069) : même ton, mais la cause
+    // est le plan, pas la marque — et la solution passe par Mariam.
+    if (e instanceof AiError && e.code === "plan_ai") {
+      return {
+        ok: true,
+        message:
+          "L'écriture assistée n'est pas incluse dans ton plan actuel, donc je " +
+          "ne peux pas rédiger pour toi. Je reste là pour le reste : retrouver un " +
+          "contenu, t'ouvrir la bonne page, faire le point sur ton mois. Pour " +
+          "l'activer, c'est côté Mariam (page Admin → ton compte → IA).",
+        deeds: [],
+      };
+    }
     if (e instanceof AiError) return { ok: false, error: e.message };
     return { ok: false, error: "Krea a eu un souci. Réessaie." };
   }

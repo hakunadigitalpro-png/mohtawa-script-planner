@@ -56,7 +56,9 @@ export async function guardAiAction(action: string) {
   // passer (une migration pas appliquée n'arrête pas la machine).
   const planErr = await assertCanUseAi();
   if (planErr) {
-    throw new AiError("ai_disabled", planErr);
+    // Code DISTINCT de « ai_disabled » (l'interrupteur de la marque) : Krea
+    // et les boutons doivent dire « ton plan » et non « cette marque ».
+    throw new AiError("plan_ai", planErr);
   }
 
   const { error } = await supabase.rpc("check_ai_rate_limit", {
