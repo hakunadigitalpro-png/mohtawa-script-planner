@@ -48,7 +48,10 @@ export async function updateSession(request: NextRequest) {
     isAuthRoute ||
     path.startsWith("/auth/") ||
     path.startsWith("/share/") ||
-    path.startsWith("/invite/");
+    path.startsWith("/invite/") ||
+    // Identifiant de build, interrogé par le bandeau « Mettre à jour » :
+    // rien de secret, et il doit répondre même quand la session a expiré.
+    path === "/api/version";
 
   if (!user && !isPublic) {
     // Le lien survit à la connexion : un client qui ouvre « Voir et valider »
