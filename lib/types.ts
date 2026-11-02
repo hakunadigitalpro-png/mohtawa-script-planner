@@ -77,6 +77,34 @@ export type GeneratedStrategy = {
   /** Hashtags récurrents de la marque — déduits du positionnement et de
    *  l'audience, jamais saisis à la main. Réutilisés dans les légendes. */
   hashtags: string[];
+  /** Entreprise ou marque personnelle. Absent avant 11/2026 = entreprise. */
+  kind?: "business" | "personal";
+  /** Marque personnelle : son histoire en accroche, tirée de son parcours. */
+  signature_story?: string;
+};
+
+/**
+ * Profil Instagram ou LinkedIn réécrit à partir de la stratégie. Les clés
+ * qui ne concernent pas le réseau arrivent vides ([] ou "").
+ */
+export type ProfileOptimization = {
+  platform: "instagram" | "linkedin";
+  generated_at: string;
+  /** Instagram : champ « Nom » ; LinkedIn : URL conseillée. */
+  name_field: string;
+  /** Instagram : catégorie ; LinkedIn : titre / slogan. */
+  headline: string;
+  bios: string[];
+  about: string;
+  link: string;
+  banner: string;
+  highlights: { name: string; content: string }[];
+  pinned: { title: string; why: string }[];
+  featured: { title: string; why: string }[];
+  skills: string[];
+  photo_tip: string;
+  diagnosis: string[];
+  quick_wins: string[];
 };
 
 /**
@@ -89,6 +117,8 @@ export type BrandStrategy = {
   answers: Record<string, string>;
   generated: GeneratedStrategy | null;
   generated_at: string | null;
+  /** Profils optimisés (0092), par réseau. */
+  profiles?: Partial<Record<"instagram" | "linkedin", ProfileOptimization>> | null;
   updated_at: string;
 };
 

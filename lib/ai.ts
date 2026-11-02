@@ -1,7 +1,8 @@
 import "server-only";
 
 import { extractJsonBlock } from "@/lib/utils";
-import type { GeneratedStrategy, FilmingGuide } from "@/lib/types";
+import type { GeneratedStrategy, FilmingGuide, ProfileOptimization } from "@/lib/types";
+import { strategyKind } from "@/lib/brand-strategy-questions";
 
 /**
  * Wrappers minimalistes (fetch, pas de SDK) autour de l'API Claude — la seule
@@ -1444,6 +1445,18 @@ Réponds dans la langue de la personne (français par défaut).`;
  */
 const STRATEGY_ANSWER_LABELS: Record<string, string> = {
   content_goal: "Objectif n°1 du contenu",
+  // Parcours entreprise.
+  offer: "Offre phare et prix",
+  differentiator: "Ce qui la distingue des concurrents",
+  customer_words: "Ce que ses clients disent d'elle (leurs mots)",
+  how_found: "Comment ses clients la trouvent aujourd'hui",
+  // Parcours marque personnelle.
+  journey: "Son parcours",
+  convictions: "Ce qu'elle défend / ses avis tranchés",
+  three_words: "3 mots pour la décrire",
+  show_or_not: "Ce qu'elle accepte de montrer ou non",
+  // Commun.
+  platforms: "Réseaux visés",
   // Relances facultatives — des FAITS, jamais inventés par l'IA.
   proof_result: "Résultat / preuve",
   legitimacy: "Ce qui la rend légitime",
@@ -1470,12 +1483,14 @@ export async function generateBrandStrategy(opts: {
 }): Promise<GeneratedStrategy> {
   // La 1re question est une phrase à trous (activité / qui / quoi) — on la
   // recompose en une ligne de brief lisible.
-  const activity = (opts.answers["what_you_do__activity"] ?? "").trim();
-  const who = (opts.answers["what_you_do__who"] ?? "").trim();
-  const what = (opts.answers["what_you_do__what"] ?? "").trim();
+  const personal = strategyKind(opts.answers) === "personal";
+  const q = personal ? "who_you_are" : "what_you_do";
+  const activity = (opts.answers[`${q}__activity`] ?? "").trim();
+  const who = (opts.answers[`${q}__who`] ?? "").trim();
+  const what = (opts.answers[`${q}__what`] ?? "").trim();
   const whatYouDoLine =
     activity || who || what
-      ? `Son activité : ${activity || "…"}. Elle aide ${who || "…"} à ${what || "…"}.`
+      ? `${personal ? "Son métier / son expertise" : "Son activité"} : ${activity || "…"}. Elle aide ${who || "…"} à ${what || "…"}.`
       : null;
 
   const brief = [
@@ -1488,9 +1503,13 @@ export async function generateBrandStrategy(opts: {
     .filter((line): line is string => Boolean(line))
     .join("\n");
 
-  const system = `Tu es un stratège de marque qui aide un PATRON DE PETITE ENTREPRISE (pas un expert marketing) à transformer ses réponses en une STRATÉGIE DE CONTENU claire, prête à l'emploi. Multilingue : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Marque : "${opts.brandName || "(sans nom)"}".
+  const who_for = personal
+    ? `une PERSONNE (indépendante, experte, dirigeante) à construire sa MARQUE PERSONNELLE — on la suit, elle, pour son expertise, son parcours et ses convictions. Ce n'est PAS la stratégie d'une entreprise : le positionnement parle d'ELLE (« je »), pas d'une offre ; la confiance vient de son parcours, de ses avis et de ce qu'elle montre d'elle. Respecte strictement ce qu'elle accepte de montrer ou non`
+    : `un PATRON DE PETITE ENTREPRISE (pas un expert marketing) — c'est la stratégie de son ENTREPRISE : on vient pour l'offre, l'expérience et ce qui la distingue des concurrents`;
 
-Elle ne remplit PAS un long formulaire : elle complète une phrase en trois blancs (son activité, qui elle aide, à quoi). C'est VOLONTAIREMENT court. Ton travail est d'en DÉDUIRE le reste — son domaine, le profil précis de son audience, le problème qu'elle résout, ce qui la distingue — puis d'en faire une stratégie complète et concrète.
+  const system = `Tu es un stratège de marque qui aide ${who_for}. Tu transformes ses réponses en une STRATÉGIE DE CONTENU claire, prête à l'emploi. Multilingue : français ET arabe. ${TUNISIAN_DIALECT_GUIDE} Marque : "${opts.brandName || "(sans nom)"}".
+
+Elle a répondu à un court questionnaire (une phrase à trous + quelques questions précises). Sers-toi de CHAQUE réponse — ses mots, ses clients, ses convictions sont la matière qui rend la stratégie personnelle et pas générique. DÉDUIS le reste — son domaine, le profil précis de son audience, le problème qu'elle résout — puis fais-en une stratégie complète et concrète, calée sur les réseaux qu'elle vise.
 
 RÈGLES :
 - Zéro jargon marketing. Écris comme si tu expliquais directement à la personne, avec chaleur et clarté.
@@ -1503,7 +1522,8 @@ RÈGLES :
 - "voice_summary" : le ton à adopter, en 2 phrases MAXIMUM (ex : "tutoie", "un peu d'humour", "direct et rassurant").
 - "approach" : 2-3 phrases qui expliquent CONCRÈTEMENT comment elle aide — sa méthode, sa façon de faire. Pas une liste de services : une explication simple, comme elle le dirait elle-même.
 - "key_messages" : exactement 3 messages ou preuves à répéter dans son contenu pour construire la confiance.
-- "hashtags" : 5 à 8 hashtags récurrents pour cette marque, déduits de son domaine, son audience et son positionnement. SANS le "#", en minuscules, sans accents ni espaces. Mélange large (son secteur) et précis (sa niche, sa ville si pertinent). Dans la langue de ses réponses.
+${personal ? `- "signature_story" : 2-3 phrases — son histoire racontée comme une accroche de présentation, UNIQUEMENT à partir de son parcours tel qu'elle l'a donné (rien d'inventé). Chaîne vide si elle n'a pas donné de parcours.
+` : ""}- "hashtags" : 5 à 8 hashtags récurrents pour cette marque, déduits de son domaine, son audience et son positionnement. SANS le "#", en minuscules, sans accents ni espaces. Mélange large (son secteur) et précis (sa niche, sa ville si pertinent). Dans la langue de ses réponses.
 - Ne propose PAS de thèmes/piliers de contenu (ce qu'il faut poster) — ce n'est pas le rôle de cette stratégie, une autre fonctionnalité de l'app s'en charge déjà.
 - Reste concis partout — des phrases courtes, JAMAIS de paragraphe à rallonge. Cette stratégie s'affiche sur un écran, elle doit se lire d'un coup d'œil : si une section dépasse 3 phrases, c'est trop long. Le JSON complet doit rester compact.
 
@@ -1516,7 +1536,8 @@ Réponds UNIQUEMENT avec un objet JSON valide, rien autour, pas de markdown :
   ],
   "voice_summary": "...",
   "approach": "...",
-  "key_messages": ["...", "...", "..."],
+  "key_messages": ["...", "...", "..."],${personal ? `
+  "signature_story": "...",` : ""}
   "hashtags": ["...", "...", "...", "...", "..."]
 }
 Réponds dans la langue des réponses de la personne (français par défaut).`;
@@ -1536,10 +1557,112 @@ Génère sa stratégie de contenu en suivant exactement le format demandé.`;
   const main = generated.audiences?.[0];
   return {
     ...generated,
+    kind: personal ? "personal" : "business",
     audience_summary:
       generated.audience_summary?.trim() ||
       (main ? `${main.who} ${main.wants}`.trim() : ""),
     pain_points:
       generated.pain_points?.length ? generated.pain_points : (main?.pain_points ?? []),
   };
+}
+
+
+/* =========================================================================
+   Studio de marque — optimisation des profils Instagram / LinkedIn
+   ========================================================================= */
+
+/**
+ * Réécrit un profil Instagram ou LinkedIn À PARTIR DE LA STRATÉGIE : même
+ * positionnement, même voix, mêmes messages clés, mêmes hashtags — c'est ce
+ * qui rend l'image cohérente d'un réseau à l'autre. Un seul appel, sorties
+ * courtes (une bio fait 150 caractères) : 2400 tokens laissent de la marge à l'arabe.
+ *
+ * `current` = ce qu'elle a aujourd'hui (bio, titre, nom affiché), collé tel
+ * quel. Facultatif : sans lui on part de zéro, avec lui on dit aussi ce qui
+ * ne va pas.
+ */
+export async function generateProfileOptimization(opts: {
+  brandName: string;
+  platform: "instagram" | "linkedin";
+  strategy: GeneratedStrategy;
+  answers: Record<string, string>;
+  current: string;
+}): Promise<ProfileOptimization> {
+  const personal = opts.strategy.kind === "personal";
+  const st = opts.strategy;
+  const ctx = [
+    `Type : ${personal ? "marque personnelle (une personne)" : "entreprise"}`,
+    `Positionnement : ${st.positioning}`,
+    `Accroche : ${st.tagline}`,
+    st.audiences?.length
+      ? `Cibles : ${st.audiences.map((a) => `${a.name} (${a.wants})`).join(" ; ")}`
+      : `Audience : ${st.audience_summary}`,
+    `Voix : ${st.voice_summary}`,
+    `Méthode : ${st.approach}`,
+    `Messages clés : ${(st.key_messages ?? []).join(" | ")}`,
+    st.signature_story ? `Son histoire : ${st.signature_story}` : null,
+    `Hashtags : ${(st.hashtags ?? []).join(", ")}`,
+    ...["offer", "content_goal", "proof_result", "legitimacy", "three_words", "show_or_not"].map((k) => {
+      const v = (opts.answers[k] ?? "").trim();
+      return v ? `${STRATEGY_ANSWER_LABELS[k] ?? k} : ${v}` : null;
+    }),
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const spec =
+    opts.platform === "instagram"
+      ? `PROFIL INSTAGRAM.
+- "name_field" : le champ « Nom » (≤ 30 caractères) — ${personal ? "son prénom + nom suivi de son métier/mot-clé" : "le nom de la marque + le mot-clé que les gens tapent dans la recherche (ex : « Dar Yasmine | Resto La Marsa »)"}. C'est ce champ qui est indexé par la recherche Instagram.
+- "headline" : la catégorie de profil à choisir dans Instagram (ex : « Consultant(e) », « Restaurant »).
+- "bios" : 3 versions de bio, CHACUNE ≤ 150 caractères (compte-les), sur 3-4 lignes séparées par "\\n" : qui / pour qui + résultat / preuve ou différence / appel à l'action vers le lien. Emojis sobres en début de ligne autorisés. Pas de hashtags dans la bio.
+- "link" : ce que doit être le lien en bio (1 phrase) et son libellé.
+- "highlights" : 4 à 6 stories à la une : "name" (≤ 15 caractères) + "content" (ce qu'on y met, 1 phrase). Dans l'ordre d'importance.
+- "pinned" : 3 publications à épingler : "title" + "why" (ce qu'elle doit faire comprendre en arrivant sur le profil).
+- "photo_tip" : 1 phrase sur la photo de profil (${personal ? "son visage, cadrage, fond" : "logo lisible en petit, ou visage du patron si c'est plus parlant"}).`
+      : personal
+        ? `PROFIL LINKEDIN PERSONNEL.
+- "name_field" : l'URL personnalisée conseillée (linkedin.com/in/…).
+- "headline" : le titre (≤ 220 caractères) : ce qu'elle fait + pour qui + le résultat, avec les mots-clés que ses clients recherchent. Pas juste son poste.
+- "about" : la section « Infos » (≤ 1300 caractères), aérée en paragraphes courts séparés par "\\n\\n" : accroche sur le problème de sa cible → son histoire/légitimité (faits donnés seulement) → sa méthode → preuve → appel à l'action (comment la contacter).
+- "banner" : le texte de la bannière (≤ 10 mots) + 1 phrase sur le visuel.
+- "featured" : 3 éléments à mettre dans « Sélection » : "title" + "why".
+- "skills" : les 5 compétences à afficher en premier.
+- "photo_tip" : 1 phrase sur la photo (visage, lumière, fond).`
+        : `PAGE LINKEDIN ENTREPRISE.
+- "name_field" : l'URL de page conseillée (linkedin.com/company/…).
+- "headline" : le slogan de page (≤ 120 caractères), avec le mot-clé du secteur.
+- "about" : la description « À propos » (≤ 1300 caractères), en paragraphes courts séparés par "\\n\\n" : ce que fait l'entreprise et pour qui → ce qui la distingue → preuve → appel à l'action.
+- "banner" : le texte de la bannière (≤ 10 mots) + 1 phrase sur le visuel.
+- "featured" : 3 publications à mettre en avant : "title" + "why".
+- "skills" : 5 spécialités à renseigner.
+- "photo_tip" : 1 phrase sur le logo.`;
+
+  const system = `Tu optimises un profil de réseau social pour qu'il soit le prolongement EXACT de la stratégie de marque ci-dessous : même positionnement, même voix, mêmes messages, mêmes mots-clés — quelqu'un qui voit son Instagram puis son LinkedIn doit reconnaître la même ${personal ? "personne" : "marque"}. ${TUNISIAN_DIALECT_GUIDE}
+
+RÈGLES :
+- Zéro jargon, phrases courtes, prêtes à copier-coller.
+- N'INVENTE AUCUN FAIT (chiffre, années d'expérience, clients, diplômes, récompenses) : utilise seulement ceux fournis. Sans preuve chiffrée, mets la différence ou la méthode à la place.
+- Respecte STRICTEMENT les limites de caractères.
+- "diagnosis" : si son profil actuel est fourni, 2-4 constats courts et concrets sur ce qui ne va pas (ou ce qui est bien) ; sinon liste vide.
+- "quick_wins" : 3 actions rapides (moins de 10 minutes chacune) pour améliorer le profil dès aujourd'hui.
+
+${spec}
+
+Réponds UNIQUEMENT avec un objet JSON valide, rien autour, avec exactement ces clés (mets [] ou "" pour celles qui ne s'appliquent pas à ce réseau) :
+{ "name_field": "...", "headline": "...", "bios": ["..."], "about": "...", "link": "...", "banner": "...", "highlights": [{ "name": "...", "content": "..." }], "pinned": [{ "title": "...", "why": "..." }], "featured": [{ "title": "...", "why": "..." }], "skills": ["..."], "photo_tip": "...", "diagnosis": ["..."], "quick_wins": ["...", "...", "..."] }
+Réponds dans la langue de la stratégie.`;
+
+  const user = `Marque : "${opts.brandName || "(sans nom)"}"
+
+STRATÉGIE :
+${ctx}
+
+PROFIL ACTUEL :
+${opts.current.trim() || "(non fourni — on part de zéro)"}
+
+Optimise ce profil.`;
+
+  const out = await callClaudeJSON<ProfileOptimization>(system, user, 2400);
+  return { ...out, platform: opts.platform, generated_at: new Date().toISOString() };
 }

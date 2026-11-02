@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { guardAiAction } from "@/lib/ai-guard";
-import { generateBrandStrategy, AiError } from "@/lib/ai";
+import { generateBrandStrategy, generateProfileOptimization, AiError } from "@/lib/ai";
 import type { GeneratedStrategy } from "@/lib/types";
 
 /**
@@ -45,15 +45,27 @@ export async function generateBrandStrategyAction(
       .eq("id", brandId)
       .maybeSingle();
 
+    const { data: prev } = await supabase
+      .from("brand_strategies")
+      .select("generated")
+      .eq("brand_id", brandId)
+      .maybeSingle();
+
     const generated = await generateBrandStrategy({
       brandName: brand?.name ?? "",
       answers,
     });
 
+    // Passée d'entreprise à marque perso (ou l'inverse) : les profils
+    // optimisés parlaient de l'autre parcours, on les efface.
+    const prevKind = (prev?.generated as GeneratedStrategy | null)?.kind ?? "business";
+    const kindChanged = prev?.generated && prevKind !== generated.kind;
+
     const { error } = await supabase.from("brand_strategies").upsert({
       brand_id: brandId,
       answers,
       generated,
+      ...(kindChanged ? { profiles: null } : {}),
       generated_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
@@ -63,6 +75,53 @@ export async function generateBrandStrategyAction(
     if (!applied.ok) return { ok: false as const, error: applied.error };
 
     return { ok: true as const, generated };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false as const, error: e.message };
+    return { ok: false as const, error: "Erreur inattendue. Réessaie." };
+  }
+}
+
+/**
+ * Optimise le profil Instagram ou LinkedIn à partir de la stratégie déjà
+ * générée — c'est elle qui garantit que les deux profils racontent la même
+ * chose. `current` = le profil actuel collé tel quel (facultatif).
+ */
+export async function optimizeProfileAction(
+  brandId: string,
+  platform: "instagram" | "linkedin",
+  current: string,
+) {
+  try {
+    const { supabase } = await guardAiAction(`profile_${platform}`);
+    const [{ data: brand }, { data: row }] = await Promise.all([
+      supabase.from("brands").select("name").eq("id", brandId).maybeSingle(),
+      supabase
+        .from("brand_strategies")
+        .select("answers, generated, profiles")
+        .eq("brand_id", brandId)
+        .maybeSingle(),
+    ]);
+    if (!row?.generated) {
+      return { ok: false as const, error: "Crée d'abord ta stratégie : tes profils en découlent." };
+    }
+
+    const profile = await generateProfileOptimization({
+      brandName: brand?.name ?? "",
+      platform,
+      strategy: row.generated as GeneratedStrategy,
+      answers: (row.answers ?? {}) as Record<string, string>,
+      current: current.slice(0, 3000),
+    });
+
+    const profiles = { ...((row.profiles ?? {}) as Record<string, unknown>), [platform]: profile };
+    const { error } = await supabase
+      .from("brand_strategies")
+      .update({ profiles, updated_at: new Date().toISOString() })
+      .eq("brand_id", brandId);
+    if (error) return { ok: false as const, error: error.message };
+
+    revalidatePath(`/brands/${brandId}`);
+    return { ok: true as const, profile };
   } catch (e) {
     if (e instanceof AiError) return { ok: false as const, error: e.message };
     return { ok: false as const, error: "Erreur inattendue. Réessaie." };

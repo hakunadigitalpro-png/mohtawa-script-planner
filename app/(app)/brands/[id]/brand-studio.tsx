@@ -15,6 +15,11 @@ import {
   Users,
   MessageCircle,
   Layers,
+  Copy,
+  Instagram,
+  Linkedin,
+  Loader2,
+  BookOpen,
 } from "lucide-react";
 import {
   Dialog,
@@ -31,15 +36,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
-  STRATEGY_QUESTIONS,
+  strategyQuestions,
+  strategyKind,
   pendingFollowups,
   type StrategyQuestion,
 } from "@/lib/brand-strategy-questions";
 import {
   saveStrategyAnswers,
   generateBrandStrategyAction,
+  optimizeProfileAction,
 } from "../brand-strategy-actions";
-import type { BrandStrategy, GeneratedStrategy } from "@/lib/types";
+import type {
+  BrandStrategy,
+  GeneratedStrategy,
+  ProfileOptimization,
+} from "@/lib/types";
 
 type Phase = "intro" | "question" | "generating" | "results";
 
@@ -109,8 +120,10 @@ export function BrandStudio({
     };
   }, [answers, brandId]);
 
-  const question = STRATEGY_QUESTIONS[qIndex];
-  const total = STRATEGY_QUESTIONS.length;
+  // Le questionnaire dépend de la 1re réponse (entreprise / marque perso).
+  const questions = strategyQuestions(strategyKind(answers));
+  const question = questions[qIndex];
+  const total = questions.length;
   const value = answers[question?.id ?? ""] ?? "";
 
   const canContinue = React.useMemo(() => {
@@ -125,7 +138,17 @@ export function BrandStudio({
   }, [question, answers, value]);
 
   const setAnswerKey = (key: string, v: string) => {
-    setAnswers((prev) => ({ ...prev, [key]: v }));
+    setAnswers((prev) => {
+      // Changer de parcours : les réponses propres à l'autre (et l'objectif,
+      // dont les choix diffèrent) ne doivent pas nourrir la nouvelle stratégie.
+      if (key === "strategy_kind" && prev.strategy_kind && prev.strategy_kind !== v) {
+        const next: Record<string, string> = { strategy_kind: v };
+        const keep = new Set(["platforms", "proof_result", "legitimacy", "why_started"]);
+        for (const [k, val] of Object.entries(prev)) if (keep.has(k)) next[k] = val;
+        return next;
+      }
+      return { ...prev, [key]: v };
+    });
   };
 
   const generate = async (finalAnswers: Record<string, string>) => {
@@ -153,8 +176,8 @@ export function BrandStudio({
     }
   };
 
-  // Avec 2 questions, pas d'écran de récap : la dernière lance directement
-  // la génération — une étape de moins.
+  // Pas d'écran de récap : la dernière question lance directement la
+  // génération — une étape de moins.
   const goNext = () => {
     if (qIndex + 1 < total) setQIndex(qIndex + 1);
     else generate(answers);
@@ -224,6 +247,7 @@ export function BrandStudio({
         >
           {phase === "intro" && (
             <IntroScreen
+              total={questions.length}
               hasDraft={hasSavedDraft}
               onStart={() => setPhase("question")}
             />
@@ -280,6 +304,14 @@ export function BrandStudio({
               onAnswer={setAnswerKey}
               onStrengthen={() => generate(answers)}
               onClose={() => setOpen(false)}
+              brandId={brandId}
+              // Profils écrits pour un autre parcours : périmés, on ne les montre pas.
+              initialProfiles={
+                (initialStrategy?.generated?.kind ?? "business") === (generated.kind ?? "business")
+                  ? (initialStrategy?.profiles ?? null)
+                  : null
+              }
+              platforms={answers.platforms ?? ""}
               onRedo={() => {
                 setPhase("question");
                 setQIndex(0);
@@ -374,9 +406,11 @@ function StrategyHero({
 /* ============================== Écrans ============================== */
 
 function IntroScreen({
+  total,
   hasDraft,
   onStart,
 }: {
+  total: number;
   hasDraft: boolean;
   onStart: () => void;
 }) {
@@ -388,8 +422,9 @@ function IntroScreen({
           Créons ta stratégie, ensemble
         </DialogTitle>
         <DialogDescription>
-          Une phrase à compléter en trois mots-clés, un clic sur ton objectif,
-          et c&apos;est tout. Je m&apos;occupe du reste.
+          Entreprise ou marque personnelle, quelques questions précises avec
+          un exemple à chaque fois — et je construis une image complète,
+          cohérente sur tous tes réseaux.
         </DialogDescription>
       </DialogHeader>
       <DialogBody className="space-y-4">
@@ -400,6 +435,7 @@ function IntroScreen({
             "Ton audience, ses galères, et le ton à adopter",
             "Ta méthode expliquée simplement",
             "Tes hashtags récurrents",
+            "Tes profils Instagram et LinkedIn optimisés",
           ].map((item) => (
             <li key={item} className="flex items-center gap-2.5">
               <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
@@ -410,7 +446,7 @@ function IntroScreen({
           ))}
         </ul>
         <p className="text-xs text-muted">
-          ~1 minute · {STRATEGY_QUESTIONS.length} questions
+          ~3 minutes · {total} questions
         </p>
       </DialogBody>
       <DialogFooter>
@@ -423,7 +459,7 @@ function IntroScreen({
   );
 }
 
-/** Progression : plus de sections, il ne reste que 2 questions. */
+/** Progression : une barre et « Question n / total ». */
 function SectionProgress({ qIndex, total }: { qIndex: number; total: number }) {
   return (
     <div className="space-y-2">
@@ -506,6 +542,10 @@ function QuestionInput({
           .filter(Boolean)
       : [];
     const toggle = (opt: string) => {
+      if (question.single) {
+        onChange(question.id, selected.includes(opt) ? "" : opt);
+        return;
+      }
       const next = selected.includes(opt)
         ? selected.filter((s) => s !== opt)
         : [...selected, opt];
@@ -671,6 +711,9 @@ function ResultsScreen({
   onStrengthen,
   onClose,
   onRedo,
+  brandId,
+  initialProfiles,
+  platforms,
 }: {
   generated: GeneratedStrategy;
   error: string | null;
@@ -680,13 +723,17 @@ function ResultsScreen({
   onStrengthen: () => void;
   onClose: () => void;
   onRedo: () => void;
+  brandId: string;
+  initialProfiles: BrandStrategy["profiles"];
+  platforms: string;
 }) {
+  const personal = generated.kind === "personal";
   return (
     <>
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <Sparkles className="size-4 text-accent" />
-          Ta stratégie de contenu
+          {personal ? "Ta stratégie de marque personnelle" : "Ta stratégie de contenu"}
         </DialogTitle>
         <DialogDescription>
           Déjà appliquée à ta marque — l&apos;IA s&apos;en sert pour écrire tes
@@ -790,6 +837,17 @@ function ResultsScreen({
           </StrategyCard>
         </div>
 
+        {generated.signature_story?.trim() && (
+          <StrategyCard
+            n="★"
+            icon={<BookOpen className="size-4" />}
+            title="Ton histoire, en accroche"
+            tone="cream"
+          >
+            <p>{generated.signature_story}</p>
+          </StrategyCard>
+        )}
+
         {generated.key_messages?.length > 0 && (
           <StrategyCard
             n="05"
@@ -829,6 +887,16 @@ function ResultsScreen({
             </ul>
           </StrategyCard>
         )}
+
+        <ProfilesSection
+          brandId={brandId}
+          personal={personal}
+          initial={initialProfiles}
+          // Seulement LinkedIn coché : on ouvre directement sur LinkedIn.
+          startOn={
+            /linkedin/i.test(platforms) && !/instagram/i.test(platforms) ? "linkedin" : "instagram"
+          }
+        />
 
         {/* Relances : des faits que l'IA ne peut pas inventer. Groupées et
             facultatives — une seule régénération quand elle le décide. */}
@@ -960,6 +1028,240 @@ function BulletList({ items }: { items: string[] }) {
   );
 }
 
+
+/**
+ * Profils Instagram et LinkedIn réécrits à partir de la stratégie : c'est
+ * ce qui rend l'image cohérente d'un réseau à l'autre. Le profil actuel
+ * collé est facultatif — avec lui, l'IA dit aussi ce qui ne va pas.
+ */
+function ProfilesSection({
+  brandId,
+  personal,
+  initial,
+  startOn,
+}: {
+  brandId: string;
+  personal: boolean;
+  initial: BrandStrategy["profiles"];
+  startOn: "instagram" | "linkedin";
+}) {
+  const [profiles, setProfiles] = React.useState(initial ?? {});
+  const [tab, setTab] = React.useState<"instagram" | "linkedin">(startOn);
+  const [current, setCurrent] = React.useState<Record<string, string>>({});
+  const [pending, setPending] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const profile = profiles[tab];
+
+  const run = async () => {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await optimizeProfileAction(brandId, tab, current[tab] ?? "");
+      if (!res.ok) setError(res.error);
+      else setProfiles((p) => ({ ...p, [tab]: res.profile }));
+    } catch {
+      setError("L'IA n'a pas répondu. Réessaie.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const label = tab === "instagram" ? "Instagram" : personal ? "LinkedIn" : "page LinkedIn";
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold">Optimiser mes profils</p>
+          <p className="mt-0.5 text-sm text-muted">
+            Réécrits à partir de ta stratégie : même message, même ton, partout.
+          </p>
+        </div>
+        <div className="flex rounded-full bg-secondary p-1">
+          {(["instagram", "linkedin"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setTab(k)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition",
+                tab === k ? "bg-card text-foreground shadow-sm" : "text-muted hover:text-foreground",
+              )}
+            >
+              {k === "instagram" ? <Instagram className="size-4" /> : <Linkedin className="size-4" />}
+              {k === "instagram" ? "Instagram" : "LinkedIn"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-sm font-semibold">
+          Ton profil {label} actuel <span className="font-normal text-muted">(facultatif)</span>
+        </Label>
+        <Textarea
+          value={current[tab] ?? ""}
+          onChange={(e) => setCurrent((c) => ({ ...c, [tab]: e.target.value }))}
+          dir="auto"
+          placeholder={
+            tab === "instagram"
+              ? "Colle ton nom affiché et ta bio telle qu'elle est aujourd'hui"
+              : "Colle ton titre et ta section « Infos » actuels"
+          }
+          className="min-h-16 text-sm leading-relaxed [field-sizing:content]"
+        />
+        <Button type="button" onClick={run} disabled={pending}>
+          {pending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+          {profile ? `Réoptimiser mon profil ${label}` : `Optimiser mon profil ${label}`}
+        </Button>
+        {error && <ErrorNote>{error}</ErrorNote>}
+      </div>
+
+      {profile && <ProfileResult profile={profile} personal={personal} />}
+    </div>
+  );
+}
+
+function ProfileResult({
+  profile: p,
+  personal,
+}: {
+  profile: ProfileOptimization;
+  personal: boolean;
+}) {
+  const ig = p.platform === "instagram";
+  const items = (ig ? p.pinned : p.featured) ?? [];
+  return (
+    <div className="space-y-3" dir="auto">
+      {p.diagnosis?.length > 0 && (
+        <StrategyCard n="00" icon={<Target className="size-4" />} title="Ce que je vois sur ton profil actuel" tone="cream">
+          <BulletList items={p.diagnosis} />
+        </StrategyCard>
+      )}
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        {p.name_field && (
+          <CopyField label={ig ? "Champ « Nom » (indexé par la recherche)" : "URL personnalisée"} text={p.name_field} />
+        )}
+        {p.headline && (
+          <CopyField
+            label={ig ? "Catégorie de profil" : personal ? "Titre" : "Slogan de page"}
+            text={p.headline}
+            max={ig ? undefined : personal ? 220 : 120}
+          />
+        )}
+      </div>
+
+      {p.bios?.map((b, i) => (
+        <CopyField key={i} label={`Bio — version ${i + 1}`} text={b} max={150} multiline />
+      ))}
+      {p.about && (
+        <CopyField label={personal ? "Section « Infos »" : "À propos"} text={p.about} max={1300} multiline />
+      )}
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        {p.link && <CopyField label="Lien en bio" text={p.link} />}
+        {p.banner && <CopyField label="Bannière" text={p.banner} />}
+        {p.photo_tip && <CopyField label={ig || personal ? "Photo de profil" : "Logo"} text={p.photo_tip} />}
+      </div>
+
+      {ig && p.highlights?.length > 0 && (
+        <StrategyCard n="01" icon={<Layers className="size-4" />} title="Stories à la une" tone="soft">
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {p.highlights.map((h, i) => (
+              <li key={i} className="rounded-xl bg-card px-3 py-2.5">
+                <span className="font-semibold">{h.name}</span>
+                <span className="block text-foreground/75">{h.content}</span>
+              </li>
+            ))}
+          </ul>
+        </StrategyCard>
+      )}
+
+      {items.length > 0 && (
+        <StrategyCard
+          n="02"
+          icon={<Sparkles className="size-4" />}
+          title={ig ? "3 publications à épingler" : "À mettre en avant (« Sélection »)"}
+          tone="cream"
+        >
+          <ul className="space-y-2">
+            {items.map((x, i) => (
+              <li key={i}>
+                <span className="font-semibold">{x.title}</span>
+                <span className="block text-foreground/75">{x.why}</span>
+              </li>
+            ))}
+          </ul>
+        </StrategyCard>
+      )}
+
+      {!ig && p.skills?.length > 0 && (
+        <StrategyCard n="03" icon={<Check className="size-4" />} title={personal ? "Compétences à afficher en premier" : "Spécialités"} tone="cream">
+          <ul className="flex flex-wrap gap-1.5">
+            {p.skills.map((k, i) => (
+              <li key={i} className="rounded-lg bg-card px-2.5 py-1 text-sm font-semibold">
+                {k}
+              </li>
+            ))}
+          </ul>
+        </StrategyCard>
+      )}
+
+      {p.quick_wins?.length > 0 && (
+        <StrategyCard n="✓" icon={<Lightbulb className="size-4" />} title="À faire aujourd'hui (moins de 10 min)" tone="soft">
+          <BulletList items={p.quick_wins} />
+        </StrategyCard>
+      )}
+    </div>
+  );
+}
+
+/** Un texte prêt à coller, avec son compteur quand le réseau impose une limite. */
+function CopyField({
+  label,
+  text,
+  max,
+  multiline,
+}: {
+  label: string;
+  text: string;
+  max?: number;
+  multiline?: boolean;
+}) {
+  const [copied, setCopied] = React.useState(false);
+  const len = [...text].length;
+  return (
+    <div className="rounded-2xl bg-secondary p-4">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className="text-xs font-bold uppercase tracking-wider text-muted">{label}</span>
+        <div className="flex items-center gap-2">
+          {max && (
+            <span className={cn("text-xs", len > max ? "font-semibold text-destructive" : "text-muted")}>
+              {len}/{max}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(text).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              });
+            }}
+            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold text-muted hover:bg-card hover:text-foreground"
+          >
+            {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+            {copied ? "Copié" : "Copier"}
+          </button>
+        </div>
+      </div>
+      <p className={cn("text-sm leading-relaxed text-foreground", multiline && "whitespace-pre-line")}>
+        {text}
+      </p>
+    </div>
+  );
+}
 
 function ErrorNote({ children }: { children: React.ReactNode }) {
   return (
