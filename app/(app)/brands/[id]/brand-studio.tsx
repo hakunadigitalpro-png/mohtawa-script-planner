@@ -1031,8 +1031,8 @@ function BulletList({ items }: { items: string[] }) {
 
 /**
  * Profils Instagram et LinkedIn réécrits à partir de la stratégie : c'est
- * ce qui rend l'image cohérente d'un réseau à l'autre. Le profil actuel
- * collé est facultatif — avec lui, l'IA dit aussi ce qui ne va pas.
+ * ce qui rend l'image cohérente d'un réseau à l'autre, à partir de la seule
+ * stratégie (un lien de profil ne se lit pas : LinkedIn et Instagram le bloquent).
  */
 function ProfilesSection({
   brandId,
@@ -1047,7 +1047,6 @@ function ProfilesSection({
 }) {
   const [profiles, setProfiles] = React.useState(initial ?? {});
   const [tab, setTab] = React.useState<"instagram" | "linkedin">(startOn);
-  const [current, setCurrent] = React.useState<Record<string, string>>({});
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const profile = profiles[tab];
@@ -1056,7 +1055,8 @@ function ProfilesSection({
     setPending(true);
     setError(null);
     try {
-      const res = await optimizeProfileAction(brandId, tab, current[tab] ?? "");
+      // Pas de profil actuel : ni lien ni copier-coller, on part de la stratégie.
+      const res = await optimizeProfileAction(brandId, tab, "");
       if (!res.ok) setError(res.error);
       else setProfiles((p) => ({ ...p, [tab]: res.profile }));
     } catch {
@@ -1096,20 +1096,6 @@ function ProfilesSection({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-sm font-semibold">
-          Ton profil {label} actuel <span className="font-normal text-muted">(facultatif)</span>
-        </Label>
-        <Textarea
-          value={current[tab] ?? ""}
-          onChange={(e) => setCurrent((c) => ({ ...c, [tab]: e.target.value }))}
-          dir="auto"
-          placeholder={
-            tab === "instagram"
-              ? "Colle ton nom affiché et ta bio telle qu'elle est aujourd'hui"
-              : "Colle ton titre et ta section « Infos » actuels"
-          }
-          className="min-h-16 text-sm leading-relaxed [field-sizing:content]"
-        />
         <Button type="button" onClick={run} disabled={pending}>
           {pending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
           {profile ? `Réoptimiser mon profil ${label}` : `Optimiser mon profil ${label}`}
