@@ -18,7 +18,7 @@ export default async function AdminPage() {
     await Promise.all([
       supabase.rpc("is_platform_admin"),
       supabase.rpc("admin_list_users"),
-      supabase.from("plans").select("id, label, price_tnd, price_eur, max_brands, max_members, max_viewers").order("position", { ascending: true }),
+      supabase.from("plans").select("id, label, price_tnd, price_eur, max_brands, max_members, max_viewers, ai_default").order("position", { ascending: true }),
     ]);
 
   if (!isAdmin || error) redirect("/dashboard");

@@ -52,6 +52,7 @@ export type AdminPlan = {
   max_brands: number | null;
   max_members: number | null;
   max_viewers: number | null;
+  ai_default: boolean | null;
 };
 
 type SubStatus = "trial" | "active" | "readonly" | "suspended";
@@ -416,6 +417,35 @@ function EditDialog({ user, plans, onClose }: { user: AdminUser; plans: AdminPla
   );
 }
 
+const count = (n: number | null, one: string, many: string) =>
+  n === null ? `${many} illimité${many.endsWith("s") ? "s" : ""}` : `${n} ${n > 1 ? many : one}`;
+
+/** Le contenu d'un plan en clair : prix en DT, limites, IA. */
+function PlanSummary({ plan }: { plan: AdminPlan }) {
+  const lines = [
+    count(plan.max_brands, "marque", "marques"),
+    // Le propriétaire compte dans les membres (lib/plans.ts) : 1 = seul.
+    plan.max_members === 1
+      ? "Travaille seul (pas d'équipe)"
+      : `${count(plan.max_members, "membre", "membres")} par marque, propriétaire compris`,
+    `${count(plan.max_viewers, "client invité", "clients invités")} par marque`,
+    plan.ai_default ? "IA incluse" : "IA en option : +29 DT/mois par marque",
+  ];
+  return (
+    <div className="rounded-2xl bg-secondary px-4 py-3 text-sm">
+      <p className="font-semibold text-foreground">
+        {plan.label} ·{" "}
+        {plan.price_tnd ? `${plan.price_tnd} DT/mois (${plan.price_eur} €)` : "gratuit"}
+      </p>
+      <ul className="mt-1 space-y-0.5 text-foreground/80">
+        {lines.map((l) => (
+          <li key={l}>• {l}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** Les champs d'abonnement, partagés entre « Modifier » et « Créer un compte ». */
 function PlanFields(p: {
   plans: AdminPlan[];
@@ -431,19 +461,22 @@ function PlanFields(p: {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="mb-1 block text-xs text-muted">Plan</label>
-          <Select value={p.planId} onValueChange={p.setPlanId} options={p.plans.map((x) => ({ value: x.id, label: x.label }))} />
-          {plan && (
-            <p className="mt-1 text-[11px] text-muted">
-              {plan.max_brands ?? "∞"} marque{(plan.max_brands ?? 2) > 1 ? "s" : ""} · {plan.max_members ?? "∞"} membres · {plan.max_viewers ?? "∞"} clients
-              {plan.price_tnd ? ` · ${plan.price_tnd} TND / ${plan.price_eur} €` : ""}
-            </p>
-          )}
+          <Select
+            value={p.planId}
+            onValueChange={p.setPlanId}
+            options={p.plans.map((x) => ({
+              value: x.id,
+              label: x.price_tnd ? `${x.label} — ${x.price_tnd} DT/mois` : `${x.label} — gratuit`,
+            }))}
+          />
         </div>
         <div>
           <label className="mb-1 block text-xs text-muted">Statut</label>
           <Select value={p.status} onValueChange={p.setStatus} options={STATUS_OPTIONS} />
         </div>
       </div>
+      {/* Ce que contient le plan choisi, pour ne pas avoir à s'en souvenir. */}
+      {plan && <PlanSummary plan={plan} />}
       <div>
         <label className="mb-1 block text-xs text-muted">{p.durationLabel}</label>
         <Select value={p.duration} onValueChange={p.setDuration} options={DURATIONS} />
