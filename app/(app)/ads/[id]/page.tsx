@@ -199,7 +199,12 @@ export default async function AdCampaignPage({
   // ET quelque chose à lui montrer. Sans ça le bouton « Soumettre »
   // deviendrait une pastille-instruction, comme pour les contenus.
   const hasClient = members.some((m) => m.role === "viewer");
-  const visualCount = media.filter((m) => m.kind === "visual").length;
+  // Les visuels vivent sur les annonces et leurs diapos depuis 0064 : ne compter
+  // que l'ancienne médiathèque bloquait l'envoi d'une campagne pourtant complète.
+  const visualCount =
+    media.filter((m) => m.kind === "visual").length +
+    adsFlat.filter((a) => a.visual_url || a.video_url).length +
+    slidesFlat.filter((s) => s.visual_url || s.video_url).length;
 
   const [team, activityRes] = isWriter
     ? await Promise.all([
