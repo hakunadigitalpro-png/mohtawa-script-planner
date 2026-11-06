@@ -193,6 +193,11 @@ function KanbanCard({
             En attente du client
           </span>
         )}
+        {c.review_state === "needs_revision" && (
+          <span className="mt-1 inline-block rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-foreground dark:bg-rose-500/20">
+            Modifications demandées
+          </span>
+        )}
         <div className="mt-1.5 space-y-0.5 text-xs text-muted-foreground">
           {c.date_start && (
             <p className="flex items-center gap-1">

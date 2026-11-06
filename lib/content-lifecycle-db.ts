@@ -5,6 +5,9 @@ import {
   statusAfterFilming,
   whyNotSendable,
   type SendBlocker,
+  statusAfterFormat,
+  statusAfterVideoReady,
+  statusAfterDateRemoved,
 } from "@/lib/content-lifecycle";
 import { fetchReviewMaterial } from "@/lib/review-material";
 
@@ -193,4 +196,51 @@ export async function fetchMaterial(
     );
   }
   return result;
+}
+
+async function readLifecycle(supabase: Supabase, contentId: string) {
+  const { data } = await supabase
+    .from("contents")
+    .select("status, type")
+    .eq("id", contentId)
+    .maybeSingle();
+  return data as { status: string; type: string | null } | null;
+}
+
+/**
+ * On vient d'écrire quelque chose (script, légende, visuel, diapo) sur un
+ * contenu encore en Idée : il est en écriture. Écrire est un geste, comme
+ * marquer une scène filmée.
+ */
+export async function applyWritingProgress(
+  supabase: Supabase,
+  contentId: string,
+): Promise<void> {
+  const row = await readLifecycle(supabase, contentId);
+  if (!row?.type) return;
+  const next = statusAfterFormat({ status: row.status, type: row.type });
+  if (next) await supabase.from("contents").update({ status: next }).eq("id", contentId);
+}
+
+/** Le lien de la vidéo prête vient d'être posé. */
+export async function applyVideoReady(
+  supabase: Supabase,
+  contentId: string,
+): Promise<void> {
+  const row = await readLifecycle(supabase, contentId);
+  if (!row) return;
+  const next = statusAfterVideoReady(row);
+  if (next) await supabase.from("contents").update({ status: next }).eq("id", contentId);
+}
+
+/** Une publication ou sa date vient de disparaître : le contenu est-il encore programmable ? */
+export async function settleAfterDateRemoved(
+  supabase: Supabase,
+  contentId: string,
+): Promise<void> {
+  const row = await readLifecycle(supabase, contentId);
+  if (!row) return;
+  const next = statusAfterDateRemoved(row.status);
+  if (!next || (await hasDatedPublication(supabase, contentId))) return;
+  await supabase.from("contents").update({ status: next }).eq("id", contentId);
 }

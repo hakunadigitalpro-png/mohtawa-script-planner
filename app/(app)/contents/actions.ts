@@ -11,10 +11,15 @@ import {
   isProgrammedStatus,
   statusAfterFormat,
   whyNotProgrammed,
+  initialStatus,
+  statusForFormat,
 } from "@/lib/content-lifecycle";
 import {
   applyFilmingProgress,
   hasDatedPublication,
+  applyWritingProgress,
+  applyVideoReady,
+  settleAfterDateRemoved,
 } from "@/lib/content-lifecycle-db";
 
 type CreateContentInput = {
@@ -54,7 +59,7 @@ export async function createContentRow(
     title: input.title || null,
     date: input.date || null,
     platform: input.platform || null,
-    status: "idea",
+    status: initialStatus(input.type),
   };
   if (input.pillar?.trim()) {
     // Le trigger 0018 synchronise la colonne singulière `pillar` depuis pillars[0].
@@ -133,6 +138,19 @@ export async function updateContent(
 ) {
   const supabase = await createClient();
 
+  // Chaque format a ses mots : par tous les chemins, et surtout le Kanban, qui
+  // montre les colonnes des deux familles côte à côte.
+  if (patch.status !== undefined) {
+    const { data: row } = await supabase
+      .from("contents")
+      .select("type")
+      .eq("id", id)
+      .maybeSingle();
+    const res = statusForFormat({ to: patch.status, type: row?.type ?? null });
+    if ("error" in res) return { error: res.error };
+    patch = { ...patch, status: res.status };
+  }
+
   // « Programmé » exige une date, par tous les chemins : le menu Statut du
   // Plan et le ⋮ des cartes passent ici. Une règle, pas deux
   // (`lib/content-lifecycle.ts`).
@@ -176,6 +194,13 @@ export async function updateContent(
     .update(clean)
     .eq("id", id);
   if (error) return { error: error.message };
+
+  // Une correction manuelle du statut prime : on n'y ajoute pas un passage.
+  if (patch.status === undefined) {
+    if (patch.caption?.trim()) await applyWritingProgress(supabase, id);
+    if (patch.preview_url?.trim()) await applyVideoReady(supabase, id);
+  }
+  if (patch.date === null) await settleAfterDateRemoved(supabase, id);
 
   revalidatePath(`/content/${id}`);
   revalidatePath("/dashboard");
@@ -228,7 +253,7 @@ export async function duplicateContent(id: string) {
       title: src.title ? `${src.title} (copie)` : "Copie sans titre",
       date: null,
       platform: src.platform,
-      status: "idea",
+      status: initialStatus(src.type),
       pillar: src.pillar,
       objective: src.objective,
       // Multi-piliers / multi-objectifs (Idée 8). Si l'arrière-plan
@@ -411,6 +436,12 @@ export async function upsertReelDetails(
     await supabase.from("contents").update(legacySync).eq("id", contentId);
   }
 
+  // Une première ligne de script : le reel est en écriture.
+  const wroteScript = (
+    ["intro", "point1", "point2", "point3", "transition", "recap", "outro", "script_full"] as const
+  ).some((k) => patch[k]?.trim());
+  if (wroteScript) await applyWritingProgress(supabase, contentId);
+
   revalidatePath(`/content/${contentId}`);
   return { ok: true };
 }
@@ -449,6 +480,11 @@ export async function upsertVlogDetails(
       .update({ hook: patch.hook?.trim() ? patch.hook : null })
       .eq("id", contentId);
   }
+
+  const wroteVlog = (
+    ["angle", "hook", "arc_situation", "arc_development", "arc_payoff", "voiceover"] as const
+  ).some((k) => patch[k]?.trim());
+  if (wroteVlog) await applyWritingProgress(supabase, contentId);
 
   revalidatePath(`/content/${contentId}`);
   return { ok: true };
@@ -500,6 +536,9 @@ export async function upsertStorySlide(
   // toutes le sont (`lib/content-lifecycle.ts`).
   if (patch.filmed !== undefined) {
     await applyFilmingProgress(supabase, contentId);
+  }
+  if (patch.body?.trim() || patch.image_url) {
+    await applyWritingProgress(supabase, contentId);
   }
 
   revalidatePath(`/content/${contentId}`);
@@ -643,6 +682,9 @@ export async function addContentVisual(contentId: string, imageUrl: string) {
     .from("content_media")
     .insert({ content_id: contentId, position: nextPos, image_url: imageUrl });
   if (error) return { error: error.message };
+
+  // Un premier visuel : le post est en création.
+  await applyWritingProgress(supabase, contentId);
 
   revalidatePath(`/content/${contentId}`);
   return { ok: true as const };
@@ -897,6 +939,7 @@ export async function updatePublication(
     }
     return { error: error.message };
   }
+  if (patch.scheduled_date === null) await settleAfterDateRemoved(supabase, contentId);
   revalidatePath(`/content/${contentId}`);
   revalidatePath("/calendar");
   return { ok: true as const };
@@ -917,6 +960,7 @@ export async function removePublication(
     .delete()
     .eq("id", publicationId);
   if (error) return { error: error.message };
+  await settleAfterDateRemoved(supabase, contentId);
   revalidatePath(`/content/${contentId}`);
   revalidatePath("/calendar");
   return { ok: true as const };

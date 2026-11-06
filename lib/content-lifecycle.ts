@@ -198,6 +198,59 @@ export function statusAfterFormat(input: {
 }
 
 /**
+ * Le statut de naissance. Un contenu créé avec son format est déjà à l'étape
+ * d'écriture : le même contenu dont on choisit le format juste après y passe
+ * (`statusAfterFormat`), les deux chemins doivent arriver au même endroit.
+ */
+export function initialStatus(type: string | null | undefined): string {
+  return type ? (statusAfterFormat({ status: "idea", type }) ?? "idea") : "idea";
+}
+
+/**
+ * Le lien de la vidéo prête vient d'être posé : le montage est fini ou en
+ * cours, la vidéo avance donc en Montage. Jamais en arrière (un contenu déjà
+ * chez le client y reste), jamais pour un format simple.
+ */
+export function statusAfterVideoReady(input: {
+  status: string;
+  type: string | null;
+}): "editing" | null {
+  if (!input.type || isSimpleType(input.type)) return null;
+  return isForward(input.status, "editing") ? "editing" : null;
+}
+
+/**
+ * Plus aucune date de publication : un contenu programmé ne l'est plus. Il
+ * revient à Validé, l'étape d'avant. Sinon il resterait programmé pour
+ * toujours, puisque c'est cette date qui le fait passer en ligne.
+ */
+export function statusAfterDateRemoved(status: string): "approved" | null {
+  return isProgrammedStatus(status) ? "approved" : null;
+}
+
+/**
+ * Le statut qu'un geste peut vraiment poser sur CE format, par tous les chemins
+ * (menu, ⋮ des cartes, Kanban). Le Kanban montre les colonnes des deux familles
+ * côte à côte : « Script » sur un post veut dire son étape d'écriture, Design.
+ * Tournage et Montage n'ont aucun équivalent pour un post : on le dit.
+ */
+export function statusForFormat(input: {
+  to: string;
+  type: string | null;
+}): { status: string } | { error: string } {
+  const { to, type } = input;
+  if (to === "cancelled" || to === "idea" || to === "selected") return { status: to };
+  if (!type) return { error: "Choisis d'abord un format pour ce contenu." };
+  const simple = isSimpleType(type);
+  if (to === "script" || to === "design") return { status: simple ? "design" : "script" };
+  if (isProgrammedStatus(to)) return { status: programmedStatusFor(type) };
+  if ((to === "filming" || to === "editing") && simple) {
+    return { error: "Ce format ne se tourne pas : son étape, c'est Design." };
+  }
+  return { status: to };
+}
+
+/**
  * La matière d'un contenu existe-t-elle ? Un script pour une vidéo, du texte
  * sur une diapo pour une story, un visuel pour un post, un carrousel ou une
  * infographie. Sans format, il n'y a rien à juger.

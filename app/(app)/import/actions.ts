@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { initialStatus } from "@/lib/content-lifecycle";
 import { getActiveBrandId } from "@/lib/brand";
 import { isSimpleType } from "@/lib/constants";
 import {
@@ -77,7 +78,7 @@ export async function importSeries(input: {
       title: p.title,
       date: p.date,
       platform,
-      status: "idea",
+      status: initialStatus(input.type),
       // Le trigger 0018 synchronise la colonne singulière depuis pillars[0].
       ...(theme ? { pillars: [theme], pillar: theme } : {}),
       // Un post ou un carrousel n'a pas de script : son texte EST sa légende.

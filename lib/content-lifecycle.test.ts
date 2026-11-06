@@ -4,6 +4,10 @@ import {
   isForward,
   isLate,
   isProductionLate,
+  initialStatus,
+  statusAfterDateRemoved,
+  statusAfterVideoReady,
+  statusForFormat,
   statusAfterResume,
   isTrulyReady,
   nextStep,
@@ -382,5 +386,46 @@ describe("annulé et échéance", () => {
     expect(statusAfterResume({ previous: "pending_review", type: "post" })).toBe("design");
     expect(statusAfterResume({ previous: "pending_review", type: "reel" })).toBe("script");
     expect(statusAfterResume({ previous: null, type: null })).toBe("idea");
+  });
+});
+
+describe("les passages revus", () => {
+  it("un contenu naît à l'étape de son format", () => {
+    expect(initialStatus("reel")).toBe("script");
+    expect(initialStatus("post")).toBe("design");
+    expect(initialStatus(null)).toBe("idea");
+  });
+
+  it("le lien de la vidéo prête mène en Montage, jamais en arrière", () => {
+    expect(statusAfterVideoReady({ status: "script", type: "reel" })).toBe("editing");
+    expect(statusAfterVideoReady({ status: "idea", type: "vlog" })).toBe("editing");
+    expect(statusAfterVideoReady({ status: "pending_review", type: "reel" })).toBeNull();
+    expect(statusAfterVideoReady({ status: "editing", type: "reel" })).toBeNull();
+    expect(statusAfterVideoReady({ status: "cancelled", type: "reel" })).toBeNull();
+    expect(statusAfterVideoReady({ status: "design", type: "post" })).toBeNull();
+  });
+
+  it("sans date, un contenu programmé redevient Validé", () => {
+    expect(statusAfterDateRemoved("programmed")).toBe("approved");
+    expect(statusAfterDateRemoved("scheduled")).toBe("approved");
+    expect(statusAfterDateRemoved("approved")).toBeNull();
+    expect(statusAfterDateRemoved("live")).toBeNull();
+  });
+
+  it("chaque format garde ses propres mots", () => {
+    expect(statusForFormat({ to: "script", type: "post" })).toEqual({ status: "design" });
+    expect(statusForFormat({ to: "design", type: "reel" })).toEqual({ status: "script" });
+    expect(statusForFormat({ to: "scheduled", type: "post" })).toEqual({ status: "programmed" });
+    expect(statusForFormat({ to: "programmed", type: "reel" })).toEqual({ status: "scheduled" });
+    expect(statusForFormat({ to: "filming", type: "reel" })).toEqual({ status: "filming" });
+    expect(statusForFormat({ to: "approved", type: "post" })).toEqual({ status: "approved" });
+  });
+
+  it("refuse ce qui n'a pas de sens, avec une raison", () => {
+    expect(statusForFormat({ to: "filming", type: "post" })).toHaveProperty("error");
+    expect(statusForFormat({ to: "editing", type: "carousel" })).toHaveProperty("error");
+    expect(statusForFormat({ to: "approved", type: null })).toHaveProperty("error");
+    expect(statusForFormat({ to: "cancelled", type: null })).toEqual({ status: "cancelled" });
+    expect(statusForFormat({ to: "selected", type: null })).toEqual({ status: "selected" });
   });
 });

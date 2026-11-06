@@ -34,7 +34,11 @@ Le moteur place tout ça sur **une seule ligne de temps** (`rankOf`) : Script et
 | Transition | Geste | Où |
 |---|---|---|
 | Idée → Retenue | « Retenir » | onglet Idées (`ideas-actions.ts`) |
+| Naissance → Script ou Design | créer un contenu avec son format | `createContentRow`, duplication, import (`initialStatus`) |
 | Idée / Retenue → Script ou Design | choisir le format | Plan (`setContentFormat`, via `statusAfterFormat`), onglet Idées, « Planifier » |
+| Idée / Retenue → Script ou Design | écrire : script, légende, visuel, diapo | `applyWritingProgress` |
+| → Montage | coller le lien de la vidéo prête | `applyVideoReady`, jamais en arrière |
+| Programmé(e) → Validé | retirer la dernière date de publication | `settleAfterDateRemoved` |
 | → Tournage | marquer une première scène ou diapo « filmée » | Storyboard / Stories (`applyFilmingProgress`, via `statusAfterFilming`) |
 | Tournage → Montage | toutes les scènes filmées | idem |
 | → En attente de validation | « Envoyer au client » | bouton d'en-tête (`submitForReview`, RPC `submit_for_review`) |
@@ -45,6 +49,8 @@ Le moteur place tout ça sur **une seule ligne de temps** (`rankOf`) : Script et
 | n'importe quoi → n'importe quoi | menu Statut du Plan, menu ⋮ d'une carte | `updateContent` / `quickChangeStatus` — correction manuelle assumée |
 
 Deux règles valent **par tous les chemins** :
+
+- **Chaque format garde ses mots** (`statusForFormat`, dans `updateContent`) : « Script » sur un post devient Design, « Programmée » devient Programmé, Tournage et Montage sont refusés à un post, et un contenu sans format ne peut être qu'Idée, Retenue ou Annulé. Le Kanban en a besoin : il montre les colonnes des deux familles côte à côte. Déposer une carte sur « À valider » passe par `submitForReview`, le vrai envoi.
 
 - **« Programmé » exige une publication datée** (`whyNotProgrammed`). C'est cette date que `recompute_live_statuses` lit pour passer en ligne, et elle qui dit « en retard ». Le bouton la demande (« Pour quand ? »), le menu Statut refuse sans elle : « Donne-lui d'abord une date dans Publications. »
 - **Tournage et Montage ne s'appliquent qu'aux vidéos**, jamais en arrière, jamais au-delà de Montage.

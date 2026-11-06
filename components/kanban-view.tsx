@@ -4,11 +4,12 @@ import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { statusColor, statusLabel } from "@/lib/constants";
-import { isProductionLate, programmedStatusFor, todayISO } from "@/lib/content-lifecycle";
+import { isProductionLate, todayISO } from "@/lib/content-lifecycle";
 import { cn } from "@/lib/utils";
 import { platformAccentColor } from "@/lib/platform-colors";
 import { ContentCommentsButton } from "@/components/comments";
 import { updateContent } from "@/app/(app)/contents/actions";
+import { submitForReview } from "@/app/(app)/review/actions";
 import type { Content } from "@/lib/types";
 
 /**
@@ -59,6 +60,7 @@ export function KanbanView({
 }) {
   const router = useRouter();
   const [dragOver, setDragOver] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
 
   // Grouper par statut. Les statuts inconnus (ex. 'selected' historique)
@@ -88,13 +90,21 @@ export function KanbanView({
     if (!id || !canEdit) return;
     // Optimisme : on recharge la page après la mutation serveur ; dans
     // l'intervalle la carte semble bouger grâce au refresh.
-    // La colonne « Programmée » accueille les deux familles : chacune garde son
-    // mot, sinon un post passé en `scheduled` ne sortirait jamais à sa date.
-    const type = contents.find((c) => c.id === id)?.type ?? null;
-    const status = toStatus === "scheduled" ? programmedStatusFor(type) : toStatus;
+    setError(null);
     startTransition(async () => {
-      const res = await updateContent(id, { status });
-      if ("ok" in res && res.ok) router.refresh();
+      // « À valider » veut dire que le client attend : on passe par le vrai envoi,
+      // qui vérifie qu'il y a un client et de quoi lui montrer, et le prévient.
+      // Déposer une carte ne doit pas faire croire qu'il a été prévenu.
+      const res =
+        toStatus === "pending_review"
+          ? await submitForReview(id)
+          : await updateContent(id, { status: toStatus });
+      if ("error" in res && res.error) {
+        // Sans ce message, la carte revenait à sa place sans un mot.
+        setError(res.error);
+        return;
+      }
+      router.refresh();
     });
   };
 
@@ -111,6 +121,11 @@ export function KanbanView({
       className="overflow-x-auto"
       aria-busy={pending}
     >
+      {error && (
+        <p role="alert" className="mb-2 text-sm font-medium text-destructive">
+          {error}
+        </p>
+      )}
       <div className="flex min-w-max gap-3 pb-2">
         {visibleColumns.map((col) => {
           const items = byStatus.get(col.value) ?? [];
