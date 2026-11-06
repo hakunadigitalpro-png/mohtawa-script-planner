@@ -4,10 +4,12 @@ import { useMemo, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, MessageSquare, PartyPopper, X } from "lucide-react";
+import { Check, MessageSquare, PartyPopper, SquareDashedMousePointer, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageZones, hasFinePointer } from "@/components/comments/image-zones";
+import { zoneLetter, type Anchor } from "@/lib/anchor";
 import { ColorDot } from "@/components/ui/badge";
 import { cn, formatDateFr } from "@/lib/utils";
 import {
@@ -32,6 +34,8 @@ export type ReviewNote = {
   /** Null : elle porte sur l'ensemble du contenu. */
   mediaId: string | null;
   body: string;
+  /** Zone visée sur le visuel, si la remarque en a une. */
+  anchor?: Anchor | null;
   mine: boolean;
   createdAt: string;
 };
@@ -60,6 +64,9 @@ export type ReviewItem = {
   notes: ReviewNote[];
 };
 
+/** Une zone dessinée, pas encore envoyée. */
+type DraftZone = { id: number; anchor: Anchor; body: string };
+
 export function ReviewDeck({
   items,
   startIndex,
@@ -80,6 +87,8 @@ export function ReviewDeck({
   // Les brouillons, par visuel. Une entrée par diapo commentée, plus
   // éventuellement `OVERALL` pour un mot sur l'ensemble.
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  // Les zones dessinées, par visuel. Plusieurs possibles sur la même image.
+  const [zones, setZones] = useState<Record<string, DraftZone[]>>({});
   const [openKey, setOpenKey] = useState<string | null>(null);
   // Un message d'aide n'est PAS une erreur : il a cliqué le bon bouton, il
   // manque juste une phrase. Les deux étaient confondus, donc habillés en
@@ -113,6 +122,10 @@ export function ReviewDeck({
     : item.status;
 
   const written = Object.entries(drafts).filter(([, v]) => v.trim().length > 0);
+  const zoneNotes = Object.entries(zones).flatMap(([mediaId, list]) =>
+    list.map((z) => ({ mediaId, body: z.body, anchor: z.anchor })),
+  );
+  const noteCount = written.length + zoneNotes.length;
 
   /** Le prochain contenu qui attend encore une décision — sinon on reste. */
   const goNext = () => {
@@ -130,6 +143,7 @@ export function ReviewDeck({
 
   const resetForm = () => {
     setDrafts({});
+    setZones({});
     setOpenKey(null);
     setHint(null);
     setError(null);
@@ -146,7 +160,14 @@ export function ReviewDeck({
     // Demander une modification sans dire laquelle laisse l'équipe sans rien
     // à corriger. Plutôt qu'un refus, on ouvre le champ qui manque et on dit
     // ce qui va se passer.
-    if (decision === "revise" && written.length === 0) {
+    // Une zone dessinée sans un mot ne dit rien : on le signale plutôt que de
+    // la perdre en silence.
+    if (zoneNotes.some((z) => !z.body.trim())) {
+      setHint("Écris ce qu'il faut changer sur chaque zone dessinée, ou retire-la.");
+      return;
+    }
+
+    if (decision === "revise" && noteCount === 0) {
       setOpenKey(OVERALL);
       setHint(
         many
@@ -161,10 +182,13 @@ export function ReviewDeck({
       const res = await reviewContent({
         contentId: item.id,
         decision,
-        notes: written.map(([key, body]) => ({
-          mediaId: key === OVERALL ? null : key,
-          body,
-        })),
+        notes: [
+          ...written.map(([key, body]) => ({
+            mediaId: key === OVERALL ? null : key,
+            body,
+          })),
+          ...zoneNotes,
+        ],
       });
       if (!res.ok) {
         setInFlight(null);
@@ -287,6 +311,8 @@ export function ReviewDeck({
                   number={many ? i + 1 : null}
                   notes={item.notes.filter((n) => n.mediaId === v.id)}
                   draft={drafts[v.id] ?? ""}
+                  zones={zones[v.id] ?? []}
+                  onZones={(next) => setZones((z) => ({ ...z, [v.id]: next }))}
                   open={openKey === v.id}
                   editable={awaiting && v.commentable !== false}
                   pending={pending}
@@ -393,11 +419,11 @@ export function ReviewDeck({
               disant « parfait, la 3 est ma préférée » ne doit pas obliger à
               demander une modification dont il ne veut pas. C'est la phrase
               qui rassure, elle n'a rien à faire en gris pâle. */}
-          {written.length > 0 && (
+          {noteCount > 0 && (
             <p className="text-sm font-semibold text-foreground">
-              {written.length === 1
+              {noteCount === 1
                 ? "Ta remarque partira avec ta réponse."
-                : `Tes ${written.length} remarques partiront avec ta réponse.`}
+                : `Tes ${noteCount} remarques partiront avec ta réponse.`}
             </p>
           )}
 
@@ -450,6 +476,8 @@ function VisualCard({
   number,
   notes,
   draft,
+  zones,
+  onZones,
   open,
   editable,
   pending,
@@ -461,15 +489,46 @@ function VisualCard({
   number: number | null;
   notes: ReviewNote[];
   draft: string;
+  zones: DraftZone[];
+  onZones: (next: DraftZone[]) => void;
   open: boolean;
   editable: boolean;
   pending: boolean;
   onToggle: () => void;
   onDraft: (value: string) => void;
 }) {
+  const [drawing, setDrawing] = useState(false);
+  // Les zones déjà envoyées gardent leur lettre ; les nouvelles continuent.
+  const sent = notes.filter((n) => n.anchor);
+  const letterOfSent = (id: string) => {
+    const i = sent.findIndex((n) => n.id === id);
+    return i >= 0 ? zoneLetter(i) : undefined;
+  };
+  const letterOfDraft = (i: number) => zoneLetter(sent.length + i);
+
   return (
     <div className="space-y-2">
       <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-secondary/40">
+        <ImageZones
+          canDraw={editable && !pending}
+          drawing={drawing}
+          onDraw={(anchor) => {
+            onZones([...zones, { id: Date.now(), anchor, body: "" }]);
+            setDrawing(false);
+          }}
+          zones={[
+            ...sent.map((n) => ({
+              key: n.id,
+              letter: letterOfSent(n.id) ?? "",
+              anchor: n.anchor as Anchor,
+            })),
+            ...zones.map((z, i) => ({
+              key: String(z.id),
+              letter: letterOfDraft(i),
+              anchor: z.anchor,
+            })),
+          ]}
+        >
         {/* `h-auto w-full` laisse le navigateur appliquer le vrai ratio une
             fois l'image chargée : les dimensions déclarées ne servent qu'à
             réserver la place et à calculer les tailles servies. Un carrousel
@@ -480,8 +539,10 @@ function VisualCard({
           width={1080}
           height={1350}
           sizes="(max-width: 640px) 100vw, 480px"
+          draggable={false}
           className="h-auto w-full"
         />
+        </ImageZones>
         {number !== null && (
           <span className="absolute start-2 top-2 rounded-full bg-ink/70 px-2 py-0.5 text-xs font-bold text-white">
             {number}
@@ -489,8 +550,51 @@ function VisualCard({
         )}
       </div>
 
+      {zones.map((z, i) => (
+        <div key={z.id} className="flex items-start gap-2">
+          <span className="mt-2 flex size-5 shrink-0 items-center justify-center rounded-full bg-ink text-xs font-bold text-white">
+            {letterOfDraft(i)}
+          </span>
+          <Textarea
+            value={z.body}
+            onChange={(e) =>
+              onZones(zones.map((x) => (x.id === z.id ? { ...x, body: e.target.value } : x)))
+            }
+            dir="auto"
+            autoFocus={hasFinePointer()}
+            disabled={pending}
+            className="min-h-16 flex-1 text-sm"
+            placeholder="Ce qu'il faut changer ici…"
+          />
+          <button
+            type="button"
+            onClick={() => onZones(zones.filter((x) => x.id !== z.id))}
+            disabled={pending}
+            aria-label={`Retirer la zone ${letterOfDraft(i)}`}
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted transition hover:bg-secondary hover:text-foreground md:mt-1.5 md:size-7"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      ))}
+
+      {editable && (
+        <button
+          type="button"
+          onClick={() => setDrawing((d) => !d)}
+          disabled={pending}
+          className={cn(
+            "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold text-foreground transition md:min-h-0",
+            drawing ? "border-foreground bg-secondary" : "border-border/70 bg-card hover:bg-secondary",
+          )}
+        >
+          <SquareDashedMousePointer className="size-3.5" />
+          {drawing ? "Dessine sur l'image — annuler" : "Montrer sur l'image"}
+        </button>
+      )}
+
       <NoteBlock
-        notes={notes}
+        notes={notes.map((n) => ({ ...n, zone: letterOfSent(n.id) }))}
         draft={draft}
         open={open}
         editable={editable}
@@ -528,7 +632,7 @@ function NoteBlock({
   onDraft,
 }: {
   title?: string;
-  notes: ReviewNote[];
+  notes: (ReviewNote & { zone?: string })[];
   draft: string;
   open: boolean;
   editable: boolean;
@@ -572,6 +676,7 @@ function NoteBlock({
             )}
           >
             {n.mine ? "Toi" : "L'équipe"}
+            {n.zone ? ` · zone ${n.zone}` : ""}
           </p>
           <p className="whitespace-pre-wrap">{n.body}</p>
         </div>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeAnchor, type Anchor } from "@/lib/anchor";
 import { notifyClientOfReply } from "@/lib/notify";
 
 // Une SEULE définition de la liste des cibles, dans `components/comments`.
@@ -17,6 +18,8 @@ export async function createComment(params: {
   targetType: CommentTargetType;
   targetId: string;
   body: string;
+  /** Zone visée sur le visuel. Seulement pour une cible `media`. */
+  anchor?: Anchor | null;
 }) {
   const body = params.body.trim();
   if (!body) return { error: "Le commentaire ne peut pas être vide." };
@@ -37,6 +40,7 @@ export async function createComment(params: {
       user_id: user.id,
       body,
       parent_id: null,
+      anchor: params.targetType === "media" ? normalizeAnchor(params.anchor) : null,
     })
     .select("id")
     .single();

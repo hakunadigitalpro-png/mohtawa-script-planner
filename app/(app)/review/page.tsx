@@ -6,6 +6,7 @@ import { resolveActiveBrand } from "@/lib/brand";
 import { PageHeader } from "@/components/page-header";
 import { ReviewDeck, type ReviewItem, type ReviewNote } from "./review-deck";
 import { fetchReviewMaterial, type ReviewMaterial } from "@/lib/review-material";
+import type { Anchor } from "@/lib/anchor";
 import { formatDateFr } from "@/lib/utils";
 
 type AdCampaignQueue = {
@@ -23,6 +24,7 @@ type CommentRow = {
   target_id: string;
   user_id: string | null;
   body: string;
+  anchor: Anchor | null;
   created_at: string;
 };
 
@@ -123,7 +125,7 @@ export default async function ReviewPage({
         // internes de l'équipe sur le script. Elles ne le regardent pas.
         supabase
           .from("content_comments")
-          .select("id, content_id, target_type, target_id, user_id, body, created_at")
+          .select("id, content_id, target_type, target_id, user_id, body, anchor, created_at")
           .in("content_id", ids)
           .in("target_type", ["media", "plan"])
           .order("created_at", { ascending: true }),
@@ -140,6 +142,7 @@ export default async function ReviewPage({
       id: r.id,
       mediaId: r.target_type === "media" ? r.target_id : null,
       body: r.body,
+      anchor: r.anchor,
       mine: Boolean(me && r.user_id === me.id),
       createdAt: r.created_at,
     });

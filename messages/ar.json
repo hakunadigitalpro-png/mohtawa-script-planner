@@ -575,7 +575,8 @@
     "filters": {
       "all": "الكل",
       "unread": "غير مقروء",
-      "resolved": "تم حله"
+      "resolved": "تم حله",
+      "activity": "النشاط"
     },
     "emptyThreadTitle": "لا توجد تعليقات هنا",
     "emptyThreadDescription": "ابدأ النقاش بإضافة أول تعليق.",
@@ -626,6 +627,25 @@
       "minutes": "منذ {count} د",
       "hours": "منذ {count} س",
       "days": "منذ {count} ي"
+    },
+    "zones": {
+      "draw": "أظهر على الصورة",
+      "drawing": "ارسم على الصورة — إلغاء",
+      "label": "منطقة على الصورة",
+      "remove": "إزالة"
+    },
+    "activity": {
+      "status": "غيّر الحالة",
+      "date": "غيّر التاريخ",
+      "title": "غيّر العنوان",
+      "caption": "عدّل التعليق",
+      "visual_added": "أضاف صورة",
+      "visual_removed": "أزال صورة",
+      "commented": "علّق · {target}",
+      "none": "لا شيء",
+      "emptyTitle": "لا شيء حاليًا",
+      "emptyDescription": "ستظهر هنا التعليقات والتغييرات على هذا المحتوى.",
+      "error": "تعذّر تحميل التغييرات. حاول مرة أخرى."
     }
   },
   "notifications": {

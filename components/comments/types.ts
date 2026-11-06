@@ -1,3 +1,5 @@
+import type { Anchor } from "@/lib/anchor";
+
 /**
  * `media` = un visuel de carrousel / post / infographie. C'est la même
  * logique que `scene` (une scène de storyboard) et `slide` (un slot de
@@ -29,8 +31,21 @@ export type Comment = {
   is_guest: boolean;
   body: string;
   resolved: boolean;
+  /** Zone visée sur le visuel (0093). Null : le visuel entier. */
+  anchor?: Anchor | null;
   created_at: string;
   updated_at: string;
+};
+
+/** Une ligne du fil d'activité (0093), lue par `list_content_activity`. */
+export type ActivityRow = {
+  id: string;
+  field: "status" | "date" | "title" | "caption" | "visual_added" | "visual_removed";
+  old_value: string | null;
+  new_value: string | null;
+  created_at: string;
+  /** Null : c'est Kreatly (passage automatique en ligne à la date). */
+  actor_label: string | null;
 };
 
 export type CommentTarget = {

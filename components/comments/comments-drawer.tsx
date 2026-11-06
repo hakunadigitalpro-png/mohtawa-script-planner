@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -12,8 +13,13 @@ import {
   RotateCcw,
   Inbox,
   ArrowLeft,
+  ArrowRight,
+  SquareDashedMousePointer,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatDateFr } from "@/lib/utils";
+import { statusColor, statusLabel } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/client";
+import { zoneLetter, type Anchor } from "@/lib/anchor";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -23,7 +29,8 @@ import {
   deleteComment,
 } from "@/app/(app)/contents/comment-actions";
 import { useComments } from "./comments-provider";
-import type { Comment, CommentTargetType } from "./types";
+import { ImageZones, hasFinePointer } from "./image-zones";
+import type { ActivityRow, Comment, CommentTargetType } from "./types";
 
 type TargetLabels = Record<string, string>;
 
@@ -83,6 +90,9 @@ export function CommentsDrawer({
       <aside className="fixed inset-y-0 end-0 z-50 flex w-full max-w-md flex-col border-s border-border/60 bg-card shadow-[0_0_60px_-10px_rgba(10,6,18,0.25)]">
         {drawer.mode === "thread" ? (
           <ThreadView
+            // Un autre fil repart de zéro : ni l'image ni la zone en cours du
+            // précédent ne doivent rester affichées.
+            key={`${drawer.targetType}:${drawer.targetId}`}
             targetType={drawer.targetType}
             targetId={drawer.targetId}
             targetLabels={targetLabels}
@@ -147,6 +157,38 @@ function ThreadView({
     return m;
   }, [comments]);
 
+  // L'image dont on parle, en tête du fil. Lue ici plutôt que passée en props :
+  // ce panneau s'ouvre aussi depuis le calendrier, les tâches et le planning,
+  // où la fiche et ses visuels ne sont pas chargés.
+  const [mediaUrl, setMediaUrl] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (targetType !== "media") return;
+    let stopped = false;
+    createClient()
+      .from("content_media")
+      .select("image_url")
+      .eq("id", targetId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!stopped) setMediaUrl((data?.image_url as string | null) ?? null);
+      });
+    return () => {
+      stopped = true;
+    };
+  }, [targetType, targetId]);
+
+  // Une lettre par zone, dans l'ordre du fil. Les fils résolus gardent la leur
+  // (« la zone B » ne doit pas devenir « la zone A » en cours de discussion)
+  // mais disparaissent de l'image : il n'y a plus rien à y regarder.
+  const anchored = roots.filter((r) => r.anchor);
+  const letterOf = (id: string) => {
+    const i = anchored.findIndex((r) => r.id === id);
+    return i >= 0 ? zoneLetter(i) : null;
+  };
+  const [draftAnchor, setDraftAnchor] = React.useState<Anchor | null>(null);
+  const [drawing, setDrawing] = React.useState(false);
+  const draftLetter = zoneLetter(anchored.length);
+
   return (
     <>
       <DrawerHeader
@@ -166,6 +208,56 @@ function ThreadView({
       />
 
       <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+        {mediaUrl && (
+          <div className="space-y-2">
+            <div className="overflow-hidden rounded-2xl border border-border/60 bg-secondary/40">
+              <ImageZones
+                canDraw
+                drawing={drawing}
+                onDraw={(a) => {
+                  setDraftAnchor(a);
+                  setDrawing(false);
+                }}
+                zones={[
+                  ...anchored
+                    .filter((r) => !r.resolved)
+                    .map((r) => ({
+                      key: r.id,
+                      letter: letterOf(r.id) ?? "",
+                      anchor: r.anchor as Anchor,
+                    })),
+                  ...(draftAnchor
+                    ? [{ key: "draft", letter: draftLetter, anchor: draftAnchor }]
+                    : []),
+                ]}
+              >
+                <Image
+                  src={mediaUrl}
+                  alt={targetLabel}
+                  width={1080}
+                  height={1350}
+                  sizes="448px"
+                  draggable={false}
+                  className="h-auto w-full"
+                />
+              </ImageZones>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDrawing((d) => !d)}
+              className={cn(
+                "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition md:min-h-0",
+                drawing
+                  ? "border-foreground bg-secondary text-foreground"
+                  : "border-border/70 bg-card text-foreground hover:bg-secondary",
+              )}
+            >
+              <SquareDashedMousePointer className="size-3.5" />
+              {drawing ? t("zones.drawing") : t("zones.draw")}
+            </button>
+          </div>
+        )}
+
         {roots.length === 0 && (
           <EmptyState
             title={t("emptyThreadTitle")}
@@ -176,6 +268,7 @@ function ThreadView({
           <CommentThread
             key={root.id}
             root={root}
+            zone={letterOf(root.id)}
             replies={replyMap.get(root.id) ?? []}
             currentUserId={currentUserId}
             contentId={contentId}
@@ -192,7 +285,11 @@ function ThreadView({
           contentId={contentId}
           targetType={targetType}
           targetId={targetId}
+          anchor={draftAnchor}
+          anchorLetter={draftLetter}
+          onClearAnchor={() => setDraftAnchor(null)}
           onSubmitted={() => {
+            setDraftAnchor(null);
             refresh();
             router.refresh();
           }}
@@ -216,9 +313,9 @@ function InboxView({
 }) {
   const t = useTranslations("comments");
   const { comments, openThread, currentUserId, lastReadAt } = useComments();
-  const [filter, setFilter] = React.useState<"all" | "unread" | "resolved">(
-    initialFilter,
-  );
+  const [filter, setFilter] = React.useState<
+    "all" | "unread" | "resolved" | "activity"
+  >(initialFilter);
 
   // On regroupe par target. Chaque "thread" dans l'inbox = un commentaire racine + meta.
   const roots = comments
@@ -268,6 +365,7 @@ function InboxView({
               { value: "all", labelKey: "all" },
               { value: "unread", labelKey: "unread" },
               { value: "resolved", labelKey: "resolved" },
+              { value: "activity", labelKey: "activity" },
             ] as const
           ).map((f) => (
             <button
@@ -287,6 +385,9 @@ function InboxView({
         </div>
       </div>
 
+      {filter === "activity" ? (
+        <ActivityFeed targetLabels={targetLabels} />
+      ) : (
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {filtered.length === 0 && (
           <div className="px-2 py-12">
@@ -355,7 +456,148 @@ function InboxView({
           );
         })}
       </div>
+      )}
     </>
+  );
+}
+
+// ============================================================
+// Fil d'activité — commentaires et changements, dans l'ordre
+// ============================================================
+
+/**
+ * Tout ce qui est arrivé à ce contenu, au même endroit : qui a écrit quoi, et
+ * qui a changé quoi. Permet de répondre à « pourquoi c'est repassé en À
+ * réviser ? » sans aller demander.
+ */
+function ActivityFeed({ targetLabels }: { targetLabels: TargetLabels }) {
+  const t = useTranslations("comments");
+  const { comments, contentId, openThread } = useComments();
+  const [rows, setRows] = React.useState<ActivityRow[] | null>(null);
+  const [failed, setFailed] = React.useState(false);
+
+  React.useEffect(() => {
+    let stopped = false;
+    createClient()
+      .rpc("list_content_activity", { p_content_id: contentId })
+      .then(({ data, error }) => {
+        if (stopped) return;
+        setFailed(Boolean(error));
+        setRows((data as ActivityRow[] | null) ?? []);
+      });
+    return () => {
+      stopped = true;
+    };
+  }, [contentId, comments]);
+
+  const feed = [
+    ...comments.map((c) => ({ at: c.created_at, comment: c, row: null })),
+    ...(rows ?? []).map((r) => ({ at: r.created_at, comment: null, row: r })),
+  ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+
+  return (
+    <div className="flex-1 space-y-2 overflow-y-auto p-3">
+      {/* Sans ce message, un échec passerait pour « rien ne s'est passé ». */}
+      {failed && (
+        <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {t("activity.error")}
+        </p>
+      )}
+      {rows !== null && !failed && feed.length === 0 && (
+        <div className="px-2 py-12">
+          <EmptyState
+            title={t("activity.emptyTitle")}
+            description={t("activity.emptyDescription")}
+          />
+        </div>
+      )}
+      {feed.map(({ comment, row }) =>
+        comment ? (
+          <button
+            key={comment.id}
+            type="button"
+            onClick={() => openThread(comment.target_type, comment.target_id)}
+            className="block w-full rounded-2xl border border-border/60 bg-card p-3 text-start transition hover:bg-secondary/50"
+          >
+            <ActivityHead
+              who={getAuthorLabel(comment)}
+              what={t("activity.commented", {
+                target:
+                  targetLabels[`${comment.target_type}:${comment.target_id}`] ??
+                  defaultLabel(t, comment.target_type, comment.target_id),
+              })}
+              at={comment.created_at}
+            />
+            <p className="mt-1 line-clamp-2 text-sm text-foreground/80" dir="auto">
+              {comment.body}
+            </p>
+          </button>
+        ) : row ? (
+          <div key={row.id} className="rounded-2xl bg-secondary/40 p-3">
+            <ActivityHead
+              who={row.actor_label ?? "Kreatly"}
+              what={t(`activity.${row.field}`)}
+              at={row.created_at}
+            />
+            <ActivityChange row={row} />
+          </div>
+        ) : null,
+      )}
+    </div>
+  );
+}
+
+function ActivityHead({ who, what, at }: { who: string; what: string; at: string }) {
+  const t = useTranslations("comments");
+  return (
+    <div className="flex items-start justify-between gap-2 text-sm">
+      <p className="min-w-0 text-foreground/80">
+        <span className="font-semibold text-foreground">{who}</span> {what}
+      </p>
+      <span className="shrink-0 text-xs text-muted">{relativeTimeFr(t, at)}</span>
+    </div>
+  );
+}
+
+/** Avant → après : l'ancienne valeur barrée, comme dans un suivi de modifs. */
+function ActivityChange({ row }: { row: ActivityRow }) {
+  const t = useTranslations("comments");
+  if (row.field === "status") {
+    return (
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+        <StatusChip status={row.old_value} struck />
+        <ArrowRight className="size-3.5 text-muted rtl-flip" aria-hidden />
+        <StatusChip status={row.new_value} />
+      </div>
+    );
+  }
+  if (row.field === "date" || row.field === "title") {
+    const show = (v: string | null) =>
+      !v ? t("activity.none") : row.field === "date" ? formatDateFr(v) : v;
+    return (
+      <p className="mt-1 text-sm text-foreground" dir="auto">
+        <span className="text-muted line-through">{show(row.old_value)}</span>
+        {" → "}
+        {show(row.new_value)}
+      </p>
+    );
+  }
+  return null;
+}
+
+function StatusChip({ status, struck }: { status: string | null; struck?: boolean }) {
+  return (
+    <span
+      className={cn(
+        "rounded-full px-2 py-0.5 text-xs font-medium text-foreground",
+        struck && "line-through opacity-70",
+      )}
+      style={{
+        backgroundColor: `color-mix(in srgb, ${statusColor(status)} 22%, transparent)`,
+      }}
+    >
+      {statusLabel(status)}
+    </span>
   );
 }
 
@@ -397,12 +639,15 @@ function DrawerHeader({
 
 function CommentThread({
   root,
+  zone,
   replies,
   currentUserId,
   contentId,
   onChanged,
 }: {
   root: Comment;
+  /** Lettre de la zone visée sur l'image, s'il y en a une. */
+  zone: string | null;
   replies: Comment[];
   currentUserId: string;
   contentId: string;
@@ -420,6 +665,14 @@ function CommentThread({
           : "border-border/60 bg-card",
       )}
     >
+      {zone && (
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-foreground">
+          <span className="flex size-5 items-center justify-center rounded-full bg-ink text-xs font-bold text-white">
+            {zone}
+          </span>
+          {t("zones.label")}
+        </p>
+      )}
       <CommentItem
         comment={root}
         isRoot
@@ -584,11 +837,17 @@ function NewCommentForm({
   contentId,
   targetType,
   targetId,
+  anchor,
+  anchorLetter,
+  onClearAnchor,
   onSubmitted,
 }: {
   contentId: string;
   targetType: CommentTargetType;
   targetId: string;
+  anchor: Anchor | null;
+  anchorLetter: string;
+  onClearAnchor: () => void;
   onSubmitted: () => void;
 }) {
   const t = useTranslations("comments");
@@ -605,6 +864,7 @@ function NewCommentForm({
         targetType,
         targetId,
         body,
+        anchor,
       });
       if ("error" in res && res.error) {
         setError(res.error);
@@ -617,10 +877,28 @@ function NewCommentForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-2">
+      {anchor && (
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+          <span className="flex size-5 items-center justify-center rounded-full bg-ink text-xs font-bold text-white">
+            {anchorLetter}
+          </span>
+          {t("zones.label")}
+          <button
+            type="button"
+            onClick={onClearAnchor}
+            className="ms-1 inline-flex items-center gap-0.5 font-medium text-muted hover:text-foreground"
+          >
+            <X className="size-3" />
+            {t("zones.remove")}
+          </button>
+        </div>
+      )}
       <Textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder={t("newPlaceholder")}
+        autoFocus={Boolean(anchor) && hasFinePointer()}
+        key={anchor ? "zone" : "plain"}
         rows={3}
         className="resize-none"
       />

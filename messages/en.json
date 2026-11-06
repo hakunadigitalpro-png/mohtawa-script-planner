@@ -575,7 +575,8 @@
     "filters": {
       "all": "All",
       "unread": "Unread",
-      "resolved": "Resolved"
+      "resolved": "Resolved",
+      "activity": "Activity"
     },
     "emptyThreadTitle": "No comments here",
     "emptyThreadDescription": "Start the discussion by adding the first comment.",
@@ -626,6 +627,25 @@
       "minutes": "{count} min ago",
       "hours": "{count} h ago",
       "days": "{count} d ago"
+    },
+    "zones": {
+      "draw": "Show on the image",
+      "drawing": "Draw on the image — cancel",
+      "label": "Area on the image",
+      "remove": "Remove"
+    },
+    "activity": {
+      "status": "changed the status",
+      "date": "changed the date",
+      "title": "changed the title",
+      "caption": "edited the caption",
+      "visual_added": "added a visual",
+      "visual_removed": "removed a visual",
+      "commented": "commented · {target}",
+      "none": "None",
+      "emptyTitle": "Nothing yet",
+      "emptyDescription": "Comments and changes to this content will show up here.",
+      "error": "Couldn't load the changes. Try again."
     }
   },
   "notifications": {

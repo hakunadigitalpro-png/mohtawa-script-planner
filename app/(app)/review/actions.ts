@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeAnchor, type Anchor } from "@/lib/anchor";
 import { renderEmail, sendEmail } from "@/lib/email";
 import { audience, contentCard, senderName } from "@/lib/notify";
 import { sendBlockerMessage } from "@/lib/content-lifecycle";
@@ -10,7 +11,12 @@ import { sendBlockerFor } from "@/lib/content-lifecycle-db";
 type ReviewResult = { ok: true } | { ok: false; error: string };
 
 /** Une remarque du client. `mediaId` null : elle porte sur l'ensemble. */
-export type ReviewNoteInput = { mediaId: string | null; body: string };
+export type ReviewNoteInput = {
+  mediaId: string | null;
+  body: string;
+  /** Zone dessinée sur le visuel. */
+  anchor?: Anchor | null;
+};
 
 /**
  * Nomme chaque remarque pour l'e-mail — « Diapo 2 », et pas un identifiant.
@@ -68,7 +74,11 @@ export async function reviewContent(input: {
   notes?: ReviewNoteInput[];
 }): Promise<ReviewResult> {
   const notes = (input.notes ?? [])
-    .map((n) => ({ mediaId: n.mediaId, body: n.body.trim() }))
+    .map((n) => ({
+      mediaId: n.mediaId,
+      body: n.body.trim(),
+      anchor: n.mediaId ? normalizeAnchor(n.anchor) : null,
+    }))
     .filter((n) => n.body.length > 0);
 
   // Un « je demande une modif' » sans explication laisse l'équipe sans rien
@@ -87,7 +97,7 @@ export async function reviewContent(input: {
   const { error } = await supabase.rpc("client_review_content_many", {
     p_content_id: input.contentId,
     p_decision: input.decision,
-    p_notes: notes.map((n) => ({ media_id: n.mediaId, body: n.body })),
+    p_notes: notes.map((n) => ({ media_id: n.mediaId, body: n.body, anchor: n.anchor })),
   });
 
   if (error) {

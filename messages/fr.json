@@ -575,7 +575,8 @@
     "filters": {
       "all": "Tous",
       "unread": "Non lus",
-      "resolved": "Résolus"
+      "resolved": "Résolus",
+      "activity": "Activité"
     },
     "emptyThreadTitle": "Aucun commentaire ici",
     "emptyThreadDescription": "Lance la discussion en ajoutant le premier commentaire.",
@@ -626,6 +627,25 @@
       "minutes": "il y a {count} min",
       "hours": "il y a {count} h",
       "days": "il y a {count} j"
+    },
+    "zones": {
+      "draw": "Montrer sur l'image",
+      "drawing": "Dessine sur l'image — annuler",
+      "label": "Zone sur l'image",
+      "remove": "Retirer"
+    },
+    "activity": {
+      "status": "a changé le statut",
+      "date": "a changé la date",
+      "title": "a changé le titre",
+      "caption": "a modifié la légende",
+      "visual_added": "a ajouté un visuel",
+      "visual_removed": "a retiré un visuel",
+      "commented": "a commenté · {target}",
+      "none": "Aucune",
+      "emptyTitle": "Rien pour l'instant",
+      "emptyDescription": "Les commentaires et les changements de ce contenu apparaîtront ici.",
+      "error": "Impossible de charger les changements. Réessaie."
     }
   },
   "notifications": {
