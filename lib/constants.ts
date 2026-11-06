@@ -99,8 +99,23 @@ export const SIMPLE_STATUSES = [
  * sens : c'est le choix du format qui ouvre la suite.
  */
 export function statusesForType(type: string | null | undefined) {
-  if (!type) return IDEA_STATUSES;
-  return isSimpleType(type) ? SIMPLE_STATUSES : STATUSES;
+  const steps = !type ? IDEA_STATUSES : isSimpleType(type) ? SIMPLE_STATUSES : STATUSES;
+  return [...steps, CANCELLED_STATUS];
+}
+
+/**
+ * Abandonner sans supprimer (0094). Hors de la ligne de temps : ce n'est pas
+ * une étape, donc il reste en dehors des trois listes ci-dessus, dont les
+ * étapes servent aussi de colonnes (board des idées).
+ */
+export const CANCELLED_STATUS = {
+  value: "cancelled",
+  label: "Annulé",
+  color: "var(--color-status-cancelled)",
+} as const;
+
+export function isCancelled(status: string | null | undefined) {
+  return status === "cancelled";
 }
 
 /** Les seuls statuts qu'un contenu sans format peut porter. */
@@ -120,6 +135,7 @@ export const ALL_STATUSES = [
   ...STATUSES,
   ...SIMPLE_STATUSES,
   ...IDEA_STATUSES,
+  CANCELLED_STATUS,
 ].filter((s, i, arr) => arr.findIndex((s2) => s2.value === s.value) === i);
 
 export type Status = (typeof STATUSES)[number]["value"];
@@ -180,6 +196,7 @@ const CLIENT_STATUS: Record<string, string> = {
   programmed: "Validé",
   live: "Publié",
   published: "Publié",
+  cancelled: "Annulé",
 };
 
 export function clientStatusLabel(status: string | null | undefined) {
@@ -192,6 +209,7 @@ export function clientStatusColor(status: string | null | undefined) {
     return statusColor(status);
   }
   if (status === "live" || status === "published") return statusColor("live");
+  if (status === "cancelled") return statusColor("cancelled");
   if (CLIENT_STATUS[status ?? ""]) return statusColor("approved");
   return statusColor("idea");
 }

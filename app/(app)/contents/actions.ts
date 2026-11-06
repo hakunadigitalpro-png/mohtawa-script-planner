@@ -125,6 +125,10 @@ export async function updateContent(
     hide_production_tabs: boolean;
     /** L'angle d'une idée, avant qu'un format dise où l'écrire (0055). */
     notes: string | null;
+    /** Échéance de production (0094). */
+    due_date: string | null;
+    /** Responsable, parmi l'équipe : la base refuse tout autre compte (0094). */
+    assignee_id: string | null;
   }>,
 ) {
   const supabase = await createClient();
@@ -162,6 +166,8 @@ export async function updateContent(
     "caption",
     "first_comment",
     "preview_url",
+    "due_date",
+    "assignee_id",
     "hide_production_tabs",
     "notes",
   ]);

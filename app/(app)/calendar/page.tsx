@@ -7,7 +7,7 @@ import {
   X,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCachedUser } from "@/lib/supabase/server";
 import { resolveActiveBrand } from "@/lib/brand";
 import { cookies } from "next/headers";
 import { CalendarMonth, type CalendarEntry } from "@/components/calendar-month";
@@ -15,6 +15,9 @@ import { EventsCountriesToggle } from "@/components/events-countries-toggle";
 import { DEFAULT_COUNTRIES } from "@/lib/maghreb-events";
 import { CalendarQuickCreate } from "@/components/calendar-quick-create";
 import { CalendarPlatformFilter } from "@/components/calendar-platform-filter";
+import { AssigneeFilter } from "@/components/assignee-filter";
+import { fetchTeam, type TeamMember } from "@/lib/brand-team";
+import { isProductionLate, rankOf, todayISO } from "@/lib/content-lifecycle";
 import { CalendarViewTabs } from "@/components/calendar-view-tabs";
 import { PlanningTable } from "@/components/planning-table";
 import { KanbanView } from "@/components/kanban-view";
@@ -49,6 +52,7 @@ export default async function CalendarPage({
     platform?: string;
     /** `1` sur le planning : seulement les contenus à remarque non lue. */
     unread?: string;
+    who?: string;
   }>;
 }) {
   const { active, role } = await resolveActiveBrand();
@@ -75,6 +79,11 @@ export default async function CalendarPage({
           ? "ideas"
           : "calendar";
   const platformFilter = params.platform || "";
+  // « Qui fait quoi ». Un identifiant, ou rien : la valeur part dans une requête.
+  // Pas pour un client invité, le responsable est un repère interne.
+  const who =
+    !isClient && params.who && /^[0-9a-f-]{36}$/i.test(params.who) ? params.who : "";
+  const whoQs = who ? `&who=${who}` : "";
   // « Non lus » : le planning ne montre que les contenus qui ont une remarque
   // non lue, TOUS mois confondus — une remarque du mois dernier ne doit pas
   // disparaître parce qu'on a changé de page. Un client invité peut y venir :
@@ -146,6 +155,13 @@ export default async function CalendarPage({
           .lt("date", monthEnd),
   ]);
 
+  const [team, currentUser] = isClient
+    ? [[] as TeamMember[], null]
+    : await Promise.all([fetchTeam(supabase, active.id), getCachedUser()]);
+  const teamLabels = isClient
+    ? undefined
+    : Object.fromEntries(team.map((m) => [m.id, m.label]));
+
   const commentCounts: Record<string, number> = {};
   for (const row of (unreadRes.data ?? []) as {
     content_id: string;
@@ -156,6 +172,14 @@ export default async function CalendarPage({
 
   const awaitingCount = awaitingRes.count ?? 0;
   let contents = (contentsRes.data ?? []) as Content[];
+  if (who) contents = contents.filter((c) => c.assignee_id === who);
+  // Côté client invité : un contenu annulé disparaît de sa vue, et l'échéance et
+  // le responsable, repères internes, ne partent pas dans la page.
+  if (isClient) {
+    contents = contents
+      .filter((c) => c.status !== "cancelled")
+      .map((c) => ({ ...c, due_date: null, assignee_id: null }));
+  }
 
   if (unreadOnly) {
     const ids = Object.keys(commentCounts).filter((id) => commentCounts[id] > 0);
@@ -181,9 +205,41 @@ export default async function CalendarPage({
           .select("id, title, type, pillar, status, notes")
           .eq("brand_id", active.id)
           .is("date", null)
+          .neq("status", "cancelled")
           .order("created_at", { ascending: false })
       : { data: [] };
   const ideas = (ideasData ?? []) as IdeaCard[];
+
+  // Les échéances du mois, même si la publication tombe le mois suivant : c'est
+  // justement quand elle est loin qu'on oublie la date de fabrication.
+  const deadlines: Record<string, { id: string; title: string | null; late: boolean }[]> = {};
+  if (view === "calendar" && !isClient) {
+    let dueQuery = supabase
+      .from("contents")
+      .select("id, title, status, due_date")
+      .eq("brand_id", active.id)
+      .gte("due_date", monthStart)
+      .lt("due_date", monthEnd)
+      .neq("status", "cancelled");
+    if (who) dueQuery = dueQuery.eq("assignee_id", who);
+    if (platformFilter) dueQuery = dueQuery.eq("platform", platformFilter);
+    const { data: dueRows } = await dueQuery;
+    const today = todayISO();
+    for (const d of (dueRows ?? []) as {
+      id: string;
+      title: string | null;
+      status: string;
+      due_date: string;
+    }[]) {
+      // Déjà parti chez le client : l'échéance est tenue, plus rien à signaler.
+      if (rankOf(d.status) >= rankOf("pending_review")) continue;
+      (deadlines[d.due_date] ??= []).push({
+        id: d.id,
+        title: d.title,
+        late: isProductionLate({ status: d.status, dueDate: d.due_date, today }),
+      });
+    }
+  }
 
   let entries: CalendarEntry[] = [];
   // `=== "calendar"` et non `!== "planning"` : sans ça, l'onglet Idées paierait
@@ -192,15 +248,18 @@ export default async function CalendarPage({
     let pubsQuery = supabase
       .from("content_publications")
       .select(
-        "id, content_id, platform, scheduled_date, scheduled_time, contents!inner(id, brand_id, title, type, pillar, status)",
+        "id, content_id, platform, scheduled_date, scheduled_time, contents!inner(id, brand_id, title, type, pillar, status, assignee_id)",
       )
       .eq("contents.brand_id", active.id)
       .gte("scheduled_date", monthStart)
       .lt("scheduled_date", monthEnd);
     if (platformFilter) pubsQuery = pubsQuery.eq("platform", platformFilter);
+    if (who) pubsQuery = pubsQuery.eq("contents.assignee_id", who);
     const { data: pubsData } = await pubsQuery;
 
-    const pubs = (pubsData ?? []) as unknown as PublicationJoinRow[];
+    const pubs = ((pubsData ?? []) as unknown as PublicationJoinRow[]).filter(
+      (p) => !isClient || p.contents.status !== "cancelled",
+    );
     const publishedContentIds = new Set(pubs.map((p) => p.content_id));
 
     entries = [
@@ -271,7 +330,7 @@ export default async function CalendarPage({
   // la MÊME vue qu'on avait, pas dans la vue par défaut (= calendrier).
   const scopeQuery = `?m=${ym}${
     view !== "calendar" ? `&view=${view}` : ""
-  }${platformFilter ? `&platform=${encodeURIComponent(platformFilter)}` : ""}`;
+  }${platformFilter ? `&platform=${encodeURIComponent(platformFilter)}` : ""}${whoQs}`;
 
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const defaultCreateDate =
@@ -294,10 +353,14 @@ export default async function CalendarPage({
               view={view}
               month={ym}
               platform={platformFilter || undefined}
+              who={who || undefined}
               showIdeas={!isClient}
             />
             </div>
             {view === "calendar" && <CalendarPlatformFilter />}
+            {!isClient && view !== "ideas" && currentUser && (
+              <AssigneeFilter team={team} currentUserId={currentUser.id} />
+            )}
             {view === "ideas" && ideas.length > 0 && (
               <Link
                 href={`/print/strategy/${active.id}#idees`}
@@ -346,6 +409,7 @@ export default async function CalendarPage({
           commentCounts={commentCounts}
           thumbs={planningThumbs}
           canEdit={!isClient}
+          teamLabels={teamLabels}
         />
       ) : view === "planning" ? (
         <div className="space-y-4">
@@ -367,7 +431,7 @@ export default async function CalendarPage({
           ) : (
           <div className="flex items-center gap-3">
             <Link
-              href={`?m=${prevYm}&view=planning`}
+              href={`?m=${prevYm}&view=planning${whoQs}`}
               className="inline-flex size-8 items-center justify-center rounded-full border border-border text-muted transition hover:bg-secondary hover:text-foreground"
               aria-label="Mois précédent"
             >
@@ -377,7 +441,7 @@ export default async function CalendarPage({
               {monthLabel}
             </span>
             <Link
-              href={`?m=${nextYm}&view=planning`}
+              href={`?m=${nextYm}&view=planning${whoQs}`}
               className="inline-flex size-8 items-center justify-center rounded-full border border-border text-muted transition hover:bg-secondary hover:text-foreground"
               aria-label="Mois suivant"
             >
@@ -390,6 +454,7 @@ export default async function CalendarPage({
             commentCounts={commentCounts}
             thumbs={planningThumbs}
             scopeQuery={scopeQuery}
+            teamLabels={teamLabels}
             groupBy={unreadOnly ? "month" : "week"}
             emptyState={
               unreadOnly ? (
@@ -421,6 +486,7 @@ export default async function CalendarPage({
           <CalendarMonth
             initialMonth={monthStart}
             entries={entries}
+            deadlines={deadlines}
             commentCounts={commentCounts}
             canEdit={!isClient}
             scopeQuery={scopeQuery}

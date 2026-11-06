@@ -15,6 +15,7 @@ import {
   Linkedin,
   Music2,
   type LucideIcon,
+  Flag,
 } from "lucide-react";
 import {
   startOfMonth,
@@ -121,6 +122,7 @@ function formatTimeFr(time: string | null): string | null {
 export function CalendarMonth({
   initialMonth,
   entries,
+  deadlines = {},
   commentCounts = {},
   canEdit = true,
   scopeQuery = "",
@@ -128,6 +130,8 @@ export function CalendarMonth({
 }: {
   initialMonth: string; // YYYY-MM-01
   entries: CalendarEntry[];
+  /** Échéances de production, par jour `YYYY-MM-DD`. Vide pour un client. */
+  deadlines?: Record<string, { id: string; title: string | null; late: boolean }[]>;
   /** Pays actifs pour les marqueurs (cookie lu côté serveur). */
   countries?: ("TN" | "MA" | "DZ" | "CA")[];
   /** contentId → nombre de commentaires non lus (badge). */
@@ -352,6 +356,29 @@ export function CalendarMonth({
                     </div>
                   );
                 })()}
+                {/* Les échéances de production : un repère, pas un contenu
+                    publié ce jour-là. D'où le cadre sans fond, et aucun glisser. */}
+                {(deadlines[key] ?? []).slice(0, 2).map((d) => (
+                  <Link
+                    key={d.id}
+                    href={`/content/${d.id}${scopeQuery}`}
+                    title={`Échéance : ${d.title || tContent("untitled")}`}
+                    className={cn(
+                      "mt-1 flex items-center gap-1 rounded-md border border-dashed px-1.5 py-0.5 text-xs font-medium",
+                      d.late
+                        ? "border-destructive/50 text-destructive"
+                        : "border-border text-foreground/70",
+                    )}
+                  >
+                    <Flag className="size-3 shrink-0" aria-hidden />
+                    <span className="truncate">{d.title || tContent("untitled")}</span>
+                  </Link>
+                ))}
+                {(deadlines[key]?.length ?? 0) > 2 && (
+                  <p className="mt-1 px-1 text-xs font-medium text-muted">
+                    {t("moreItems", { count: deadlines[key].length - 2 })}
+                  </p>
+                )}
                 <ul className="mt-1.5 space-y-1.5">
                   {items.slice(0, 3).map((entry) => (
                     <EntryCard
@@ -599,6 +626,8 @@ function EntryCard({
           "block rounded-lg border-s-[3px] bg-secondary/40 p-2 pe-8 transition-colors hover:bg-secondary",
           canEdit && !agenda && "cursor-grab active:cursor-grabbing",
           agenda && "flex items-start gap-3",
+          // Annulé : il garde sa place, mais on voit tout de suite qu'il ne sort pas.
+          entry.status === "cancelled" && "opacity-70",
         )}
       >
         {agenda ? (

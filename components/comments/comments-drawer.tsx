@@ -571,9 +571,15 @@ function ActivityChange({ row }: { row: ActivityRow }) {
       </div>
     );
   }
-  if (row.field === "date" || row.field === "title") {
+  if (
+    row.field === "date" ||
+    row.field === "due_date" ||
+    row.field === "title" ||
+    row.field === "assignee"
+  ) {
+    const isDate = row.field === "date" || row.field === "due_date";
     const show = (v: string | null) =>
-      !v ? t("activity.none") : row.field === "date" ? formatDateFr(v) : v;
+      !v ? t("activity.none") : isDate ? formatDateFr(v) : v;
     return (
       <p className="mt-1 text-sm text-foreground" dir="auto">
         <span className="text-muted line-through">{show(row.old_value)}</span>

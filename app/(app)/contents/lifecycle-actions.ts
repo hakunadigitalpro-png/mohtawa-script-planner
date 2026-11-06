@@ -10,10 +10,13 @@ import {
   programmedStatusFor,
   todayISO,
   whyNotProgrammed,
+  statusAfterResume,
+  isProgrammedStatus,
 } from "@/lib/content-lifecycle";
 import type { ContentPublication } from "@/lib/types";
 
 type Result = { ok: true } | { ok: false; error: string };
+type ActivityEntry = { field: string; old_value: string | null; new_value: string | null };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^\d{2}:\d{2}(:\d{2})?$/;
@@ -182,5 +185,46 @@ export async function advanceContent(input: {
   revalidatePath("/dashboard");
   revalidatePath("/calendar");
   revalidatePath("/analytics");
+  return { ok: true };
+}
+
+/**
+ * Reprendre un contenu annulé : il retrouve le statut qu'il avait, lu dans
+ * l'historique. La lecture passe par la RPC, réservée à l'équipe.
+ */
+export async function resumeContent(contentId: string): Promise<Result> {
+  const supabase = await createClient();
+  const [{ data: row }, { data: activity }] = await Promise.all([
+    supabase.from("contents").select("status, type").eq("id", contentId).maybeSingle(),
+    supabase.rpc("list_content_activity", { p_content_id: contentId }),
+  ]);
+  if (!row) return { ok: false, error: "Ce contenu n'existe plus." };
+  if (row.status !== "cancelled") return { ok: true };
+
+  const cancelledFrom = ((activity ?? []) as ActivityEntry[]).find(
+    (a) => a.field === "status" && a.new_value === "cancelled",
+  )?.old_value;
+
+  let status = statusAfterResume({ previous: cancelledFrom, type: row.type });
+  // « Programmé » exige une date : si elle a été retirée entre-temps, le contenu
+  // reprend à l'étape d'avant, Validé.
+  if (isProgrammedStatus(status)) {
+    const { count } = await supabase
+      .from("content_publications")
+      .select("id", { count: "exact", head: true })
+      .eq("content_id", contentId)
+      .not("scheduled_date", "is", null);
+    if (!count) status = "approved";
+  }
+
+  const { error } = await supabase
+    .from("contents")
+    .update({ status })
+    .eq("id", contentId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath(`/content/${contentId}`);
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
   return { ok: true };
 }

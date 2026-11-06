@@ -3,6 +3,8 @@ import {
   hasMaterial,
   isForward,
   isLate,
+  isProductionLate,
+  statusAfterResume,
   isTrulyReady,
   nextStep,
   primaryPublication,
@@ -351,5 +353,34 @@ describe("todayISO", () => {
   it("écrit la date locale sur dix caractères, mois et jour sur deux chiffres", () => {
     expect(todayISO(new Date(2026, 0, 5))).toBe("2026-01-05");
     expect(todayISO(new Date(2026, 11, 31))).toBe("2026-12-31");
+  });
+});
+
+describe("annulé et échéance", () => {
+  const today = "2026-11-06";
+
+  it("un contenu annulé n'est jamais en retard, ni prêt, ni à envoyer", () => {
+    expect(isLate({ status: "cancelled", date: "2026-01-01", today })).toBe(false);
+    expect(isProductionLate({ status: "cancelled", dueDate: "2026-01-01", today })).toBe(false);
+    expect(isTrulyReady({ status: "cancelled", hasMaterial: true })).toBe(false);
+    expect(nextStep({ status: "cancelled", type: "post", publicationDate: null, today })).toEqual({
+      kind: "cancelled",
+    });
+    expect(isForward("cancelled", "live")).toBe(false);
+  });
+
+  it("l'échéance ne compte que tant que le contenu est en fabrication", () => {
+    expect(isProductionLate({ status: "design", dueDate: "2026-11-05", today })).toBe(true);
+    expect(isProductionLate({ status: "needs_revision", dueDate: "2026-11-05", today })).toBe(false);
+    expect(isProductionLate({ status: "pending_review", dueDate: "2026-11-05", today })).toBe(false);
+    expect(isProductionLate({ status: "design", dueDate: today, today })).toBe(false);
+    expect(isProductionLate({ status: "design", dueDate: null, today })).toBe(false);
+  });
+
+  it("reprendre ramène au statut d'avant, jamais directement chez le client", () => {
+    expect(statusAfterResume({ previous: "approved", type: "post" })).toBe("approved");
+    expect(statusAfterResume({ previous: "pending_review", type: "post" })).toBe("design");
+    expect(statusAfterResume({ previous: "pending_review", type: "reel" })).toBe("script");
+    expect(statusAfterResume({ previous: null, type: null })).toBe("idea");
   });
 });

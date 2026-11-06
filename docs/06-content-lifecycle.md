@@ -50,6 +50,13 @@ Deux règles valent **par tous les chemins** :
 - **Tournage et Montage ne s'appliquent qu'aux vidéos**, jamais en arrière, jamais au-delà de Montage.
 - **« Chez le client » a ses conditions** (`whyNotSendable`, chantier 2) : un client invité sur la marque (un membre `viewer`), et quelque chose à montrer — exactement ce que l'écran de validation affiche : un visuel avec image, un script (reel, vlog), les diapos d'une story, ou une légende. Lu par `fetchReviewMaterial` (`lib/review-material.ts`), le même chargeur que `/review`. Le bouton le dit avant le clic (pastille « Invite d'abord ton client », « Écris d'abord le script », « Ajoute un visuel ou une légende », « Ajoute une diapo avec son image ») ; `submitForReview` et le menu Statut refusent avec les mêmes mots.
 
+## Annulé, échéance, responsable (0094)
+
+- **`cancelled` Annulé** est hors de la ligne de temps (`rankOf` = -1) : aucun geste n'en part, il n'est jamais en retard ni « prêt », il sort des compteurs du tableau de bord et des rappels. On y entre par le menu Statut. Le bouton d'en-tête propose « Reprendre » (`resumeContent`), qui retrouve le statut d'avant dans `content_activity` ; sauf `pending_review`, qui repart en fabrication (`statusAfterResume`) pour ne pas réapparaître chez le client sans envoi.
+- **`due_date` Échéance** : pour quand ça doit être prêt, distincte de la publication. `isProductionLate` ne la surveille que tant que le contenu n'est pas parti chez le client ; ensuite c'est `isLate`, sur la date de publication.
+- **`assignee_id` Responsable** : un membre de l'équipe de la marque, jamais un client invité. La base le vérifie (`contents_check_assignee`) et vide le champ quand la personne quitte la marque.
+- Échéance et responsable sont des repères internes : ni le client invité ni `/review` ne les affichent.
+
 ## Le bouton qui suit le contenu
 
 [`components/content-detail/next-step-button.tsx`](../components/content-detail/next-step-button.tsx), dans l'en-tête de la fiche, ancre `data-tour="content-review"`. Un seul bouton, la seule action orange de la rangée ; `nextStep()` dit ce qu'il montre :

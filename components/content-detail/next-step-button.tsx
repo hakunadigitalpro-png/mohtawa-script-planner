@@ -15,6 +15,8 @@ import {
   Image as ImageIcon,
   Send,
   UserPlus,
+  Ban,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -37,7 +39,7 @@ import {
   type SendBlocker,
 } from "@/lib/content-lifecycle";
 import { submitForReview } from "@/app/(app)/review/actions";
-import { advanceContent } from "@/app/(app)/contents/lifecycle-actions";
+import { advanceContent, resumeContent } from "@/app/(app)/contents/lifecycle-actions";
 import type { ContentPublication } from "@/lib/types";
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -128,6 +130,24 @@ export function NextStepButton({
     </span>
   );
 
+  if (step.kind === "cancelled") {
+    return (
+      <>
+        {pill(<Ban className="size-3.5" />, t("cancelled"))}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={() => run(() => resumeContent(contentId))}
+        >
+          <RotateCcw className="size-3.5" />
+          {t("resume")}
+        </Button>
+        {errorLine}
+      </>
+    );
+  }
   if (step.kind === "waiting_client") {
     return pill(<Clock className="size-3.5" />, t("waitingClient"));
   }

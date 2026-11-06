@@ -23,7 +23,8 @@ import {
   platformLabel,
 } from "@/lib/constants";
 import { platformAccentColor } from "@/lib/platform-colors";
-import { formatDateFr } from "@/lib/utils";
+import { cn, formatDateFr } from "@/lib/utils";
+import { isProductionLate, todayISO } from "@/lib/content-lifecycle";
 import { ContentCommentsButton } from "@/components/comments";
 import type { Content } from "@/lib/types";
 
@@ -77,6 +78,11 @@ function PlatformChip({ platform }: { platform: string | null | undefined }) {
  * de la fiche, et la vignette s'agrandit sur place dans une lightbox. Le
  * reste de la ligne ouvre la fiche sur l'onglet Plan.
  */
+
+/** « 12 nov. » : l'année se devine, la colonne est étroite. */
+function formatDueShort(iso: string): string {
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
 
 /** Jour de la semaine abrégé en français (lun, mar…). */
 function dayShortFr(iso: string | null): string {
@@ -199,7 +205,13 @@ export function PlanningTable({
   scopeQuery = "",
   groupBy = "week",
   emptyState,
+  teamLabels,
 }: {
+  /**
+   * Responsables, par id. Présent : on affiche Échéance et Responsable. Absent
+   * pour un client invité : ce sont des repères internes à l'équipe.
+   */
+  teamLabels?: Record<string, string>;
   contents: Content[];
   /** contentId → nombre de commentaires non lus (badge). */
   commentCounts?: Record<string, number>;
@@ -317,8 +329,11 @@ export function PlanningTable({
   }
 
   // Jour · Date · Plateforme · Statut · Légende · Vidéo · Titre+Visuel
-  const cols =
-    "grid-cols-[60px_100px_110px_120px_minmax(0,1.5fr)_70px_minmax(0,1.6fr)]";
+  const showTeam = Boolean(teamLabels);
+  const today = todayISO();
+  const cols = showTeam
+    ? "grid-cols-[44px_90px_100px_120px_84px_96px_minmax(0,1.2fr)_56px_minmax(0,1.4fr)]"
+    : "grid-cols-[60px_100px_110px_120px_minmax(0,1.5fr)_70px_minmax(0,1.6fr)]";
 
   // Un clic sur la ligne (hors cellules spéciales) ouvre la fiche. On
   // intercepte les ouvertures de nouvel onglet (Ctrl/Cmd/middle-click) pour
@@ -344,7 +359,7 @@ export function PlanningTable({
   return (
     <>
       <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
-        <div className="min-w-[900px]">
+        <div className={showTeam ? "min-w-[1080px]" : "min-w-[900px]"}>
           <div
             className={`grid ${cols} gap-3 border-b border-border/60 bg-secondary/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted`}
           >
@@ -370,6 +385,8 @@ export function PlanningTable({
             >
               Statut{sortArrow("status")}
             </button>
+            {showTeam && <div>Échéance</div>}
+            {showTeam && <div>Responsable</div>}
             <div>Légende</div>
             <div>Vidéo</div>
             <button
@@ -400,7 +417,11 @@ export function PlanningTable({
                       openFiche(c.id);
                     }
                   }}
-                  className={`relative grid ${cols} cursor-pointer items-center gap-3 border-b border-border/40 px-4 py-3 pe-10 text-sm transition last:border-b-0 hover:bg-secondary/40`}
+                  className={cn(
+                    `relative grid ${cols} cursor-pointer items-center gap-3 border-b border-border/40 px-4 py-3 pe-10 text-sm transition last:border-b-0 hover:bg-secondary/40`,
+                    // Annulé : il reste à sa place, mais ne pèse plus dans la lecture.
+                    c.status === "cancelled" && "opacity-70",
+                  )}
                 >
                   <span className="font-medium capitalize text-foreground/80">
                     {dayShortFr(c.date)}
@@ -414,6 +435,23 @@ export function PlanningTable({
                   <span className="min-w-0 truncate">
                     <StatusChip status={c.status} />
                   </span>
+                  {showTeam && (
+                    <span
+                      className={cn(
+                        "whitespace-nowrap text-xs",
+                        isProductionLate({ status: c.status, dueDate: c.due_date, today })
+                          ? "font-semibold text-destructive"
+                          : "text-muted",
+                      )}
+                    >
+                      {c.due_date ? formatDueShort(c.due_date) : "—"}
+                    </span>
+                  )}
+                  {showTeam && (
+                    <span className="min-w-0 truncate text-xs text-foreground/80">
+                      {(c.assignee_id && teamLabels?.[c.assignee_id]) || "—"}
+                    </span>
+                  )}
                   {/* Clic sur la légende → popup lecture avec un crayon
                       pour aller la modifier. Vide → on va directement
                       à l'onglet Légende pour la rédiger. */}

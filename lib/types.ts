@@ -141,6 +141,10 @@ export type Content = {
   id: string;
   brand_id: string;
   user_id: string;
+  /** Pour quand ça doit être prêt, distinct de la publication (0094). */
+  due_date?: string | null;
+  /** Qui s'en occupe, parmi l'équipe de la marque (0094). */
+  assignee_id?: string | null;
   /** Null tant que le format n'est pas choisi — une idée (migration 0055). */
   type: string | null;
   /** L'angle d'une idée, avant qu'un format dise où l'écrire (0055). */

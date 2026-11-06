@@ -25,6 +25,7 @@ import type {
   ContentPublication,
   ScenePreset,
 } from "@/lib/types";
+import type { TeamMember } from "@/lib/brand-team";
 
 export function DetailTabs({
   defaultTab,
@@ -37,6 +38,7 @@ export function DetailTabs({
   perf,
   visuals,
   brandPillars,
+  team,
   brandObjectives,
   checklistItems,
   publications,
@@ -56,6 +58,7 @@ export function DetailTabs({
   perf: Performance | null;
   visuals: ContentMedia[];
   brandPillars: { id: string; name: string; objective?: string | null }[];
+  team: TeamMember[];
   brandObjectives: { id: string; name: string }[];
   /** Toujours nécessaires : le Vlog en tire sa liste de plans à capturer. */
   checklistItems: ChecklistItem[];
@@ -149,6 +152,7 @@ export function DetailTabs({
           brandPillars={brandPillars}
           brandObjectives={brandObjectives}
           publications={publications}
+          team={team}
         />
       </TabsContent>
 

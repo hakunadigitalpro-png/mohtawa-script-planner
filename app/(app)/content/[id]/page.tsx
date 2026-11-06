@@ -35,6 +35,7 @@ import {
   statusLabel,
 } from "@/lib/constants";
 import { DetailTabs } from "@/components/content-detail/detail-tabs";
+import { fetchTeam } from "@/lib/brand-team";
 import { DeleteContentButton } from "@/components/content-detail/delete-button";
 import { ShareButton } from "@/components/content-detail/share-button";
 import {
@@ -402,6 +403,7 @@ export default async function ContentDetailPage({
           perf={perf}
           visuals={visuals}
           brandPillars={pillars}
+          team={await fetchTeam(supabase, content.brand_id)}
           brandObjectives={objectives}
           checklistItems={checklistItems}
           publications={publications}

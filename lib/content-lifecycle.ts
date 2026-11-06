@@ -104,9 +104,11 @@ export function primaryPublication<
 }
 
 /** Les statuts où « Prêt » serait un mensonge : rien à montrer, ou refusé. */
-const NOT_READY = new Set(["idea", "selected", "script", "design", "needs_revision"]);
+const NOT_READY = new Set(["idea", "selected", "script", "design", "needs_revision", "cancelled"]);
 
 export type NextStep =
+  /** Annulé : la seule chose à proposer, c'est de le reprendre. */
+  | { kind: "cancelled" }
   /** Le contenu est en fabrication : on peut l'envoyer au client. */
   | { kind: "send_to_client" }
   /** Chez le client, on attend sa décision. */
@@ -140,6 +142,7 @@ export function nextStep(input: {
   url?: string | null;
 }): NextStep {
   const { status, type, publicationDate, today } = input;
+  if (status === "cancelled") return { kind: "cancelled" };
   if (status === "pending_review") return { kind: "waiting_client" };
   if (isLiveStatus(status)) return { kind: "online", url: input.url ?? null };
   if (status === "approved" || isProgrammedStatus(status)) {
@@ -255,8 +258,38 @@ export function isLate(input: {
 }): boolean {
   const { status, date, today } = input;
   if (!date) return false;
-  if (isLiveStatus(status)) return false;
+  if (isLiveStatus(status) || status === "cancelled") return false;
   return date < today;
+}
+
+/**
+ * Production en retard : l'échéance est passée et le contenu n'est pas encore
+ * parti chez le client. Une fois chez lui, la fabrication est finie : ce qui
+ * reste à surveiller, c'est la date de publication (`isLate`).
+ */
+export function isProductionLate(input: {
+  status: string;
+  dueDate: string | null | undefined;
+  today: string;
+}): boolean {
+  const { status, dueDate, today } = input;
+  if (!dueDate || status === "cancelled") return false;
+  return dueDate < today && rankOf(status) < rankOf("pending_review");
+}
+
+/**
+ * Le statut à retrouver quand on reprend un contenu annulé : celui d'avant
+ * l'annulation. Sauf « chez le client » : le reprendre le remettrait dans sa
+ * file sans que personne ne le lui ait renvoyé, on repart donc de la fabrication.
+ */
+export function statusAfterResume(input: {
+  previous: string | null | undefined;
+  type: string | null;
+}): string {
+  const { previous, type } = input;
+  if (previous && previous !== "cancelled" && previous !== "pending_review") return previous;
+  if (!type) return "idea";
+  return isSimpleType(type) ? "design" : "script";
 }
 
 export type SendBlocker =

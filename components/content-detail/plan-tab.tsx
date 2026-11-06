@@ -16,6 +16,9 @@ import { SaveFooter } from "./save-footer";
 import { PillarHelp } from "@/components/field-help/pillar-help";
 import { CommentButton } from "@/components/comments";
 import { PublicationsEditor } from "./publications-editor";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { formatDateFr } from "@/lib/utils";
+import type { TeamMember } from "@/lib/brand-team";
 import type { Content, ContentPublication } from "@/lib/types";
 
 function safeT(fn: (k: string) => string, key: string, fallback: string) {
@@ -30,8 +33,11 @@ export function PlanTab({
   content,
   brandPillars,
   publications,
+  team,
 }: {
   content: Content;
+  /** Ceux à qui on peut confier ce contenu. */
+  team: TeamMember[];
   brandPillars: { id: string; name: string; objective?: string | null }[];
   // Conservé dans le type (passé par DetailTabs) mais l'ancien champ à
   // étiquettes "Objectifs" a été remplacé par l'objectif hérité du pilier.
@@ -76,6 +82,8 @@ export function PlanTab({
       objectives: content.objectives ?? [],
       status: content.status,
       notes: content.notes ?? "",
+      due_date: content.due_date ?? "",
+      assignee_id: content.assignee_id ?? "",
     }),
     // `pillarsKey` / `objectivesKey` sont des clés sérialisées : le
     // compilateur infère `content.pillars` et refuse la mémoïsation sans
@@ -88,6 +96,8 @@ export function PlanTab({
       objectivesKey,
       content.status,
       content.notes,
+      content.due_date,
+      content.assignee_id,
     ],
   );
 
@@ -100,6 +110,8 @@ export function PlanTab({
         objectives: v.objectives,
         status: v.status,
         notes: v.notes || null,
+        due_date: v.due_date || null,
+        assignee_id: v.assignee_id || null,
       }),
     );
 
@@ -176,6 +188,44 @@ export function PlanTab({
             {/* La correction manuelle, assumée : le geste normal est le
                 bouton d'en-tête, mais une erreur se répare ici sans détour. */}
             <p className="text-xs text-muted">{t("statusHelp")}</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Échéance de production</Label>
+            <DateTimePicker
+              date={state.due_date}
+              time=""
+              showTime={false}
+              placeholder="Pour quand ça doit être prêt"
+              ariaLabel="Échéance de production"
+              onChange={({ date }) => setState((s) => ({ ...s, due_date: date }))}
+            />
+            {/* Prêt après la sortie : presque toujours une erreur de saisie, mais
+                un rappel suffit, on ne refuse pas. */}
+            {state.due_date && content.date && state.due_date > content.date ? (
+              <p className="text-xs font-medium text-destructive">
+                C&apos;est après la publication, prévue le {formatDateFr(content.date)}.
+              </p>
+            ) : (
+              <p className="text-xs text-muted">
+                Pour quand ça doit être prêt, avant de partir chez le client.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="assignee">Responsable</Label>
+            <Select
+              id="assignee"
+              value={state.assignee_id}
+              onValueChange={(v) => setState((s) => ({ ...s, assignee_id: v }))}
+              placeholder="Personne pour l'instant"
+              options={[
+                { value: "", label: "Personne pour l'instant" },
+                ...team.map((m) => ({ value: m.id, label: m.label })),
+              ]}
+            />
+            <p className="text-xs text-muted">Qui s&apos;en occupe dans l&apos;équipe.</p>
           </div>
 
           <div className="space-y-2">

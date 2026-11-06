@@ -645,7 +645,9 @@
       "none": "Aucune",
       "emptyTitle": "Rien pour l'instant",
       "emptyDescription": "Les commentaires et les changements de ce contenu apparaîtront ici.",
-      "error": "Impossible de charger les changements. Réessaie."
+      "error": "Impossible de charger les changements. Réessaie.",
+      "due_date": "a changé l'échéance",
+      "assignee": "a changé le responsable"
     }
   },
   "notifications": {
@@ -884,7 +886,8 @@
     "needs_revision": "À réviser",
     "approved": "Validé",
     "programmed": "Programmé",
-    "live": "En ligne"
+    "live": "En ligne",
+    "cancelled": "Annulé"
   },
   "objectives": {
     "education": "Éducation",
@@ -1115,6 +1118,8 @@
       "writeScript": "Écris d'abord le script",
       "addVisual": "Ajoute un visuel ou une légende",
       "addSlide": "Ajoute une diapo avec son image"
-    }
+    },
+    "cancelled": "Annulé",
+    "resume": "Reprendre"
   }
 }

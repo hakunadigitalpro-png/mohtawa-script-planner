@@ -121,6 +121,7 @@ export default async function DashboardPage({
       .eq("brand_id", active.id)
       .gte("date", today)
       .lt("date", weekAheadISO)
+      .neq("status", "cancelled")
       .order("date", { ascending: true })
       .limit(6),
     supabase
@@ -138,10 +139,13 @@ export default async function DashboardPage({
 
   const allContents = allRes.data ?? [];
   const total = allContents.length;
-  const drafts = allContents.filter((c) => !isLiveStatus(c.status)).length;
+  // Un contenu annulé n'est plus « en cours » : il n'y a plus rien à y faire.
+  const drafts = allContents.filter(
+    (c) => !isLiveStatus(c.status) && c.status !== "cancelled",
+  ).length;
   const published = allContents.filter((c) => isLiveStatus(c.status)).length;
   const thisMonth = allContents.filter((c) => {
-    if (!c.date) return false;
+    if (!c.date || c.status === "cancelled") return false;
     const d = new Date(c.date);
     return d >= startMonth && d < endMonth;
   }).length;

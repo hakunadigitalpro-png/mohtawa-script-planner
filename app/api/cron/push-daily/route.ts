@@ -102,7 +102,7 @@ export async function GET(req: Request) {
     }
 
     // Un contenu déjà « live » ou « published » n'a plus besoin d'un rappel.
-    const DONE = new Set(["live", "published"]);
+    const DONE = new Set(["live", "published", "cancelled"]);
     const todo = [...items.values()].filter((it) => !DONE.has(it.status ?? ""));
     if (todo.length === 0) continue;
 

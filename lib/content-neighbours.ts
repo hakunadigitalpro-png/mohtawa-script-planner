@@ -14,6 +14,8 @@ export type NeighbourScope = {
   /** Mois affiché, au format AAAA-MM. */
   month?: string;
   platform?: string;
+  /** Responsable filtré sur la liste d'où l'on vient. */
+  who?: string;
   /** Vrai quand on vient de l'onglet Idées : uniquement les contenus sans date. */
   undated?: boolean;
   /** Vue d'où l'on vient (planning / kanban). Permet au retour de
@@ -41,6 +43,7 @@ export function scopeFromParams(
   return {
     month: /^\d{4}-\d{2}$/.test(one(params.m) ?? "") ? one(params.m) : undefined,
     platform: one(params.platform),
+    who: one(params.who),
     undated: one(params.scope) === "ideas",
     view: v === "planning" || v === "kanban" ? v : undefined,
   };
@@ -53,6 +56,7 @@ export function scopeToQuery(scope: NeighbourScope): string {
   if (scope.month) parts.push(`m=${scope.month}`);
   if (scope.view) parts.push(`view=${scope.view}`);
   if (scope.platform) parts.push(`platform=${encodeURIComponent(scope.platform)}`);
+  if (scope.who) parts.push(`who=${encodeURIComponent(scope.who)}`);
   return parts.length ? `?${parts.join("&")}` : "";
 }
 
@@ -95,6 +99,7 @@ export async function fetchNeighbours(
   // trigger depuis la publication primaire (0020) : elle suffit ici, où l'on
   // ne cherche qu'un ordre de parcours.
   if (scope.platform) q = q.eq("platform", scope.platform);
+  if (scope.who && /^[0-9a-f-]{36}$/i.test(scope.who)) q = q.eq("assignee_id", scope.who);
 
   const { data } = await q
     .order("date", { ascending: true, nullsFirst: false })

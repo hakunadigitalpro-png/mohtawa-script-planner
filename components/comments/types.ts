@@ -40,7 +40,15 @@ export type Comment = {
 /** Une ligne du fil d'activité (0093), lue par `list_content_activity`. */
 export type ActivityRow = {
   id: string;
-  field: "status" | "date" | "title" | "caption" | "visual_added" | "visual_removed";
+  field:
+    | "status"
+    | "date"
+    | "title"
+    | "caption"
+    | "visual_added"
+    | "visual_removed"
+    | "due_date"
+    | "assignee";
   old_value: string | null;
   new_value: string | null;
   created_at: string;

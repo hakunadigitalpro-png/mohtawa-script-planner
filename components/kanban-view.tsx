@@ -4,6 +4,8 @@ import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { statusColor, statusLabel } from "@/lib/constants";
+import { isProductionLate, programmedStatusFor, todayISO } from "@/lib/content-lifecycle";
+import { cn } from "@/lib/utils";
 import { platformAccentColor } from "@/lib/platform-colors";
 import { ContentCommentsButton } from "@/components/comments";
 import { updateContent } from "@/app/(app)/contents/actions";
@@ -36,6 +38,7 @@ const COLUMNS: { value: string; label: string }[] = [
   { value: "approved", label: "Validé" },
   { value: "scheduled", label: "Programmée" },
   { value: "live", label: "Live" },
+  { value: "cancelled", label: "Annulé" },
 ];
 
 const DRAG_MIME = "application/x-kreatly-kanban";
@@ -45,7 +48,10 @@ export function KanbanView({
   commentCounts = {},
   thumbs = {},
   canEdit = true,
+  teamLabels,
 }: {
+  /** Responsables, par id. Absent pour un client invité : repère interne. */
+  teamLabels?: Record<string, string>;
   contents: Content[];
   commentCounts?: Record<string, number>;
   thumbs?: Record<string, string>;
@@ -60,7 +66,10 @@ export function KanbanView({
   const byStatus = new Map<string, KanbanContent[]>();
   for (const col of COLUMNS) byStatus.set(col.value, []);
   for (const c of contents) {
-    const key = COLUMNS.find((col) => col.value === c.status)?.value ?? "idea";
+    // « Programmé » (post) et « Programmée » (vidéo) sont la même étape, dite
+    // avec le mot de leur famille : sans ça, un post programmé tombait en Idée.
+    const status = c.status === "programmed" ? "scheduled" : c.status;
+    const key = COLUMNS.find((col) => col.value === status)?.value ?? "idea";
     const list = byStatus.get(key)!;
     list.push({ ...c, thumb: thumbs[c.id] ?? null });
   }
@@ -79,8 +88,12 @@ export function KanbanView({
     if (!id || !canEdit) return;
     // Optimisme : on recharge la page après la mutation serveur ; dans
     // l'intervalle la carte semble bouger grâce au refresh.
+    // La colonne « Programmée » accueille les deux familles : chacune garde son
+    // mot, sinon un post passé en `scheduled` ne sortirait jamais à sa date.
+    const type = contents.find((c) => c.id === id)?.type ?? null;
+    const status = toStatus === "scheduled" ? programmedStatusFor(type) : toStatus;
     startTransition(async () => {
-      const res = await updateContent(id, { status: toStatus });
+      const res = await updateContent(id, { status });
       if ("ok" in res && res.ok) router.refresh();
     });
   };
@@ -140,6 +153,8 @@ export function KanbanView({
                 )}
                 {items.map((c) => (
                   <KanbanCard
+                    assignee={(c.assignee_id && teamLabels?.[c.assignee_id]) || null}
+                    showDue={Boolean(teamLabels)}
                     key={c.id}
                     content={c}
                     canEdit={canEdit}
@@ -156,6 +171,8 @@ export function KanbanView({
 }
 
 function KanbanCard({
+  assignee,
+  showDue,
   content: c,
   canEdit,
   unreadCount,
@@ -163,18 +180,26 @@ function KanbanCard({
   content: KanbanContent;
   canEdit: boolean;
   unreadCount: number;
+  /** Le nom du responsable, déjà résolu. */
+  assignee: string | null;
+  /** Faux pour un client invité : l'échéance est un repère interne. */
+  showDue: boolean;
 }) {
   const router = useRouter();
   const platColor = platformAccentColor(c.platform);
   return (
     <li
-      draggable={canEdit}
+      // Annulé : il se reprend depuis sa fiche, qui retrouve son statut d'avant.
+      draggable={canEdit && c.status !== "cancelled"}
       onDragStart={(e) => {
         if (!canEdit) return;
         e.dataTransfer.setData(DRAG_MIME, c.id);
         e.dataTransfer.effectAllowed = "move";
       }}
-      className="group rounded-xl border border-border/60 bg-card p-2 shadow-sm transition hover:border-accent/40"
+      className={cn(
+        "group rounded-xl border border-border/60 bg-card p-2 shadow-sm transition hover:border-accent/40",
+        c.status === "cancelled" && "opacity-70",
+      )}
     >
       <button
         type="button"
@@ -216,6 +241,28 @@ function KanbanCard({
             </span>
           )}
         </div>
+        {showDue && (c.due_date || assignee) && (
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-x-2 text-xs">
+            {c.due_date ? (
+              <span
+                className={cn(
+                  isProductionLate({ status: c.status, dueDate: c.due_date, today: todayISO() })
+                    ? "font-semibold text-destructive"
+                    : "text-muted",
+                )}
+              >
+                Prêt pour le{" "}
+                {new Date(c.due_date).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "short",
+                })}
+              </span>
+            ) : (
+              <span />
+            )}
+            {assignee && <span className="truncate text-foreground/80">{assignee}</span>}
+          </div>
+        )}
       </button>
       <div
         className="mt-1 flex items-center justify-between"

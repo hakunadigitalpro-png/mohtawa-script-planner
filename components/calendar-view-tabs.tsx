@@ -15,18 +15,21 @@ export function CalendarViewTabs({
   view,
   month,
   platform,
+  who,
   showIdeas,
 }: {
   view: CalendarView;
   month: string;
   /** Conservé d'un onglet à l'autre : sinon le filtre se perd au retour. */
   platform?: string;
+  /** Le responsable filtré, conservé de même. */
+  who?: string;
   /** Faux pour un client invité : les idées sont le brouillon interne. */
   showIdeas: boolean;
 }) {
   const t = useTranslations("calendar");
   const query = (v: CalendarView) =>
-    `?m=${month}&view=${v}${platform ? `&platform=${encodeURIComponent(platform)}` : ""}`;
+    `?m=${month}&view=${v}${platform ? `&platform=${encodeURIComponent(platform)}` : ""}${who && v !== "ideas" ? `&who=${who}` : ""}`;
 
   return (
     <ViewTabs>
