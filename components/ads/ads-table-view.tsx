@@ -59,7 +59,10 @@ export function AdsTableView({
   campaigns,
   adSetsByCampaign = {},
   commentsByTarget = {},
+  backQs = "",
 }: {
+  /** D'où l'on vient, pour que la fiche ramène à cette vue et ces filtres. */
+  backQs?: string;
   campaigns: CampaignRow[];
   adSetsByCampaign?: Record<string, AdSetWithAds[]>;
   /** Clé : `${campaignId}:photo|text:${adId}#0` — identique au Planning. */
@@ -127,7 +130,7 @@ export function AdsTableView({
                 className={`grid ${cols} items-center gap-3 border-b border-foreground/5 px-4 py-3 text-sm last:border-b-0`}
               >
                 <Link
-                  href={`/ads/${c.id}`}
+                  href={`/ads/${c.id}${backQs}`}
                   className="truncate font-medium text-foreground hover:text-accent"
                 >
                   {c.title || "Sans titre"}

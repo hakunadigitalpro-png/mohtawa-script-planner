@@ -47,6 +47,7 @@ const EDITABLE_FIELDS = [
   "analysis",
   "evaluation",
   "live_url",
+  "lead_id",
 ] as const;
 
 type EditableField = (typeof EDITABLE_FIELDS)[number];

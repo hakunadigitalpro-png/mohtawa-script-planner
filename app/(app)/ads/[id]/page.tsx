@@ -4,6 +4,8 @@ import { resolveActiveBrand } from "@/lib/brand";
 import { PageHeader } from "@/components/page-header";
 import { AdCampaignEditor } from "@/components/ads/ad-campaign-editor";
 import { FullWidthBoost } from "@/components/full-width-boost";
+import type { CampaignActivityRow } from "@/components/ads/campaign-activity";
+import { fetchTeam } from "@/lib/brand-team";
 import type {
   Ad,
   AdCampaign,
@@ -24,10 +26,15 @@ type CommentRow = AdCampaignComment & { user_id: string };
 
 export default async function AdCampaignPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const { id } = await params;
+  // Seulement une chaîne de filtres : jamais une adresse où renvoyer quelqu'un.
+  const { from } = await searchParams;
+  const backHref = from && /^[\w=&%-]+$/.test(from) ? `/ads?${from}` : "/ads";
   const supabase = await createClient();
   const user = await getCachedUser();
   if (!user) redirect(`/login?next=/ads/${id}`);
@@ -38,9 +45,22 @@ export default async function AdCampaignPage({
     .eq("id", id)
     .maybeSingle();
   if (!raw) notFound();
-  const campaign = raw as AdCampaign;
+
+  // Le statut suit les dates (0095) : à relire après le calcul, sinon la fiche
+  // afficherait encore l'ancien.
+  await supabase.rpc("recompute_ad_statuses", { p_brand_id: raw.brand_id });
+  const { data: fresh } = await supabase
+    .from("ad_campaigns")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+  const fullCampaign = { ...raw, status: fresh?.status ?? raw.status } as AdCampaign;
 
   const { active, role: brandRole } = await resolveActiveBrand();
+  // Le responsable est un repère interne : son identifiant ne part pas vers un
+  // client invité.
+  const campaign =
+    brandRole === "viewer" ? { ...fullCampaign, lead_id: null } : fullCampaign;
   if (!active || active.id !== campaign.brand_id) {
     redirect(`/switch-brand?to=${campaign.brand_id}&next=/ads/${id}`);
   }
@@ -173,14 +193,21 @@ export default async function AdCampaignPage({
     .eq("user_id", user.id)
     .maybeSingle();
   const role = (myRole?.role as string | null) ?? null;
-  const isWriter =
-    role === "owner" || role === "admin" || role === "editor";
+  const isWriter = role !== null && role !== "viewer";
 
   // Garde à l'envoi (règle contenus 0052/0058) : il faut un client invité
   // ET quelque chose à lui montrer. Sans ça le bouton « Soumettre »
   // deviendrait une pastille-instruction, comme pour les contenus.
   const hasClient = members.some((m) => m.role === "viewer");
   const visualCount = media.filter((m) => m.kind === "visual").length;
+
+  const [team, activityRes] = isWriter
+    ? await Promise.all([
+        fetchTeam(supabase, campaign.brand_id),
+        supabase.rpc("list_ad_campaign_activity", { p_campaign_id: id }),
+      ])
+    : [[], { data: [] }];
+  const activity = (activityRes.data ?? []) as CampaignActivityRow[];
 
   return (
     <div className="space-y-6">
@@ -189,7 +216,7 @@ export default async function AdCampaignPage({
         eyebrow={active.name}
         title={campaign.title || "Campagne sans titre"}
         subtitle="Proposition de campagne, suivi et résultats"
-        backHref="/ads"
+        backHref={backHref}
         backLabel="Toutes les campagnes"
       />
       <AdCampaignEditor
@@ -203,6 +230,8 @@ export default async function AdCampaignPage({
         brandId={campaign.brand_id}
         adSets={adSets}
         adSetSuggestions={adSetSuggestions}
+        team={team}
+        activity={activity}
       />
     </div>
   );

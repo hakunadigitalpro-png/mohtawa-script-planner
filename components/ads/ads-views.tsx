@@ -8,6 +8,7 @@ import { AD_STATUS_LABEL } from "@/lib/types-ads";
 import { PlanningAdCard } from "@/components/ads/planning-ad-card";
 import { CampaignCommentsButton } from "@/components/ads/campaign-comments-button";
 import { reorderAdCampaigns } from "@/app/(app)/ads/actions";
+import { adReadiness } from "@/lib/ad-campaigns";
 
 /**
  * Les deux vues alternatives à la liste simple :
@@ -36,6 +37,10 @@ export type CampaignRow = {
   status: string;
   review_state: string | null;
   evaluation: string | null;
+  lead_id: string | null;
+  reach: number | null;
+  clicks: number | null;
+  leads: number | null;
 };
 
 export type MediaRow = {
@@ -112,7 +117,8 @@ type AdSetWithAds = {
     name: string | null;
     hook: string | null;
     visual_url: string | null;
-    slides: { visual_url: string | null; text: string | null }[];
+    video_url?: string | null;
+    slides: { visual_url: string | null; video_url?: string | null; text: string | null }[];
   }[];
 };
 
@@ -124,7 +130,13 @@ export function AdsPlanningView({
   adSetsByCampaign = {},
   commentsByTarget = {},
   brandId,
+  teamLabels,
+  backQs = "",
 }: {
+  /** D'où l'on vient, pour que la fiche ramène à cette vue et ces filtres. */
+  backQs?: string;
+  /** Responsables, par id. Absent pour un client invité : repère interne. */
+  teamLabels?: Record<string, string>;
   campaigns: CampaignRow[];
   media: MediaRow[];
   /** Les ad sets d'une campagne, chacun avec ses ads (visuel + texte). */
@@ -202,6 +214,8 @@ export function AdsPlanningView({
         const adSets = adSetsByCampaign[c.id] ?? [];
         const legacyVisual = firstVisualByCampaign.get(c.id);
         const totalAds = adSets.reduce((n, s) => n + s.ads.length, 0);
+        const { ready } = adReadiness(adSets);
+        const lead = c.lead_id ? teamLabels?.[c.lead_id] : null;
         const isDraggingOver = dragOver === c.id && dragging !== c.id;
         return (
           <li
@@ -252,7 +266,7 @@ export function AdsPlanningView({
             )}
             {/* En-tête — infos de la campagne, cliquable → la fiche. */}
             <Link
-              href={`/ads/${c.id}`}
+              href={`/ads/${c.id}${backQs}`}
               className="block space-y-2"
             >
               <div className="flex flex-wrap items-center gap-2">
@@ -295,6 +309,12 @@ export function AdsPlanningView({
                   {adSets.length} ad set{adSets.length > 1 ? "s" : ""} ·{" "}
                   {totalAds} ad{totalAds > 1 ? "s" : ""}
                 </span>
+                {teamLabels && totalAds > 0 ? (
+                  <span className={ready < totalAds ? "font-medium text-foreground" : undefined}>
+                    {ready}/{totalAds} prête{ready > 1 ? "s" : ""}
+                  </span>
+                ) : null}
+                {lead ? <span className="text-foreground/80">{lead}</span> : null}
               </div>
             </Link>
 
@@ -389,9 +409,14 @@ const BAND_TONE: Record<string, string> = {
 export function AdsCalendarView({
   campaigns,
   month,
+  filterQs = "",
+  backQs = "",
 }: {
+  backQs?: string;
   campaigns: CampaignRow[];
   month: string;
+  /** Les filtres actifs, conservés quand on change de mois. */
+  filterQs?: string;
 }) {
   const [yearStr, monthStr] = month.split("-");
   const year = Number(yearStr);
@@ -486,7 +511,7 @@ export function AdsCalendarView({
   const prevMonth = new Date(year, m0 - 1, 1);
   const nextMonth = new Date(year, m0 + 1, 1);
   const monthHref = (d: Date) =>
-    `/ads?view=calendar&month=${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    `/ads?view=calendar&month=${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}${filterQs}`;
 
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
   const monthLabel = firstOfMonth.toLocaleDateString("fr-FR", {
@@ -586,7 +611,7 @@ export function AdsCalendarView({
                 return (
                   <Link
                     key={`${seg.campaign.id}-${seg.weekIdx}-${seg.startCol}`}
-                    href={`/ads/${seg.campaign.id}`}
+                    href={`/ads/${seg.campaign.id}${backQs}`}
                     title={`${seg.campaign.title} · ${formatRange(seg.campaign.date_start, seg.campaign.date_end)}`}
                     className={`absolute flex items-center overflow-hidden truncate px-2 text-[11px] font-medium transition hover:opacity-80 ${
                       BAND_TONE[seg.campaign.status] ??

@@ -15,6 +15,10 @@ import {
 } from "@/components/ads/ads-views";
 import { AdsTableView } from "@/components/ads/ads-table-view";
 import { AdCardDelete } from "@/components/ads/ad-card-delete";
+import { AdsKanbanView } from "@/components/ads/ads-kanban";
+import { AdsFilters } from "@/components/ads/ads-filters";
+import { fetchTeam, type TeamMember } from "@/lib/brand-team";
+import { summarizeCampaigns } from "@/lib/ad-campaigns";
 
 /**
  * Trois façons de regarder les mêmes campagnes :
@@ -36,7 +40,7 @@ const STATUS_TONE: Record<string, string> = {
   stopped: "bg-foreground/10 text-foreground",
 };
 
-type ViewMode = "planning" | "calendar" | "table";
+type ViewMode = "planning" | "kanban" | "calendar" | "table";
 
 function monthKey(iso: string | null): string {
   if (!iso) return "Sans date";
@@ -60,7 +64,7 @@ function formatRange(start: string | null, end: string | null): string {
 export default async function AdsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; month?: string }>;
+  searchParams: Promise<{ view?: string; month?: string; status?: string; who?: string }>;
 }) {
   const supabase = await createClient();
   const user = await getCachedUser();
@@ -85,7 +89,17 @@ export default async function AdsPage({
       ? "calendar"
       : params.view === "table"
         ? "table"
-        : "planning";
+        : params.view === "kanban"
+          ? "kanban"
+          : "planning";
+
+  const isClient = role === "viewer";
+  // Filtres. Le responsable est un repère interne : rien pour un client invité.
+  const statusFilter =
+    params.status && params.status in AD_STATUS_LABEL ? params.status : "";
+  const who =
+    !isClient && params.who && /^[0-9a-f-]{36}$/i.test(params.who) ? params.who : "";
+  const filterQs = `${statusFilter ? `&status=${statusFilter}` : ""}${who ? `&who=${who}` : ""}`;
 
   const now = new Date();
   const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -94,10 +108,18 @@ export default async function AdsPage({
       ? params.month
       : defaultMonth;
 
+  // Le statut suit les dates (0095), à la lecture et avant de les charger.
+  await supabase.rpc("recompute_ad_statuses", { p_brand_id: active.id });
+
+  const team: TeamMember[] = isClient ? [] : await fetchTeam(supabase, active.id);
+  const teamLabels = isClient
+    ? undefined
+    : Object.fromEntries(team.map((m) => [m.id, m.label]));
+
   const { data } = await supabase
     .from("ad_campaigns")
     .select(
-      "id, brand_id, title, theme, platforms, budget_global, budget_daily, targeting_age, targeting_location, targeting_interests, date_start, date_end, status, review_state, evaluation",
+      "id, brand_id, title, theme, platforms, budget_global, budget_daily, targeting_age, targeting_location, targeting_interests, date_start, date_end, status, review_state, evaluation, lead_id, reach, clicks, leads",
     )
     .eq("brand_id", active.id)
     // Ordre manuel (0073) : on respecte le `position` posé par le
@@ -108,7 +130,15 @@ export default async function AdsPage({
     .order("date_start", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: true });
 
-  const campaigns = (data ?? []) as CampaignRow[];
+  // Le responsable est un repère interne : son identifiant ne part pas vers un
+  // client invité.
+  const allCampaigns = ((data ?? []) as CampaignRow[]).map((c) =>
+    isClient ? { ...c, lead_id: null } : c,
+  );
+  const campaigns = allCampaigns.filter(
+    (c) => (!statusFilter || c.status === statusFilter) && (!who || c.lead_id === who),
+  );
+  const totals = summarizeCampaigns(campaigns);
 
   let media: MediaRow[] = [];
   // Ad sets + ads par campagne pour la vue Planning. On veut l'ensemble
@@ -126,7 +156,8 @@ export default async function AdsPage({
         name: string | null;
         hook: string | null;
         visual_url: string | null;
-        slides: { visual_url: string | null; text: string | null }[];
+        video_url: string | null;
+        slides: { visual_url: string | null; video_url: string | null; text: string | null }[];
       }[];
     }[]
   > = {};
@@ -136,7 +167,7 @@ export default async function AdsPage({
     string,
     { id: string; body: string; created_at: string; author_email: string }[]
   > = {};
-  if ((view === "planning" || view === "table") && campaigns.length > 0) {
+  if ((view === "planning" || view === "table" || view === "kanban") && campaigns.length > 0) {
     const campaignIds = campaigns.map((c) => c.id);
     const [
       { data: mediaData },
@@ -160,14 +191,14 @@ export default async function AdsPage({
       supabase
         .from("ads")
         .select(
-          "id, name, hook, visual_url, position, ad_sets!inner(campaign_id, id)",
+          "id, name, hook, visual_url, video_url, position, ad_sets!inner(campaign_id, id)",
         )
         .in("ad_sets.campaign_id", campaignIds)
         .order("position", { ascending: true }),
       supabase
         .from("ad_slides")
         .select(
-          "ad_id, visual_url, text, position, ads!inner(ad_set_id, ad_sets!inner(campaign_id))",
+          "ad_id, visual_url, video_url, text, position, ads!inner(ad_set_id, ad_sets!inner(campaign_id))",
         )
         .in("ads.ad_sets.campaign_id", campaignIds)
         .order("position", { ascending: true }),
@@ -246,15 +277,17 @@ export default async function AdsPage({
     // 2) y injecter les ads
     const slidesByAd: Record<
       string,
-      { visual_url: string | null; text: string | null }[]
+      { visual_url: string | null; video_url: string | null; text: string | null }[]
     > = {};
     for (const sl of (slideData ?? []) as {
       ad_id: string;
       visual_url: string | null;
+      video_url: string | null;
       text: string | null;
     }[]) {
       (slidesByAd[sl.ad_id] ||= []).push({
         visual_url: sl.visual_url,
+        video_url: sl.video_url,
         text: sl.text,
       });
     }
@@ -263,6 +296,7 @@ export default async function AdsPage({
       name: string | null;
       hook: string | null;
       visual_url: string | null;
+      video_url: string | null;
       ad_sets: { campaign_id: string; id: string } | { campaign_id: string; id: string }[];
     }[]) {
       const setRow = Array.isArray(a.ad_sets) ? a.ad_sets[0] : a.ad_sets;
@@ -277,6 +311,7 @@ export default async function AdsPage({
           name: a.name,
           hook: a.hook,
           visual_url: a.visual_url,
+          video_url: a.video_url,
           slides: slidesByAd[a.id] ?? [],
         });
       }
@@ -284,7 +319,17 @@ export default async function AdsPage({
   }
 
   const monthHref = (v: ViewMode) =>
-    v === "calendar" ? `/ads?view=calendar&month=${month}` : `/ads?view=${v}`;
+    v === "calendar"
+      ? `/ads?view=calendar&month=${month}${filterQs}`
+      : `/ads?view=${v}${filterQs}`;
+
+  // La fiche ramène à cette vue, ce mois et ces filtres, pas à la liste par défaut.
+  const backQs = `?from=${encodeURIComponent(
+    `view=${view}${view === "calendar" ? `&month=${month}` : ""}${filterQs}`,
+  )}`;
+
+  const legacyVisuals: Record<string, string> = {};
+  for (const m of media) legacyVisuals[m.campaign_id] ??= m.image_url;
 
   return (
     <div className="space-y-6">
@@ -306,8 +351,13 @@ export default async function AdsPage({
                     label: "Planning",
                   },
                   {
+                    v: "kanban" as const,
+                    href: monthHref("kanban"),
+                    label: "Kanban",
+                  },
+                  {
                     v: "table" as const,
-                    href: "/ads?view=table",
+                    href: monthHref("table"),
                     label: "Tableau",
                   },
                   {
@@ -346,7 +396,38 @@ export default async function AdsPage({
         }
       />
 
-      {campaigns.length === 0 ? (
+      {allCampaigns.length > 0 && (
+        <div className="space-y-3">
+          <AdsFilters team={isClient ? undefined : team} currentUserId={user.id} />
+          {campaigns.length > 0 && (
+            // Ce que la liste représente, d'un coup d'œil. Les résultats ne
+            // s'affichent qu'une fois qu'il y en a.
+            <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+              <Tile label="Campagnes" value={totals.count} />
+              <Tile label="En cours" value={totals.live} />
+              <Tile label="Chez le client" value={totals.awaitingClient} />
+              {totals.budget > 0 && <Tile label="Budget prévu" value={totals.budget} />}
+              {totals.reach > 0 && <Tile label="Portée" value={totals.reach} />}
+              {totals.clicks > 0 && <Tile label="Clics" value={totals.clicks} />}
+              {totals.leads > 0 && <Tile label="Prospects" value={totals.leads} />}
+            </dl>
+          )}
+        </div>
+      )}
+
+      {allCampaigns.length > 0 && campaigns.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-foreground/15 bg-card p-10 text-center">
+          <p className="text-sm font-medium text-foreground">
+            Aucune campagne ne correspond à ce filtre.
+          </p>
+          <Link
+            href={monthHref(view).replace(filterQs, "")}
+            className="mt-2 inline-block text-sm font-semibold text-foreground underline-offset-4 hover:underline"
+          >
+            Tout afficher
+          </Link>
+        </div>
+      ) : campaigns.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-foreground/15 bg-card p-10 text-center">
           <Megaphone className="mx-auto h-10 w-10 text-foreground/40" />
           <h3 className="mt-3 text-base font-semibold text-foreground">
@@ -364,12 +445,22 @@ export default async function AdsPage({
           </form>
         </div>
       ) : view === "calendar" ? (
-        <AdsCalendarView campaigns={campaigns} month={month} />
+        <AdsCalendarView campaigns={campaigns} month={month} filterQs={filterQs} backQs={backQs} />
+      ) : view === "kanban" ? (
+        <AdsKanbanView
+          campaigns={campaigns}
+          adSetsByCampaign={adSetsByCampaign}
+          canEdit={!isClient}
+          teamLabels={teamLabels}
+          legacyVisuals={legacyVisuals}
+          backQs={backQs}
+        />
       ) : view === "table" ? (
         <AdsTableView
           campaigns={campaigns}
           adSetsByCampaign={adSetsByCampaign}
           commentsByTarget={commentsByTargetPlanning}
+          backQs={backQs}
         />
       ) : (
         <AdsPlanningView
@@ -377,10 +468,22 @@ export default async function AdsPage({
           media={media}
           adSetsByCampaign={adSetsByCampaign}
           commentsByTarget={commentsByTargetPlanning}
-          brandId={active.id}
+          // Réordonner une liste filtrée écraserait les positions des campagnes
+          // qu'on ne voit pas : sans `brandId`, pas de poignée.
+          brandId={filterQs ? undefined : active.id}
+          teamLabels={teamLabels}
+          backQs={backQs}
         />
       )}
     </div>
   );
 }
 
+function Tile({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl border border-foreground/10 bg-card px-3 py-2">
+      <dd className="text-lg font-bold text-foreground">{value.toLocaleString("fr-FR")}</dd>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+    </div>
+  );
+}

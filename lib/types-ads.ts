@@ -54,6 +54,8 @@ export type AdCampaign = {
   analysis: string | null;
   evaluation: AdCampaignEvaluation;
   live_url: string | null;
+  /** Qui s'en occupe, parmi l'équipe de la marque (0095). */
+  lead_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -92,11 +94,11 @@ export const AD_STATUS_LABEL: Record<AdCampaignStatus, string> = {
 };
 
 /**
- * Statuts proposés dans le menu de sélection. On y retire 'scheduled' :
- * dès qu'une campagne a une date de début, elle est « En cours » si on
- * est entre ses dates, « Terminée » après. 'scheduled' reste supporté
- * en base pour les campagnes historiques, mais ne s'offre plus en
- * choix manuel.
+ * Statuts proposés dans le menu de sélection. On y retire 'scheduled', qui
+ * reste en base pour les campagnes historiques. « En cours » se pose à la
+ * main quand la campagne est vraiment lancée : Validée ne bascule jamais
+ * seule (0096). Elle passe ensuite seule à « Terminée » une fois la période
+ * finie (`recompute_ad_statuses`).
  */
 export const AD_STATUS_PICKER: AdCampaignStatus[] = [
   "draft",

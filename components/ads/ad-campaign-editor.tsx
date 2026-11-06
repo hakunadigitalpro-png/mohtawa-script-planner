@@ -32,6 +32,8 @@ import {
 } from "@/lib/types-ads";
 import { Select } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { CampaignActivity, type CampaignActivityRow } from "@/components/ads/campaign-activity";
+import type { TeamMember } from "@/lib/brand-team";
 import {
   updateCampaignField,
   deleteAdCampaign,
@@ -74,7 +76,13 @@ export function AdCampaignEditor({
   brandId,
   adSets,
   adSetSuggestions,
+  team = [],
+  activity = [],
 }: {
+  /** Ceux à qui on peut confier la campagne. Vide pour un client invité. */
+  team?: TeamMember[];
+  /** Qui a changé quoi. Vide pour un client invité. */
+  activity?: CampaignActivityRow[];
   campaign: AdCampaign;
   media: AdCampaignMedia[];
   comments: CommentView[];
@@ -329,6 +337,24 @@ export function AdCampaignEditor({
                 disabled={!isWriter}
               />
             </Field>
+            {isWriter && (
+              <Field label="Responsable" hint="Qui s'en occupe dans l'équipe.">
+                <Select
+                  value={local.lead_id ?? ""}
+                  placeholder="Personne pour l'instant"
+                  ariaLabel="Responsable de la campagne"
+                  onValueChange={(v) => {
+                    const lead_id = v || null;
+                    setLocal({ ...local, lead_id });
+                    flush({ lead_id }, "lead_id");
+                  }}
+                  options={[
+                    { value: "", label: "Personne pour l'instant" },
+                    ...team.map((m) => ({ value: m.id, label: m.label })),
+                  ]}
+                />
+              </Field>
+            )}
             <Field label="Période de la campagne" hint="Clique le début, puis la fin — style Notion.">
               <DateRangePicker
                 start={local.date_start}
@@ -561,6 +587,7 @@ export function AdCampaignEditor({
               currentUserId={currentUserId}
             />
           </section>
+          <CampaignActivity rows={activity} />
         </aside>
       ) : null}
 
