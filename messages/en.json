@@ -195,7 +195,8 @@
     "subtitles": {
       "calendar": "See your month at a glance.",
       "planning": "All your content this month, as a table.",
-      "ideas": "What has no date yet."
+      "ideas": "What has no date yet.",
+      "kanban": "Your content by stage: drag a card to move it forward."
     },
     "unread": {
       "chip": "Unread",

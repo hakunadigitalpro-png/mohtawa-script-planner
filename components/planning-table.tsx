@@ -332,7 +332,7 @@ export function PlanningTable({
   const showTeam = Boolean(teamLabels);
   const today = todayISO();
   const cols = showTeam
-    ? "grid-cols-[44px_90px_100px_120px_84px_96px_minmax(0,1.2fr)_56px_minmax(0,1.4fr)]"
+    ? "grid-cols-[44px_90px_100px_190px_84px_96px_minmax(0,1.1fr)_56px_minmax(0,1.3fr)]"
     : "grid-cols-[60px_100px_110px_120px_minmax(0,1.5fr)_70px_minmax(0,1.6fr)]";
 
   // Un clic sur la ligne (hors cellules spéciales) ouvre la fiche. On
@@ -359,7 +359,7 @@ export function PlanningTable({
   return (
     <>
       <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card">
-        <div className={showTeam ? "min-w-[1080px]" : "min-w-[900px]"}>
+        <div className={showTeam ? "min-w-[1140px]" : "min-w-[900px]"}>
           <div
             className={`grid ${cols} gap-3 border-b border-border/60 bg-secondary/40 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-muted`}
           >
