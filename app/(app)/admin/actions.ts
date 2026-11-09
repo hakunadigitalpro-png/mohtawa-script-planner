@@ -25,12 +25,15 @@ export async function adminSetSubscription(input: {
   status: SubStatus;
   /** Durée à ajouter en jours. 0 ou null = pas de date de fin. */
   durationDays: number | null;
+  /** Vrai : la date de fin reste celle d'aujourd'hui en base, `durationDays` est ignoré. */
+  keepEndsAt?: boolean;
   aiEnabled: boolean | null;
   note?: string | null;
 }) {
   const supabase = await createClient();
-  const endsAt =
-    input.durationDays && input.durationDays > 0
+  const endsAt = input.keepEndsAt
+    ? ((await currentSub(supabase, input.userId))?.ends_at ?? null)
+    : input.durationDays && input.durationDays > 0
       ? new Date(Date.now() + input.durationDays * 86400_000).toISOString()
       : null;
   const { error } = await supabase.rpc("admin_set_subscription", {

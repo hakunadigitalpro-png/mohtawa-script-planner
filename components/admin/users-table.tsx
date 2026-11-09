@@ -357,9 +357,24 @@ function EditDialog({ user, plans, onClose }: { user: AdminUser; plans: AdminPla
   const router = useRouter();
   const [planId, setPlanId] = useState(user.plan_id ?? "free");
   const [status, setStatus] = useState<string>(user.status ?? "trial");
-  const [duration, setDuration] = useState<string>(
-    user.ends_at ? String(Math.max(0, daysLeft(user.ends_at) ?? 0)) : "0",
-  );
+  // Par défaut on ne touche pas à la date de fin : enregistrer un autre champ
+  // (statut, plan, note) ne doit pas la déplacer. Avant, le formulaire partait
+  // des jours restants, une valeur absente de la liste, donc invisible, et
+  // l'enregistrait comme nouvelle durée à partir d'aujourd'hui.
+  const [duration, setDuration] = useState<string>(user.ends_at ? "keep" : "0");
+  const durationOptions = user.ends_at
+    ? [
+        {
+          value: "keep",
+          label: `Garder la fin actuelle (${new Date(user.ends_at).toLocaleDateString("fr-FR", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })})`,
+        },
+        ...DURATIONS,
+      ]
+    : DURATIONS;
   const [aiEnabled, setAiEnabled] = useState<boolean>(user.ai_enabled ?? false);
   const [note, setNote] = useState(user.note ?? "");
   const [pending, startTransition] = useTransition();
@@ -372,7 +387,8 @@ function EditDialog({ user, plans, onClose }: { user: AdminUser; plans: AdminPla
         userId: user.user_id,
         planId,
         status: status as SubStatus,
-        durationDays: Number(duration) || null,
+        durationDays: duration === "keep" ? null : Number(duration) || null,
+        keepEndsAt: duration === "keep",
         aiEnabled,
         note: note || null,
       });
@@ -397,7 +413,8 @@ function EditDialog({ user, plans, onClose }: { user: AdminUser; plans: AdminPla
             status={status} setStatus={setStatus}
             duration={duration} setDuration={setDuration}
             aiEnabled={aiEnabled} setAiEnabled={setAiEnabled}
-            durationLabel="Durée restante (0 = pas de fin)"
+            durationLabel="Date de fin de l'accès"
+            durationOptions={durationOptions}
           />
           <div>
             <label className="mb-1 block text-xs text-muted">Note (interne)</label>
@@ -454,6 +471,7 @@ function PlanFields(p: {
   duration: string; setDuration: (v: string) => void;
   aiEnabled: boolean; setAiEnabled: (v: boolean) => void;
   durationLabel: string;
+  durationOptions?: { value: string; label: string }[];
 }) {
   const plan = p.plans.find((x) => x.id === p.planId);
   return (
@@ -479,7 +497,11 @@ function PlanFields(p: {
       {plan && <PlanSummary plan={plan} />}
       <div>
         <label className="mb-1 block text-xs text-muted">{p.durationLabel}</label>
-        <Select value={p.duration} onValueChange={p.setDuration} options={DURATIONS} />
+        <Select
+          value={p.duration}
+          onValueChange={p.setDuration}
+          options={p.durationOptions ?? DURATIONS}
+        />
       </div>
       <label className="flex items-center gap-2 text-sm text-foreground">
         <input type="checkbox" checked={p.aiEnabled} onChange={(e) => p.setAiEnabled(e.target.checked)} className="size-4 rounded border-border" />
