@@ -33,6 +33,7 @@ import {
 import { Select } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { CampaignActivity, type CampaignActivityRow } from "@/components/ads/campaign-activity";
+import { AdShareButton } from "@/components/ads/ad-share-button";
 import type { TeamMember } from "@/lib/brand-team";
 import {
   updateCampaignField,
@@ -276,6 +277,10 @@ export function AdCampaignEditor({
                           : "Soumettre au client"}
                     </Button>
                   )}
+                  <AdShareButton
+                    campaignId={campaign.id}
+                    initialToken={campaign.share_token}
+                  />
                   <Button
                     size="sm"
                     variant="ghost"

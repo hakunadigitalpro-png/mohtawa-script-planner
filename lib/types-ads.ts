@@ -56,6 +56,8 @@ export type AdCampaign = {
   live_url: string | null;
   /** Qui s'en occupe, parmi l'équipe de la marque (0095). */
   lead_id: string | null;
+  /** Lien de partage public, ou null s'il n'est pas actif (0099). */
+  share_token: string | null;
   created_at: string;
   updated_at: string;
 };

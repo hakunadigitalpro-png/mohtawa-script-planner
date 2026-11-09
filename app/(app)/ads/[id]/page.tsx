@@ -60,7 +60,7 @@ export default async function AdCampaignPage({
   // Le responsable est un repère interne : son identifiant ne part pas vers un
   // client invité.
   const campaign =
-    brandRole === "viewer" ? { ...fullCampaign, lead_id: null } : fullCampaign;
+    brandRole === "viewer" ? { ...fullCampaign, lead_id: null, share_token: null } : fullCampaign;
   if (!active || active.id !== campaign.brand_id) {
     redirect(`/switch-brand?to=${campaign.brand_id}&next=/ads/${id}`);
   }

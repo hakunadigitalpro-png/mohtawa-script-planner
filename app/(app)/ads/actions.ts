@@ -469,3 +469,31 @@ export async function reorderAdCampaigns(brandId: string, orderedIds: string[]) 
   revalidatePath("/ads");
   return { ok: true as const };
 }
+
+/** Crée ou renouvelle le lien public de la campagne. Renouveler coupe l'ancien. */
+export async function enableAdCampaignSharing(
+  campaignId: string,
+): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("enable_ad_campaign_sharing", {
+    p_campaign_id: campaignId,
+  });
+  if (error || !data) {
+    return { ok: false, error: "Impossible de créer le lien. Réessaie." };
+  }
+  revalidatePath(`/ads/${campaignId}`);
+  return { ok: true, token: data as string };
+}
+
+/** Coupe le lien public : la page ne s'ouvre plus. */
+export async function disableAdCampaignSharing(
+  campaignId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("disable_ad_campaign_sharing", {
+    p_campaign_id: campaignId,
+  });
+  if (error) return { ok: false, error: "Impossible de couper le lien. Réessaie." };
+  revalidatePath(`/ads/${campaignId}`);
+  return { ok: true };
+}
