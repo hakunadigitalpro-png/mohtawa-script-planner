@@ -31,6 +31,7 @@ type CommentRow = {
 type ContentRow = {
   id: string;
   title: string | null;
+  subtitle?: string | null;
   type: string;
   date: string | null;
   platform: string | null;
@@ -65,7 +66,7 @@ export default async function ReviewPage({
   const [{ data: queueData }, { data: adsData }] = await Promise.all([
     supabase
       .from("contents")
-      .select("id, title, type, date, platform, status, caption, preview_url")
+      .select("id, title, subtitle, type, date, platform, status, caption, preview_url")
       .eq("brand_id", active.id)
       .eq("status", "pending_review")
       .order("date", { ascending: true, nullsFirst: false }),
@@ -92,7 +93,7 @@ export default async function ReviewPage({
     // Si c'est le cas, on bascule d'abord — le rôle est par marque.
     const { data } = await supabase
       .from("contents")
-      .select("id, brand_id, title, type, date, platform, status, caption, preview_url")
+      .select("id, brand_id, title, subtitle, type, date, platform, status, caption, preview_url")
       .eq("id", params.c)
       .maybeSingle();
     const found = (data as (ContentRow & { brand_id: string }) | null) ?? null;
@@ -160,6 +161,8 @@ export default async function ReviewPage({
     previewUrl: c.preview_url,
     visuals: material.get(c.id)?.visuals ?? [],
     script: material.get(c.id)?.script ?? null,
+    article: material.get(c.id)?.article ?? null,
+    subtitle: c.subtitle ?? null,
     notes: notesByContent.get(c.id) ?? [],
   });
 

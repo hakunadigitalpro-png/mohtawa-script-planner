@@ -261,7 +261,7 @@ export const KREA_TOOLS: KreaTool[] = [
   {
     name: "rediger_script",
     description:
-      "Écrit le script d'un reel, d'une story ou d'un vlog déjà créé, ou le PLAN d'une vidéo longue, d'un direct, d'un podcast ou d'un article (les parties s'écrivent ensuite une par une dans la fiche), et l'enregistre. Utilise l'identifiant renvoyé par creer_contenu, ou celui du contenu ouvert indiqué dans le contexte.",
+      "Écrit le script d'un reel, d'une story ou d'un vlog déjà créé, ou le PLAN d'une vidéo longue, d'un direct ou d'un podcast (les parties s'écrivent ensuite une par une dans la fiche), et l'enregistre. PAS pour un article : il s'écrit dans sa fiche, sur un brief. Utilise l'identifiant renvoyé par creer_contenu, ou celui du contenu ouvert indiqué dans le contexte.",
     input_schema: {
       type: "object",
       properties: {

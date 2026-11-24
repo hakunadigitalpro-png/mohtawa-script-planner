@@ -1119,6 +1119,7 @@
       "datePast": "Choisis une date à venir : avec une date passée, je le mettrais en ligne tout de suite."
     },
     "live": {
+      "toConfirm": "Il reste {count} information(s) à confirmer dans le texte. Vérifie ce qui a été publié.",
       "title": "Tu as le lien ?",
       "description": "Colle-le si tu l'as. Sinon tu pourras l'ajouter plus tard dans l'onglet Performances.",
       "where": "Où est-il sorti ?",

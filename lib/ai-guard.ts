@@ -26,6 +26,7 @@ const BRAND_GATED_ACTIONS = new Set([
   "longform_plan",
   "longform_part",
   "extracts",
+  "article_full",
 ]);
 
 /**

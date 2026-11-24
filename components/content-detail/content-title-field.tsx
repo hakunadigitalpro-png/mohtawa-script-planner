@@ -34,6 +34,14 @@ export function ContentTitleField({
   // évite d'enregistrer quand rien n'a changé.
   const [saved, setSaved] = useState(initialTitle);
   const [failed, setFailed] = useState(false);
+  // Le titre a changé ailleurs (Krea vient d'écrire l'article) : on suit, sauf si
+  // elle est en train d'en taper un autre.
+  const [seen, setSeen] = useState(initialTitle);
+  if (seen !== initialTitle) {
+    setSeen(initialTitle);
+    if (value === saved) setValue(initialTitle);
+    setSaved(initialTitle);
+  }
   const [pending, startTransition] = useTransition();
 
   const commit = () => {

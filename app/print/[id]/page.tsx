@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { partNumber } from "@/lib/article";
 import { longformSpec } from "@/lib/longform";
 import {
   platformLabel,
@@ -13,6 +14,7 @@ import { PrintActions } from "../print-actions";
 import "../print.css";
 import type {
   Content,
+  ArticleClaim,
   ContentMedia,
   ContentSection,
   ReelDetails,
@@ -59,6 +61,7 @@ export default async function PrintPage({
     vlogRes,
     mediaRes,
     sectionsRes,
+    claimsRes,
   ] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
@@ -86,6 +89,11 @@ export default async function PrintPage({
       .eq("content_id", id)
       .in("kind", ["section", "guest"])
       .order("position", { ascending: true }),
+    supabase
+      .from("article_claims")
+      .select("id, content_id, position, text, checked_at")
+      .eq("content_id", id)
+      .order("position", { ascending: true }),
   ]);
 
   const c = content as Content;
@@ -98,6 +106,7 @@ export default async function PrintPage({
   const vlog = (vlogRes.data ?? null) as VlogDetails | null;
   const media = ((mediaRes.data ?? []) as ContentMedia[]).filter((m) => m.image_url);
   const sections = (sectionsRes.data ?? []) as ContentSection[];
+  const claims = (claimsRes.data ?? []) as ArticleClaim[];
   const guest = sections.find((s) => s.kind === "guest") ?? null;
   const parts = sections.filter(
     (s) => s.kind === "section" && (s.title?.trim() || s.body?.trim()),
@@ -194,15 +203,36 @@ export default async function PrintPage({
               {guest.body ? ` — ${guest.body}` : ""}
             </p>
           )}
-          {parts.map((p, i) => (
-            <div key={p.id} className="print-part">
-              <h3 dir="auto">
-                {i + 1}. {p.title || "Sans titre"}
-                {p.minutes ? ` (${p.minutes} min)` : ""}
-              </h3>
-              {p.body && <p className="print-text" dir="auto">{p.body}</p>}
-            </div>
-          ))}
+          {c.subtitle && <p className="print-text" dir="auto">{c.subtitle}</p>}
+          {parts.map((p, i) => {
+            const n = partNumber(c.type, parts, i);
+            const heading = p.title || (c.type === "article" ? "" : "Sans titre");
+            return (
+              <div key={p.id} className="print-part">
+                {heading && (
+                  <h3 dir="auto">
+                    {n ? `${n}. ` : ""}
+                    {heading}
+                    {p.minutes ? ` (${p.minutes} min)` : ""}
+                  </h3>
+                )}
+                {p.body && <p className="print-text" dir="auto">{p.body}</p>}
+              </div>
+            );
+          })}
+        </section>
+      )}
+
+      {claims.length > 0 && (
+        <section className="print-section">
+          <h2>À valider par l&apos;auteur</h2>
+          <ul className="print-text">
+            {claims.map((x) => (
+              <li key={x.id} dir="auto">
+                {x.checked_at ? "☑" : "☐"} {x.text}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

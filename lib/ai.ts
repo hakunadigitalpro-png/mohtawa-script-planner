@@ -804,6 +804,100 @@ export async function callClaudeText(
 }
 
 /**
+ * Texte long qu'on refuse de perdre. Lu au fil de l'eau : si le temps ou la
+ * place manque, on rend ce qui est déjà écrit avec `truncated`, au lieu de jeter
+ * un appel payé. À l'appelant de savoir quoi garder (`parseArticle` ne retient
+ * que les blocs fermés).
+ */
+export async function callClaudeDraft(
+  system: string,
+  userText: string,
+  maxTokens: number,
+): Promise<{ text: string; truncated: boolean }> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new AiError(
+      "no_api_key",
+      "L'IA n'est pas configurée. Ajoute ANTHROPIC_API_KEY sur le serveur.",
+    );
+  }
+  let out = "";
+  let stopReason: string | null = null;
+  try {
+    const res = await fetch(ANTHROPIC_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        ...modelParams(maxTokens),
+        stream: true,
+        system,
+        messages: [{ role: "user", content: userText }],
+      }),
+      signal: aiSignal(aiDeadline()),
+    });
+    if (!res.ok || !res.body) {
+      if (res.status === 401) {
+        throw new AiError("auth", "Clé Anthropic invalide. Vérifie ANTHROPIC_API_KEY.");
+      }
+      if (res.status === 429) {
+        throw new AiError(
+          "rate_limit",
+          "Quota Anthropic atteint ou trop de requêtes. Réessaie dans une minute.",
+        );
+      }
+      const detail = ((await res.json().catch(() => null)) as {
+        error?: { message?: string };
+      } | null)?.error?.message;
+      throw new AiError("api", `Erreur Anthropic (${res.status})${detail ? ` : ${detail}` : ""}.`);
+    }
+
+    let buffer = "";
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.startsWith("data:")) continue;
+        const event = JSON.parse(line.slice(5)) as {
+          type?: string;
+          delta?: { type?: string; text?: string; stop_reason?: string | null };
+          error?: { message?: string };
+        };
+        if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
+          out += event.delta.text ?? "";
+        } else if (event.type === "message_delta") {
+          stopReason = event.delta?.stop_reason ?? stopReason;
+        } else if (event.type === "error") {
+          throw new AiError("api", `Erreur Anthropic${event.error?.message ? ` : ${event.error.message}` : ""}.`);
+        }
+      }
+    }
+  } catch (e) {
+    // Coupé en route avec du texte en main : on le garde.
+    if (out.trim()) return { text: out, truncated: true };
+    throw aiFetchError(e);
+  }
+  if (stopReason === "refusal") {
+    throw new AiError(
+      "refusal",
+      "L'IA a refusé d'écrire sur ce sujet. Reformule-le et relance.",
+    );
+  }
+  if (!out.trim()) {
+    throw new AiError("empty", "L'IA n'a rien écrit. Réessaie.");
+  }
+  return { text: out, truncated: stopReason !== "end_turn" };
+}
+
+/**
  * Comme callClaudeText mais force une sortie JSON. Claude n'a pas de mode
  * "json_object" natif (contrairement à OpenAI) → on demande du JSON pur dans
  * le prompt, puis on extrait défensivement : on retire un éventuel bloc
@@ -1247,6 +1341,16 @@ export type CaptionInput = {
   language?: GenerationLanguage;
 };
 
+/** Les règles du texte de partage d'un article : les mêmes quand il est écrit
+ *  avec l'article et quand on le redemande seul. */
+export const SHARE_TEXT_RULES = `RÈGLES DU TEXTE DE PARTAGE :
+- Il donne envie, il ne répète pas : AUCUNE phrase recopiée de l'article, même en partie.
+- 300 à 700 caractères. Une première ligne qui arrête, un peu de vécu, une raison d'ouvrir l'article.
+- Ne promets RIEN qui n'existe pas : ni checklist, ni PDF, ni modèle, ni lien, sauf s'ils sont cités dans l'article.
+- Même voix que l'article : « je » ou « nous », mais partout pareil.
+- 3 hashtags au maximum, dans la langue du texte, sur la dernière ligne. Aucun emoji.
+- N'invente aucun fait. Une information manquante s'écrit [À CONFIRMER].`;
+
 const CAPTION_FORMAT_HINT: Record<string, string> = {
   reel: "un Reel (vidéo courte verticale)",
   story: "une séquence de Stories",
@@ -1270,7 +1374,12 @@ const CAPTION_FORMAT_HINT: Record<string, string> = {
 export async function generateCaption(input: CaptionInput): Promise<string> {
   const format = CAPTION_FORMAT_HINT[input.type] ?? "un contenu";
 
-  const system = `Tu écris la LÉGENDE de publication d'un contenu sur les réseaux sociaux, pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing). ${languageInstruction(input.language)}${voiceInstruction(input.voice)}
+  // Un article n'a pas de légende : il a un texte de partage, et ses règles.
+  const system = input.type === "article" ? `Tu écris le TEXTE DE PARTAGE d'un article, publié sur les réseaux pour donner envie de le lire. ${languageInstruction(input.language)}${voiceInstruction(input.voice)}
+
+${SHARE_TEXT_RULES}
+
+Réponds UNIQUEMENT avec le texte de partage, prêt à coller. Pas de titre, pas de guillemets, pas d'explication, pas de markdown.` : `Tu écris la LÉGENDE de publication d'un contenu sur les réseaux sociaux, pour un PATRON DE PETITE ENTREPRISE (pas un expert marketing). ${languageInstruction(input.language)}${voiceInstruction(input.voice)}
 
 CE QU'EST UNE BONNE LÉGENDE :
 - La PREMIÈRE ligne est la plus importante : c'est la seule visible avant « voir plus ». Elle doit donner envie d'ouvrir. Jamais « Nouvelle vidéo ! » ni « Regardez ça ».

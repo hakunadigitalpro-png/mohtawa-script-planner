@@ -1119,6 +1119,7 @@
       "datePast": "Pick a date to come: with a past date I would mark it online right away."
     },
     "live": {
+      "toConfirm": "{count} item(s) still to confirm in the text. Check what was published.",
       "title": "Got the link?",
       "description": "Paste it if you have it. Otherwise you can add it later in the Performance tab.",
       "where": "Where did it go out?",

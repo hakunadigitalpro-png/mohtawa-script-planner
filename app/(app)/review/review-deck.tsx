@@ -63,6 +63,12 @@ export type ReviewItem = {
    */
   visuals: { id: string; url: string; commentable?: boolean }[];
   script: string | null;
+  /** Article : ses parties et ce que l'auteur doit vérifier. */
+  article?: {
+    parts: { number: number | null; title: string | null; body: string | null }[];
+    claims: string[];
+  } | null;
+  subtitle?: string | null;
   notes: ReviewNote[];
 };
 
@@ -332,11 +338,40 @@ export function ReviewDeck({
           </div>
         )}
 
+        {/* Un article se lit comme un article, avant son texte de partage. */}
+        {item.article && (
+          <article
+            dir="auto"
+            className="space-y-4 rounded-2xl bg-secondary/40 p-4 text-base leading-relaxed text-foreground"
+          >
+            {item.subtitle && (
+              <p dir="auto" className="text-muted-foreground">
+                {item.subtitle}
+              </p>
+            )}
+            {item.article.parts.map((p, i) => (
+              <section key={i} className="space-y-1">
+                {p.title && (
+                  <h3 dir="auto" className="font-semibold">
+                    {p.number ? `${p.number}. ` : ""}
+                    {p.title}
+                  </h3>
+                )}
+                {p.body && (
+                  <p dir="auto" className="whitespace-pre-wrap">
+                    {p.body}
+                  </p>
+                )}
+              </section>
+            ))}
+          </article>
+        )}
+
         {/* La légende : ce qui sera publié avec les visuels. */}
         {item.caption && (
           <div className="space-y-1.5">
             <p className="text-xs font-bold uppercase tracking-wider text-muted">
-              Légende
+              {longformSpec(item.type)?.captionTitle ?? "Légende"}
             </p>
             <p
               dir="auto"
@@ -349,7 +384,7 @@ export function ReviewDeck({
 
         {/* Les formats vidéo n'ont pas de visuel : c'est le script qu'on relit.
             Une story a les deux : ses images au-dessus, ses textes ici. */}
-        {item.script && (
+        {item.script && !item.article && (
           <div className="space-y-1.5">
             <p className="text-xs font-bold uppercase tracking-wider text-muted">
               {item.type === "story"
@@ -362,6 +397,21 @@ export function ReviewDeck({
             >
               {item.script}
             </p>
+          </div>
+        )}
+
+        {item.article && item.article.claims.length > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-sm font-semibold">
+              Merci de vérifier ces points avant de valider
+            </p>
+            <ul className="list-disc space-y-1 ps-5 text-sm">
+              {item.article.claims.map((c, i) => (
+                <li key={i} dir="auto">
+                  {c}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 

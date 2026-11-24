@@ -11,6 +11,8 @@ import { Select } from "@/components/ui/select";
 import { Thinking } from "@/components/ui/thinking";
 import { KreaBadge } from "@/components/krea-avatar";
 import { updateContent } from "@/app/(app)/contents/actions";
+import { saveCoverBrief } from "@/app/(app)/contents/article-actions";
+import type { ArticleIssue } from "@/lib/article-checks";
 import { aiGenerateCaption } from "@/app/(app)/contents/ai-actions";
 import type { GenerationLanguage } from "@/lib/ai";
 import { useExplicitSave } from "./use-explicit-save";
@@ -33,6 +35,7 @@ export function CaptionTab({
   title = "Légende",
   hint = "Le texte qui sera publié avec le contenu. Prépare-le ici, copie-le au moment de poster.",
   maxChars = 2200,
+  share,
 }: {
   contentId: string;
   caption: string | null;
@@ -46,18 +49,28 @@ export function CaptionTab({
   title?: string;
   hint?: string;
   maxChars?: number;
+  /** Article : ce texte est un texte de partage, avec ses contrôles et l'idée
+   *  d'image — un seul bouton pour les deux. */
+  share?: {
+    check: (text: string) => ArticleIssue[];
+    coverBrief: string;
+    hasCover: boolean;
+  };
 }) {
+  const coverBrief = share?.coverBrief ?? "";
   const initial = useMemo(
-    () => ({ caption: caption ?? "" }),
-    [caption],
+    () => ({ caption: caption ?? "", cover: coverBrief }),
+    [caption, coverBrief],
   );
 
   const { state, setState, isDirty, isSaving, error, handleSave, handleReset } =
-    useExplicitSave(initial, async (v) =>
-      updateContent(contentId, {
+    useExplicitSave(initial, async (v) => {
+      const res = await updateContent(contentId, {
         caption: v.caption.trim() || null,
-      }),
-    );
+      });
+      if (res.error || !share || v.cover === coverBrief) return res;
+      return saveCoverBrief(contentId, v.cover);
+    });
 
   const [copied, setCopied] = useState(false);
 
@@ -78,7 +91,7 @@ export function CaptionTab({
       // On écrit dans le formulaire, pas en base : rien n'est enregistré tant
       // qu'elle n'a pas cliqué sur Enregistrer, et « Annuler » restaure son
       // texte précédent.
-      setState(() => ({ caption: res.caption }));
+      setState((s) => ({ ...s, caption: res.caption }));
     });
   };
 
@@ -95,8 +108,9 @@ export function CaptionTab({
 
   // Stats utiles : Instagram = 2200 caractères (défaut), hashtags max = 30
   const charCount = state.caption.length;
-  const hashtagMatches = state.caption.match(/#\w+/g) ?? [];
-  const hashtagCount = hashtagMatches.length;
+  // `\w` ignorait les hashtags arabes.
+  const hashtagCount = state.caption.match(/#[\p{L}\p{N}\p{M}_]+/gu)?.length ?? 0;
+  const issues = share ? share.check(state.caption) : [];
   const charLimitColor =
     charCount > maxChars
       ? "text-destructive"
@@ -137,9 +151,9 @@ export function CaptionTab({
         <div className="space-y-3 rounded-2xl border border-border/60 bg-secondary/30 p-4">
           <KreaBadge />
           <p className="text-sm text-foreground">
-            J&apos;écris la légende à partir de ce qui existe déjà : le thème du
-            contenu, son objectif, son script, ta voix de marque et tes
-            hashtags. Choisis juste la langue.
+            {share
+              ? "J'écris le texte de partage à partir de l'article, sans en recopier une phrase. Choisis juste la langue."
+              : "J'écris la légende à partir de ce qui existe déjà : le thème du contenu, son objectif, son script, ta voix de marque et tes hashtags. Choisis juste la langue."}
           </p>
           <div className="flex flex-wrap items-end gap-2">
             <div className="w-48">
@@ -168,7 +182,9 @@ export function CaptionTab({
             >
               <Sparkles className="size-4" />
               {generating ? (
-                <Thinking label="J'écris ta légende…" />
+                <Thinking label={share ? "J'écris ton texte…" : "J'écris ta légende…"} />
+              ) : share ? (
+                "Écrire le texte de partage"
               ) : (
                 "Générer la légende"
               )}
@@ -192,7 +208,7 @@ export function CaptionTab({
             onChange={(e) =>
               setState((s) => ({ ...s, caption: e.target.value }))
             }
-            placeholder={`Ex :\n\nLes 3 outils qui ont changé ma productivité en 2026 — celui en #2 m'a fait gagner 5h par semaine.\n\nLequel tu utilises déjà ? 👇\n\n#productivité #marketingdigital #coworking #freelance`}
+            placeholder={share ? "Ce que tu publies pour donner envie de lire l'article." : `Ex :\n\nLes 3 outils qui ont changé ma productivité en 2026 — celui en #2 m'a fait gagner 5h par semaine.\n\nLequel tu utilises déjà ? 👇\n\n#productivité #marketingdigital #coworking #freelance`}
           />
           <div className="flex items-center justify-between text-xs">
             <span className={cn("font-medium", charLimitColor)}>
@@ -207,7 +223,31 @@ export function CaptionTab({
               )}
             </span>
           </div>
+          {issues.length > 0 && (
+            <ul className="list-disc space-y-1 ps-5 text-sm text-muted-foreground">
+              {issues.map((x) => (
+                <li key={x.code}>{x.message}</li>
+              ))}
+            </ul>
+          )}
         </div>
+
+        {share && (
+          <details open={!share.hasCover}>
+            <summary className="cursor-pointer text-sm font-semibold">
+              Idée pour l&apos;image
+            </summary>
+            <Textarea
+              dir="auto"
+              value={state.cover}
+              maxLength={4000}
+              onChange={(e) => setState((s) => ({ ...s, cover: e.target.value }))}
+              placeholder="Ce qu'on voit, l'ambiance, le cadrage."
+              aria-label="Idée pour l'image"
+              className="mt-2 min-h-16 text-sm [field-sizing:content]"
+            />
+          </details>
+        )}
       </Card>
 
       <SaveFooter

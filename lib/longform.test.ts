@@ -24,6 +24,7 @@ import {
 import {
   LONGFORM_SPECS,
   countWords,
+  detectLanguage,
   lengthLabel,
   longformChanges,
   longformSpec,
@@ -221,12 +222,42 @@ describe("mergeLongform — rien de ce qu'elle écrit ne disparaît", () => {
   });
 });
 
+describe("article : rôle et sous-titre suivent la fusion", () => {
+  const d = (role: string, subtitle: string): LongformDraft => ({
+    ...draft([["a", "1"]]),
+    subtitle,
+    parts: [{ id: "a", title: "A", body: "1", minutes: null, role }],
+  });
+  it("garde le rôle et le sous-titre en cours de saisie", () => {
+    const m = mergeLongform(d("item", "à moi"), d("text", ""), d("text", "ailleurs"));
+    expect(m.parts[0].role).toBe("item");
+    expect(m.subtitle).toBe("à moi");
+    expect(mergeLongform(d("text", ""), d("text", ""), d("item", "x"))).toMatchObject({
+      subtitle: "x",
+    });
+  });
+  it("un changement de rôle ou de sous-titre s'envoie, seul", () => {
+    const diff = longformChanges(d("text", ""), d("item", "neuf"));
+    expect(diff.changed).toHaveLength(1);
+    expect(diff.subtitle).toBe("neuf");
+    expect(longformChanges(d("text", "x"), d("text", "x"))).toMatchObject({ changed: [] });
+    expect(longformChanges(d("text", "x"), d("text", "x")).subtitle).toBeUndefined();
+  });
+  it("un article remplacé prend toute la place : rien de l'ancien ne reste", () => {
+    const old = draft([["a", "1"], ["b", "2"]]);
+    expect(bodies(mergeLongform(old, old, draft([["x", "n1"], ["y", "n2"]])))).toEqual([
+      "x:n1",
+      "y:n2",
+    ]);
+  });
+});
+
 describe("longformChanges — n'envoyer que la différence", () => {
   it("une partie corrigée n'emporte pas les autres", () => {
     const saved = draft([["a", "1"], ["b", "2"], ["c", "3"]]);
     const now = draft([["c", "3"], ["b", "2 bis"], ["n", "neuf"]]);
     const diff = longformChanges(saved, now);
-    expect(diff.changed.map((p) => p.id)).toEqual(["b", "n"]);
+    expect(diff.changed.map((p) => [p.id, p.existing])).toEqual([["b", true], ["n", false]]);
     expect(diff.order).toEqual(["c", "b", "n"]);
     expect(diff.deleted).toEqual(["a"]);
     expect(diff.guest).toBeUndefined();
@@ -237,6 +268,15 @@ describe("longformChanges — n'envoyer que la différence", () => {
       name: "Sonia",
       bio: "",
     });
+  });
+});
+
+describe("detectLanguage — ne pas changer la langue d'un texte en le réécrivant", () => {
+  it("reconnaît les trois langues d'un article", () => {
+    expect(detectLanguage("Why the questions you ask the mill matter to you and that is it")).toBe("en");
+    expect(detectLanguage("Les questions que tu poses et la réponse")).toBe("fr");
+    expect(detectLanguage("من يراقب في نفس اليوم")).toBe("ar_tn");
+    expect(detectLanguage("")).toBe("fr");
   });
 });
 

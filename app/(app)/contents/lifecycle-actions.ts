@@ -13,6 +13,7 @@ import {
   statusAfterResume,
   isProgrammedStatus,
 } from "@/lib/content-lifecycle";
+import { countUnconfirmed } from "@/lib/content-lifecycle-db";
 import type { ContentPublication } from "@/lib/types";
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -101,6 +102,10 @@ export async function advanceContent(input: {
   if (step.kind === "mark_programmed") {
     const to = programmedStatusFor(row.type);
     let date = primary?.scheduled_date ?? null;
+    // Vérifié AVANT d'écrire la date : un refus ne doit rien laisser derrière lui.
+    const toConfirm = await countUnconfirmed(supabase, row.id);
+    const confirmBlocker = whyNotProgrammed({ to, hasDatedPublication: true, toConfirm });
+    if (confirmBlocker) return { ok: false, error: confirmBlocker };
 
     if (step.needsDate) {
       const given = (input.date ?? "").trim();
@@ -131,7 +136,7 @@ export async function advanceContent(input: {
       date = given;
     }
 
-    const blocker = whyNotProgrammed({ to, hasDatedPublication: Boolean(date) });
+    const blocker = whyNotProgrammed({ to, hasDatedPublication: Boolean(date), toConfirm });
     if (blocker) return { ok: false, error: blocker };
     if (!isForward(row.status, to)) {
       return { ok: false, error: "Ce contenu a changé entre-temps. Recharge la page." };
@@ -206,7 +211,7 @@ export async function resumeContent(contentId: string): Promise<Result> {
   )?.old_value;
 
   let status = statusAfterResume({ previous: cancelledFrom, type: row.type });
-  // « Programmé » exige une date : si elle a été retirée entre-temps, le contenu
+  // « Programmé » exige une date, et plus rien à confirmer : sinon le contenu
   // reprend à l'étape d'avant, Validé.
   if (isProgrammedStatus(status)) {
     const { count } = await supabase
@@ -214,7 +219,7 @@ export async function resumeContent(contentId: string): Promise<Result> {
       .select("id", { count: "exact", head: true })
       .eq("content_id", contentId)
       .not("scheduled_date", "is", null);
-    if (!count) status = "approved";
+    if (!count || (await countUnconfirmed(supabase, contentId)) !== 0) status = "approved";
   }
 
   const { error } = await supabase

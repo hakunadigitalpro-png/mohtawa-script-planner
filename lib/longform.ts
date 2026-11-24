@@ -82,7 +82,7 @@ export const LONGFORM_SPECS: Record<LongformType, LongformSpec> = {
     tab: "Article",
     part: "partie",
     addLabel: "Ajouter une partie",
-    hint: "Un intertitre et son texte par partie.",
+    hint: "Une introduction, des parties à intertitre court, une conclusion qui dit quoi faire.",
     titlePlaceholder: "Ex : Pourquoi ça ne marche pas",
     bodyPlaceholder: "Ton texte…",
     hasGuest: false,
@@ -91,7 +91,7 @@ export const LONGFORM_SPECS: Record<LongformType, LongformSpec> = {
     coverHint: "L'image en haut de l'article ou de la newsletter.",
     coverRatio: "video",
     captionTitle: "Texte de partage",
-    captionHint: "Ce que tu publies sur les réseaux pour faire lire l'article.",
+    captionHint: "Il donne envie de lire, il ne répète pas l'article.",
     captionMax: 2200,
   },
 };
@@ -138,16 +138,23 @@ export type LongformPart = {
   title: string;
   body: string;
   minutes: number | null;
+  /** Article seulement : introduction, point numéroté, texte, conclusion. */
+  role?: string | null;
 };
 
 export type LongformDraft = {
+  /** Article seulement. */
+  subtitle?: string;
   parts: LongformPart[];
   guestName: string;
   guestBio: string;
 };
 
 const samePart = (a: LongformPart, b: LongformPart) =>
-  a.title === b.title && a.body === b.body && a.minutes === b.minutes;
+  a.title === b.title &&
+  a.body === b.body &&
+  a.minutes === b.minutes &&
+  (a.role ?? null) === (b.role ?? null);
 
 /**
  * Trois versions d'un même texte : ce qui est à l'écran, ce que l'écran croyait
@@ -175,7 +182,7 @@ export function mergeLongform(
   // connue avant : retirée ici, elle ne revient pas.
   const added = incoming.parts.filter((p) => !here.has(p.id) && !base.has(p.id));
 
-  const pickField = (key: "guestName" | "guestBio") =>
+  const pickField = <K extends "guestName" | "guestBio" | "subtitle">(key: K) =>
     current[key] !== baseline[key] ? current[key] : incoming[key];
 
   const order = (parts: LongformPart[]) => parts.map((p) => p.id).join();
@@ -193,6 +200,7 @@ export function mergeLongform(
     );
   }
   return {
+    subtitle: pickField("subtitle"),
     parts: merged,
     guestName: pickField("guestName"),
     guestBio: pickField("guestBio"),
@@ -204,24 +212,39 @@ export function longformChanges(
   saved: LongformDraft,
   draft: LongformDraft,
 ): {
-  changed: LongformPart[];
+  /** `existing` : la base la connaît. Si elle a disparu, l'article a été remplacé. */
+  changed: (LongformPart & { existing: boolean })[];
   order: string[];
   deleted: string[];
   guest?: { name: string; bio: string };
+  subtitle?: string;
 } {
   const was = new Map(saved.parts.map((p) => [p.id, p]));
   const now = new Set(draft.parts.map((p) => p.id));
   return {
-    changed: draft.parts.filter((p) => {
+    changed: draft.parts.flatMap((p) => {
       const before = was.get(p.id);
-      return !before || !samePart(before, p);
+      return before && samePart(before, p) ? [] : [{ ...p, existing: Boolean(before) }];
     }),
     order: draft.parts.map((p) => p.id),
     deleted: saved.parts.map((p) => p.id).filter((id) => !now.has(id)),
     ...(draft.guestName !== saved.guestName || draft.guestBio !== saved.guestBio
       ? { guest: { name: draft.guestName, bio: draft.guestBio } }
       : {}),
+    ...((draft.subtitle ?? "") !== (saved.subtitle ?? "")
+      ? { subtitle: draft.subtitle ?? "" }
+      : {}),
   };
+}
+
+/** La langue d'un texte déjà écrit, pour ne pas la changer en le réécrivant. */
+export function detectLanguage(text: string): "fr" | "en" | "ar_tn" {
+  if (/[\u0600-\u06FF]/.test(text)) return "ar_tn";
+  const t = ` ${text.toLowerCase().replace(/[^\p{L}]+/gu, " ")} `;
+  const count = (re: RegExp) => t.match(re)?.length ?? 0;
+  const en = count(/ (?:the|and|you|your|is|of|to|that|with) /g);
+  const fr = count(/ (?:le|la|les|et|tu|vous|est|des|une|que|pour) /g);
+  return en > fr ? "en" : "fr";
 }
 
 /** Au-delà, une réécriture d'un bloc ampute le texte : il faut le découper. */

@@ -1,5 +1,6 @@
 import type { createClient } from "@/lib/supabase/server";
 import { isLongformType } from "@/lib/constants";
+import { partNumber } from "@/lib/article";
 import { sectionsToText } from "@/lib/longform";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -19,6 +20,12 @@ export type ReviewMaterial = {
   visuals: ReviewVisual[];
   /** Le texte à relire : script d'un reel, voix off d'un vlog, diapos d'une story. */
   script: string | null;
+  /** Article : ses parties, à afficher comme un article et non en un pavé. */
+  article?: {
+    parts: { number: number | null; title: string | null; body: string | null }[];
+    /** À vérifier par l'auteur avant de valider. */
+    claims: string[];
+  };
 };
 
 /**
@@ -42,7 +49,9 @@ export async function fetchReviewMaterial(
   const storyIds = idsOf("story");
   const longIds = items.filter((i) => isLongformType(i.type)).map((i) => i.id);
 
-  const [mediaRes, reelRes, vlogRes, slidesRes, sectionsRes] = await Promise.all([
+  const articleIds = idsOf("article");
+
+  const [mediaRes, reelRes, vlogRes, slidesRes, sectionsRes, claimsRes] = await Promise.all([
     supabase
       .from("content_media")
       .select("id, content_id, position, image_url")
@@ -71,9 +80,16 @@ export async function fetchReviewMaterial(
     longIds.length
       ? supabase
           .from("content_sections")
-          .select("content_id, kind, title, body, position")
+          .select("content_id, kind, title, body, position, role")
           .in("content_id", longIds)
           .in("kind", ["section", "guest"])
+          .order("position", { ascending: true })
+      : Promise.resolve({ data: [] }),
+    articleIds.length
+      ? supabase
+          .from("article_claims")
+          .select("content_id, text, checked_at")
+          .in("content_id", articleIds)
           .order("position", { ascending: true })
       : Promise.resolve({ data: [] }),
   ]);
@@ -109,13 +125,17 @@ export async function fetchReviewMaterial(
     if (entry && v.voiceover?.trim()) entry.script = v.voiceover;
   }
 
-  const parts = new Map<string, { title: string | null; body: string | null }[]>();
+  const parts = new Map<
+    string,
+    { title: string | null; body: string | null; role?: string | null }[]
+  >();
   const guests = new Map<string, string>();
   for (const s of (sectionsRes.data ?? []) as {
     content_id: string;
     kind: string;
     title: string | null;
     body: string | null;
+    role?: string | null;
   }[]) {
     if (s.kind === "guest") {
       const line = [s.title?.trim(), s.body?.trim()].filter(Boolean).join(" — ");
@@ -134,6 +154,28 @@ export async function fetchReviewMaterial(
         .filter(Boolean)
         .join("\n\n");
     }
+  }
+
+  // Un article se relit comme un article. Ce que l'équipe a déjà vérifié n'est
+  // plus à demander au client.
+  for (const item of items) {
+    const list = item.type === "article" ? parts.get(item.id) : undefined;
+    const entry = result.get(item.id);
+    if (!list || !entry || !list.some((s) => s.body?.trim())) continue;
+    entry.article = {
+      parts: list.map((p, i) => ({
+        number: partNumber("article", list, i),
+        title: p.title,
+        body: p.body,
+      })),
+      claims: ((claimsRes.data ?? []) as {
+        content_id: string;
+        text: string;
+        checked_at: string | null;
+      }[])
+        .filter((c) => c.content_id === item.id && !c.checked_at)
+        .map((c) => c.text),
+    };
   }
 
   // Une story : ses images deviennent les visuels, ses textes le script —

@@ -14,6 +14,8 @@ import { PillarManager } from "./pillar-manager";
 import { ThemeAssistant } from "./theme-assistant";
 import { BrandAiSwitch } from "./ai-switch";
 import { ScenePresetManager } from "./scene-preset-manager";
+import { cleanSheet } from "@/lib/article";
+import { AuthorSheetManager } from "./author-sheet-manager";
 import { BrandKitManager } from "./brand-kit-manager";
 import { BrandStudio } from "./brand-studio";
 import { TeamSection } from "./team-section";
@@ -229,6 +231,22 @@ export default async function BrandDetailPage({
         </CardHeader>
         <CardContent>
           <BrandKitManager brandId={brand.id} kit={kit} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Fiche auteur</CardTitle>
+          <CardDescription>
+            Qui signe les articles, ses preuves, ce qu&apos;on ne promet pas. Demandée une
+            fois, reprise dans chaque brief.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AuthorSheetManager
+            brandId={brand.id}
+            sheet={cleanSheet(kitRes.data?.author_sheet)}
+          />
         </CardContent>
       </Card>
 

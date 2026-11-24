@@ -198,6 +198,8 @@ export type Content = {
   hide_production_tabs: boolean;
   /** Le contenu long dont celui-ci est un extrait (0100). */
   source_content_id?: string | null;
+  /** Article : la ligne sous le titre (0103). */
+  subtitle?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -309,6 +311,17 @@ export type ContentSection = {
   title: string | null;
   body: string | null;
   minutes: number | null;
+  /** Article seulement (0103) : 'intro', 'item' (numéroté), 'text', 'outro'. */
+  role?: string | null;
+};
+
+/** Un point que l'auteur doit vérifier (0104). L'équipe coche. */
+export type ArticleClaim = {
+  id: string;
+  content_id: string;
+  position: number;
+  text: string;
+  checked_at: string | null;
 };
 
 /** Un contenu tiré d'un contenu long, tel que l'onglet Extraits le liste. */

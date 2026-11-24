@@ -171,6 +171,14 @@ async function writeScript(
 
   // Formats longs : le plan seulement, et jamais par-dessus ce qui existe — on
   // le vérifie AVANT de payer l'appel.
+  if (type === "article") {
+    return {
+      ok: false,
+      error:
+        "Un article s'écrit sur un brief (lecteur, preuves, longueur) : ouvre la fiche et clique « Écrire l'article ».",
+    };
+  }
+
   if (isLongformType(type)) {
     const { count } = await supabase
       .from("content_sections")

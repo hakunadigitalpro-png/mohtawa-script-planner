@@ -23,6 +23,7 @@ import {
   STORY_SLOT_LABELS,
 } from "@/lib/constants";
 import { formatDateFr } from "@/lib/utils";
+import { partNumber } from "@/lib/article";
 import { longformSpec } from "@/lib/longform";
 import { parsePreviewUrl } from "@/lib/preview-embed";
 import { Card } from "@/components/ui/card";
@@ -67,6 +68,7 @@ type SharedContent = Pick<
   | "id"
   | "type"
   | "title"
+  | "subtitle"
   | "date"
   | "platform"
   | "status"
@@ -84,6 +86,7 @@ type SharedPart = {
   title: string | null;
   body: string | null;
   minutes: number | null;
+  role?: string | null;
 };
 
 type Bundle = {
@@ -204,6 +207,23 @@ export function ShareView({
       />
     );
   };
+
+  const captionSection = c.caption?.trim() && (
+    <Section
+      title={longform?.captionTitle ?? "Légende"}
+      headerExtra={
+        <Btn
+          type="plan"
+          id="caption"
+          label={longform?.captionTitle ?? "Légende"}
+        />
+      }
+    >
+      <p dir="auto" className="whitespace-pre-wrap text-sm leading-relaxed">
+        {c.caption}
+      </p>
+    </Section>
+  );
 
   return (
     <div className="min-h-screen">
@@ -352,22 +372,7 @@ export function ShareView({
           </Section>
         )}
 
-        {c.caption?.trim() && (
-          <Section
-            title={longform?.captionTitle ?? "Légende"}
-            headerExtra={
-              <Btn
-                type="plan"
-                id="caption"
-                label={longform?.captionTitle ?? "Légende"}
-              />
-            }
-          >
-            <p dir="auto" className="whitespace-pre-wrap text-sm leading-relaxed">
-              {c.caption}
-            </p>
-          </Section>
-        )}
+        {c.type !== "article" && captionSection}
 
         {vlog &&
           (vlog.angle ||
@@ -413,16 +418,27 @@ export function ShareView({
               </p>
             )}
             <div className="space-y-5">
-              {parts.map((p, i) => (
+              {c.subtitle && (
+                <p dir="auto" className="text-muted-foreground">
+                  {c.subtitle}
+                </p>
+              )}
+              {parts.map((p, i) => {
+                const n = partNumber(c.type, parts, i);
+                const heading = p.title || (c.type === "article" ? "" : "Sans titre");
+                return (
                 <div key={p.id}>
+                  {heading && (
                   <h3 dir="auto" className="text-sm font-semibold">
-                    {i + 1}. {p.title || "Sans titre"}
+                    {n ? `${n}. ` : ""}
+                    {heading}
                     {p.minutes ? (
                       <span className="ms-2 text-xs font-medium text-muted">
                         {p.minutes} min
                       </span>
                     ) : null}
                   </h3>
+                  )}
                   {p.body && (
                     <p
                       dir="auto"
@@ -432,10 +448,14 @@ export function ShareView({
                     </p>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </Section>
         )}
+
+        {/* Un article se lit avant son texte de partage. */}
+        {c.type === "article" && captionSection}
 
         {/* Reel script — affiché uniquement si la vidéo est un Reel ET au
             moins un bloc est rempli. Chaque bloc rempli a son bouton commenter

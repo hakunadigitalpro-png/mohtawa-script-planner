@@ -45,7 +45,10 @@ import {
   CommentsInboxButton,
 } from "@/components/comments";
 import type { Comment } from "@/components/comments";
+import { cleanBrief } from "@/lib/article";
+import { countToConfirm } from "@/lib/article-checks";
 import type {
+  ArticleClaim,
   Content,
   ContentMedia,
   ContentSection,
@@ -129,6 +132,8 @@ export default async function ContentDetailPage({
     sectionsRes,
     derivedRes,
     sourceRes,
+    articleRes,
+    claimsRes,
   ] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
@@ -214,6 +219,20 @@ export default async function ContentDetailPage({
           .eq("id", content.source_content_id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    content.type === "article"
+      ? supabase
+          .from("article_briefs")
+          .select("brief, cover_brief, versions")
+          .eq("content_id", id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    content.type === "article"
+      ? supabase
+          .from("article_claims")
+          .select("id, content_id, position, text, checked_at")
+          .eq("content_id", id)
+          .order("position", { ascending: true })
+      : Promise.resolve({ data: [] }),
   ]);
 
   const reel = (reelRes.data ?? null) as ReelDetails | null;
@@ -232,6 +251,37 @@ export default async function ContentDetailPage({
   const sections = (sectionsRes.data ?? []) as ContentSection[];
   const derived = (derivedRes.data ?? []) as DerivedContent[];
   const source = sourceRes.data as { id: string; title: string | null } | null;
+  const articleRow = articleRes.data as {
+    brief: unknown;
+    cover_brief: string | null;
+    versions: { at: string; title: string | null }[] | null;
+  } | null;
+  const article =
+    content.type === "article"
+      ? {
+          brief: articleRow?.brief ? cleanBrief(articleRow.brief) : null,
+          coverBrief: articleRow?.cover_brief ?? "",
+          claims: (claimsRes.data ?? []) as ArticleClaim[],
+          versions: (articleRow?.versions ?? []).map((v) => ({
+            at: v.at,
+            title: v.title ?? "",
+          })),
+        }
+      : undefined;
+  const toConfirm = article
+    ? countToConfirm(
+        [
+          content.title,
+          content.subtitle,
+          content.caption,
+          ...sections
+            .filter((s) => s.kind === "section")
+            .flatMap((s) => [s.title, s.body]),
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      )
+    : 0;
   const comments = (commentsRes.data ?? []) as Comment[];
   const lastReadAt = readRes.data?.last_comment_read_at ?? "1970-01-01T00:00:00Z";
   const checklistItems = (checklistItemsRes.data ?? []) as ChecklistItem[];
@@ -412,6 +462,7 @@ export default async function ContentDetailPage({
                 brandId={c.brand_id}
                 canInvite={role === "owner" || role === "admin"}
                 sendBlocker={sendBlocker}
+                toConfirm={toConfirm}
               />
               <span data-tour="content-comments" className="inline-flex">
                 <CommentsInboxButton />
@@ -456,6 +507,7 @@ export default async function ContentDetailPage({
           brandAudience={brandAudience}
           sections={sections}
           derived={derived}
+          article={article}
           aiEnabled={activeBrand?.ai_enabled !== false}
         />
       </div>

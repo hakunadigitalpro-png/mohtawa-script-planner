@@ -10,6 +10,7 @@ import {
   statusAfterDateRemoved,
 } from "@/lib/content-lifecycle";
 import { fetchReviewMaterial } from "@/lib/review-material";
+import { countToConfirm } from "@/lib/article-checks";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -30,6 +31,44 @@ export async function hasDatedPublication(
     .eq("content_id", contentId)
     .not("scheduled_date", "is", null);
   return (count ?? 0) > 0;
+}
+
+/**
+ * Combien d'informations restent marquées [À CONFIRMER] dans ce qui sera publié
+ * d'un article : titre, sous-titre, parties, texte de partage. Zéro pour les
+ * autres formats, sans requête de plus. `null` si la lecture échoue : ne pas
+ * savoir n'est pas « zéro ».
+ */
+export async function countUnconfirmed(
+  supabase: Supabase,
+  contentId: string,
+): Promise<number | null> {
+  const { data: c, error } = await supabase
+    .from("contents")
+    .select("type, title, subtitle, caption")
+    .eq("id", contentId)
+    .maybeSingle();
+  if (error) return null;
+  if (c?.type !== "article") return 0;
+  const { data: parts, error: partsError } = await supabase
+    .from("content_sections")
+    .select("title, body")
+    .eq("content_id", contentId)
+    .eq("kind", "section");
+  if (partsError) return null;
+  return countToConfirm(
+    [
+      c.title,
+      c.subtitle,
+      c.caption,
+      ...((parts ?? []) as { title: string | null; body: string | null }[]).flatMap((p) => [
+        p.title,
+        p.body,
+      ]),
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
 }
 
 /**

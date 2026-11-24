@@ -13,6 +13,8 @@ import {
   type PlannedPart,
 } from "@/lib/ai-longform";
 import { isLongformType } from "@/lib/constants";
+import { articleRole, cleanBrief, type ArticleBrief } from "@/lib/article";
+import { countToConfirm } from "@/lib/article-checks";
 import { applyWritingProgress } from "@/lib/content-lifecycle-db";
 import {
   MAX_PARTS,
@@ -100,10 +102,11 @@ async function saveSingle(
 export async function saveLongform(
   contentId: string,
   input: {
-    changed: LongformPart[];
+    changed: (LongformPart & { existing?: boolean })[];
     order: string[];
     deleted: string[];
     guest?: { name: string; bio: string };
+    subtitle?: string;
   },
 ) {
   if (input.order.length > MAX_PARTS) {
@@ -117,11 +120,28 @@ export async function saveLongform(
       title: p.title.slice(0, 300),
       body: p.body,
       minutes: p.minutes,
+      // Absent pour les autres formats : la base garde ce qu'elle a.
+      ...(p.role ? { role: articleRole(p.role) } : {}),
+      existing: p.existing === true,
     })),
     p_order: input.order,
     p_deleted: input.deleted,
   });
-  if (error) return { error: error.message };
+  if (error) {
+    return {
+      error: error.message.includes("stale_sections")
+        ? "Ce texte a été remplacé entre-temps, ailleurs. Copie ce que tu viens d'écrire, puis recharge la page."
+        : error.message,
+    };
+  }
+
+  if (input.subtitle !== undefined) {
+    const { error: subtitleError } = await supabase
+      .from("contents")
+      .update({ subtitle: input.subtitle.trim().slice(0, 300) || null })
+      .eq("id", contentId);
+    if (subtitleError) return { error: subtitleError.message };
+  }
 
   if (input.guest) {
     const guestError = await saveSingle(supabase, contentId, "guest", {
@@ -231,6 +251,10 @@ export async function aiWritePart(input: {
   previous?: string;
   current?: string;
   language: GenerationLanguage;
+  /** Article : introduction ou conclusion. */
+  role?: string | null;
+  /** Article : ce que les contrôles reprochent à cette partie. */
+  fixes?: string[];
 }): Promise<{ ok: true; text: string } | { ok: false; error: string }> {
   try {
     // Refusé, pas tronqué : une réécriture d'un texte coupé en perdrait la fin.
@@ -240,8 +264,24 @@ export async function aiWritePart(input: {
         error: "Cette partie est trop longue pour être réécrite d'un coup. Découpe-la d'abord.",
       };
     }
-    const { ctx } = await prepareAi("longform_part", input.contentId, input.language);
+    const { ctx, supabase, content } = await prepareAi(
+      "longform_part",
+      input.contentId,
+      input.language,
+    );
+    let brief: ArticleBrief | undefined;
+    if (content.type === "article") {
+      const { data } = await supabase
+        .from("article_briefs")
+        .select("brief")
+        .eq("content_id", content.id)
+        .maybeSingle();
+      if (data?.brief) brief = cleanBrief(data.brief);
+    }
     const text = await writeLongformPart(ctx, {
+      role: input.role,
+      brief,
+      fixes: input.fixes?.slice(0, 6).map((f) => f.slice(0, 300)),
       outline: input.outline.slice(0, MAX_PARTS),
       index: input.index,
       previous: input.previous,
@@ -322,6 +362,10 @@ export async function createExtract(input: {
   const supabase = await createClient();
   const source = await readLongContent(supabase, input.sourceId);
   if (!source) return { ok: false, error: "Contenu introuvable." };
+
+  if (countToConfirm(`${input.quote ?? ""}${input.hook ?? ""}${input.caption ?? ""}`) > 0) {
+    return { ok: false, error: "Ce passage contient une information à confirmer. Complète-la d'abord." };
+  }
 
   const quote = input.quote?.trim();
   if (quote) {

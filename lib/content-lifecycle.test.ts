@@ -429,3 +429,23 @@ describe("les passages revus", () => {
     expect(statusForFormat({ to: "selected", type: null })).toEqual({ status: "selected" });
   });
 });
+
+describe("whyNotProgrammed — plus rien à confirmer", () => {
+  const base = { to: "programmed", hasDatedPublication: true };
+  it("refuse tant qu'il reste une information à confirmer, et le compte", () => {
+    expect(whyNotProgrammed({ ...base, toConfirm: 1 })).toContain("une information");
+    expect(whyNotProgrammed({ ...base, toConfirm: 3 })).toContain("3 informations");
+    expect(whyNotProgrammed({ ...base, toConfirm: 0 })).toBeNull();
+    expect(whyNotProgrammed(base)).toBeNull();
+    // Ne pas savoir n'est pas « zéro ».
+    expect(whyNotProgrammed({ ...base, toConfirm: null })).toContain("Réessaie");
+  });
+  it("demande la date d'abord, et n'empêche aucun autre statut", () => {
+    expect(
+      whyNotProgrammed({ to: "scheduled", hasDatedPublication: false, toConfirm: 2 }),
+    ).toContain("date");
+    for (const to of ["pending_review", "approved", "live"]) {
+      expect(whyNotProgrammed({ to, hasDatedPublication: false, toConfirm: 2 })).toBeNull();
+    }
+  });
+});

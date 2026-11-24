@@ -14,8 +14,11 @@ import { PerformanceTab } from "./performance-tab";
 import { LongformTab } from "./longform-tab";
 import { ExtractsTab } from "./extracts-tab";
 import { isLiveStatus, isSimpleType, isWideType } from "@/lib/constants";
+import { articleRole, DEFAULT_WORDS, withRoles, type ArticleBrief } from "@/lib/article";
+import { checkArticle } from "@/lib/article-checks";
 import { longformSpec } from "@/lib/longform";
 import type {
+  ArticleClaim,
   Content,
   ContentMedia,
   ContentSection,
@@ -52,6 +55,7 @@ export function DetailTabs({
   brandAudience,
   sections,
   derived,
+  article,
   aiEnabled = true,
 }: {
   /** Onglet à ouvrir par défaut (via ?tab=…). Validé plus bas. */
@@ -77,6 +81,13 @@ export function DetailTabs({
   sections: ContentSection[];
   /** Formats longs : les contenus qu'on en a tirés (0100). */
   derived: DerivedContent[];
+  /** Article seulement (0104). */
+  article?: {
+    brief: ArticleBrief | null;
+    coverBrief: string;
+    claims: ArticleClaim[];
+    versions: { at: string; title: string }[];
+  };
   /**
    * Interrupteur IA de la marque (0054), porté jusqu'ici par
    * `resolveActiveBrand()` plutôt que par une requête de plus à chaque
@@ -187,6 +198,7 @@ export function DetailTabs({
             <LongformTab
               content={content}
               sections={sections}
+              article={article}
               aiEnabled={aiEnabled}
             />
           </TabsContent>
@@ -209,6 +221,24 @@ export function DetailTabs({
               visuals={visuals}
               isCarousel={false}
               presentation={longform}
+              share={
+                article && {
+                  coverBrief: article.coverBrief,
+                  check: (text) =>
+                    checkArticle({
+                      title: content.title ?? "",
+                      parts: withRoles(sections.filter((s) => s.kind === "section"))
+                        .map((s) => ({
+                          id: s.id,
+                          role: articleRole(s.role),
+                          title: s.title ?? "",
+                          body: s.body ?? "",
+                        })),
+                      shareText: text,
+                      targetWords: article.brief?.words ?? DEFAULT_WORDS,
+                    }).filter((x) => x.where === "share"),
+                }
+              }
             />
           </TabsContent>
           <TabsContent value="extracts">

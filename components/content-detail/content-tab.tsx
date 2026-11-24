@@ -14,6 +14,7 @@ import {
   reorderContentVisuals,
 } from "@/app/(app)/contents/actions";
 import { cn } from "@/lib/utils";
+import type { ArticleIssue } from "@/lib/article-checks";
 import type { LongformSpec } from "@/lib/longform";
 import type { ContentMedia } from "@/lib/types";
 
@@ -41,6 +42,7 @@ export function ContentTab({
   isCarousel,
   aiEnabled = true,
   presentation,
+  share,
 }: {
   contentId: string;
   caption: string | null;
@@ -50,6 +52,8 @@ export function ContentTab({
   aiEnabled?: boolean;
   /** Formats longs : une miniature ou une couverture, pas « l'image de ton post ». */
   presentation?: LongformSpec;
+  /** Article : contrôles du texte de partage, idée d'image. */
+  share?: { check: (text: string) => ArticleIssue[]; coverBrief: string };
 }) {
   const ratio = presentation?.coverRatio ?? "portrait";
   const frame = cn(
@@ -219,6 +223,7 @@ export function ContentTab({
         title={presentation?.captionTitle}
         hint={presentation?.captionHint}
         maxChars={presentation?.captionMax}
+        share={share && { ...share, hasCover: items.length > 0 }}
       />
 
       {preview && (

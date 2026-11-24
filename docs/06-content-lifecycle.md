@@ -27,7 +27,7 @@ Deux familles, définies dans `lib/constants.ts` (`STATUSES`, `SIMPLE_STATUSES`)
 
 `published` subsiste en base comme valeur héritée (0045) ; `isLiveStatus` et le moteur le tiennent pour l'équivalent de `live`. Côté client invité, ces douze valeurs sont projetées en cinq mots (`clientStatusLabel`) : rien de nouveau n'est stocké.
 
-Ce que chaque format sait faire est dans `FORMAT_SPECS` (`lib/constants.ts`) : sa famille, s'il se tourne, s'il s'écrit en parties. Un **direct** n'a ni Tournage ni Montage, un **article** non plus. Le mot affiché s'adapte (`statusWord` : « Rédaction » pour un article, « Enregistrement » pour un podcast, « Préparation » pour un direct), la valeur en base ne change pas. Un format long est prêt dès qu'une de ses parties porte du texte.
+Ce que chaque format sait faire est dans `FORMAT_SPECS` (`lib/constants.ts`) : sa famille, s'il se tourne, s'il s'écrit en parties. Un **direct** n'a ni Tournage ni Montage, un **article** non plus. Le mot affiché s'adapte (`statusWord` : « Rédaction » pour un article, « Enregistrement » pour un podcast, « Préparation » pour un direct), la valeur en base ne change pas. Un format long est prêt dès qu'une de ses parties porte du texte. Un article qui porte encore « [À CONFIRMER] » peut partir chez le client, mais ne peut pas être programmé (`whyNotProgrammed`) : programmé, il sortirait tout seul.
 
 Le moteur place tout ça sur **une seule ligne de temps** (`rankOf`) : Script et Design ont le même rang, Programmée et Programmé aussi. Un geste n'avance que vers l'avant (`isForward`). La correction manuelle reste libre.
 

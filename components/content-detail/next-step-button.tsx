@@ -69,6 +69,7 @@ export function NextStepButton({
   brandId,
   canInvite,
   sendBlocker,
+  toConfirm = 0,
 }: {
   contentId: string;
   status: string;
@@ -84,6 +85,8 @@ export function NextStepButton({
    * avec la même règle que l'action (`whyNotSendable`). Null : on peut.
    */
   sendBlocker: SendBlocker | null;
+  /** Article : informations encore marquées [À CONFIRMER] dans ce qui sort. */
+  toConfirm?: number;
 }) {
   const t = useTranslations("lifecycle");
   const router = useRouter();
@@ -279,6 +282,7 @@ export function NextStepButton({
       {errorLine}
       {dialog === "live" && (
         <LiveDialog
+          toConfirm={toConfirm}
           contentId={contentId}
           type={type}
           needsPlatform={publications.length === 0}
@@ -445,8 +449,10 @@ function LiveDialog({
   contentId,
   type,
   needsPlatform,
+  toConfirm,
   onClose,
 }: {
+  toConfirm: number;
   contentId: string;
   type: string | null;
   needsPlatform: boolean;
@@ -489,6 +495,12 @@ function LiveDialog({
           <DialogDescription>{t("live.description")}</DialogDescription>
         </DialogHeader>
         <DialogBody className="space-y-3">
+          {/* Un constat ne se refuse pas : s'il est sorti, il est sorti. On le dit. */}
+          {toConfirm > 0 && (
+            <p className="rounded-2xl bg-secondary/40 p-3 text-sm">
+              {t("live.toConfirm", { count: toConfirm })}
+            </p>
+          )}
           {needsPlatform && (
             <div className="space-y-2">
               <Label htmlFor="next-step-live-platform">{t("live.where")}</Label>

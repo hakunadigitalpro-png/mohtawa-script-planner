@@ -85,10 +85,26 @@ export function isProgrammedStatus(status: string | null | undefined): boolean {
 export function whyNotProgrammed(input: {
   to: string;
   hasDatedPublication: boolean;
+  /** Article : informations encore marquées [À CONFIRMER]. */
+  toConfirm?: number | null;
 }): string | null {
   if (!isProgrammedStatus(input.to)) return null;
-  if (input.hasDatedPublication) return null;
-  return "Donne-lui d'abord une date dans Publications.";
+  if (!input.hasDatedPublication) {
+    return "Donne-lui d'abord une date dans Publications.";
+  }
+  // Programmé, le contenu part en ligne tout seul à sa date : c'est la dernière
+  // porte avant qu'un « [À CONFIRMER] » se retrouve sous les yeux des lecteurs.
+  // `null` : la vérification a échoué. Dans le doute, on ne programme pas.
+  if (input.toConfirm === null) {
+    return "Je n'ai pas pu vérifier le texte avant de programmer. Réessaie.";
+  }
+  const n = input.toConfirm ?? 0;
+  if (n > 0) {
+    return n === 1
+      ? "Il reste une information à confirmer dans le texte. Complète-la avant de programmer."
+      : `Il reste ${n} informations à confirmer dans le texte. Complète-les avant de programmer.`;
+  }
+  return null;
 }
 
 /**

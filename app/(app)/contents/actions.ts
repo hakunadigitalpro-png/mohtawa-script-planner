@@ -16,6 +16,7 @@ import {
   statusForFormat,
 } from "@/lib/content-lifecycle";
 import {
+  countUnconfirmed,
   applyFilmingProgress,
   hasDatedPublication,
   applyWritingProgress,
@@ -162,6 +163,7 @@ export async function updateContent(
     const blocker = whyNotProgrammed({
       to: patch.status,
       hasDatedPublication: await hasDatedPublication(supabase, id),
+      toConfirm: await countUnconfirmed(supabase, id),
     });
     if (blocker) return { error: blocker };
   }
@@ -273,6 +275,7 @@ export async function duplicateContent(id: string) {
       caption: src.caption,
       // La copie d'un extrait reste un extrait du même contenu long.
       ...(src.source_content_id ? { source_content_id: src.source_content_id } : {}),
+      ...(src.subtitle ? { subtitle: src.subtitle } : {}),
     })
     .select("id")
     .single();
@@ -320,7 +323,7 @@ export async function duplicateContent(id: string) {
   if (isLongformType(src.type)) {
     const { data: sections } = await supabase
       .from("content_sections")
-      .select("kind, position, title, body, minutes")
+      .select("kind, position, title, body, minutes, role")
       .eq("content_id", id)
       .in("kind", ["section", "guest"]);
     if (sections && sections.length) {
@@ -328,6 +331,35 @@ export async function duplicateContent(id: string) {
         .from("content_sections")
         .insert(sections.map((s) => ({ ...s, content_id: newId })));
       if (error) return { error: `La copie est créée, mais sans son texte : ${error.message}` };
+    }
+  }
+
+  // Article : le brief et l'idée d'image suivent, sans le numéro d'édition ni les
+  // versions de Krea ; la liste à valider repart décochée.
+  if (src.type === "article") {
+    const [{ data: ab }, { data: claims }] = await Promise.all([
+      supabase
+        .from("article_briefs")
+        .select("brief, cover_brief")
+        .eq("content_id", id)
+        .maybeSingle(),
+      supabase
+        .from("article_claims")
+        .select("position, text")
+        .eq("content_id", id)
+        .order("position", { ascending: true }),
+    ]);
+    if (ab) {
+      await supabase.from("article_briefs").insert({
+        content_id: newId,
+        brief: ab.brief ? { ...(ab.brief as object), edition: "single" } : null,
+        cover_brief: ab.cover_brief,
+      });
+    }
+    if (claims?.length) {
+      await supabase
+        .from("article_claims")
+        .insert(claims.map((c) => ({ ...c, content_id: newId })));
     }
   }
 
