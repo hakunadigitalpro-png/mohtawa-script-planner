@@ -53,12 +53,9 @@ export function TabsList({
       {...props}
       className={cn(
         "inline-flex h-11 items-center gap-1 rounded-full bg-card/70 p-1 border border-border/60 backdrop-blur",
-        // Mobile : la barre d'onglets dépasse souvent la largeur de l'écran
-        // (5-6 onglets). On la rend scrollable horizontalement au lieu de la
-        // laisser clipper par le `overflow-x-hidden` du <main>. Scrollbar
-        // masquée pour garder l'allure "pilule". Sur desktop ça ne change
-        // rien (inline-flex hug le contenu, pas de débordement → pas de scroll).
-        "max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        // Mobile : la barre dépasse souvent l'écran (5-6 onglets). Défilante,
+        // elle cachait les derniers sans le dire ; on passe à la ligne.
+        "max-w-full max-sm:flex max-sm:h-auto max-sm:flex-wrap max-sm:rounded-3xl",
         className,
       )}
     >

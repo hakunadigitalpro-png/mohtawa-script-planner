@@ -8,7 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CONTENT_TYPES, platformsForType } from "@/lib/constants";
+import {
+  CONTENT_TYPES,
+  FORMAT_HINTS,
+  GROUPED_CONTENT_TYPES,
+  platformsForType,
+  type ContentType,
+} from "@/lib/constants";
 import { createContent } from "@/app/(app)/contents/actions";
 
 export function NewContentButton({
@@ -114,7 +120,7 @@ export function NewContentModal({
           }
         >
           <DialogBody className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="type">{t("format")}</Label>
                 <Select
@@ -124,11 +130,17 @@ export function NewContentModal({
                     setType(v);
                     setPlatform(""); // reset platform when type changes
                   }}
-                  options={CONTENT_TYPES.map((ct) => ({
+                  options={GROUPED_CONTENT_TYPES.map((ct) => ({
                     value: ct.value,
                     label: safeT(tType, ct.value, ct.label),
+                    group: ct.group,
                   }))}
                 />
+                {FORMAT_HINTS[type as ContentType] && (
+                  <p className="text-xs text-muted">
+                    {FORMAT_HINTS[type as ContentType]}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="platform">{t("platform")}</Label>

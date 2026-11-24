@@ -17,7 +17,12 @@
    client et leur fin (Validé, Programmé·e, Live).
    ========================================================================= */
 
-import { isLiveStatus, isSimpleType } from "./constants";
+import {
+  isFilmedType,
+  isLiveStatus,
+  isLongformType,
+  isSimpleType,
+} from "./constants";
 
 /**
  * Le rang de chaque statut sur UNE ligne de temps commune aux deux familles.
@@ -177,7 +182,7 @@ export function statusAfterFilming(input: {
   total: number;
 }): "filming" | "editing" | null {
   const { status, type, filmed, total } = input;
-  if (!type || isSimpleType(type)) return null;
+  if (!isFilmedType(type)) return null;
   if (total <= 0 || filmed <= 0) return null;
   const target = filmed >= total ? "editing" : "filming";
   return isForward(status, target) ? target : null;
@@ -215,7 +220,7 @@ export function statusAfterVideoReady(input: {
   status: string;
   type: string | null;
 }): "editing" | null {
-  if (!input.type || isSimpleType(input.type)) return null;
+  if (!isFilmedType(input.type)) return null;
   return isForward(input.status, "editing") ? "editing" : null;
 }
 
@@ -244,8 +249,15 @@ export function statusForFormat(input: {
   const simple = isSimpleType(type);
   if (to === "script" || to === "design") return { status: simple ? "design" : "script" };
   if (isProgrammedStatus(to)) return { status: programmedStatusFor(type) };
-  if ((to === "filming" || to === "editing") && simple) {
-    return { error: "Ce format ne se tourne pas : son étape, c'est Design." };
+  if ((to === "filming" || to === "editing") && !isFilmedType(type)) {
+    return {
+      error:
+        type === "article"
+          ? "Un article ne se tourne pas : son étape, c'est Rédaction."
+          : type === "livestream"
+            ? "Un direct ne se monte pas : son étape, c'est Préparation."
+            : "Ce format ne se tourne pas : son étape, c'est Design.",
+    };
   }
   return { status: to };
 }
@@ -266,9 +278,12 @@ export function hasMaterial(
     slidesWithText?: number;
     /** Formats simples : nombre de visuels. */
     visuals?: number;
+    /** Formats longs : nombre de parties qui portent du texte. */
+    partsWithText?: number;
   },
 ): boolean {
   const filled = (s: string | null | undefined) => Boolean(s && s.trim());
+  if (isLongformType(type)) return (facts.partsWithText ?? 0) > 0;
   switch (type) {
     case "reel":
       return filled(facts.script);
@@ -349,7 +364,10 @@ export type SendBlocker =
   /** Sans format, rien ne peut être montré. */
   | { kind: "needs_format" }
   /** L'écran de validation n'aurait rien à afficher. */
-  | { kind: "nothing_to_review"; family: "video" | "story" | "simple" }
+  | {
+      kind: "nothing_to_review";
+      family: "video" | "story" | "simple" | "longform" | "article";
+    }
   /** Personne ne recevrait l'e-mail : la marque n'a pas de client invité. */
   | { kind: "no_client" };
 
@@ -389,14 +407,26 @@ export function whyNotSendable(input: {
       family:
         input.type === "story"
           ? "story"
-          : isSimpleType(input.type)
-            ? "simple"
-            : "video",
+          : input.type === "article"
+            ? "article"
+            : isLongformType(input.type)
+              ? "longform"
+              : isSimpleType(input.type)
+                ? "simple"
+                : "video",
     };
   }
   if (!input.hasClient) return { kind: "no_client" };
   return null;
 }
+
+const NOTHING_TO_REVIEW = {
+  video: "Écris d'abord le script.",
+  story: "Ajoute une diapo avec son image.",
+  simple: "Ajoute un visuel ou une légende.",
+  longform: "Écris d'abord une partie.",
+  article: "Écris d'abord le texte.",
+} as const;
 
 /** Le refus dit avec des mots, pour les actions serveur. */
 export function sendBlockerMessage(blocker: SendBlocker): string {
@@ -406,11 +436,7 @@ export function sendBlockerMessage(blocker: SendBlocker): string {
     case "no_client":
       return "Invite d'abord ton client : personne ne recevrait l'e-mail.";
     case "nothing_to_review":
-      return blocker.family === "video"
-        ? "Écris d'abord le script."
-        : blocker.family === "story"
-          ? "Ajoute une diapo avec son image."
-          : "Ajoute un visuel ou une légende.";
+      return NOTHING_TO_REVIEW[blocker.family];
   }
 }
 

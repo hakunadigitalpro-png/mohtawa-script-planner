@@ -12,7 +12,10 @@ import {
   Instagram,
   Facebook,
   Youtube,
+  Globe,
   Linkedin,
+  Mail,
+  Podcast,
   Music2,
   type LucideIcon,
   Flag,
@@ -42,6 +45,7 @@ import {
   platformLabel,
   clientStatusColor,
   clientStatusLabel,
+  mainTabForType,
 } from "@/lib/constants";
 import { NewContentModal } from "@/components/new-content-modal";
 import { ContentCommentsButton } from "@/components/comments";
@@ -110,6 +114,9 @@ const PLATFORM_ICONS: Record<string, LucideIcon> = {
   // Pas d'icône TikTok dans lucide-react — la note de musique est le
   // meilleur équivalent disponible dans le set.
   tiktok: Music2,
+  spotify: Podcast,
+  website: Globe,
+  email: Mail,
 };
 
 function formatTimeFr(time: string | null): string | null {
@@ -590,7 +597,7 @@ function EntryCard({
             }
           />
           <span className="text-xs font-medium text-muted">
-            {canEdit ? statusLabel(entry.status) : clientStatusLabel(entry.status)}
+            {canEdit ? statusLabel(entry.status, entry.type) : clientStatusLabel(entry.status)}
           </span>
         </span>
       </div>
@@ -601,9 +608,7 @@ function EntryCard({
     <li className="relative">
       <Link
         href={`/content/${entry.contentId}${scopeQuery}${scopeQuery ? "&" : "?"}tab=${
-          entry.type === "reel" || entry.type === "story" || entry.type === "vlog"
-            ? "video"
-            : "content"
+          mainTabForType(entry.type)
         }`}
         // Le glisser-déposer n'a pas de sens au doigt : en agenda la carte
         // n'est jamais draggable, quel que soit le rôle.

@@ -23,6 +23,9 @@ const BRAND_GATED_ACTIONS = new Set([
   "caption",
   "autopsy",
   "krea",
+  "longform_plan",
+  "longform_part",
+  "extracts",
 ]);
 
 /**
@@ -40,7 +43,12 @@ const BRAND_GATED_ACTIONS = new Set([
  * fonctionner — seul un vrai dépassement de limite (`ai_rate_limited`) bloque.
  * La vérif d'auth, elle, est toujours active.
  */
-export async function guardAiAction(action: string) {
+export async function guardAiAction(
+  action: string,
+  /** La marque du CONTENU, quand on la connaît : l'interrupteur à lire est le
+   *  sien, pas celui de la marque active dans un autre onglet. */
+  contentBrandId?: string,
+) {
   const supabase = await createClient();
 
   const {
@@ -76,7 +84,7 @@ export async function guardAiAction(action: string) {
   // dans l'interface ne suffirait pas — deux actions (l'autopsie et l'analyse
   // de référence) n'ont même plus de bouton mais restent appelables.
   if (BRAND_GATED_ACTIONS.has(action)) {
-    const brandId = await getActiveBrandId();
+    const brandId = contentBrandId ?? (await getActiveBrandId());
     if (brandId) {
       const { data: on, error: switchError } = await supabase.rpc(
         "is_brand_ai_enabled",

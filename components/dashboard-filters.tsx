@@ -6,7 +6,7 @@ import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CONTENT_TYPES, PLATFORMS, ALL_STATUSES } from "@/lib/constants";
+import { GROUPED_CONTENT_TYPES, PLATFORMS, ALL_STATUSES } from "@/lib/constants";
 
 function buildMonthOptions(locale: string) {
   const opts: { value: string; label: string }[] = [];
@@ -101,9 +101,10 @@ export function DashboardFilters() {
             placeholder={t("allTypes")}
             options={[
               { value: "", label: t("allTypes") },
-              ...CONTENT_TYPES.map((ct) => ({
+              ...GROUPED_CONTENT_TYPES.map((ct) => ({
                 value: ct.value,
                 label: safeT(tType, ct.value, ct.label),
+                group: ct.group,
               })),
             ]}
           />

@@ -11,7 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { KreaBadge } from "@/components/krea-avatar";
+import { GROUPED_CONTENT_TYPES, platformsForType } from "@/lib/constants";
 import {
+  IMPORTABLE_TYPES,
   parseSeries,
   spreadDates,
   type ImportableType,
@@ -23,13 +25,17 @@ import { importSeries } from "./actions";
  * atelier arrive souvent avant qu'on ait tranché reel ou carrousel. Sans
  * format, tout atterrit dans « À trier » plutôt qu'au calendrier.
  */
-const TYPE_OPTIONS: { value: ImportableType | ""; label: string }[] = [
+const TYPE_OPTIONS: {
+  value: ImportableType | "";
+  label: string;
+  group?: string;
+}[] = [
   { value: "", label: "À décider plus tard" },
-  { value: "reel", label: "Reel" },
-  { value: "vlog", label: "Vlog" },
-  { value: "post", label: "Post" },
-  { value: "carousel", label: "Carrousel" },
-  { value: "infographic", label: "Infographie" },
+  ...GROUPED_CONTENT_TYPES.flatMap((t) =>
+    IMPORTABLE_TYPES.includes(t.value as ImportableType)
+      ? [{ value: t.value as ImportableType, label: t.label, group: t.group }]
+      : [],
+  ),
 ];
 
 const CADENCE_OPTIONS = [
@@ -129,7 +135,10 @@ export function ImportForm({
               <Select
                 id="imp-type"
                 value={type}
-                onValueChange={(v) => setType(v as ImportableType | "")}
+                onValueChange={(v) => {
+                  setType(v as ImportableType | "");
+                  setPlatform(""); // les plateformes dépendent du format
+                }}
                 options={TYPE_OPTIONS}
               />
             </div>
@@ -140,7 +149,10 @@ export function ImportForm({
                 value={platform}
                 onValueChange={setPlatform}
                 placeholder="Aucune"
-                options={[{ value: "", label: "Aucune" }, ...platforms]}
+                options={[
+                  { value: "", label: "Aucune" },
+                  ...(type ? platformsForType(type) : platforms),
+                ]}
               />
             </div>
             <div className="space-y-1.5">

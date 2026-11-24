@@ -17,7 +17,9 @@ import {
   clientStatusLabel,
   platformLabel,
   typeLabel,
+  isWideType,
 } from "@/lib/constants";
+import { longformSpec } from "@/lib/longform";
 import { parsePreviewUrl, previewProviderLabel } from "@/lib/preview-embed";
 import { reviewContent } from "./actions";
 
@@ -265,7 +267,13 @@ export function ReviewDeck({
                 Vidéo · {previewProviderLabel(embed.provider)}
               </p>
               <div className="overflow-hidden rounded-2xl bg-black">
-                <div className="relative aspect-[9/16] max-h-[70vh] mx-auto w-full max-w-sm">
+                <div
+                  className={
+                    isWideType(item.type)
+                      ? "relative aspect-video w-full"
+                      : "relative aspect-[9/16] max-h-[70vh] mx-auto w-full max-w-sm"
+                  }
+                >
                   <iframe
                     src={embed.src}
                     allow="autoplay; encrypted-media; picture-in-picture"
@@ -344,7 +352,9 @@ export function ReviewDeck({
         {item.script && (
           <div className="space-y-1.5">
             <p className="text-xs font-bold uppercase tracking-wider text-muted">
-              {item.type === "story" ? "Texte des diapos" : "Script"}
+              {item.type === "story"
+                ? "Texte des diapos"
+                : (longformSpec(item.type)?.tab ?? "Script")}
             </p>
             <p
               dir="auto"

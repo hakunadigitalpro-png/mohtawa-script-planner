@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MultiSelectWithCreate } from "@/components/ui/multi-select-with-create";
 import { Card } from "@/components/ui/card";
-import { statusesForType, CONTENT_TYPES } from "@/lib/constants";
+import { GROUPED_CONTENT_TYPES, statusesForType, statusKey } from "@/lib/constants";
 import { updateContent, setContentFormat } from "@/app/(app)/contents/actions";
 import { createTaxonomy } from "@/app/(app)/brands/taxonomy-actions";
 import { useExplicitSave } from "./use-explicit-save";
@@ -158,9 +158,10 @@ export function PlanTab({
                   router.refresh();
                 });
               }}
-              options={CONTENT_TYPES.map((ct) => ({
+              options={GROUPED_CONTENT_TYPES.map((ct) => ({
                 value: ct.value,
                 label: safeT(tType, ct.value, ct.label),
+                group: ct.group,
               }))}
             />
             {!content.type && !formatError && (
@@ -182,7 +183,7 @@ export function PlanTab({
               onValueChange={(v) => setState((s) => ({ ...s, status: v }))}
               options={statusesForType(content.type).map((s) => ({
                 value: s.value,
-                label: safeT(tStatus, s.value, s.label),
+                label: safeT(tStatus, statusKey(s.value, content.type), s.label),
               }))}
             />
             {/* La correction manuelle, assumée : le geste normal est le

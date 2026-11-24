@@ -21,6 +21,8 @@ import {
   statusColor,
   statusLabel,
   platformLabel,
+  captionTabForType,
+  mainTabForType,
 } from "@/lib/constants";
 import { platformAccentColor } from "@/lib/platform-colors";
 import { cn, formatDateFr } from "@/lib/utils";
@@ -33,7 +35,13 @@ import type { Content } from "@/lib/types";
  * statut (CSS var `--color-status-*`) à 15 % d'opacité en fond + 100 % en
  * texte, pour la lisibilité des deux thèmes sans toucher aux tokens.
  */
-function StatusChip({ status }: { status: string | null | undefined }) {
+function StatusChip({
+  status,
+  type,
+}: {
+  status: string | null | undefined;
+  type: string | null | undefined;
+}) {
   const color = statusColor(status);
   return (
     <span
@@ -44,7 +52,7 @@ function StatusChip({ status }: { status: string | null | undefined }) {
       }}
     >
       <span className="size-1.5 rounded-full" style={{ background: color }} />
-      {statusLabel(status)}
+      {statusLabel(status, type)}
     </span>
   );
 }
@@ -346,10 +354,7 @@ export function PlanningTable({
     // On lit le type depuis la liste `contents` pour ne pas devoir
     // repasser par l'URL.
     const c = contents.find((x) => x.id === id);
-    const def =
-      c?.type === "reel" || c?.type === "story" || c?.type === "vlog"
-        ? "video"
-        : "content";
+    const def = mainTabForType(c?.type);
     const t = tab ?? def;
     const sep = scopeQuery ? "&" : "?";
     const tabQs = `${scopeQuery || ""}${sep}tab=${t}`;
@@ -433,7 +438,7 @@ export function PlanningTable({
                     <PlatformChip platform={c.platform} />
                   </span>
                   <span className="min-w-0 truncate">
-                    <StatusChip status={c.status} />
+                    <StatusChip status={c.status} type={c.type} />
                   </span>
                   {showTeam && (
                     <span
@@ -466,7 +471,7 @@ export function PlanningTable({
                           caption: c.caption,
                         });
                       } else {
-                        openFiche(c.id, "caption");
+                        openFiche(c.id, captionTabForType(c.type));
                       }
                     }}
                     className="min-w-0 truncate text-start text-foreground/70 hover:text-foreground"
@@ -582,7 +587,10 @@ export function PlanningTable({
               onClick={() => {
                 const id = captionReader?.id;
                 setCaptionReader(null);
-                if (id) openFiche(id, "caption");
+                if (id) {
+                  const type = contents.find((x) => x.id === id)?.type;
+                  openFiche(id, captionTabForType(type));
+                }
               }}
             >
               <Pencil className="size-4" />

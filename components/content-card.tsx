@@ -20,6 +20,7 @@ import {
   typeLabel,
   statusColor,
   statusLabel,
+  statusKey,
   platformLabel,
   statusesForType,
 } from "@/lib/constants";
@@ -105,7 +106,7 @@ export function ContentCard({ content }: { content: Content }) {
                 }}
               >
                 <ColorDot color={s.color} />
-                {safeT(tStatus, s.value, s.label)}
+                {safeT(tStatus, statusKey(s.value, content.type), s.label)}
                 {s.value === content.status && (
                   <CheckCircle2 className="ms-auto size-3.5 text-muted" />
                 )}
@@ -142,7 +143,11 @@ export function ContentCard({ content }: { content: Content }) {
           className="text-white"
           style={{ background: statusColor(content.status) }}
         >
-          {safeT(tStatus, content.status, statusLabel(content.status))}
+          {safeT(
+            tStatus,
+            statusKey(content.status, content.type),
+            statusLabel(content.status, content.type),
+          )}
         </Badge>
 
         <div className="flex items-center gap-2 text-xs text-muted">

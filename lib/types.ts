@@ -196,6 +196,8 @@ export type Content = {
    * onglets Script et Storyboard — ils ne servent plus. 0063.
    */
   hide_production_tabs: boolean;
+  /** Le contenu long dont celui-ci est un extrait (0100). */
+  source_content_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -292,6 +294,30 @@ export type ContentMedia = {
   position: number;
   image_url: string | null;
   created_at: string;
+};
+
+/**
+ * Une partie d'un contenu long (0101) : chapitre, étape de direct, question de
+ * podcast, intertitre d'article. `guest` : l'invité (title = nom, body = sa
+ * présentation). `transcript` : matière de travail, jamais montrée au client.
+ */
+export type ContentSection = {
+  id: string;
+  content_id: string;
+  kind: "section" | "guest" | "transcript";
+  position: number;
+  title: string | null;
+  body: string | null;
+  minutes: number | null;
+};
+
+/** Un contenu tiré d'un contenu long, tel que l'onglet Extraits le liste. */
+export type DerivedContent = {
+  id: string;
+  type: string | null;
+  title: string | null;
+  status: string;
+  date: string | null;
 };
 
 export type StorySlide = {

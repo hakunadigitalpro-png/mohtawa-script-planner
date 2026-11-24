@@ -17,11 +17,14 @@ import {
   platformLabel,
   typeLabel,
   typeColor,
-  statusLabel,
-  statusColor,
+  clientStatusLabel,
+  clientStatusColor,
+  isWideType,
   STORY_SLOT_LABELS,
 } from "@/lib/constants";
 import { formatDateFr } from "@/lib/utils";
+import { longformSpec } from "@/lib/longform";
+import { parsePreviewUrl } from "@/lib/preview-embed";
 import { Card } from "@/components/ui/card";
 import { Badge, ColorDot } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +39,7 @@ import type {
   StorySlide,
   StoryboardScene,
   Performance,
+  VlogDetails,
 } from "@/lib/types";
 
 const GUEST_NAME_KEY = "kreatly_guest_name";
@@ -57,9 +61,38 @@ type SharedComment = {
   created_at: string;
 };
 
+/** Ce que `get_shared_content` renvoie : une liste blanche (0102). */
+type SharedContent = Pick<
+  Content,
+  | "id"
+  | "type"
+  | "title"
+  | "date"
+  | "platform"
+  | "status"
+  | "pillar"
+  | "objective"
+  | "hook"
+  | "cta"
+  | "caption"
+  | "preview_url"
+  | "share_mode"
+>;
+
+type SharedPart = {
+  id: string;
+  title: string | null;
+  body: string | null;
+  minutes: number | null;
+};
+
 type Bundle = {
-  content: Content;
+  content: SharedContent;
   brand_name: string | null;
+  vlog?: Omit<VlogDetails, "content_id"> | null;
+  media?: { id: string; image_url: string }[];
+  sections?: SharedPart[];
+  guest?: { title: string | null; body: string | null } | null;
   reel: ReelDetails | null;
   story: StoryDetails | null;
   slides: StorySlide[];
@@ -83,6 +116,14 @@ export function ShareView({
 }) {
   const c = bundle.content;
   const isStory = c.type === "story";
+  const media = bundle.media ?? [];
+  const parts = (bundle.sections ?? []).filter(
+    (s) => s.title?.trim() || s.body?.trim(),
+  );
+  const vlog = bundle.vlog;
+  const embed = parsePreviewUrl(c.preview_url ?? null);
+  const wide = isWideType(c.type);
+  const longform = longformSpec(c.type);
   const canComment = c.share_mode === "comment";
 
   // Identité invité persistée en localStorage (re-utilisée entre visites).
@@ -201,9 +242,9 @@ export function ShareView({
               </span>
               <Badge
                 className="text-white"
-                style={{ background: statusColor(c.status) }}
+                style={{ background: clientStatusColor(c.status) }}
               >
-                {statusLabel(c.status)}
+                {clientStatusLabel(c.status)}
               </Badge>
               {c.platform && (
                 <span className="text-white/70">
@@ -249,6 +290,150 @@ export function ShareView({
                 />
               )}
             </dl>
+          </Section>
+        )}
+
+        {c.preview_url && (
+          <Section title="Vidéo">
+            {embed ? (
+              <div className="overflow-hidden rounded-2xl bg-black">
+                <div
+                  className={
+                    wide
+                      ? "relative aspect-video w-full"
+                      : "relative mx-auto aspect-[9/16] w-full max-w-sm"
+                  }
+                >
+                  <iframe
+                    src={embed.src}
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 h-full w-full"
+                    title={c.title ?? "Vidéo"}
+                  />
+                </div>
+              </div>
+            ) : (
+              <a
+                href={c.preview_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold underline underline-offset-4"
+              >
+                Ouvrir la vidéo
+                <ExternalLink className="size-3.5" />
+              </a>
+            )}
+          </Section>
+        )}
+
+        {/* Les visuels : le cœur d'un post ou d'un carrousel, la miniature ou
+            la couverture d'un contenu long. */}
+        {media.length > 0 && (
+          <Section title={longform?.coverTitle ?? (media.length > 1 ? "Visuels" : "Visuel")}>
+            <div
+              className={
+                media.length > 1
+                  ? "grid grid-cols-2 gap-3 sm:grid-cols-3"
+                  : "mx-auto max-w-lg"
+              }
+            >
+              {media.map((m, i) => (
+                // eslint-disable-next-line @next/next/no-img-element -- ratio inconnu : un carrousel, une affiche et une miniature passent ici.
+                <img
+                  key={m.id}
+                  src={m.image_url}
+                  alt={media.length > 1 ? `Visuel ${i + 1}` : "Visuel"}
+                  loading="lazy"
+                  className="h-auto w-full rounded-2xl border border-border/60"
+                />
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {c.caption?.trim() && (
+          <Section
+            title={longform?.captionTitle ?? "Légende"}
+            headerExtra={
+              <Btn
+                type="plan"
+                id="caption"
+                label={longform?.captionTitle ?? "Légende"}
+              />
+            }
+          >
+            <p dir="auto" className="whitespace-pre-wrap text-sm leading-relaxed">
+              {c.caption}
+            </p>
+          </Section>
+        )}
+
+        {vlog &&
+          (vlog.angle ||
+            vlog.hook ||
+            vlog.arc_situation ||
+            vlog.arc_development ||
+            vlog.arc_payoff ||
+            vlog.voiceover) && (
+            <Section
+              title="Vlog"
+              headerExtra={
+                <Btn type="script" id="script_full" label="Vlog · Voix off" />
+              }
+            >
+              <div className="space-y-4">
+                {vlog.angle && <Block label="Angle" value={vlog.angle} />}
+                {vlog.hook && <Block label="Accroche" value={vlog.hook} />}
+                {vlog.arc_situation && (
+                  <Block label="Situation" value={vlog.arc_situation} />
+                )}
+                {vlog.arc_development && (
+                  <Block label="Développement" value={vlog.arc_development} />
+                )}
+                {vlog.arc_payoff && <Block label="Chute" value={vlog.arc_payoff} />}
+                {vlog.voiceover && (
+                  <Block label="Voix off" value={vlog.voiceover} />
+                )}
+              </div>
+            </Section>
+          )}
+
+        {longform && parts.length > 0 && (
+          <Section
+            title={longform.tab}
+            headerExtra={
+              <Btn type="script" id="script_full" label={longform.tab} />
+            }
+          >
+            {bundle.guest?.title && (
+              <p dir="auto" className="mb-4 text-sm text-muted-foreground">
+                Invité : <span className="font-semibold">{bundle.guest.title}</span>
+                {bundle.guest.body ? ` — ${bundle.guest.body}` : ""}
+              </p>
+            )}
+            <div className="space-y-5">
+              {parts.map((p, i) => (
+                <div key={p.id}>
+                  <h3 dir="auto" className="text-sm font-semibold">
+                    {i + 1}. {p.title || "Sans titre"}
+                    {p.minutes ? (
+                      <span className="ms-2 text-xs font-medium text-muted">
+                        {p.minutes} min
+                      </span>
+                    ) : null}
+                  </h3>
+                  {p.body && (
+                    <p
+                      dir="auto"
+                      className="mt-1 whitespace-pre-wrap text-sm leading-relaxed"
+                    >
+                      {p.body}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
           </Section>
         )}
 
@@ -551,7 +736,7 @@ function Field({
         <span>{label}</span>
         {inlineExtra}
       </dt>
-      <dd className="mt-0.5 text-sm">{value}</dd>
+      <dd dir="auto" className="mt-0.5 text-sm">{value}</dd>
     </div>
   );
 }
@@ -571,7 +756,7 @@ function Block({
         <span>{label}</span>
         {extra}
       </div>
-      <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{value}</p>
+      <p dir="auto" className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{value}</p>
     </div>
   );
 }
@@ -876,11 +1061,11 @@ function CommentBubble({ c }: { c: SharedComment }) {
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           <span className="font-semibold text-foreground">{authorLabel}</span>
           {c.is_guest ? (
-            <span className="rounded-full bg-orange-soft/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-orange-strong">
+            <span className="rounded-full bg-orange-soft/80 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider text-orange-strong">
               Invité
             </span>
           ) : (
-            <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-muted">
+            <span className="rounded-full bg-secondary px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider text-muted">
               Équipe
             </span>
           )}

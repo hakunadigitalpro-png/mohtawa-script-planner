@@ -12,7 +12,7 @@ Tout ce qui décide d'un statut vit dans **un seul moteur**, en logique pure et 
 
 Deux familles, définies dans `lib/constants.ts` (`STATUSES`, `SIMPLE_STATUSES`), qui partagent leur début, leur boucle client et leur fin :
 
-| Étape | Vidéo (reel, story, vlog) | Simple (post, carrousel, infographie) |
+| Étape | Vidéo (reel, story, vlog, vidéo longue, direct, podcast) | Simple (post, carrousel, infographie, article) |
 |---|---|---|
 | Notée | `idea` Idée | `idea` Idée |
 | Choisie en atelier | `selected` Retenue | `selected` Retenue |
@@ -26,6 +26,8 @@ Deux familles, définies dans `lib/constants.ts` (`STATUSES`, `SIMPLE_STATUSES`)
 | Sortie | `live` En ligne | idem |
 
 `published` subsiste en base comme valeur héritée (0045) ; `isLiveStatus` et le moteur le tiennent pour l'équivalent de `live`. Côté client invité, ces douze valeurs sont projetées en cinq mots (`clientStatusLabel`) : rien de nouveau n'est stocké.
+
+Ce que chaque format sait faire est dans `FORMAT_SPECS` (`lib/constants.ts`) : sa famille, s'il se tourne, s'il s'écrit en parties. Un **direct** n'a ni Tournage ni Montage, un **article** non plus. Le mot affiché s'adapte (`statusWord` : « Rédaction » pour un article, « Enregistrement » pour un podcast, « Préparation » pour un direct), la valeur en base ne change pas. Un format long est prêt dès qu'une de ses parties porte du texte.
 
 Le moteur place tout ça sur **une seule ligne de temps** (`rankOf`) : Script et Design ont le même rang, Programmée et Programmé aussi. Un geste n'avance que vers l'avant (`isForward`). La correction manuelle reste libre.
 

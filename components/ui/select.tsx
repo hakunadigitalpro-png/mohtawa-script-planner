@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 export type SelectOption = {
   value: string;
   label: string;
+  /** Titre de famille, affiché une fois au-dessus de sa première option. */
+  group?: string;
 };
 
 export type SelectProps = {
@@ -138,10 +140,21 @@ export function Select({
           {options.length === 0 && (
             <li className="px-4 py-2 text-sm text-muted">{t("noOptions")}</li>
           )}
-          {options.map((opt) => {
+          {options.map((opt, i) => {
             const active = opt.value === value;
+            const heading =
+              opt.group && opt.group !== options[i - 1]?.group ? opt.group : null;
             return (
-              <li key={opt.value} role="option" aria-selected={active}>
+              <React.Fragment key={opt.value}>
+              {heading && (
+                <li
+                  role="presentation"
+                  className="px-4 pb-1 pt-2 text-xs font-bold uppercase tracking-wider text-muted"
+                >
+                  {heading}
+                </li>
+              )}
+              <li role="option" aria-selected={active}>
                 <button
                   type="button"
                   onClick={() => handlePick(opt.value)}
@@ -156,6 +169,7 @@ export function Select({
                   {active && <Check className="size-4 shrink-0" />}
                 </button>
               </li>
+              </React.Fragment>
             );
           })}
         </ul>,

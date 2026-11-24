@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
-  CONTENT_TYPES,
+  GROUPED_CONTENT_TYPES,
   platformsForType,
   platformLabel,
   typeColor,
@@ -389,10 +389,7 @@ function ScheduleDialog({
                   setPlatform(""); // les plateformes dépendent du format
                 }}
                 placeholder="Choisis un format"
-                options={CONTENT_TYPES.map((t) => ({
-                  value: t.value,
-                  label: t.label,
-                }))}
+                options={GROUPED_CONTENT_TYPES}
               />
               <p className="text-xs text-muted">
                 Une fois choisi, le format ne change plus.
@@ -517,10 +514,7 @@ function FormatDialog({
             value={type}
             onValueChange={setType}
             placeholder="Choisis un format"
-            options={CONTENT_TYPES.map((t) => ({
-              value: t.value,
-              label: t.label,
-            }))}
+            options={GROUPED_CONTENT_TYPES}
           />
           {error && (
             <p className="text-sm font-medium text-destructive" role="alert">

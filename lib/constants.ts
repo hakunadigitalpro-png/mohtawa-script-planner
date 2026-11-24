@@ -5,18 +5,105 @@ export const CONTENT_TYPES = [
   { value: "post", label: "Post", color: "var(--color-post)" },
   { value: "carousel", label: "Carrousel", color: "var(--color-carousel)" },
   { value: "infographic", label: "Infographie", color: "var(--color-infographic)" },
+  { value: "long_video", label: "Vidéo longue", color: "var(--color-long-video)" },
+  // « Direct », pas « Live » : « Live » est déjà le statut « c'est sorti ».
+  { value: "livestream", label: "Direct", color: "var(--color-livestream)" },
+  { value: "podcast", label: "Podcast", color: "var(--color-podcast)" },
+  { value: "article", label: "Article", color: "var(--color-article)" },
 ] as const;
 
+export type ContentType = (typeof CONTENT_TYPES)[number]["value"];
+
 /**
- * Types "vidéo" (éditeur complet : script, storyboard…) vs types "simples"
- * (post/carrousel/infographie : éditeur allégé légende + visuels).
+ * Ce que chaque format SAIT FAIRE — la seule table à remplir pour en ajouter
+ * un. `isSimpleType` portait à lui seul trois décisions (le mot de l'étape
+ * d'écriture, le tournage, le mot « programmé ») : un format oublié tombait
+ * en silence dans la famille vidéo.
  */
-export const SIMPLE_TYPES = ["post", "carousel", "infographic"] as const;
-export function isSimpleType(type: string | null | undefined): boolean {
-  return (SIMPLE_TYPES as readonly string[]).includes(type ?? "");
+type FormatSpec = {
+  /** Où le format se range dans les menus. */
+  group: "short" | "long" | "visual";
+  /** Suit les statuts Design → Programmé (SIMPLE_STATUSES) plutôt que la vidéo. */
+  simple: boolean;
+  /** Passe par Tournage et Montage. Un direct se prépare, il ne se monte pas. */
+  filmed: boolean;
+  /** Le lecteur vidéo s'affiche en 16:9 plutôt qu'en vertical. */
+  wide: boolean;
+};
+
+const FORMAT_SPECS: Record<ContentType, FormatSpec> = {
+  reel: { group: "short", simple: false, filmed: true, wide: false },
+  story: { group: "short", simple: false, filmed: true, wide: false },
+  vlog: { group: "short", simple: false, filmed: true, wide: false },
+  long_video: { group: "long", simple: false, filmed: true, wide: true },
+  livestream: { group: "long", simple: false, filmed: false, wide: true },
+  podcast: { group: "long", simple: false, filmed: true, wide: true },
+  article: { group: "long", simple: true, filmed: false, wide: true },
+  post: { group: "visual", simple: true, filmed: false, wide: false },
+  carousel: { group: "visual", simple: true, filmed: false, wide: false },
+  infographic: { group: "visual", simple: true, filmed: false, wide: false },
+};
+
+function specOf(type: string | null | undefined): FormatSpec | null {
+  return (FORMAT_SPECS as Record<string, FormatSpec>)[type ?? ""] ?? null;
 }
 
-export type ContentType = (typeof CONTENT_TYPES)[number]["value"];
+/** Suit les statuts « simples » (Design, Programmé) : post, carrousel,
+ *  infographie — et article, qui se rédige sans se tourner. */
+export function isSimpleType(type: string | null | undefined): boolean {
+  return specOf(type)?.simple ?? false;
+}
+
+/** Passe par Tournage et Montage. */
+export function isFilmedType(type: string | null | undefined): boolean {
+  return specOf(type)?.filmed ?? false;
+}
+
+/** S'écrit en parties (chapitres, déroulé, intertitres), et on en tire des
+ *  contenus courts : vidéo longue, direct, podcast, article. */
+export function isLongformType(type: string | null | undefined): boolean {
+  return specOf(type)?.group === "long";
+}
+
+/** Le lecteur vidéo s'affiche en 16:9 plutôt qu'en vertical. */
+export function isWideType(type: string | null | undefined): boolean {
+  return specOf(type)?.wide ?? false;
+}
+
+/** L'onglet où l'on arrive depuis le calendrier ou le planning. */
+export function mainTabForType(type: string | null | undefined): string {
+  if (isLongformType(type)) return "parts";
+  return !type || isSimpleType(type) ? "content" : "video";
+}
+
+/** L'onglet où s'écrit la légende de ce format. */
+export function captionTabForType(type: string | null | undefined): string {
+  return isLongformType(type) || isSimpleType(type) ? "content" : "caption";
+}
+
+const FORMAT_GROUPS: { key: FormatSpec["group"]; label: string }[] = [
+  { key: "short", label: "Vidéo courte" },
+  { key: "long", label: "Format long" },
+  { key: "visual", label: "Visuel" },
+];
+
+/** Les formats rangés par famille, pour les menus : dix à plat ne se lisent pas. */
+export const GROUPED_CONTENT_TYPES = FORMAT_GROUPS.flatMap((g) =>
+  (Object.keys(FORMAT_SPECS) as ContentType[])
+    .filter((t) => FORMAT_SPECS[t].group === g.key)
+    .map((t) => ({
+      ...CONTENT_TYPES.find((c) => c.value === t)!,
+      group: g.label,
+    })),
+);
+
+/** Une phrase pour les formats qu'on ne connaît pas forcément. */
+export const FORMAT_HINTS: Partial<Record<ContentType, string>> = {
+  long_video: "Une vidéo YouTube de plusieurs minutes, écrite en chapitres.",
+  livestream: "Un direct à une heure précise, avec son déroulé.",
+  podcast: "Un épisode : l'invité, les questions, puis les extraits à publier.",
+  article: "Un texte pour ton site, ta newsletter ou LinkedIn.",
+};
 
 export const PLATFORMS = [
   { value: "instagram", label: "Instagram" },
@@ -24,6 +111,9 @@ export const PLATFORMS = [
   { value: "youtube", label: "YouTube" },
   { value: "facebook", label: "Facebook" },
   { value: "linkedin", label: "LinkedIn" },
+  { value: "spotify", label: "Spotify" },
+  { value: "website", label: "Site / blog" },
+  { value: "email", label: "E-mail" },
 ] as const;
 
 export type Platform = (typeof PLATFORMS)[number]["value"];
@@ -35,6 +125,11 @@ const PLATFORMS_BY_TYPE: Record<string, Platform[]> = {
   post: ["instagram", "facebook", "linkedin"],
   carousel: ["instagram", "linkedin", "facebook", "tiktok"],
   infographic: ["instagram", "linkedin", "facebook"],
+  long_video: ["youtube", "facebook", "linkedin"],
+  livestream: ["instagram", "facebook", "youtube", "tiktok", "linkedin"],
+  podcast: ["spotify", "youtube", "website", "facebook", "linkedin"],
+  // Un seul format pour l'article et la newsletter : même texte, deux sorties.
+  article: ["website", "email", "linkedin"],
 };
 
 export function platformsForType(type: string | null | undefined) {
@@ -100,7 +195,38 @@ export const SIMPLE_STATUSES = [
  */
 export function statusesForType(type: string | null | undefined) {
   const steps = !type ? IDEA_STATUSES : isSimpleType(type) ? SIMPLE_STATUSES : STATUSES;
-  return [...steps, CANCELLED_STATUS];
+  return [...steps, CANCELLED_STATUS]
+    .filter((s) => !type || isFilmedType(type) || !FILMING_STATUSES.has(s.value))
+    .map((s) => ({ ...s, label: statusWord(s.value, type) ?? s.label }));
+}
+
+const FILMING_STATUSES = new Set<string>(["filming", "editing"]);
+
+/**
+ * Le mot juste pour CE format : on rédige un article, on enregistre un
+ * podcast, on prépare un direct. Projection d'affichage — la valeur en base
+ * reste la même, comme pour `clientStatusLabel`. Null : le mot habituel va.
+ */
+function statusWord(
+  status: string | null | undefined,
+  type: string | null | undefined,
+): string | null {
+  return STATUS_WORDS[statusKey(status, type)] ?? null;
+}
+
+const STATUS_WORDS: Record<string, string> = {
+  design_article: "Rédaction",
+  filming_podcast: "Enregistrement",
+  script_livestream: "Préparation",
+};
+
+/** La clé de traduction (`messages/*.json`, `statuses`) de ce statut sur ce format. */
+export function statusKey(
+  status: string | null | undefined,
+  type: string | null | undefined,
+): string {
+  const key = `${status}_${type}`;
+  return key in STATUS_WORDS ? key : (status ?? "");
 }
 
 /**
@@ -172,7 +298,12 @@ export function typeLabel(type: string | null | undefined) {
 export function statusColor(status: string | null | undefined) {
   return ALL_STATUSES.find((s) => s.value === status)?.color ?? "#6b7280";
 }
-export function statusLabel(status: string | null | undefined) {
+export function statusLabel(
+  status: string | null | undefined,
+  type?: string | null,
+) {
+  const word = statusWord(status, type);
+  if (word) return word;
   return ALL_STATUSES.find((s) => s.value === status)?.label ?? status ?? "—";
 }
 

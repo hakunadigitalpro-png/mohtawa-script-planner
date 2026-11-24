@@ -412,11 +412,41 @@
   color: #a1a1aa;
 }
 
+/* Visuels, parties d'un contenu long */
+.print-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.print-media {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.print-media-single { grid-template-columns: minmax(0, 360px); }
+.print-media img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #e4e4e7;
+  break-inside: avoid;
+}
+.print-part { margin-top: 16px; }
+.print-part h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  break-after: avoid;
+}
+
 @media print {
   body { background: #fff; }
   .no-print, .print-actions { display: none !important; }
   .print-page { padding: 0; max-width: none; }
   .print-section { page-break-inside: avoid; }
+  /* Un texte de plusieurs pages doit pouvoir se couper, sinon il laisse des blancs. */
+  .print-section-flow { page-break-inside: auto; }
   .print-scene, .print-story-card { page-break-inside: avoid; }
 }
 

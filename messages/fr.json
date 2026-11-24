@@ -607,6 +607,7 @@
       "planField": "Plan · {field}",
       "scriptField": "Script · {field}",
       "planGeneral": "Infos générales",
+      "planCaption": "Légende",
       "planHook": "Accroche",
       "planCta": "Appel à l'action",
       "planTitle": "Titre",
@@ -866,14 +867,21 @@
     "vlog": "Vlog",
     "post": "Post",
     "carousel": "Carrousel",
-    "infographic": "Infographie"
+    "infographic": "Infographie",
+    "long_video": "Vidéo longue",
+    "livestream": "Direct",
+    "podcast": "Podcast",
+    "article": "Article"
   },
   "platforms": {
     "instagram": "Instagram",
     "tiktok": "TikTok",
     "youtube": "YouTube",
     "facebook": "Facebook",
-    "linkedin": "LinkedIn"
+    "linkedin": "LinkedIn",
+    "spotify": "Spotify",
+    "website": "Site / blog",
+    "email": "E-mail"
   },
   "statuses": {
     "idea": "Idée",
@@ -888,7 +896,10 @@
     "approved": "Validé",
     "programmed": "Programmé",
     "live": "En ligne",
-    "cancelled": "Annulé"
+    "cancelled": "Annulé",
+    "design_article": "Rédaction",
+    "filming_podcast": "Enregistrement",
+    "script_livestream": "Préparation"
   },
   "objectives": {
     "education": "Éducation",
@@ -1117,6 +1128,8 @@
       "inviteClient": "Invite d'abord ton client",
       "askAdmin": "Demande à l'admin d'inviter ton client",
       "writeScript": "Écris d'abord le script",
+      "writePart": "Écris d'abord une partie",
+      "writeText": "Écris d'abord le texte",
       "addVisual": "Ajoute un visuel ou une légende",
       "addSlide": "Ajoute une diapo avec son image"
     },

@@ -607,6 +607,7 @@
       "planField": "الخطة · {field}",
       "scriptField": "النص · {field}",
       "planGeneral": "معلومات عامة",
+      "planCaption": "التعليق",
       "planHook": "العنوان الجذاب",
       "planCta": "الدعوة للعمل",
       "planTitle": "العنوان",
@@ -866,14 +867,21 @@
     "vlog": "Vlog",
     "post": "Post",
     "carousel": "Carrousel",
-    "infographic": "Infographie"
+    "infographic": "Infographie",
+    "long_video": "فيديو طويل",
+    "livestream": "بث مباشر",
+    "podcast": "بودكاست",
+    "article": "مقال"
   },
   "platforms": {
     "instagram": "إنستجرام",
     "tiktok": "تيك توك",
     "youtube": "يوتيوب",
     "facebook": "فيسبوك",
-    "linkedin": "لينكدإن"
+    "linkedin": "لينكدإن",
+    "spotify": "Spotify",
+    "website": "موقع / مدونة",
+    "email": "بريد إلكتروني"
   },
   "statuses": {
     "idea": "فكرة",
@@ -888,7 +896,10 @@
     "approved": "تمت الموافقة",
     "programmed": "مبرمج",
     "live": "مباشر",
-    "cancelled": "ملغى"
+    "cancelled": "ملغى",
+    "design_article": "تحرير",
+    "filming_podcast": "تسجيل",
+    "script_livestream": "تحضير"
   },
   "objectives": {
     "education": "تعليم",
@@ -1117,6 +1128,8 @@
       "inviteClient": "ادعُ عميلك أولاً",
       "askAdmin": "اطلب من المسؤول دعوة عميلك",
       "writeScript": "اكتب السكريبت أولاً",
+      "writePart": "اكتب جزءًا أولاً",
+      "writeText": "اكتب النص أولاً",
       "addVisual": "أضف صورة أو تعليقاً",
       "addSlide": "أضف شريحة مع صورتها"
     },

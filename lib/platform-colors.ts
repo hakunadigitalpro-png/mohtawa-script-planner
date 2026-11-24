@@ -13,6 +13,9 @@ const COLORS: Record<string, string> = {
   youtube: "#FF0000",
   tiktok: "#111111",
   linkedin: "#0A66C2",
+  spotify: "#1DB954",
+  website: "#64748B",
+  email: "#B45309",
 };
 
 export function platformAccentColor(

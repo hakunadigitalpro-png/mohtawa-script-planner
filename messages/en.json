@@ -607,6 +607,7 @@
       "planField": "Plan · {field}",
       "scriptField": "Script · {field}",
       "planGeneral": "General info",
+      "planCaption": "Caption",
       "planHook": "Hook",
       "planCta": "Call to action",
       "planTitle": "Title",
@@ -866,14 +867,21 @@
     "vlog": "Vlog",
     "post": "Post",
     "carousel": "Carousel",
-    "infographic": "Infographic"
+    "infographic": "Infographic",
+    "long_video": "Long video",
+    "livestream": "Livestream",
+    "podcast": "Podcast",
+    "article": "Article"
   },
   "platforms": {
     "instagram": "Instagram",
     "tiktok": "TikTok",
     "youtube": "YouTube",
     "facebook": "Facebook",
-    "linkedin": "LinkedIn"
+    "linkedin": "LinkedIn",
+    "spotify": "Spotify",
+    "website": "Website / blog",
+    "email": "Email"
   },
   "statuses": {
     "idea": "Idea",
@@ -888,7 +896,10 @@
     "approved": "Approved",
     "programmed": "Scheduled",
     "live": "Live",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "design_article": "Writing",
+    "filming_podcast": "Recording",
+    "script_livestream": "Preparation"
   },
   "objectives": {
     "education": "Education",
@@ -1117,6 +1128,8 @@
       "inviteClient": "Invite your client first",
       "askAdmin": "Ask the admin to invite your client",
       "writeScript": "Write the script first",
+      "writePart": "Write a part first",
+      "writeText": "Write the text first",
       "addVisual": "Add a visual or a caption",
       "addSlide": "Add a slide with its image"
     },

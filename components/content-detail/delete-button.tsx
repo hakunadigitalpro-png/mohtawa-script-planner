@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { deleteContent } from "@/app/(app)/contents/actions";
 
-export function DeleteContentButton({ contentId }: { contentId: string }) {
+export function DeleteContentButton({
+  contentId,
+  derivedCount = 0,
+}: {
+  contentId: string;
+  /** Les extraits qu'on en a tirés : ils restent, et on le dit. */
+  derivedCount?: number;
+}) {
   const t = useTranslations("deleteContent");
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
@@ -24,7 +31,15 @@ export function DeleteContentButton({ contentId }: { contentId: string }) {
             <DialogTitle>{t("confirmTitle")}</DialogTitle>
             <DialogDescription>{t("confirmDescription")}</DialogDescription>
           </DialogHeader>
-          <DialogBody />
+          <DialogBody>
+            {derivedCount > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {derivedCount === 1
+                  ? "L'extrait tiré de ce contenu reste."
+                  : `Les ${derivedCount} extraits tirés de ce contenu restent.`}
+              </p>
+            )}
+          </DialogBody>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               {tCommon("cancel")}

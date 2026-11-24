@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { CONTENT_TYPES, isSimpleType } from "@/lib/constants";
+import { CONTENT_TYPES, isLongformType } from "@/lib/constants";
 import { getActiveBrandId } from "@/lib/brand";
 import { pick } from "@/lib/utils";
+import { moveNotesIntoFormat } from "@/lib/content-notes";
 import { removeContentFiles, removeOwnedFile } from "@/lib/storage-cleanup";
 import {
   isProgrammedStatus,
@@ -32,6 +33,8 @@ type CreateContentInput = {
   brandId?: string;
   /** Thème de contenu à pré-remplir (ex : depuis un exemple d'un thème). */
   pillar?: string;
+  /** Le contenu long dont celui-ci est un extrait (0100). */
+  sourceContentId?: string;
 };
 
 /**
@@ -66,6 +69,7 @@ export async function createContentRow(
     insertRow.pillars = [input.pillar.trim()];
     insertRow.pillar = input.pillar.trim();
   }
+  if (input.sourceContentId) insertRow.source_content_id = input.sourceContentId;
   const { data, error } = await supabase
     .from("contents")
     .insert(insertRow)
@@ -264,6 +268,11 @@ export async function duplicateContent(id: string) {
       hook: src.hook,
       cta: src.cta,
       tags: src.tags,
+      // Le texte d'un post, d'un carrousel ou d'un article vit ici : sans elle,
+      // la copie arrivait vide.
+      caption: src.caption,
+      // La copie d'un extrait reste un extrait du même contenu long.
+      ...(src.source_content_id ? { source_content_id: src.source_content_id } : {}),
     })
     .select("id")
     .single();
@@ -303,6 +312,22 @@ export async function duplicateContent(id: string) {
       await supabase.from("storyboard_scenes").insert(
         scenes.map((s) => ({ ...s, content_id: newId })),
       );
+    }
+  }
+
+  // Les parties et l'invité d'un contenu long. Pas la transcription : elle
+  // appartient à un enregistrement précis. Ni les extraits, qui vivent seuls.
+  if (isLongformType(src.type)) {
+    const { data: sections } = await supabase
+      .from("content_sections")
+      .select("kind, position, title, body, minutes")
+      .eq("content_id", id)
+      .in("kind", ["section", "guest"]);
+    if (sections && sections.length) {
+      const { error } = await supabase
+        .from("content_sections")
+        .insert(sections.map((s) => ({ ...s, content_id: newId })));
+      if (error) return { error: `La copie est créée, mais sans son texte : ${error.message}` };
     }
   }
 
@@ -1159,13 +1184,6 @@ export async function setContentFormat(contentId: string, type: string) {
     return { error: "Ce contenu a déjà un format." };
   }
 
-  // L'angle écrit au stade « idée » rejoint le champ qui lui correspond
-  // maintenant qu'on sait lequel c'est. Sans ça, le texte resterait dans
-  // `notes` et il faudrait le recopier à la main.
-  //
-  // Jamais d'écrasement : on n'écrit que dans un champ vide. Un contenu
-  // peut avoir reçu un script entre-temps, et des notes de travail ne
-  // valent pas mieux que du texte déjà rédigé.
   const row = data[0] as {
     notes: string | null;
     caption: string | null;
@@ -1184,36 +1202,9 @@ export async function setContentFormat(contentId: string, type: string) {
       .eq("id", contentId);
   }
 
-  const notes = row.notes?.trim();
-  if (notes) {
-    if (type === "reel") {
-      const { data: existing } = await supabase
-        .from("reel_details")
-        .select("script_full")
-        .eq("content_id", contentId)
-        .maybeSingle();
-      if (!existing?.script_full?.trim()) {
-        await supabase
-          .from("reel_details")
-          .upsert({ content_id: contentId, script_full: notes });
-      }
-    } else if (type === "vlog") {
-      const { data: existing } = await supabase
-        .from("vlog_details")
-        .select("voiceover")
-        .eq("content_id", contentId)
-        .maybeSingle();
-      if (!existing?.voiceover?.trim()) {
-        await supabase
-          .from("vlog_details")
-          .upsert({ content_id: contentId, voiceover: notes });
-      }
-    } else if (isSimpleType(type) && !row.caption?.trim()) {
-      await supabase
-        .from("contents")
-        .update({ caption: notes })
-        .eq("id", contentId);
-    }
+  const notesError = await moveNotesIntoFormat(supabase, contentId, type, row);
+  if (notesError) {
+    return { error: `Format posé, mais tes notes n'ont pas pu être recopiées : ${notesError}` };
   }
 
   revalidatePath(`/content/${contentId}`);

@@ -14,7 +14,9 @@ import {
   type KreaContext,
   type KreaTurn,
 } from "@/lib/krea";
+import { isLongformType } from "@/lib/constants";
 import { createContentRow } from "./contents/actions";
+import { aiPlanLongform, saveLongform } from "./contents/longform-actions";
 import { aiGenerateReel, applyReelGeneration } from "./contents/ai-actions";
 import { aiGenerateStory, applyStoryGeneration } from "./contents/ai-actions";
 import { aiGenerateVlog, applyVlogGeneration } from "./contents/ai-actions";
@@ -167,11 +169,44 @@ async function writeScript(
     return { ok: true };
   }
 
+  // Formats longs : le plan seulement, et jamais par-dessus ce qui existe — on
+  // le vérifie AVANT de payer l'appel.
+  if (isLongformType(type)) {
+    const { count } = await supabase
+      .from("content_sections")
+      .select("id", { count: "exact", head: true })
+      .eq("content_id", contentId)
+      .eq("kind", "section");
+    if (count) {
+      return {
+        ok: false,
+        error: "Ce contenu a déjà ses parties : elles s'écrivent dans la fiche.",
+      };
+    }
+    const plan = await aiPlanLongform({
+      contentId,
+      topic: sujet,
+      language: /[\u0600-\u06FF]/.test(sujet) ? "ar_tn" : "fr",
+    });
+    if (!plan.ok) return { ok: false, error: plan.error };
+    const saved = await saveLongform(contentId, {
+      ...withIds(plan.parts),
+      deleted: [],
+    });
+    if ("error" in saved) return { ok: false, error: saved.error ?? "Erreur." };
+    return { ok: true };
+  }
+
   return {
     ok: false,
     error:
       "Ce format n'a pas de script — c'est une légende et des visuels, à remplir dans la fiche.",
   };
+}
+
+function withIds(parts: { title: string; body: string; minutes: number | null }[]) {
+  const changed = parts.map((p) => ({ id: crypto.randomUUID() as string, ...p }));
+  return { changed, order: changed.map((p) => p.id) };
 }
 
 /**
@@ -209,6 +244,7 @@ export async function askKrea(input: {
       deadline,
     });
 
+    let failed = false;
     for (let round = 0; round < MAX_TOOL_ROUNDS && reply.calls.length; round++) {
       // Le tour de l'assistant (texte + demandes d'outils) doit être rejoué
       // tel quel avant les résultats, sinon l'API rejette la suite.
@@ -268,6 +304,7 @@ export async function askKrea(input: {
           payload = { erreur: "Outil inconnu." };
         }
 
+        if (payload && typeof payload === "object" && "erreur" in payload) failed = true;
         results.push({
           type: "tool_result",
           tool_use_id: call.id,
@@ -278,6 +315,20 @@ export async function askKrea(input: {
       // TOUS les résultats dans UN SEUL message utilisateur : les répartir sur
       // plusieurs messages apprend au modèle à ne plus paralléliser ses appels.
       messages.push({ role: "user", content: results });
+
+      // Rédiger peut avoir mangé tout le temps : le travail est FAIT et
+      // enregistré. Répondre « erreur » la ferait recommencer, et payer deux fois.
+      if (deeds.length && deadline - Date.now() < 10_000) {
+        revalidatePath("/dashboard");
+        revalidatePath("/calendar");
+        return {
+          ok: true,
+          message: failed
+            ? "Une partie seulement est faite : je n'ai pas réussi à tout écrire. Ouvre la fiche et relance-moi depuis là."
+            : "C'est fait, tu peux ouvrir la fiche.",
+          deeds,
+        };
+      }
 
       reply = await kreaInteract({
         systemStable: KREA_PERSONA,

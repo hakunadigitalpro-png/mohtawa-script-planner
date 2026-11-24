@@ -11,10 +11,15 @@ import { ContentTab } from "./content-tab";
 import { FirstCommentTab } from "./first-comment-tab";
 import { VideoTab } from "./video-tab";
 import { PerformanceTab } from "./performance-tab";
-import { isSimpleType, isLiveStatus } from "@/lib/constants";
+import { LongformTab } from "./longform-tab";
+import { ExtractsTab } from "./extracts-tab";
+import { isLiveStatus, isSimpleType, isWideType } from "@/lib/constants";
+import { longformSpec } from "@/lib/longform";
 import type {
   Content,
   ContentMedia,
+  ContentSection,
+  DerivedContent,
   ReelDetails,
   StoryDetails,
   VlogDetails,
@@ -45,6 +50,8 @@ export function DetailTabs({
   scenePresets,
   brandId,
   brandAudience,
+  sections,
+  derived,
   aiEnabled = true,
 }: {
   /** Onglet à ouvrir par défaut (via ?tab=…). Validé plus bas. */
@@ -66,6 +73,10 @@ export function DetailTabs({
   scenePresets: ScenePreset[];
   brandId: string;
   brandAudience: string | null;
+  /** Formats longs : parties, invité et transcription (0101). */
+  sections: ContentSection[];
+  /** Formats longs : les contenus qu'on en a tirés (0100). */
+  derived: DerivedContent[];
   /**
    * Interrupteur IA de la marque (0054), porté jusqu'ici par
    * `resolveActiveBrand()` plutôt que par une requête de plus à chaque
@@ -78,7 +89,11 @@ export function DetailTabs({
   const isVlog = content.type === "vlog";
   // Formats "simples" (post/carrousel/infographie) : éditeur allégé
   // (Plan + Contenu), sans Script ni Storyboard.
-  const isSimple = isSimpleType(content.type);
+  // Formats longs (vidéo longue, direct, podcast, article) : un éditeur en
+  // parties, une présentation, des extraits.
+  const longform = longformSpec(content.type);
+  const isSimple = isSimpleType(content.type) && !longform;
+  const hasVideo = content.type !== "article";
   // Une idée n'a pas encore de format (0055) : aucun éditeur ne lui
   // correspond. Sans ce cas, `isSimpleType(null)` valant false, on lui
   // proposerait Script, Storyboard et Caption — des onglets vides pour
@@ -99,7 +114,10 @@ export function DetailTabs({
   // Garde-fou : un `?tab=…` incohérent (onglet masqué, format qui ne l'a
   // pas) ou vide retombe sur « plan » plutôt qu'ouvrir une page vide.
   const ALLOWED = new Set<string>(["plan", "video", "performance"]);
-  if (isSimple) {
+  if (longform) {
+    for (const tab of ["parts", "content", "extracts"]) ALLOWED.add(tab);
+    if (!hasVideo) ALLOWED.delete("video");
+  } else if (isSimple) {
     ALLOWED.add("content");
     ALLOWED.add("first-comment");
   } else if (hasFormat) {
@@ -113,7 +131,14 @@ export function DetailTabs({
     <Tabs defaultValue={initial}>
       <TabsList data-tour="content-tabs">
         <TabsTrigger value="plan">{t("plan")}</TabsTrigger>
-        {!hasFormat ? null : isSimple ? (
+        {!hasFormat ? null : longform ? (
+          <>
+            <TabsTrigger value="parts">{longform.tab}</TabsTrigger>
+            {hasVideo && <TabsTrigger value="video">Vidéo</TabsTrigger>}
+            <TabsTrigger value="content">Présentation</TabsTrigger>
+            <TabsTrigger value="extracts">Extraits</TabsTrigger>
+          </>
+        ) : isSimple ? (
           /* Post / Carrousel / Infographie : Contenu (visuels + légende),
              onglet Vidéo (lien externe) puis premier commentaire. */
           <>
@@ -156,7 +181,51 @@ export function DetailTabs({
         />
       </TabsContent>
 
-      {!hasFormat ? null : isSimple ? (
+      {!hasFormat ? null : longform ? (
+        <>
+          <TabsContent value="parts">
+            <LongformTab
+              content={content}
+              sections={sections}
+              aiEnabled={aiEnabled}
+            />
+          </TabsContent>
+          {hasVideo && (
+            <TabsContent value="video">
+              <VideoTab
+                contentId={content.id}
+                previewUrl={content.preview_url}
+                hideProductionTabs={false}
+                canOfferHide={false}
+                wide={isWideType(content.type)}
+              />
+            </TabsContent>
+          )}
+          <TabsContent value="content">
+            <ContentTab
+              aiEnabled={aiEnabled}
+              contentId={content.id}
+              caption={content.caption}
+              visuals={visuals}
+              isCarousel={false}
+              presentation={longform}
+            />
+          </TabsContent>
+          <TabsContent value="extracts">
+            <ExtractsTab
+              content={content}
+              transcript={
+                sections.find((s) => s.kind === "transcript")?.body ?? null
+              }
+              derived={derived}
+              hasText={sections.some(
+                (s) => s.kind === "section" && Boolean(s.body?.trim()),
+              )}
+              aiEnabled={aiEnabled}
+            />
+          </TabsContent>
+        </>
+      ) : isSimple ? (
         <>
           <TabsContent value="content">
             <ContentTab

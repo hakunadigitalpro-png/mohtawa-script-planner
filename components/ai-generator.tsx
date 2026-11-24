@@ -506,7 +506,7 @@ export function StoryboardSegmentButton({
   );
 }
 
-function ThinkingIndicator({ label }: { label: string }) {
+export function ThinkingIndicator({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-accent/20 bg-accent/5 px-6 py-12 text-center">
       <div className="relative flex size-12 items-center justify-center">

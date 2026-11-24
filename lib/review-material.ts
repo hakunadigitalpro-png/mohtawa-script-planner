@@ -1,4 +1,6 @@
 import type { createClient } from "@/lib/supabase/server";
+import { isLongformType } from "@/lib/constants";
+import { sectionsToText } from "@/lib/longform";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -38,8 +40,9 @@ export async function fetchReviewMaterial(
   const reelIds = idsOf("reel");
   const vlogIds = idsOf("vlog");
   const storyIds = idsOf("story");
+  const longIds = items.filter((i) => isLongformType(i.type)).map((i) => i.id);
 
-  const [mediaRes, reelRes, vlogRes, slidesRes] = await Promise.all([
+  const [mediaRes, reelRes, vlogRes, slidesRes, sectionsRes] = await Promise.all([
     supabase
       .from("content_media")
       .select("id, content_id, position, image_url")
@@ -63,6 +66,15 @@ export async function fetchReviewMaterial(
           .select("id, content_id, slot_number, body, image_url")
           .in("content_id", storyIds)
           .order("slot_number", { ascending: true })
+      : Promise.resolve({ data: [] }),
+    // Les parties et l'invité : la transcription n'est pas pour le client.
+    longIds.length
+      ? supabase
+          .from("content_sections")
+          .select("content_id, kind, title, body, position")
+          .in("content_id", longIds)
+          .in("kind", ["section", "guest"])
+          .order("position", { ascending: true })
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -95,6 +107,33 @@ export async function fetchReviewMaterial(
   }[]) {
     const entry = result.get(v.content_id);
     if (entry && v.voiceover?.trim()) entry.script = v.voiceover;
+  }
+
+  const parts = new Map<string, { title: string | null; body: string | null }[]>();
+  const guests = new Map<string, string>();
+  for (const s of (sectionsRes.data ?? []) as {
+    content_id: string;
+    kind: string;
+    title: string | null;
+    body: string | null;
+  }[]) {
+    if (s.kind === "guest") {
+      const line = [s.title?.trim(), s.body?.trim()].filter(Boolean).join(" — ");
+      if (line) guests.set(s.content_id, `Invité : ${line}`);
+      continue;
+    }
+    const list = parts.get(s.content_id) ?? [];
+    list.push(s);
+    parts.set(s.content_id, list);
+  }
+  for (const [contentId, list] of parts) {
+    const entry = result.get(contentId);
+    // Des titres sans une ligne de texte ne sont pas de la matière à valider.
+    if (entry && list.some((s) => s.body?.trim())) {
+      entry.script = [guests.get(contentId), sectionsToText(list)]
+        .filter(Boolean)
+        .join("\n\n");
+    }
   }
 
   // Une story : ses images deviennent les visuels, ses textes le script —

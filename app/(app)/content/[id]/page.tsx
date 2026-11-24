@@ -22,17 +22,18 @@ import {
 } from "@/lib/content-lifecycle";
 import { sendBlockerFor } from "@/lib/content-lifecycle-db";
 
-// L'autopsie IA (appel Claude) peut prendre 15-30s. Le défaut Vercel est
-// de 10s sur le plan Hobby → la fonction était tuée avant de répondre.
-// On monte à 60s (max autorisé sur Hobby). Les Server Actions appelées
-// depuis cette page héritent de cette durée.
-export const maxDuration = 60;
+// Les appels IA de cette page peuvent durer jusqu'à AI_BUDGET_MS (90 s). Sans
+// effet sur notre serveur (réglage Vercel), gardé pour qu'un hébergeur à durée
+// limitée ne coupe pas avant nous.
+export const maxDuration = 120;
 import { Badge, ColorDot } from "@/components/ui/badge";
 import {
   typeColor,
   typeLabel,
   statusColor,
   statusLabel,
+  statusKey,
+  isLongformType,
 } from "@/lib/constants";
 import { DetailTabs } from "@/components/content-detail/detail-tabs";
 import { fetchTeam } from "@/lib/brand-team";
@@ -47,6 +48,8 @@ import type { Comment } from "@/components/comments";
 import type {
   Content,
   ContentMedia,
+  ContentSection,
+  DerivedContent,
   ReelDetails,
   StoryDetails,
   VlogDetails,
@@ -123,6 +126,9 @@ export default async function ContentDetailPage({
     scenePresetsRes,
     mediaRes,
     brandKitRes,
+    sectionsRes,
+    derivedRes,
+    sourceRes,
   ] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
@@ -185,6 +191,29 @@ export default async function ContentDetailPage({
       .select("audience")
       .eq("brand_id", content.brand_id)
       .maybeSingle(),
+    // Formats longs : les parties, et les contenus qu'on en a tirés.
+    isLongformType(content.type)
+      ? supabase
+          .from("content_sections")
+          .select("*")
+          .eq("content_id", id)
+          .order("position", { ascending: true })
+      : Promise.resolve({ data: [] }),
+    isLongformType(content.type)
+      ? supabase
+          .from("contents")
+          .select("id, type, title, status, date")
+          .eq("source_content_id", id)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    // Un extrait dit d'où il vient.
+    content.source_content_id
+      ? supabase
+          .from("contents")
+          .select("id, title")
+          .eq("id", content.source_content_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const reel = (reelRes.data ?? null) as ReelDetails | null;
@@ -200,6 +229,9 @@ export default async function ContentDetailPage({
     objective: string | null;
   }[];
   const objectives = (objectivesRes.data ?? []) as { id: string; name: string }[];
+  const sections = (sectionsRes.data ?? []) as ContentSection[];
+  const derived = (derivedRes.data ?? []) as DerivedContent[];
+  const source = sourceRes.data as { id: string; title: string | null } | null;
   const comments = (commentsRes.data ?? []) as Comment[];
   const lastReadAt = readRes.data?.last_comment_read_at ?? "1970-01-01T00:00:00Z";
   const checklistItems = (checklistItemsRes.data ?? []) as ChecklistItem[];
@@ -320,6 +352,14 @@ export default async function ContentDetailPage({
           }
           meta={
             <div className="flex flex-wrap items-center gap-2 text-sm">
+              {source && (
+                <Link
+                  href={`/content/${source.id}?tab=extracts`}
+                  className="max-w-full basis-full truncate text-sm text-white/70 hover:text-white"
+                >
+                  Extrait de : <bdi>{source.title || "Sans titre"}</bdi>
+                </Link>
+              )}
               {/* Une idée n'a pas encore de format : on le dit, plutôt que
                   d'afficher un tiret qui ressemble à une donnée manquante. */}
               <ColorDot color={typeColor(c.type)} />
@@ -332,7 +372,11 @@ export default async function ContentDetailPage({
                 className="ms-1 text-white"
                 style={{ background: statusColor(c.status) }}
               >
-                {safeT(tStatus, c.status, statusLabel(c.status))}
+                {safeT(
+                  tStatus,
+                  statusKey(c.status, c.type),
+                  statusLabel(c.status, c.type),
+                )}
               </Badge>
               <span className="ms-1 inline-flex items-center gap-1.5 font-medium text-white/70">
                 <CalendarDays className="size-3.5 shrink-0" />
@@ -387,7 +431,7 @@ export default async function ContentDetailPage({
                 <FileDown className="size-3.5" />
                 {tContent("exportPdf")}
               </Link>
-              <DeleteContentButton contentId={c.id} />
+              <DeleteContentButton contentId={c.id} derivedCount={derived.length} />
             </>
           }
         />
@@ -410,6 +454,8 @@ export default async function ContentDetailPage({
           scenePresets={scenePresets}
           brandId={content.brand_id}
           brandAudience={brandAudience}
+          sections={sections}
+          derived={derived}
           aiEnabled={activeBrand?.ai_enabled !== false}
         />
       </div>

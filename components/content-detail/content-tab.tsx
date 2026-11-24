@@ -13,7 +13,21 @@ import {
   removeContentVisual,
   reorderContentVisuals,
 } from "@/app/(app)/contents/actions";
+import { cn } from "@/lib/utils";
+import type { LongformSpec } from "@/lib/longform";
 import type { ContentMedia } from "@/lib/types";
+
+const COVER_WIDTH = {
+  video: "w-full max-w-sm",
+  square: "w-48",
+  portrait: "w-48",
+} as const;
+
+const COVER_ASPECT = {
+  video: "aspect-video",
+  square: "aspect-square",
+  portrait: "aspect-[4/5]",
+} as const;
 
 /**
  * Onglet "Contenu" des formats non-vidéo (post/carrousel/infographie) :
@@ -26,6 +40,7 @@ export function ContentTab({
   visuals,
   isCarousel,
   aiEnabled = true,
+  presentation,
 }: {
   contentId: string;
   caption: string | null;
@@ -33,7 +48,14 @@ export function ContentTab({
   isCarousel: boolean;
   /** Interrupteur IA de la marque (0054). */
   aiEnabled?: boolean;
+  /** Formats longs : une miniature ou une couverture, pas « l'image de ton post ». */
+  presentation?: LongformSpec;
 }) {
+  const ratio = presentation?.coverRatio ?? "portrait";
+  const frame = cn(
+    presentation ? COVER_WIDTH[ratio] : "w-24",
+    isCarousel && "cursor-grab",
+  );
   const router = useRouter();
   const [items, setItems] = React.useState(visuals);
   const [pending, startTransition] = React.useTransition();
@@ -92,12 +114,14 @@ export function ContentTab({
       <Card className="space-y-4 p-6">
         <div>
           <h2 className="text-base font-semibold">
-            {isCarousel ? "Visuels du carrousel" : "Visuel"}
+            {presentation?.coverTitle ??
+              (isCarousel ? "Visuels du carrousel" : "Visuel")}
           </h2>
           <p className="text-xs text-muted">
-            {isCarousel
-              ? "Ajoute tes slides dans l'ordre — glisse pour réordonner."
-              : "L'image de ton post."}
+            {presentation?.coverHint ??
+              (isCarousel
+                ? "Ajoute tes slides dans l'ordre — glisse pour réordonner."
+                : "L'image de ton post.")}
           </p>
         </div>
 
@@ -111,10 +135,13 @@ export function ContentTab({
               }}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => onDrop(idx)}
-              className={isCarousel ? "w-24 cursor-grab" : "w-24"}
+              className={frame}
             >
               <div
-                className="relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-lg border border-border bg-secondary/40"
+                className={cn(
+                  "relative cursor-zoom-in overflow-hidden rounded-lg border border-border bg-secondary/40",
+                  COVER_ASPECT[ratio],
+                )}
                 onClick={() => it.image_url && setPreview(it.image_url)}
                 title="Cliquer pour agrandir"
               >
@@ -123,7 +150,7 @@ export function ContentTab({
                     src={it.image_url}
                     alt=""
                     fill
-                    sizes="96px"
+                    sizes={presentation ? "384px" : "96px"}
                     className="object-cover"
                   />
                 )}
@@ -163,14 +190,20 @@ export function ContentTab({
           ))}
 
           {canAdd && (
-            <div className="w-24">
+            <div className={presentation ? COVER_WIDTH[ratio] : "w-24"}>
               <ImageUpload
                 key={`add-${items.length}`}
                 contentId={contentId}
                 value={null}
-                aspectRatio="portrait"
+                aspectRatio={ratio}
                 onChange={onAdd}
-                label={isCarousel ? "+ Slide" : "+ Visuel"}
+                label={
+                  presentation
+                    ? `+ ${presentation.coverTitle}`
+                    : isCarousel
+                      ? "+ Slide"
+                      : "+ Visuel"
+                }
               />
             </div>
           )}
@@ -179,7 +212,14 @@ export function ContentTab({
         {pending && <p className="text-xs text-muted">Enregistrement…</p>}
       </Card>
 
-      <CaptionTab contentId={contentId} caption={caption} aiEnabled={aiEnabled} />
+      <CaptionTab
+        contentId={contentId}
+        caption={caption}
+        aiEnabled={aiEnabled}
+        title={presentation?.captionTitle}
+        hint={presentation?.captionHint}
+        maxChars={presentation?.captionMax}
+      />
 
       {preview && (
         <div

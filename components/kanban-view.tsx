@@ -31,7 +31,7 @@ type KanbanContent = Content & {
 const COLUMNS: { value: string; label: string }[] = [
   { value: "idea", label: "Idée" },
   { value: "script", label: "Script" },
-  { value: "design", label: "Design" },
+  { value: "design", label: "Design / Rédaction" },
   { value: "filming", label: "Tournage" },
   { value: "editing", label: "Montage" },
   { value: "pending_review", label: "À valider" },
@@ -284,7 +284,7 @@ function KanbanCard({
         onClick={(e) => e.stopPropagation()}
       >
         <span className="text-[10px] uppercase text-muted">
-          {statusLabel(c.status)}
+          {statusLabel(c.status, c.type)}
         </span>
         <ContentCommentsButton contentId={c.id} unreadCount={unreadCount} />
       </div>

@@ -1,6 +1,7 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { longformSpec } from "@/lib/longform";
 import {
   platformLabel,
   typeLabel,
@@ -12,11 +13,14 @@ import { PrintActions } from "../print-actions";
 import "../print.css";
 import type {
   Content,
+  ContentMedia,
+  ContentSection,
   ReelDetails,
   StoryDetails,
   StorySlide,
   StoryboardScene,
   Performance,
+  VlogDetails,
 } from "@/lib/types";
 
 export const metadata = {
@@ -38,7 +42,24 @@ export default async function PrintPage({
     .maybeSingle();
   if (!content) notFound();
 
-  const [reelRes, storyRes, slidesRes, scenesRes, perfRes, brandRes] = await Promise.all([
+  // L'export est un outil d'équipe (notes, production) : un client invité a son
+  // écran de validation, comme sur la fiche.
+  const { data: canWrite } = await supabase.rpc("is_brand_writer", {
+    b: content.brand_id,
+  });
+  if (canWrite === false) redirect(`/review?c=${id}`);
+
+  const [
+    reelRes,
+    storyRes,
+    slidesRes,
+    scenesRes,
+    perfRes,
+    brandRes,
+    vlogRes,
+    mediaRes,
+    sectionsRes,
+  ] = await Promise.all([
     supabase.from("reel_details").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("story_details").select("*").eq("content_id", id).maybeSingle(),
     supabase
@@ -53,6 +74,18 @@ export default async function PrintPage({
       .order("scene_number", { ascending: true }),
     supabase.from("performances").select("*").eq("content_id", id).maybeSingle(),
     supabase.from("brands").select("name").eq("id", content.brand_id).maybeSingle(),
+    supabase.from("vlog_details").select("*").eq("content_id", id).maybeSingle(),
+    supabase
+      .from("content_media")
+      .select("*")
+      .eq("content_id", id)
+      .order("position", { ascending: true }),
+    supabase
+      .from("content_sections")
+      .select("*")
+      .eq("content_id", id)
+      .in("kind", ["section", "guest"])
+      .order("position", { ascending: true }),
   ]);
 
   const c = content as Content;
@@ -62,6 +95,23 @@ export default async function PrintPage({
   const scenes = (scenesRes.data ?? []) as StoryboardScene[];
   const perf = (perfRes.data ?? null) as Performance | null;
   const brandName = brandRes.data?.name ?? "";
+  const vlog = (vlogRes.data ?? null) as VlogDetails | null;
+  const media = ((mediaRes.data ?? []) as ContentMedia[]).filter((m) => m.image_url);
+  const sections = (sectionsRes.data ?? []) as ContentSection[];
+  const guest = sections.find((s) => s.kind === "guest") ?? null;
+  const parts = sections.filter(
+    (s) => s.kind === "section" && (s.title?.trim() || s.body?.trim()),
+  );
+  const longform = longformSpec(c.type);
+  const hasVlog = Boolean(
+    vlog &&
+      (vlog.angle ||
+        vlog.hook ||
+        vlog.arc_situation ||
+        vlog.arc_development ||
+        vlog.arc_payoff ||
+        vlog.voiceover),
+  );
 
   const isStory = c.type === "story";
 
@@ -77,7 +127,7 @@ export default async function PrintPage({
           <span>·</span>
           <span>{platformLabel(c.platform)}</span>
           <span>·</span>
-          <span>{statusLabel(c.status)}</span>
+          <span>{statusLabel(c.status, c.type)}</span>
           {c.date && (
             <>
               <span>·</span>
@@ -100,6 +150,62 @@ export default async function PrintPage({
         </dl>
       </section>
 
+      {media.length > 0 && (
+        <section className="print-section">
+          <h2>{longform?.coverTitle ?? (media.length > 1 ? "Visuels" : "Visuel")}</h2>
+          <div className={media.length > 1 ? "print-media" : "print-media print-media-single"}>
+            {media.map((m, i) => (
+              // eslint-disable-next-line @next/next/no-img-element -- ratio inconnu, rendu papier.
+              <img key={m.id} src={m.image_url!} alt={`Visuel ${i + 1}`} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {c.caption?.trim() && (
+        <section className="print-section print-section-flow">
+          <h2>{longform?.captionTitle ?? "Légende"}</h2>
+          <p className="print-text" dir="auto">{c.caption}</p>
+        </section>
+      )}
+
+      {hasVlog && vlog && (
+        <section className="print-section print-section-flow">
+          <h2>Vlog</h2>
+          <dl className="print-list">
+            {vlog.angle && <Block label="Angle" value={vlog.angle} />}
+            {vlog.hook && <Block label="Accroche" value={vlog.hook} />}
+            {vlog.arc_situation && <Block label="Situation" value={vlog.arc_situation} />}
+            {vlog.arc_development && (
+              <Block label="Développement" value={vlog.arc_development} />
+            )}
+            {vlog.arc_payoff && <Block label="Chute" value={vlog.arc_payoff} />}
+            {vlog.voiceover && <Block label="Voix off" value={vlog.voiceover} />}
+          </dl>
+        </section>
+      )}
+
+      {longform && parts.length > 0 && (
+        <section className="print-section print-section-flow">
+          <h2>{longform.tab}</h2>
+          {guest?.title && (
+            <p className="print-text" dir="auto">
+              Invité : {guest.title}
+              {guest.body ? ` — ${guest.body}` : ""}
+            </p>
+          )}
+          {parts.map((p, i) => (
+            <div key={p.id} className="print-part">
+              <h3 dir="auto">
+                {i + 1}. {p.title || "Sans titre"}
+                {p.minutes ? ` (${p.minutes} min)` : ""}
+              </h3>
+              {p.body && <p className="print-text" dir="auto">{p.body}</p>}
+            </div>
+          ))}
+        </section>
+      )}
+
       {!isStory && reel && (
         <section className="print-section">
           <h2>Script</h2>
@@ -117,7 +223,7 @@ export default async function PrintPage({
           {reel.script_full && (
             <div className="print-script-full">
               <h3>Script complet</h3>
-              <p>{reel.script_full}</p>
+              <p dir="auto">{reel.script_full}</p>
             </div>
           )}
         </section>
@@ -251,7 +357,7 @@ function Field({
   return (
     <div className={long ? "print-field print-field-long" : "print-field"}>
       <dt>{label}</dt>
-      <dd>{value}</dd>
+      <dd dir="auto">{value}</dd>
     </div>
   );
 }
@@ -260,7 +366,7 @@ function Block({ label, value }: { label: string; value: string }) {
   return (
     <div className="print-block">
       <dt>{label}</dt>
-      <dd>{value}</dd>
+      <dd dir="auto">{value}</dd>
     </div>
   );
 }

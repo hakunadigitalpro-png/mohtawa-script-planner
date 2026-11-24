@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveBrandId } from "@/lib/brand";
-import { CONTENT_TYPES, isSimpleType } from "@/lib/constants";
+import { CONTENT_TYPES } from "@/lib/constants";
+import { moveNotesIntoFormat } from "@/lib/content-notes";
+import { statusAfterFormat } from "@/lib/content-lifecycle";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -18,7 +20,8 @@ export type IdeaLane = (typeof IDEA_LANES)[number];
  * d'inventer un vocabulaire parallèle à celui de `lib/constants.ts`.
  */
 function writingStatusFor(type: string | null): string {
-  return isSimpleType(type) ? "design" : "script";
+  if (!type) return "script";
+  return statusAfterFormat({ status: "idea", type }) ?? "script";
 }
 
 /**
@@ -126,12 +129,17 @@ export async function scheduleIdea(input: {
   const supabase = await createClient();
   const { data: content } = await supabase
     .from("contents")
-    .select("id, type, status")
+    .select("id, type, status, notes, caption")
     .eq("id", input.contentId)
     .maybeSingle();
 
   if (!content) return { ok: false, error: "Contenu introuvable." };
-  const current = content as { type: string | null; status: string };
+  const current = content as {
+    type: string | null;
+    status: string;
+    notes: string | null;
+    caption: string | null;
+  };
 
   // Poser le format s'il manque — même condition « seulement si vide » que
   // `setContentFormat`, portée par la requête plutôt que par un test préalable.
@@ -147,6 +155,10 @@ export async function scheduleIdea(input: {
       .is("type", null);
     if (typeError) return { ok: false, error: typeError.message };
     type = input.type;
+    // Même passage que `setContentFormat` : sans lui, les notes devenaient
+    // invisibles dès que l'idée entrait au calendrier.
+    const notesError = await moveNotesIntoFormat(supabase, input.contentId, type, current);
+    if (notesError) return { ok: false, error: notesError };
   }
 
   const { error } = await supabase.from("content_publications").insert({

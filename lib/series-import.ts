@@ -116,6 +116,10 @@ export const IMPORTABLE_TYPES = [
   "post",
   "carousel",
   "infographic",
+  "long_video",
+  "livestream",
+  "podcast",
+  "article",
 ] as const;
 
 export type ImportableType = (typeof IMPORTABLE_TYPES)[number];

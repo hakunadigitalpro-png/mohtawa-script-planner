@@ -212,7 +212,18 @@ export const KREA_TOOLS: KreaTool[] = [
       properties: {
         type: {
           type: "string",
-          enum: ["reel", "story", "vlog", "post", "carousel", "infographic"],
+          enum: [
+            "reel",
+            "story",
+            "vlog",
+            "post",
+            "carousel",
+            "infographic",
+            "long_video",
+            "livestream",
+            "podcast",
+            "article",
+          ],
           description:
             "Le format du contenu. À omettre si elle ne l'a pas dit : une idée peut naître sans format.",
         },
@@ -226,7 +237,16 @@ export const KREA_TOOLS: KreaTool[] = [
         },
         plateforme: {
           type: "string",
-          enum: ["instagram", "tiktok", "youtube", "facebook", "linkedin"],
+          enum: [
+            "instagram",
+            "tiktok",
+            "youtube",
+            "facebook",
+            "linkedin",
+            "spotify",
+            "website",
+            "email",
+          ],
           description: "Plateforme de publication, si elle est connue.",
         },
         theme: {
@@ -241,7 +261,7 @@ export const KREA_TOOLS: KreaTool[] = [
   {
     name: "rediger_script",
     description:
-      "Écrit le script d'un contenu reel, story ou vlog déjà créé, et l'enregistre. Utilise l'identifiant renvoyé par creer_contenu, ou celui du contenu ouvert indiqué dans le contexte.",
+      "Écrit le script d'un reel, d'une story ou d'un vlog déjà créé, ou le PLAN d'une vidéo longue, d'un direct, d'un podcast ou d'un article (les parties s'écrivent ensuite une par une dans la fiche), et l'enregistre. Utilise l'identifiant renvoyé par creer_contenu, ou celui du contenu ouvert indiqué dans le contexte.",
     input_schema: {
       type: "object",
       properties: {

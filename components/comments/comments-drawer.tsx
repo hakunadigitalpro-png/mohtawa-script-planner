@@ -992,6 +992,7 @@ type Translator = (key: string, values?: Record<string, string | number>) => str
 
 const PLAN_KEYS: Record<string, string> = {
   general: "planGeneral",
+  caption: "planCaption",
   title: "planTitle",
   hook: "planHook",
   cta: "planCta",

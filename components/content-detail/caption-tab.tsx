@@ -30,6 +30,9 @@ export function CaptionTab({
   contentId,
   caption,
   aiEnabled = true,
+  title = "Légende",
+  hint = "Le texte qui sera publié avec le contenu. Prépare-le ici, copie-le au moment de poster.",
+  maxChars = 2200,
 }: {
   contentId: string;
   caption: string | null;
@@ -39,6 +42,10 @@ export function CaptionTab({
    * seulement de proposer un bouton qui ne peut qu'échouer.
    */
   aiEnabled?: boolean;
+  /** Une description YouTube n'est pas une légende, et n'a pas sa limite. */
+  title?: string;
+  hint?: string;
+  maxChars?: number;
 }) {
   const initial = useMemo(
     () => ({ caption: caption ?? "" }),
@@ -86,14 +93,14 @@ export function CaptionTab({
     }
   };
 
-  // Stats utiles : Instagram caption max = 2200 caractères, hashtags max = 30
+  // Stats utiles : Instagram = 2200 caractères (défaut), hashtags max = 30
   const charCount = state.caption.length;
   const hashtagMatches = state.caption.match(/#\w+/g) ?? [];
   const hashtagCount = hashtagMatches.length;
   const charLimitColor =
-    charCount > 2200
+    charCount > maxChars
       ? "text-destructive"
-      : charCount > 2000
+      : charCount > maxChars * 0.9
         ? "text-amber-600"
         : "text-muted";
 
@@ -102,11 +109,8 @@ export function CaptionTab({
       <Card className="space-y-5 p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold">Légende</h2>
-            <p className="text-xs text-muted">
-              Le texte qui sera publié avec le contenu. Prépare-le ici, copie-le
-              au moment de poster.
-            </p>
+            <h2 className="text-base font-semibold">{title}</h2>
+            <p className="text-xs text-muted">{hint}</p>
           </div>
           <Button
             type="button"
@@ -179,9 +183,10 @@ export function CaptionTab({
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="caption">Texte de la légende</Label>
+          <Label htmlFor="caption">{title}</Label>
           <Textarea
             id="caption"
+            dir="auto"
             className="min-h-48 text-sm [field-sizing:content]"
             value={state.caption}
             onChange={(e) =>
@@ -191,7 +196,7 @@ export function CaptionTab({
           />
           <div className="flex items-center justify-between text-xs">
             <span className={cn("font-medium", charLimitColor)}>
-              {charCount} / 2200 caractères
+              {charCount} / {maxChars} caractères
             </span>
             <span className="text-muted">
               {hashtagCount} hashtag{hashtagCount > 1 ? "s" : ""}

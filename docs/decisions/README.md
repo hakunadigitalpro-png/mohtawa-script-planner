@@ -45,3 +45,4 @@ ADRs liés, issues, commits importants.
 | 2026-10-12 | [Le statut d'un contenu change par un geste explicite](./2026-10-12-statut-par-gestes-explicites.md) | ✅ Accepted |
 | 2026-10-12 | [La marque suit le contenu qu'on regarde](./2026-10-12-la-marque-suit-le-contenu.md) | ✅ Accepted |
 | 2026-10-13 | [Qui prévient qui : un module, l'e-mail pour le client](./2026-10-13-qui-previent-qui.md) | ✅ Accepted |
+| 2026-11-24 | [Formats longs et extraits](./2026-11-24-formats-longs-et-extraits.md) | ✅ Accepted |

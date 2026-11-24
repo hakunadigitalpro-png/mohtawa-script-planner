@@ -180,7 +180,13 @@ export function NextStepButton({
         return pill(<Globe className="size-3.5" />, t("needsFormat"));
       }
       if (sendBlocker.kind === "nothing_to_review") {
-        return sendBlocker.family === "video"
+        return sendBlocker.family === "article" ||
+          sendBlocker.family === "longform"
+          ? pill(
+              <FileText className="size-3.5" />,
+              t(sendBlocker.family === "article" ? "blocked.writeText" : "blocked.writePart"),
+            )
+          : sendBlocker.family === "video"
           ? pill(<FileText className="size-3.5" />, t("blocked.writeScript"))
           : sendBlocker.family === "story"
             ? pill(<ImageIcon className="size-3.5" />, t("blocked.addSlide"))

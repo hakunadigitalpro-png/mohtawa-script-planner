@@ -1,5 +1,5 @@
 import type { createClient } from "@/lib/supabase/server";
-import { isSimpleType } from "@/lib/constants";
+import { isFilmedType, isLongformType, isSimpleType } from "@/lib/constants";
 import {
   hasMaterial,
   statusAfterFilming,
@@ -85,7 +85,7 @@ export async function applyFilmingProgress(
     .maybeSingle();
   if (!content) return;
   const row = content as { status: string; type: string | null };
-  if (!row.type || isSimpleType(row.type)) return;
+  if (!isFilmedType(row.type)) return;
 
   const [scenesRes, slidesRes] = await Promise.all([
     supabase
@@ -127,9 +127,10 @@ export async function fetchMaterial(
   const reelIds = idsOf((t) => t === "reel");
   const vlogIds = idsOf((t) => t === "vlog");
   const storyIds = idsOf((t) => t === "story");
-  const simpleIds = idsOf((t) => isSimpleType(t));
+  const longIds = idsOf((t) => isLongformType(t));
+  const simpleIds = idsOf((t) => isSimpleType(t) && !isLongformType(t));
 
-  const [reelRes, vlogRes, slidesRes, mediaRes] = await Promise.all([
+  const [reelRes, vlogRes, slidesRes, mediaRes, sectionsRes] = await Promise.all([
     reelIds.length
       ? supabase
           .from("reel_details")
@@ -153,6 +154,13 @@ export async function fetchMaterial(
           .from("content_media")
           .select("content_id")
           .in("content_id", simpleIds)
+      : Promise.resolve({ data: [] }),
+    longIds.length
+      ? supabase
+          .from("content_sections")
+          .select("content_id, body")
+          .in("content_id", longIds)
+          .eq("kind", "section")
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -184,6 +192,15 @@ export async function fetchMaterial(
     visuals.set(r.content_id, (visuals.get(r.content_id) ?? 0) + 1);
   }
 
+  const partsWithText = new Map<string, number>();
+  for (const r of (sectionsRes.data ?? []) as {
+    content_id: string;
+    body: string | null;
+  }[]) {
+    if (!r.body?.trim()) continue;
+    partsWithText.set(r.content_id, (partsWithText.get(r.content_id) ?? 0) + 1);
+  }
+
   for (const item of items) {
     result.set(
       item.id,
@@ -192,6 +209,7 @@ export async function fetchMaterial(
         voiceover: voiceover.get(item.id),
         slidesWithText: slidesWithText.get(item.id),
         visuals: visuals.get(item.id),
+        partsWithText: partsWithText.get(item.id),
       }),
     );
   }

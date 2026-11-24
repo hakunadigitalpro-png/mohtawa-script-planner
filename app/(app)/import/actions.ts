@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { initialStatus } from "@/lib/content-lifecycle";
 import { getActiveBrandId } from "@/lib/brand";
-import { isSimpleType } from "@/lib/constants";
+import { isLongformType, isSimpleType } from "@/lib/constants";
 import {
   MAX_SERIES_ITEMS,
   spreadDates,
@@ -60,7 +60,8 @@ export async function importSeries(input: {
     : [];
   const theme = input.theme?.trim();
   const platform = input.platform?.trim() || null;
-  const simple = isSimpleType(input.type ?? null);
+  const longform = isLongformType(input.type ?? null);
+  const simple = isSimpleType(input.type ?? null) && !longform;
 
   const prepared = items.map((item, i) => ({
     id: crypto.randomUUID(),
@@ -119,6 +120,25 @@ export async function importSeries(input: {
         ...(p.script ? { voiceover: p.script } : {}),
       })),
     );
+  } else if (longform) {
+    // Le texte importé devient la première partie, à découper ensuite.
+    const withText = prepared.filter((p) => p.script);
+    if (withText.length) {
+      const { error } = await supabase.from("content_sections").insert(
+        withText.map((p) => ({
+          content_id: p.id,
+          kind: "section",
+          position: 0,
+          body: p.script,
+        })),
+      );
+      if (error) {
+        return {
+          ok: false,
+          error: `Les fiches sont créées, mais sans leur texte : ${error.message}`,
+        };
+      }
+    }
   }
 
   revalidatePath("/dashboard");

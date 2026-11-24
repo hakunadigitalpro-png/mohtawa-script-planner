@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { guardAiAction } from "@/lib/ai-guard";
 import { assertCanUseAi } from "@/lib/plans";
+import { getBrandKitContext } from "@/lib/brand-kit-context";
+import { isLongformType } from "@/lib/constants";
+import { sectionsToText } from "@/lib/longform";
 import {
   generateCaption,
   generateReel,
@@ -21,58 +24,6 @@ import type {
   GeneratedStrategy,
   StrategyAudience,
 } from "@/lib/types";
-
-/**
- * Voix de marque + hashtags récurrents, issus de la Stratégie de contenu.
- * Récupérés côté SERVEUR et appliqués automatiquement : l'utilisatrice ne les
- * ressaisit jamais, ils découlent de sa stratégie.
- */
-async function getBrandKitContext(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  contentId: string,
-): Promise<{
-  voice?: string;
-  hashtags: string[];
-  /** Thème choisi dans l'onglet Plan — il était rempli, il était affiché, et
-   *  il n'arrivait jamais jusqu'au générateur. */
-  theme?: string;
-  /** Objectif du contenu, même histoire. */
-  objective?: string;
-  /** Cibles de la stratégie, pour que l'écran de génération les propose. */
-  audiences: StrategyAudience[];
-}> {
-  const { data: content } = await supabase
-    .from("contents")
-    .select("brand_id, pillar, objective")
-    .eq("id", contentId)
-    .maybeSingle();
-  if (!content) return { hashtags: [], audiences: [] };
-
-  const [kitRes, strategyRes] = await Promise.all([
-    supabase
-      .from("brand_kits")
-      .select("voice, hashtags")
-      .eq("brand_id", content.brand_id)
-      .maybeSingle(),
-    supabase
-      .from("brand_strategies")
-      .select("generated")
-      .eq("brand_id", content.brand_id)
-      .maybeSingle(),
-  ]);
-
-  const kit = kitRes.data;
-  const generated = strategyRes.data?.generated as GeneratedStrategy | null;
-
-  return {
-    voice: kit?.voice?.trim() || undefined,
-    hashtags: (kit?.hashtags ?? []) as string[],
-    theme: (content as { pillar: string | null }).pillar?.trim() || undefined,
-    objective:
-      (content as { objective: string | null }).objective?.trim() || undefined,
-    audiences: generated?.audiences ?? [],
-  };
-}
 
 /** Les cibles de la marque, pour l'écran de génération (boutons à cliquer). */
 export async function listBrandAudiences(
@@ -668,6 +619,24 @@ async function getContentSource(
       .filter((s) => s.body?.trim())
       .map((s) => `Story ${s.slot_number} : ${s.body!.trim()}`)
       .join("\n");
+    return text || undefined;
+  }
+
+  if (isLongformType(type)) {
+    const { data } = await supabase
+      .from("content_sections")
+      .select("title, body")
+      .eq("content_id", contentId)
+      .eq("kind", "section")
+      .order("position", { ascending: true });
+    // Les titres et le début de chaque partie suffisent à une légende :
+    // envoyer vingt minutes de texte coûterait dix fois plus pour le même résultat.
+    const text = sectionsToText(
+      ((data ?? []) as { title: string | null; body: string | null }[]).map((s) => ({
+        title: s.title,
+        body: s.body ? s.body.slice(0, 400) : null,
+      })),
+    );
     return text || undefined;
   }
 

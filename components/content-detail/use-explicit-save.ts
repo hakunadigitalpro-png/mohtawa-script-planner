@@ -17,6 +17,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export function useExplicitSave<T>(
   initial: T,
   save: (v: T) => Promise<{ error?: string; ok?: boolean } | void>,
+  /**
+   * Comment réconcilier ce que l'écran porte avec ce que le serveur vient de
+   * renvoyer. Sans elle, le serveur gagne — donc tout ce qui a été tapé pendant
+   * l'aller-retour disparaît. À fournir dès qu'on écrit long.
+   */
+  merge?: (current: T, baseline: T, incoming: T) => T,
 ) {
   const [state, setState] = useState<T>(initial);
   const [isSaving, setIsSaving] = useState(false);
@@ -26,13 +32,21 @@ export function useExplicitSave<T>(
   // après une action atomique comme un upload image), on resync sans casser
   // le dirty tracking — la nouvelle baseline = la nouvelle donnée serveur.
   const initialSnapshotRef = useRef<string>(JSON.stringify(initial));
+  const mergeRef = useRef(merge);
+  useEffect(() => {
+    mergeRef.current = merge;
+  });
 
   useEffect(() => {
     const nextSnapshot = JSON.stringify(initial);
     if (nextSnapshot !== initialSnapshotRef.current) {
       initialSnapshotRef.current = nextSnapshot;
+      const before = baselineRef.current;
       baselineRef.current = initial;
-      setState(initial);
+      const reconcile = mergeRef.current;
+      setState((current) =>
+        reconcile ? reconcile(current, before, initial) : initial,
+      );
     }
   }, [initial]);
 

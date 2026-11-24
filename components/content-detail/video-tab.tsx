@@ -20,6 +20,7 @@ export function VideoTab({
   previewUrl,
   hideProductionTabs,
   canOfferHide,
+  wide = false,
 }: {
   contentId: string;
   previewUrl: string | null;
@@ -27,6 +28,8 @@ export function VideoTab({
   /** Faux pour les Stories et pour les formats simples : il n'y a pas de
    *  Script ni de Storyboard à cacher, l'offre n'a pas de sens. */
   canOfferHide: boolean;
+  /** Formats longs : le lecteur s'affiche en 16:9. */
+  wide?: boolean;
 }) {
   const router = useRouter();
   const embed = parsePreviewUrl(previewUrl);
@@ -58,7 +61,13 @@ export function VideoTab({
           </div>
           {embed ? (
             <div className="overflow-hidden rounded-2xl bg-black">
-              <div className="relative mx-auto aspect-[9/16] w-full max-w-sm">
+              <div
+                className={
+                  wide
+                    ? "relative aspect-video w-full"
+                    : "relative mx-auto aspect-[9/16] w-full max-w-sm"
+                }
+              >
                 <iframe
                   src={embed.src}
                   allow="autoplay; encrypted-media; picture-in-picture"

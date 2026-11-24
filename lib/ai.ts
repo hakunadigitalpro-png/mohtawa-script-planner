@@ -15,20 +15,45 @@ export const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 // (même prix que 4.5 — 3$/15$ par 1M — mais meilleure qualité). Pour Haiku
 // (moins cher) ou Opus (plus puissant), définir ANTHROPIC_MODEL dans Vercel.
 const DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-6";
-/** Période où Mariam a demandé le modèle le plus puissant. Bornes en
- *  heure de Tunis : jusqu'au 25 novembre inclus, retour au défaut le 26. */
+/** Période où Mariam a demandé mieux que Sonnet. Bornes en heure de Tunis :
+ *  jusqu'au 27 décembre 2026 inclus, retour au défaut le 28. */
 const BOOST_MODEL = "claude-opus-5-5";
-const BOOST_UNTIL = new Date("2026-11-26T00:00:00+01:00");
+const BOOST_UNTIL = new Date("2026-12-28T00:00:00+01:00");
 
 /**
  * Le modèle Claude à utiliser MAINTENANT. Fonction, pas constante : le
  * serveur tourne des semaines sans redémarrer, la date doit être relue à
- * chaque appel pour que le retour au défaut se fasse tout seul le 26/11.
+ * chaque appel pour que le retour au défaut se fasse tout seul le 28/12.
  * ANTHROPIC_MODEL (env Coolify) garde la priorité s'il est posé.
  */
 export function anthropicModel(): string {
   if (process.env.ANTHROPIC_MODEL) return process.env.ANTHROPIC_MODEL;
   return Date.now() < BOOST_UNTIL.getTime() ? BOOST_MODEL : DEFAULT_ANTHROPIC_MODEL;
+}
+
+/**
+ * Les modèles de la famille 5 réfléchissent avant d'écrire, toujours, et cette
+ * réflexion se décompte de `max_tokens` : une légende limitée à 900 pouvait
+ * être consommée avant son premier mot. On leur laisse donc de la place en
+ * plus. `effort: "low"` garde la réflexion courte : un script n'est pas une
+ * démonstration, et l'écran attend.
+ */
+const THINKING_ROOM = 4000;
+
+export function modelParams(maxTokens: number): {
+  model: string;
+  max_tokens: number;
+  output_config?: { effort: "low" };
+} {
+  const model = anthropicModel();
+  if (!/^claude-(opus|sonnet|haiku|fable|mythos)-5/.test(model)) {
+    return { model, max_tokens: maxTokens };
+  }
+  return {
+    model,
+    max_tokens: maxTokens + THINKING_ROOM,
+    output_config: { effort: "low" },
+  };
 }
 
 export class AiError extends Error {
@@ -39,15 +64,16 @@ export class AiError extends Error {
 }
 
 /**
- * Vercel coupe la fonction à 60 s (plan Hobby) et rend alors une page 504
- * brute — l'utilisatrice perd son travail sans comprendre pourquoi. On coupe
- * donc NOUS-MÊMES avant, pour renvoyer un message lisible dans l'interface.
+ * Au-delà, l'attente ne ressemble plus à une attente mais à une panne : on
+ * coupe nous-mêmes et on le dit. C'était 52 s du temps de Vercel, qui tuait
+ * la fonction à 60 s ; l'app tourne depuis octobre 2026 sur notre serveur,
+ * sans cette coupure.
  */
-export const AI_BUDGET_MS = 52_000;
+export const AI_BUDGET_MS = 90_000;
 /** En dessous, un appel n'a aucune chance d'aboutir : autant le dire tout de suite. */
 const AI_MIN_MS = 6_000;
 const AI_TIMEOUT_MESSAGE =
-  "L'IA a mis trop de temps à répondre (le serveur coupe à 60 s). Réessaie — si ça recommence, raccourcis ton script ou découpe-le en deux vidéos.";
+  "L'IA a mis trop de temps à répondre. Réessaie. Si ça recommence, raccourcis ton texte ou découpe-le en deux.";
 
 /** Échéance partagée par tous les appels d'une même requête. */
 export function aiDeadline(): number {
@@ -108,7 +134,7 @@ export type GenerationLanguage = "fr" | "en" | "ar_msa" | "ar_tn";
  * générations. Bloc conditionnel : rien n'est envoyé au modèle tant que la
  * marque n'a pas de stratégie, donc aucun token dépensé pour rien.
  */
-function voiceInstruction(voice?: string): string {
+export function voiceInstruction(voice?: string): string {
   const v = voice?.trim();
   return v ? ` Respecte la VOIX DE MARQUE suivante dans tout ce que tu écris : ${v}.` : "";
 }
@@ -120,7 +146,7 @@ function voiceInstruction(voice?: string): string {
  * tounsi ; "ar_msa" l'exclut volontairement pour rester en arabe standard
  * (pas de tounsi ni d'autre dialecte).
  */
-function languageInstruction(language?: GenerationLanguage): string {
+export function languageInstruction(language?: GenerationLanguage): string {
   switch (language) {
     case "fr":
       return "Écris exclusivement en français.";
@@ -603,11 +629,8 @@ Fais l'autopsie de cette vidéo en suivant exactement le format demandé.`;
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: anthropicModel(),
-        // 2000 : compromis profondeur / latence. 3000 + plusieurs images
-        // dépassait les 60s max de Vercel Hobby (timeout). 2000 garde une
-        // bonne profondeur tout en restant sous la limite.
-        max_tokens: 2000,
+        // 2000 : compromis profondeur / latence, avec plusieurs images jointes.
+        ...modelParams(2000),
         system,
         messages: [{ role: "user", content }],
       }),
@@ -697,8 +720,7 @@ async function callClaudeRaw(
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: anthropicModel(),
-        max_tokens: maxTokens,
+        ...modelParams(maxTokens),
         system,
         messages: [{ role: "user", content: userText }],
       }),
@@ -741,17 +763,44 @@ async function callClaudeRaw(
     .map((b) => b.text ?? "")
     .join("\n")
     .trim();
-  if (!text) throw new AiError("empty", "Réponse vide de l'IA.");
-  return { text, stopReason: data.stop_reason ?? null };
+  const stopReason = data.stop_reason ?? null;
+  if (stopReason === "refusal") {
+    throw new AiError(
+      "refusal",
+      "L'IA a refusé d'écrire sur ce sujet. Reformule-le et relance.",
+    );
+  }
+  // Coupée avant son premier mot : c'est une réponse trop longue, pas une panne.
+  if (!text && stopReason !== "max_tokens") {
+    throw new AiError("empty", "Réponse vide de l'IA.");
+  }
+  return { text: text ?? "", stopReason };
 }
 
-async function callClaudeText(
+/**
+ * Texte libre. Coupé par la limite, il RESSEMBLE à un texte fini : on relance
+ * une fois avec le double de place, et sinon on le dit — jamais un texte
+ * tronqué rendu comme complet.
+ */
+export async function callClaudeText(
   system: string,
   userText: string,
   maxTokens: number,
 ): Promise<string> {
-  const { text } = await callClaudeRaw(system, userText, maxTokens);
-  return text;
+  const deadline = aiDeadline();
+  const startedAt = Date.now();
+  const first = await callClaudeRaw(system, userText, maxTokens, deadline);
+  if (first.stopReason !== "max_tokens") return first.text;
+
+  const elapsed = Date.now() - startedAt;
+  if (elapsed * 2 < deadline - Date.now()) {
+    const second = await callClaudeRaw(system, userText, maxTokens * 2, deadline);
+    if (second.stopReason !== "max_tokens") return second.text;
+  }
+  throw new AiError(
+    "too_long",
+    "Ta demande est trop longue pour être traitée d'un coup. Raccourcis-la ou découpe-la, puis relance.",
+  );
 }
 
 /**
@@ -765,7 +814,7 @@ async function callClaudeText(
  * avec le double de budget avant d'abandonner : ça évite une erreur "format
  * invalide" qui, pour l'utilisateur, ne veut rien dire de plus qu'"réessaie".
  */
-async function callClaudeJSON<T>(
+export async function callClaudeJSON<T>(
   system: string,
   userText: string,
   maxTokens: number,
@@ -850,7 +899,7 @@ export function useGeminiFor(language?: GenerationLanguage): boolean {
   return geminiEnabled() && (language === "ar_msa" || language === "ar_tn");
 }
 
-async function callGeminiJSON<T>(
+export async function callGeminiJSON<T>(
   system: string,
   userText: string,
   maxTokens: number,
@@ -1181,7 +1230,7 @@ Renvoie UNIQUEMENT ce JSON (sans markdown autour) :
    ========================================================================= */
 
 export type CaptionInput = {
-  /** reel, story, vlog, post, carousel, infographic. */
+  /** Une valeur de CONTENT_TYPES. */
   type: string;
   title?: string;
   /** Thème de contenu de la fiche — la « thématique » demandée. */
@@ -1205,6 +1254,12 @@ const CAPTION_FORMAT_HINT: Record<string, string> = {
   post: "un post image",
   carousel: "un carrousel de plusieurs visuels",
   infographic: "une infographie",
+  long_video:
+    "une vidéo longue YouTube : écris sa DESCRIPTION, en finissant par la liste des chapitres avant les hashtags",
+  livestream:
+    "un direct : écris son ANNONCE, qui donne envie d'être là à l'heure dite",
+  podcast: "un épisode de podcast : écris sa DESCRIPTION",
+  article: "un article : écris le TEXTE DE PARTAGE qui donne envie de le lire",
 };
 
 /**
@@ -1360,8 +1415,7 @@ Réponds dans la langue de la personne (français par défaut).`;
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: anthropicModel(),
-          max_tokens: maxTokens,
+          ...modelParams(maxTokens),
           system,
           messages,
         }),
